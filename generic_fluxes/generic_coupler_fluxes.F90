@@ -11,34 +11,31 @@ module generic_coupler_fluxes
   use constants_mod,          only : WTMN, WTMAIR,rdgas
 
   implicit none ; private
-
-  integer :: id_nh3_sc_no=-1, id_nh3_csurf=-1,id_nh3_alpha=-1, id_nh4_csurf = -1
-  integer :: id_phos=-1, id_sos=-1, id_pka_nh3 = -1
+  real, parameter :: WTMDMS = 62.13e-3
+  real, parameter :: vb_nh3 = 25, vb_dms = 77
+  
+  integer :: id_nh3_sc_no=-1, id_nh3_csurf=-1, id_nh3_alpha=-1
+  integer :: id_dms_sc_no=-1, id_dms_csurf=-1, id_dms_alpha=-1
+  integer :: id_phos=-1, id_sos=-1, id_pka_nh3=-1, id_nh4_csurf=-1
 
   integer :: ind_nh3_flux = 0 
-
+  integer :: ind_dms_flux = 0
+  
   public generic_coupler_fluxes_init
-  public generic_coupler_fluxes_set_nh3_alpha
+  public generic_coupler_fluxes_set_iob
   
 contains
 
-  subroutine generic_coupler_fluxes_init(ocean_time, axes, axt, is,ie,js,je, ocean_iob_fields, gas_fields_ocn)
+  subroutine generic_coupler_fluxes_init(ocean_time, axes, axt, is,ie,js,je, &
+                                         do_nh3, do_dms,&
+                                         ocean_iob_fields, gas_fields_ocn)
     type(time_type),          intent(in) :: ocean_time
     integer, dimension(1),    intent(in) :: axes
     integer, dimension(2),    intent(in) :: axt
     integer,                  intent(in) :: is, ie, js, je
     type(coupler_2d_bc_type), intent(inout) :: ocean_iob_fields
+    logical,                  intent(in) :: do_nh3, do_dms
     type(coupler_1d_bc_type),  optional, intent(in) :: gas_fields_ocn !< If present, this type describes the
-
-    !set ocean/atm fluxes for nh3
-    ind_nh3_flux = aof_set_coupler_flux('nh3_flux',      &
-         flux_type         = 'air_sea_gas_flux_generic', &  
-         implementation    = 'johnson',                  &
-         mol_wt            = WTMN,                       &
-         param             = (/ 17., 25. /),             &
-         ice_restart_file  = 'ice_airsea_flux.res.nc',   &
-         ocean_restart_file= 'ocean_airsea_flux_res.nc'  &
-         )
 
     if (present(gas_fields_ocn)) then
        call coupler_type_spawn(gas_fields_ocn, ocean_iob_fields, (/is,is,ie,ie/), &
@@ -46,6 +43,35 @@ contains
        call coupler_type_set_diags(ocean_iob_fields, "ocean_sfc", axes(1:2), ocean_time)
     end if
 
+    if(do_nh3) call generic_coupler_fluxes_init_nh3(ocean_time, axes, axt, is,ie,js,je, ocean_iob_fields)
+    if(do_dms) call generic_coupler_fluxes_init_dms(ocean_time, axes, axt, is,ie,js,je, ocean_iob_fields)
+
+    !Register diagnostics
+    id_nh4_csurf = register_diag_field('ocean_model', 'nh4_csurf',axt, ocean_time, 'NH4 surface concentration',  &
+                                       'mol/m^3', missing_value=1.e10)
+    id_phos = register_diag_field('ocean_model', 'phos',axt, ocean_time, 'ocean surface pH', &
+                                  'unitless', missing_value=1.e10)
+    id_sos = register_diag_field('ocean_model', 'sos',axt, ocean_time, 'ocean surface salt', &
+                                 'psu', missing_value=1.e10)
+
+  end subroutine generic_coupler_fluxes_init
+    
+  subroutine generic_coupler_fluxes_init_nh3(ocean_time, axes, axt, is,ie,js,je, ocean_iob_fields)
+    type(time_type),          intent(in) :: ocean_time
+    integer, dimension(1),    intent(in) :: axes
+    integer, dimension(2),    intent(in) :: axt
+    integer,                  intent(in) :: is, ie, js, je
+    type(coupler_2d_bc_type), intent(inout) :: ocean_iob_fields
+
+    !set ocean/atm fluxes for nh3
+    ind_nh3_flux = aof_set_coupler_flux('nh3_flux',      &
+         flux_type         = 'air_sea_gas_flux_generic', &  
+         implementation    = 'johnson',                  &
+         mol_wt            = WTMN,                       &
+         param             = (/ 17., vb_nh3 /),             &
+         ice_restart_file  = 'ice_generic_coupler_fluxes.res.nc',   &
+         ocean_restart_file= 'ocean_generic_coupler_fluxes.res.nc'  &
+         )
     !Register diagnostics
     id_nh3_sc_no = register_diag_field('ocean_model', 'nh3_sc_no',axt, ocean_time, 'NH3 Schmidt Number',  &
                                        'unitless', missing_value=1.e10)
@@ -53,36 +79,82 @@ contains
                                        'mol/m^3', missing_value=1.e10)
     id_nh4_csurf = register_diag_field('ocean_model', 'nh4_csurf',axt, ocean_time, 'NH4 surface concentration',  &
                                        'mol/m^3', missing_value=1.e10)
-    id_phos = register_diag_field('ocean_model', 'phos',axt, ocean_time, 'ocean surface pH', &
-                                  'unitless', missing_value=1.e10)
-    id_sos = register_diag_field('ocean_model', 'sos',axt, ocean_time, 'ocean surface salt', &
-                                 'psu', missing_value=1.e10)
     id_pka_nh3 = register_diag_field('ocean_model', 'pka_nh3',axt, ocean_time, 'pka of NH3',&
                                      'unitless', missing_value=1.e10)
     id_nh3_alpha = register_diag_field('ocean_model', 'nh3_alpha',axt, ocean_time, 'NH3 solubilty',  &
                                        'mol/m3/atm', missing_value=1.e10)
 
-  end subroutine generic_coupler_fluxes_init
+  end subroutine generic_coupler_fluxes_init_nh3
 
-
-  subroutine generic_coupler_fluxes_set_nh3_alpha(ocean_iob_fields, is, ie, js, je, ocean_sst, ocean_mask, ocean_time)
+  subroutine generic_coupler_fluxes_init_dms(ocean_time, axes, axt, is,ie,js,je, ocean_iob_fields)
+    type(time_type),          intent(in) :: ocean_time
+    integer, dimension(1),    intent(in) :: axes
+    integer, dimension(2),    intent(in) :: axt
+    integer,                  intent(in) :: is, ie, js, je
     type(coupler_2d_bc_type), intent(inout) :: ocean_iob_fields
+
+    !set ocean/atm fluxes for dms
+    ind_dms_flux = aof_set_coupler_flux('dms_flux',      &
+         flux_type         = 'air_sea_gas_flux_generic', &  
+         implementation    = 'johnson',                  &
+         mol_wt            = WTMDMS,                       &
+         param             = (/ WTMDMS*1e3, vb_dms /),             &
+         ice_restart_file  = 'ice_generic_coupler_fluxes.res.nc',   &
+         ocean_restart_file= 'ocean_generic_coupler_fluxes.res.nc'  &
+         )
+    !Register diagnostics
+    id_dms_sc_no = register_diag_field('ocean_model', 'dms_sc_no',axt, ocean_time, 'DMS Schmidt Number',  &
+                                       'unitless', missing_value=1.e10)
+    id_dms_csurf = register_diag_field('ocean_model', 'dms_csurf',axt, ocean_time, 'DMS surface concentration',  &
+                                       'mol/m^3', missing_value=1.e10)
+    id_dms_alpha = register_diag_field('ocean_model', 'dms_alpha',axt, ocean_time, 'DMS solubilty',  &
+                                       'mol/m3/atm', missing_value=1.e10)
+
+  end subroutine generic_coupler_fluxes_init_dms  
+
+  subroutine generic_coupler_fluxes_set_iob(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
+                                             do_nh3, do_dms,&
+                                             dms_surf,nh4_surf,ph_surf,salt_surf,& 
+                                             ocean_iob_fields)
+    type(time_type),          intent(in)    :: ocean_time
     integer,                  intent(in)    :: is, ie, js, je
     real, dimension(is:,js:), intent(in)    :: ocean_sst
-    logical, dimension(is:,js:), intent(in) ::  ocean_mask
-    type(time_type),          intent(in)    :: ocean_time
+    logical, dimension(is:,js:), intent(in) :: ocean_mask
+    real, dimension(is:,js:), intent(in)    :: dms_surf,nh4_surf,ph_surf,salt_surf
+    logical,                  intent(in)    :: do_nh3, do_dms
+    type(coupler_2d_bc_type), intent(inout) :: ocean_iob_fields
 
     logical :: sent
     real            :: ltr,tr
     integer         :: i,j
     real, parameter :: vb_nh3 = 25
     real            :: sstc
-    real, dimension(size(ocean_mask,1),size(ocean_mask,2)) :: nh4_surf,ph_surf,nh3_alpha,nh3_csurf,nh3_sc_no,pka_nh3,salt_surf
 
-    nh4_surf(:,:) = 0; ph_surf(:,:)=8.0;salt_surf(:,:)=33.0         
-    call data_override('OCN', 'nh4_surf', nh4_surf, ocean_time)
-    call data_override('OCN', 'ph_surf',  ph_surf, ocean_time)
-    call data_override('OCN', 'salt_surf',  salt_surf, ocean_time)  
+
+    if(do_nh3) call generic_coupler_fluxes_set_iob_nh3(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
+                                                        nh4_surf,ph_surf,salt_surf,& 
+                                                        ocean_iob_fields)
+    if(do_dms) call generic_coupler_fluxes_set_iob_dms(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
+                                                        dms_surf,ph_surf,salt_surf,& 
+                                                        ocean_iob_fields)
+  end subroutine generic_coupler_fluxes_set_iob
+  
+  subroutine generic_coupler_fluxes_set_iob_nh3(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
+                                                 nh4_surf,ph_surf,salt_surf,& 
+                                                 ocean_iob_fields)
+    type(time_type),          intent(in)    :: ocean_time
+    integer,                  intent(in)    :: is, ie, js, je
+    real, dimension(is:,js:), intent(in)    :: ocean_sst
+    logical, dimension(is:,js:), intent(in) :: ocean_mask
+    real, dimension(is:,js:), intent(in)    :: nh4_surf,ph_surf,salt_surf
+    type(coupler_2d_bc_type), intent(inout) :: ocean_iob_fields
+
+    logical :: sent
+    real            :: ltr,tr
+    integer         :: i,j
+    real, parameter :: vb_nh3 = 25
+    real            :: sstc
+    real, dimension(size(ocean_mask,1),size(ocean_mask,2)) :: nh3_alpha,nh3_csurf,nh3_sc_no,pka_nh3
 
     do i = 1,size(ocean_sst,1); do j=1,size(ocean_sst,2)
        !Note that COBALT uses sst in C. For consistency. To avoid mistakes, I am converting sst to C
@@ -93,8 +165,8 @@ contains
 
        !calculate solubility/schmidt number for NH3
        nh3_alpha(i,j) = 5.76e1*exp(13.79*tr-5.39*ltr)*997.
-       nh3_alpha(i,j) = nh3_alpha(i,j)/saltout_correction(101325./(1.e-3*rdgas*wtmair*(sstc+273.15)*nh3_alpha(i,j)),vb_nh3,salt_surf(i,j)) !mol/m3/atm  
-
+       nh3_alpha(i,j) = nh3_alpha(i,j)&
+           /saltout_correction(101325./(1.e-3*rdgas*wtmair*(sstc+273.15)*nh3_alpha(i,j)),vb_nh3,salt_surf(i,j)) !mol/m3/atm  
        nh3_csurf(i,j) = nh4_surf(i,j)/(1.+10**(pka_nh3(i,j)-max(min(ph_surf(i,j),11.),3.))) !in mol/m3
        nh3_sc_no(i,j) = schmidt_w(sstc,salt_surf(i,j),vb_nh3)
     enddo;enddo
@@ -110,8 +182,40 @@ contains
     if (id_phos>0) sent = send_data(id_phos, ph_surf, ocean_time, mask=ocean_mask)                        
     if (id_nh3_alpha>0) sent = send_data(id_nh3_alpha, nh3_alpha, ocean_time, mask=ocean_mask)
     if (id_pka_nh3>0)   sent = send_data(id_pka_nh3,   pka_nh3, ocean_time, mask=ocean_mask)                        
-  end subroutine generic_coupler_fluxes_set_nh3_alpha
+  end subroutine generic_coupler_fluxes_set_iob_nh3
 
+  subroutine generic_coupler_fluxes_set_iob_dms(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
+       dms_surf,ph_surf,salt_surf,& 
+       ocean_iob_fields)
+    type(time_type),          intent(in)    :: ocean_time
+    integer,                  intent(in)    :: is, ie, js, je
+    real, dimension(is:,js:), intent(in)    :: ocean_sst
+    logical, dimension(is:,js:), intent(in) :: ocean_mask
+    real, dimension(is:,js:), intent(in)    :: dms_surf,ph_surf,salt_surf
+    type(coupler_2d_bc_type), intent(inout) :: ocean_iob_fields
+
+    logical :: sent
+    integer         :: i,j
+    real, dimension(size(ocean_mask,1),size(ocean_mask,2)) :: dms_alpha,dms_sc_no
+
+    do i = 1,size(ocean_sst,1); do j=1,size(ocean_sst,2)
+       !Note that COBALT uses sst in C. For consistency. To avoid mistakes, I am converting sst to C
+       dms_alpha(i,j) = 0.537023e3*exp(3500*(1/ocean_sst(i,j)-1/298.15)) !M/atm
+       dms_alpha(i,j) = dms_alpha(i,j)&
+       /saltout_correction(101325./(1.e-3*rdgas*wtmair*ocean_sst(i,j)*dms_alpha(i,j)),vb_dms,salt_surf(i,j)) !mol/m3/atm 
+       dms_sc_no(i,j) = schmidt_dms(ocean_sst(i,j)-273.15)
+    enddo;enddo
+
+    ocean_iob_fields%bc(ind_dms_flux)%field(ind_sc_no)%values(is:ie,js:je) = dms_sc_no
+    ocean_iob_fields%bc(ind_dms_flux)%field(ind_csurf)%values(is:ie,js:je) = dms_surf
+    ocean_iob_fields%bc(ind_dms_flux)%field(ind_alpha)%values(is:ie,js:je) = dms_alpha
+
+    if (id_dms_sc_no>0) sent = send_data(id_dms_sc_no, dms_sc_no, ocean_time, mask=ocean_mask)
+    if (id_dms_csurf>0) sent = send_data(id_dms_csurf, dms_surf,  ocean_time, mask=ocean_mask)
+    if (id_dms_alpha>0) sent = send_data(id_dms_alpha, dms_alpha, ocean_time, mask=ocean_mask)
+
+  end subroutine generic_coupler_fluxes_set_iob_dms
+  
 !f1p
  function calc_pka_nh3(tc,salt) result(pka)
     !temperature, salinity
@@ -160,6 +264,13 @@ contains
 
     sc=2.*v_sw(t,s,rho)/(d_hm(t,s,vb)+d_wc(t,s,vb))    
   end function schmidt_w
+
+  function schmidt_dms(sstc) result(S)
+    !Wanninkhof (2014)
+    real             :: S
+    real, intent(in) :: sstc    
+    S = 2855.7 + (-177.63 + (6.0438 + (-0.11645 + 0.00094743 * sstc ) * sstc ) * sstc ) * sstc 
+  end function schmidt_dms
 
   function v_sw(t,s,rho) result(v)
     real, intent(in) :: t,s
