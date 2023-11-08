@@ -14,8 +14,8 @@ module generic_coupler_fluxes
   real, parameter :: WTMDMS = 62.13e-3
   real, parameter :: vb_nh3 = 25, vb_dms = 77
   
-  integer :: id_nh3_sc_no=-1, id_nh3_csurf=-1, id_nh3_alpha=-1
-  integer :: id_dms_sc_no=-1, id_dms_csurf=-1, id_dms_alpha=-1
+  integer :: id_nh3_sc_no=-1, id_nh3_csurf=-1, id_nh3_alpha=-1, id_nh3_kw=-1
+  integer :: id_dms_sc_no=-1, id_dms_csurf=-1, id_dms_alpha=-1, id_dms_kw=-1
   integer :: id_phos=-1, id_sos=-1, id_pka_nh3=-1, id_nh4_csurf=-1
 
   integer :: ind_nh3_flux = 0 
@@ -77,12 +77,12 @@ contains
                                        'unitless', missing_value=1.e10)
     id_nh3_csurf = register_diag_field('ocean_model', 'nh3_csurf',axt, ocean_time, 'NH3 surface concentration',  &
                                        'mol/m^3', missing_value=1.e10)
-    id_nh4_csurf = register_diag_field('ocean_model', 'nh4_csurf',axt, ocean_time, 'NH4 surface concentration',  &
-                                       'mol/m^3', missing_value=1.e10)
     id_pka_nh3 = register_diag_field('ocean_model', 'pka_nh3',axt, ocean_time, 'pka of NH3',&
                                      'unitless', missing_value=1.e10)
     id_nh3_alpha = register_diag_field('ocean_model', 'nh3_alpha',axt, ocean_time, 'NH3 solubilty',  &
                                        'mol/m3/atm', missing_value=1.e10)
+    id_nh3_kw = register_diag_field('ocean_model', 'nh3_kw',axt, ocean_time, 'NH3 Gas Exchange piston velocity',&
+                                       'm/sec', missing_value=1.e10)
 
   end subroutine generic_coupler_fluxes_init_nh3
 
@@ -109,6 +109,8 @@ contains
                                        'mol/m^3', missing_value=1.e10)
     id_dms_alpha = register_diag_field('ocean_model', 'dms_alpha',axt, ocean_time, 'DMS solubilty',  &
                                        'mol/m3/atm', missing_value=1.e10)
+    id_dms_kw = register_diag_field('ocean_model', 'dms_kw',axt, ocean_time, 'DMS Gas Exchange piston velocity',&
+                                       'm/sec', missing_value=1.e10)
 
   end subroutine generic_coupler_fluxes_init_dms  
 
@@ -155,7 +157,8 @@ contains
     real, parameter :: vb_nh3 = 25
     real            :: sstc
     real, dimension(size(ocean_mask,1),size(ocean_mask,2)) :: nh3_alpha,nh3_csurf,nh3_sc_no,pka_nh3
-
+    real, dimension(size(ocean_mask,1),size(ocean_mask,2)) :: nh3_kw
+    
     do i = 1,size(ocean_sst,1); do j=1,size(ocean_sst,2)
        !Note that COBALT uses sst in C. For consistency. To avoid mistakes, I am converting sst to C
        sstc = ocean_sst(i,j)-273.15
@@ -174,14 +177,17 @@ contains
     ocean_iob_fields%bc(ind_nh3_flux)%field(ind_sc_no)%values(is:ie,js:je) = nh3_sc_no
     ocean_iob_fields%bc(ind_nh3_flux)%field(ind_csurf)%values(is:ie,js:je) = nh3_csurf
     ocean_iob_fields%bc(ind_nh3_flux)%field(ind_alpha)%values(is:ie,js:je) = nh3_alpha
-
+    
     if (id_nh3_sc_no>0) sent = send_data(id_nh3_sc_no, nh3_sc_no, ocean_time, mask=ocean_mask)
     if (id_nh3_csurf>0) sent = send_data(id_nh3_csurf, nh3_csurf, ocean_time, mask=ocean_mask)
     if (id_nh4_csurf>0) sent = send_data(id_nh4_csurf, nh4_surf, ocean_time, mask=ocean_mask)            
     if (id_sos>0) sent = send_data(id_sos, salt_surf, ocean_time, mask=ocean_mask)
     if (id_phos>0) sent = send_data(id_phos, ph_surf, ocean_time, mask=ocean_mask)                        
     if (id_nh3_alpha>0) sent = send_data(id_nh3_alpha, nh3_alpha, ocean_time, mask=ocean_mask)
-    if (id_pka_nh3>0)   sent = send_data(id_pka_nh3,   pka_nh3, ocean_time, mask=ocean_mask)                        
+    if (id_pka_nh3>0)   sent = send_data(id_pka_nh3,   pka_nh3, ocean_time, mask=ocean_mask)
+
+    nh3_kw(is:ie,js:je) = ocean_iob_fields%bc(ind_nh3_flux)%field(ind_kw)%values(is:ie,js:je)
+    if (id_nh3_kw>0) sent = send_data(id_nh3_kw, nh3_kw, ocean_time, mask=ocean_mask)
   end subroutine generic_coupler_fluxes_set_iob_nh3
 
   subroutine generic_coupler_fluxes_set_iob_dms(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
@@ -196,7 +202,7 @@ contains
 
     logical :: sent
     integer         :: i,j
-    real, dimension(size(ocean_mask,1),size(ocean_mask,2)) :: dms_alpha,dms_sc_no
+    real, dimension(size(ocean_mask,1),size(ocean_mask,2)) :: dms_alpha,dms_sc_no,dms_kw
 
     do i = 1,size(ocean_sst,1); do j=1,size(ocean_sst,2)
        !Note that COBALT uses sst in C. For consistency. To avoid mistakes, I am converting sst to C
@@ -213,6 +219,9 @@ contains
     if (id_dms_sc_no>0) sent = send_data(id_dms_sc_no, dms_sc_no, ocean_time, mask=ocean_mask)
     if (id_dms_csurf>0) sent = send_data(id_dms_csurf, dms_surf,  ocean_time, mask=ocean_mask)
     if (id_dms_alpha>0) sent = send_data(id_dms_alpha, dms_alpha, ocean_time, mask=ocean_mask)
+
+    dms_kw(is:ie,js:je) = ocean_iob_fields%bc(ind_dms_flux)%field(ind_kw)%values(is:ie,js:je)
+    if (id_dms_kw>0) sent = send_data(id_dms_kw, dms_kw, ocean_time, mask=ocean_mask)
 
   end subroutine generic_coupler_fluxes_set_iob_dms
   
