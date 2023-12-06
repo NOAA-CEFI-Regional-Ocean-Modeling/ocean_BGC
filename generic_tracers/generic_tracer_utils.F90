@@ -330,6 +330,9 @@ module g_tracer_utils
      !coast mask
      integer, _ALLOCATABLE, dimension(:,:):: grid_mask_coast    _NULL
 
+     real, _ALLOCATABLE, dimension(:,:) :: geolon  _NULL
+     real, _ALLOCATABLE, dimension(:,:) :: geolat  _NULL
+
      ! IN and OUT (restart) files
      character(len=fm_string_len) :: ice_restart_file, ocean_restart_file
   end type g_tracer_common
@@ -365,6 +368,7 @@ module g_tracer_utils
   public :: g_tracer_get_next
   public :: g_tracer_register_diag
   public :: g_tracer_is_prog
+  public :: g_tracer_vertfill
   public :: g_tracer_vertdiff_G
   public :: g_tracer_vertdiff_M
   public :: g_tracer_start_param_list
@@ -1596,18 +1600,19 @@ contains
   !   grid_mask array and initial time.
   !  </DESCRIPTION>
   !  <TEMPLATE>
-  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
+  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat)
   !  </TEMPLATE>
   !  <IN NAME="" TYPE="">
   !   
   !  </IN>
   ! </SUBROUTINE>
 
-  subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
+  subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat)
     integer,                     intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes(3)
     real, dimension(isd:,jsd:,:),intent(in) :: grid_tmask
     integer,dimension(isd:,jsd:),intent(in) :: grid_kmt
-    type(time_type),             intent(in) :: init_time 
+    type(time_type),             intent(in) :: init_time
+    real, dimension(isd:,jsd:),  intent(in) :: geolon,geolat
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_set_common'
     integer :: i,j
@@ -1635,6 +1640,12 @@ contains
     g_tracer_com%grid_kmt = grid_kmt
 
     if(.NOT. _ALLOCATED(g_tracer_com%grid_mask_coast)) allocate(g_tracer_com%grid_mask_coast(isd:ied,jsd:jed))
+
+    if(.NOT. _ALLOCATED(g_tracer_com%geolon)) allocate(g_tracer_com%geolon(isd:ied,jsd:jed))
+    g_tracer_com%geolon = geolon
+
+    if(.NOT. _ALLOCATED(g_tracer_com%geolat)) allocate(g_tracer_com%geolat(isd:ied,jsd:jed))
+    g_tracer_com%geolat = geolat
 
     !Determine the coast line.
     !In order to that grid_tmask must have the proper value on the data domain boundaries isd,ied,jsd,jed
@@ -1670,7 +1681,7 @@ contains
   ! </SUBROUTINE>
 
   subroutine g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
-       axes,grid_tmask,grid_mask_coast,grid_kmt,init_time,diag_CS)
+       axes,grid_tmask,grid_mask_coast,grid_kmt,init_time,diag_CS,geolon,geolat)
 
     integer,               intent(out) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau
     integer,optional,      intent(out) :: axes(3)
@@ -1678,6 +1689,8 @@ contains
     real, optional, dimension(:,:,:),pointer    :: grid_tmask
     integer, optional, dimension(:,:),  pointer :: grid_mask_coast
     integer, optional, dimension(:,:),  pointer :: grid_kmt
+    real, optional, dimension(:,:), pointer :: geolon
+    real, optional, dimension(:,:), pointer :: geolat
     type(g_diag_ctrl), optional,        pointer :: diag_CS
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_get_common'
@@ -1700,6 +1713,8 @@ contains
     if(present(grid_mask_coast))  grid_mask_coast=> g_tracer_com%grid_mask_coast
     if(present(grid_kmt))         grid_kmt => g_tracer_com%grid_kmt
     if(present(diag_CS))          diag_CS => g_tracer_com%diag_CS
+    if(present(geolon))           geolon => g_tracer_com%geolon
+    if(present(geolat))           geolat => g_tracer_com%geolat
 !    if(present(ice_restart_file)) ice_restart_file    = g_tracer_com%ice_restart_file
 !    if(present(ocean_restart_file)) ocean_restart_file  = g_tracer_com%ocean_restart_file
 
@@ -2166,7 +2181,7 @@ contains
     case ('vdiff') 
        g_tracer%vdiff  = array 
     case ('vdiffuse_impl') 
-       g_tracer%vdiffuse_impl  = array 
+       g_tracer%vdiffuse_impl  = array
     case default 
        call mpp_error(FATAL, trim(sub_name)//": Not a known member variable: "//trim(member))   
     end select
@@ -3072,6 +3087,73 @@ contains
     g_tracer_next => g_tracer%next
   end subroutine g_tracer_get_next
 
+!> Returns tracer arrays (nominally T and S) with massless layers filled with
+  !! sensible values, by diffusing vertically with a small but constant diffusivity.
+  subroutine g_tracer_vertfill(g_tracer, h, kappa_dt, tau, larger_h_denom)
+    type(g_tracer_type),    pointer  :: g_tracer
+    real, dimension(g_tracer_com%isd:,g_tracer_com%jsd:,:), intent(in) :: h
+    real,                   intent(in) :: kappa_dt
+    integer,                intent(in) :: tau
+    logical,      optional, intent(in) :: larger_h_denom !< Present and true, add a large
+    !! enough minimal thickness in the denominator of
+    !! the flux calculations so that the fluxes are
+    !! never so large as eliminate the transmission
+    !! of information across groups of massless layers.
+    ! Local variables
+    real :: ent(1:g_tracer_com%nk+1)  ! The diffusive entrainment (kappa*dt)/dz
+    ! between layers in a timestep [H ~> m or kg m-2].
+    real :: b1              ! A variable used by the tridiagonal solver [H-1 ~> m-1 or m2 kg-1]
+    real :: d1              ! A variable used by the tridiagonal solver [nondim], d1 = 1 - c1.
+    real :: c1(1:g_tracer_com%nk)     ! A variable used by the tridiagonal solver [nondim].
+    real :: kap_dt_x2                ! The 2*kappa_dt converted to H units [H2 ~> m2 or kg2 m-4].
+    real :: h_neglect                ! A negligible thickness [H ~> m or kg m-2], to allow for zero thicknesses.
+    real :: h0                       ! A negligible thickness to allow for zero thickness layers without
+    ! completely decoupling groups of layers [H ~> m or kg m-2].
+    ! Often 0 < h_neglect << h0.
+    real :: h_tr                     ! h_tr is h at tracer points with a tiny thickness
+    ! added to ensure positive definiteness [H ~> m or kg m-2].
+    integer :: i, j, k, is, ie, js, je, nz
+
+    h_neglect = 1.0e-20 !GV%H_subroundoff
+    kap_dt_x2 = (2.0*kappa_dt) !*GV%Z_to_H**2
+    h0 = h_neglect
+    if (present(larger_h_denom)) then
+       if (larger_h_denom) h0 = 1.0e-16*sqrt(kappa_dt) !*GV%Z_to_H
+    endif
+
+    if (kap_dt_x2 > 0.0) then
+       do j=g_tracer_com%jsc,g_tracer_com%jec ; do i=g_tracer_com%isc,g_tracer_com%iec
+       if (g_tracer_com%grid_tmask(i,j,1) > 0.5) then
+          nz=g_tracer_com%grid_kmt(i,j)
+          ent(2) = kap_dt_x2 / ((h(i,j,1)+h(i,j,2)) + h0)
+          h_tr = h(i,j,1) + h_neglect
+          b1 = 1.0 / (h_tr + ent(2))
+          d1 = b1 * h_tr
+          g_tracer%field(i,j,1,tau) = b1*h_tr*g_tracer%field(i,j,1,tau)
+          do k=2,nz-1
+             ent(K+1) = kap_dt_x2 / ((h(i,j,k)+h(i,j,k+1)) + h0) !eb(k+1)=ea(k)=ent(k)
+             h_tr = h(i,j,k) + h_neglect 
+             c1(k) = ent(K) * b1 !eb(k-1)*b1
+             b1 = 1.0 / ((h_tr + d1*ent(K)) + ent(K+1))  
+             d1 = b1 * (h_tr + d1*ent(K))
+             g_tracer%field(i,j,k,tau) = b1 * (h_tr   * g_tracer%field(i,j,k,tau) + &
+                                               ent(K) * g_tracer%field(i,j,k-1,tau))
+             !T_f(i,j,k) = b1(i) * (h_tr*T_in(i,j,k) + ent(i,K)*T_f(i,j,k-1))
+          enddo
+          c1(nz) = ent(nz) * b1
+          h_tr = h(i,j,nz) + h_neglect
+          b1 = 1.0 / (h_tr + d1*ent(nz))
+          g_tracer%field(i,j,nz,tau) = b1 * (h_tr    * g_tracer%field(i,j,nz,tau) + &
+                                             ent(nz) * g_tracer%field(i,j,nz-1,tau))
+          !T_f(i,j,nz) = b1(i) * (h_tr*T_in(i,j,nz) + ent(i,nz)*T_f(i,j,nz-1))
+          do k=nz-1,1,-1
+             g_tracer%field(i,j,k,tau) = g_tracer%field(i,j,k,tau) + c1(k+1)*g_tracer%field(i,j,k+1,tau)
+             !T_f(i,j,k) = T_f(i,j,k) + c1(i,k+1)*T_f(i,j,k+1)
+          enddo
+       endif
+       enddo;enddo
+    endif
+  end subroutine g_tracer_vertfill
   ! <SUBROUTINE NAME="g_tracer_vertdiff_G">
   !  <OVERVIEW>
   !   Vertical Diffusion of a tracer node
@@ -3169,7 +3251,7 @@ contains
           nz=g_tracer_com%grid_kmt(i,j)
 
           if (g_tracer%move_vertical) then
-	    do k=2,nz; sink_dist(k) = (dt*g_tracer%vmove(i,j,k)) * m_to_H; enddo
+	    do k=2,(nz+1); sink_dist(k) = (dt*g_tracer%vmove(i,j,k-1)) * m_to_H; enddo
 	  endif
           sfc_src = 0.0 ; btm_src = 0.0 
 
@@ -3178,33 +3260,35 @@ contains
           !   If a non-constant sinking rate were used, that would be incorprated
           ! here.
           if (_ALLOCATED(g_tracer%btm_reservoir)) then
-             do k=2,nz 
-                sink(k) = sink_dist(k) ; h_minus_dsink(k) = h_old(i,j,k)
-             enddo
              sink(nz+1) = sink_dist(nz+1) 
           else
-             sink(nz+1) = 0.0 
-             ! Find the limited sinking distance at the interfaces.
-             do k=nz,2,-1
-                if (sink(k+1) >= sink_dist(k)) then
-                   sink(k) = sink_dist(k)
-                   h_minus_dsink(k) = h_old(i,j,k) + (sink(k+1) - sink(k))
-                elseif (sink(k+1) + h_old(i,j,k) < sink_dist(k)) then
-                   sink(k) = sink(k+1) + h_old(i,j,k)
-                   h_minus_dsink(k) = 0.0
-                else
-                   sink(k) = sink_dist(k)
-                   h_minus_dsink(k) = (h_old(i,j,k) + sink(k+1)) - sink(k)
-                endif
-             enddo
+             sink(nz+1) = 0.0
+             sink_dist(nz+1) = 0.0 
           endif
 
-          sink(1) = 0.0 ; h_minus_dsink(1) = (h_old(i,j,1) + sink(2))
-
           !Avoid sinking tracers with negative concentrations
-          do k=2,nz+1
-             if(g_tracer%field(i,j,k-1,tau) <= 0.0) sink(k) = 0.0
+          !do k=2,nz+1
+          !   if(g_tracer%field(i,j,k-1,tau) < 0.0)
+          !     sink(k) = 0.0
+          !     sink_dist(k) = 0.0
+          !   endif
+          !enddo
+
+          ! Find the limited sinking distance at the interfaces.
+          do k=nz,2,-1
+             if (sink(k+1) >= sink_dist(k)) then
+                sink(k) = sink_dist(k)
+                h_minus_dsink(k) = h_old(i,j,k) + (sink(k+1) - sink(k))
+             elseif (sink(k+1) + h_old(i,j,k) < sink_dist(k)) then
+                sink(k) = sink(k+1) + h_old(i,j,k)
+                h_minus_dsink(k) = 0.0
+             else
+                sink(k) = sink_dist(k)
+                h_minus_dsink(k) = (h_old(i,j,k) + sink(k+1)) - sink(k)
+             endif
           enddo
+
+          sink(1) = 0.0 ; h_minus_dsink(1) = (h_old(i,j,1) + sink(2))
 
           ! Now solve the tridiagonal equation for the tracer concentrations.
 
@@ -3700,6 +3784,14 @@ contains
              case('dic_sat')
                 g_tracer%src_var_unit_conversion = 1.0 / 1.0e6
              case('do14c')
+                g_tracer%src_var_unit_conversion = 1.0 / 1.0e6
+             case('no3')
+                g_tracer%src_var_unit_conversion = 1.0 / 1.0e6
+             case('o2')
+                g_tracer%src_var_unit_conversion = 1.0 / 1.0e6
+             case('po4')
+                g_tracer%src_var_unit_conversion = 1.0 / 1.0e6
+             case('sio4')
                 g_tracer%src_var_unit_conversion = 1.0 / 1.0e6
              case default
                 write(errorstring, '(a)') trim(g_tracer%name)//' : cannot determine src_var_unit_conversion'

@@ -45,7 +45,7 @@ module generic_tracer
   use g_tracer_utils, only : g_tracer_get_common, g_tracer_set_common, g_tracer_is_prog
   use g_tracer_utils, only : g_tracer_coupler_set,g_tracer_coupler_get, g_tracer_register_diag
   use g_tracer_utils, only : g_tracer_vertdiff_M, g_tracer_vertdiff_G, g_tracer_get_next     
-  use g_tracer_utils, only : g_tracer_diag, g_tracer_print_info
+  use g_tracer_utils, only : g_tracer_diag, g_tracer_print_info, g_tracer_vertfill
   use g_tracer_utils, only : g_tracer_coupler_accumulate
 
   use generic_abiotic, only : generic_abiotic_register, generic_abiotic_register_diag
@@ -105,6 +105,8 @@ module generic_tracer
   use generic_COBALT,  only : generic_COBALT_set_boundary_values, generic_COBALT_end, do_generic_COBALT
   use generic_COBALT, only : as_param_cobalt
 
+  use MOM_variables, only : thermo_var_ptrs
+
   implicit none ; private
 
   character(len=fm_string_len), parameter :: mod_name       = 'generic_tracer'
@@ -136,13 +138,14 @@ module generic_tracer
   type(g_diag_type), save, pointer :: diag_list => NULL()
 
   logical :: do_generic_tracer = .false.
+  logical :: do_vertfill_post = .false.
   logical :: generic_tracer_register_called = .false.
   logical :: force_update_fluxes = .false.
   character(len=10) :: as_param   = 'gfdl_cmip6'     ! Use default Wanninkhoff/OCMIP2 parameters for air-sea gas transfer
 
   namelist /generic_tracer_nml/ do_generic_tracer, do_generic_abiotic, do_generic_age, do_generic_argon, do_generic_CFC, &
       do_generic_SF6, do_generic_TOPAZ,do_generic_ERGOM, do_generic_BLING, do_generic_miniBLING, do_generic_COBALT, &
-      force_update_fluxes, do_generic_blres, as_param
+      force_update_fluxes, do_generic_blres, as_param, do_vertfill_post
 
 contains
 
@@ -245,16 +248,17 @@ contains
   !   Grid mask
   !  </IN>
   ! </SUBROUTINE>
-  subroutine generic_tracer_init(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
+  subroutine generic_tracer_init(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat)
     integer,                       intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes(3)
     type(time_type),               intent(in) :: init_time
     real, dimension(:,:,:),target, intent(in) :: grid_tmask
     integer, dimension(:,:)      , intent(in) :: grid_kmt
+    real, dimension(:,:),target,   intent(in) :: geolon,geolat
     type(g_tracer_type), pointer    :: g_tracer,g_tracer_next
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_init'
 
-    call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time) 
+    call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat) 
 
     !Allocate and initialize all registered generic tracers
     !JGJ 2013/05/31  merged COBALT into siena_201303
@@ -501,10 +505,11 @@ contains
   !  </IN>
   ! </SUBROUTINE>
 
-  subroutine generic_tracer_source(Temp,Salt,rho_dzt,dzt,hblt_depth,ilb,jlb,tau,dtts,&
+  subroutine generic_tracer_source(Temp,Salt,tv,rho_dzt,dzt,hblt_depth,ilb,jlb,tau,dtts,&
        grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,&
        frunoff,grid_ht, current_wave_stress, sosga)
     real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,Salt,rho_dzt,dzt
+    type(thermo_var_ptrs),          intent(in) :: tv
     real, dimension(ilb:,jlb:),     intent(in) :: hblt_depth
     integer,                        intent(in) :: ilb,jlb,tau
     real,                           intent(in) :: dtts
@@ -549,7 +554,7 @@ contains
          hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
          nbands,max_wavelength_band,sw_pen_band,opacity_band, grid_ht)
 
-    if(do_generic_COBALT)  call generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
+    if(do_generic_COBALT)  call generic_COBALT_update_from_source(tracer_list,Temp,Salt,tv,rho_dzt,dzt,&
          hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
          nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
 
@@ -634,6 +639,7 @@ contains
     real,                   intent(in) :: dt, kg_m2_to_H, m_to_H
     integer,                intent(in) :: tau
     type(g_tracer_type), pointer    :: g_tracer,g_tracer_next
+    real :: KD_SMOOTH = 1.0E-06
 
     !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?    
     !JGJ 2013/05/31  merged COBALT into siena_201303
@@ -643,9 +649,10 @@ contains
        g_tracer => tracer_list        
        !Go through the list of tracers 
        do  
-          if(g_tracer_is_prog(g_tracer)) &
+          if(g_tracer_is_prog(g_tracer)) then
              call g_tracer_vertdiff_G(g_tracer,h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau)
-
+             if(do_vertfill_post) call g_tracer_vertfill(g_tracer, h_old, KD_SMOOTH*dt, tau=1)
+          endif
           !traverse the linked list till hit NULL
           call g_tracer_get_next(g_tracer, g_tracer_next)
           if(.NOT. associated(g_tracer_next)) exit
