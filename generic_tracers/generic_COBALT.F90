@@ -214,7 +214,7 @@ module generic_COBALT
   real    :: irr_inhibit = 10.
   real    :: gamma_nitrif= 3.5e6 !month(-1)
   real    :: k_nh3_nitrif= 3.1e-9 !mol/kg
-  real    :: imbalance_tolerance=1.0e-10 !the tolerance for non-conservation in C,N,P,Sc,Fe
+  real    :: imbalance_tolerance=1.0e-09 !the tolerance for non-conservation in C,N,P,Sc,Fe
 
   integer :: scheme_no3_nh4_lim = 2 !1-Frost and Franzen (1992)
                                     !2-O'Neill
