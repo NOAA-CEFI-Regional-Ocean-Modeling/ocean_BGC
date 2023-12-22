@@ -35,6 +35,9 @@ jobs:
         run: |
           apt update
           apt install -y wget
+          cd /opt
+          ls -l -h
+          pwd
 
       # git clone MOM6_OBGC_examples and replace ocean_BGC
       - name: git clone MOM6_OBGC_examples
@@ -43,7 +46,7 @@ jobs:
           git clone https://github.com/NOAA-CEFI-Regional-Ocean-Modeling/MOM6_OBGC_examples.git --recursive
           rm -rf MOM6_OBGC_examples/src/ocean_BGC
           cp -r ocean_BGC MOM6_OBGC_examples/src
-          cd MOM6_OBGC_examples/src/ocean_BGC
-          git branch
-          ls /opt
+          cd MOM6_OBGC_examples/builds
+          ./linux-build.bash -m docker -p linux-gnu -t prod -f mom6sis2
+          
 
