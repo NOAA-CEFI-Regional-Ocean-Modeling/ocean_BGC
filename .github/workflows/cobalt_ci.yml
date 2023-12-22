@@ -65,7 +65,11 @@ jobs:
       - name: baseline check
         run: |      
           cd ../MOM6_OBGC_examples/exps/OM4.single_column.COBALT.p4
-          # check 
-          diff -q ref/ocean.stats ./ocean.stats > /dev/null || { echo "Error: ocean.stats are different. Exiting..."; exit 1; }
-          diff -q ref/MOM.res.nc ./RESTART/MOM.res.nc > /dev/null || { echo "Error: MOM.res.nc are different. Exiting..."; exit 1; }
-          #nccmp -dfqS ref/MOM.res.nc ./RESTART/MOM.res.nc || { echo "Error: MOM.res.nc are different. Exiting..."; exit 1; }
+          mkdir -p ref
+          cp ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/* ./ref
+          # check ocean.stats 
+          diff -q ref/ocean.stats ./ocean.stats > /dev/null || { echo "Error: ocean.stats are different, check and update ref! Exiting now..."; exit 1; }
+          # check MOM.res.nc
+          ncdump ref/MOM.res.nc > org_ref.txt
+          ncdump RESTART/MOM.res.nc > new_ref.txt
+          diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: MOM.res.nc are different, check and update ref! Exiting now..."; exit 1; }
