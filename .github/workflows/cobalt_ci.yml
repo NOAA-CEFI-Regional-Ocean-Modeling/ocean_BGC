@@ -36,7 +36,7 @@ jobs:
       - name: Install wget and get data
         run: |
           apt update
-          apt install -y wget nccmp
+          apt install -y wget
           cd /opt
           wget https://gfdl-med.s3.amazonaws.com/OceanBGC_dataset/1d_datasets.tar.gz
           tar -zxvf 1d_datasets.tar.gz
@@ -67,4 +67,4 @@ jobs:
           cd ../MOM6_OBGC_examples/exps/OM4.single_column.COBALT.p4
           # check 
           diff -q ref/ocean.stats ./ocean.stats > /dev/null || { echo "Error: ocean.stats are different. Exiting..."; exit 1; }
-          nccmp -df -t 1e-6 ref/MOM.res.nc ./RESTART/MOM.res.nc || { echo "Error: MOM.res.nc are different. Exiting..."; exit 1; }
+          diff -q ref/MOM.res.nc ./RESTART/MOM.res.nc > /dev/null || { echo "Error: MOM.res.nc are different. Exiting..."; exit 1; }
