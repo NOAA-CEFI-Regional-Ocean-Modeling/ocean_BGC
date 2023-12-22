@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     # define container
     container:
-       image: clouden90/1d_mom6_cobalt:v0.1
+       image: clouden90/1d_mom6_cobalt:base
        options: --user root
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -36,12 +36,11 @@ jobs:
       - name: Install wget and get data
         run: |
           apt update
-          apt install -y wget
-          cd /opt/datasets/OceanBGC_dataset
-          wget https://gfdl-med.s3.amazonaws.com/OceanBGC_dataset/COBALT_2023_10_spinup_2003_subset.nc
-          cd /opt/datasets/OM4_025.JRA.single_column
-          rm ocean_hgrid.nc
-          wget https://gfdl-med.s3.amazonaws.com/OceanBGC_dataset/ocean_hgrid.nc
+          apt install -y wget nccmp
+          cd /opt
+          wget https://gfdl-med.s3.amazonaws.com/OceanBGC_dataset/1d_datasets.tar.gz
+          tar -zxvf 1d_datasets.tar.gz
+          rm -rf 1d_datasets.tar.gz
 
       # git clone MOM6_OBGC_examples and replace ocean_BGC
       - name: git clone MOM6_OBGC_examples and build mom6sis2-cobalt
@@ -63,4 +62,9 @@ jobs:
           mkdir RESTART
           mpirun --allow-run-as-root -np 1 ../../builds/build/docker-linux-gnu/ocean_ice/prod/MOM6SIS2
 
-      # TODO: add baseline check     
+      - name: baseline check
+        run: |      
+          cd ../MOM6_OBGC_examples/exps/OM4.single_column.COBALT.p4
+          # check 
+          diff -q ref/ocean.stats ./ocean.stats > /dev/null || { echo "Error: ocean.stats are different. Exiting..."; exit 1; }
+          nccmp -df -t 1e-6 ref/MOM.res.nc ./RESTART/MOM.res.nc || { echo "Error: MOM.res.nc are different. Exiting..."; exit 1; }
