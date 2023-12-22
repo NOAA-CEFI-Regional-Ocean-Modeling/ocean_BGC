@@ -28,7 +28,7 @@ jobs:
 
       # Build and Test within Docker container
       - name: Build and Test
-        uses: docker://clouden90/1d_mom6_cobalt:base:
+        uses: docker://clouden90/1d_mom6_cobalt:base
         with:
           args: |
             ls -l -h
