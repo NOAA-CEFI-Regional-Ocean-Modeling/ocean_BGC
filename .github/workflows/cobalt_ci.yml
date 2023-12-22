@@ -29,6 +29,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
       # Install wget
       - name: Install wget
@@ -36,8 +38,6 @@ jobs:
           apt update
           apt install -y wget
           cd /opt
-          ls -l -h
-          pwd
 
       # git clone MOM6_OBGC_examples and replace ocean_BGC
       - name: git clone MOM6_OBGC_examples
