@@ -35,9 +35,11 @@ jobs:
       # Install wget and get data
       - name: Install wget and get data
         run: |
+          apt-get update
+          apt-get install -y wget software-properties-common
           add-apt-repository ppa:remik-ziemlinski/nccmp
           apt-get update
-          apt-get install -y wget nccmp
+          apt-get install -y nccmp
           cd /opt
           wget https://gfdl-med.s3.amazonaws.com/OceanBGC_dataset/1d_datasets.tar.gz
           tar -zxvf 1d_datasets.tar.gz
