@@ -22,6 +22,7 @@ jobs:
     # define container
     container:
        image: clouden90/1d_mom6_cobalt:base
+       options: --user root
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -29,10 +30,20 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      # Install wget
+      - name: Build and Test
+        run: |
+          sudo apt update
+          sudo apt install -y wget
+
       # Build and Test within Docker container
       - name: Build and Test
         run: |
-          ls -l -h
+          ls 
           pwd
-          which wget
+          cd ..
+          pwd
+          ls
+          git clone https://github.com/NOAA-CEFI-Regional-Ocean-Modeling/MOM6_OBGC_examples.git --recursive
+          ls
 
