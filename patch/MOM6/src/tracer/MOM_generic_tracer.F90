@@ -559,18 +559,18 @@ contains
         (G%US%Q_to_J_kg == 1.0) .and. (G%US%RZ_to_kg_m2 == 1.0) .and. &
         (US%C_to_degC == 1.0) .and. (US%S_to_ppt == 1.0)) then
       ! Avoid unnecessary copies when no unit conversion is needed.
-      call generic_tracer_source(tv%T, tv%S, tv, rho_dzt, dzt, dz_ml, G%isd, G%jsd, 1, dt, &
+      call generic_tracer_source(tv%T, tv%S, rho_dzt, dzt, dz_ml, G%isd, G%jsd, 1, dt, &
                G%areaT, get_diag_time_end(CS%diag), &
                optics%nbands, optics%max_wavelength_band, optics%sw_pen_band, optics%opacity_band, &
-               internal_heat=tv%internal_heat, frunoff=fluxes%frunoff, sosga=sosga)
+               internal_heat=tv%internal_heat, frunoff=fluxes%frunoff, sosga=sosga, eqn_of_state=tv%eqn_of_state)
     else
-      call generic_tracer_source(US%C_to_degC*tv%T, US%S_to_ppt*tv%S, tv, rho_dzt, dzt, dz_ml, G%isd, G%jsd, 1, dt, &
+      call generic_tracer_source(US%C_to_degC*tv%T, US%S_to_ppt*tv%S, rho_dzt, dzt, dz_ml, G%isd, G%jsd, 1, dt, &
                G%US%L_to_m**2*G%areaT(:,:), get_diag_time_end(CS%diag), &
                optics%nbands, optics%max_wavelength_band, &
                sw_pen_band=G%US%QRZ_T_to_W_m2*optics%sw_pen_band(:,:,:), &
                opacity_band=G%US%m_to_Z*optics%opacity_band(:,:,:,:), &
                internal_heat=G%US%RZ_to_kg_m2*US%C_to_degC*tv%internal_heat(:,:), &
-               frunoff=G%US%RZ_T_to_kg_m2s*fluxes%frunoff(:,:), sosga=sosga)
+               frunoff=G%US%RZ_T_to_kg_m2s*fluxes%frunoff(:,:), sosga=sosga, eqn_of_state=tv%eqn_of_state)
     endif
 
     ! This uses applyTracerBoundaryFluxesInOut to handle the change in tracer due to freshwater fluxes
