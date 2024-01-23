@@ -248,17 +248,16 @@ contains
   !   Grid mask
   !  </IN>
   ! </SUBROUTINE>
-  subroutine generic_tracer_init(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat)
+  subroutine generic_tracer_init(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
     integer,                       intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes(3)
     type(time_type),               intent(in) :: init_time
     real, dimension(:,:,:),target, intent(in) :: grid_tmask
     integer, dimension(:,:)      , intent(in) :: grid_kmt
-    real, dimension(:,:),target,   intent(in) :: geolon,geolat
     type(g_tracer_type), pointer    :: g_tracer,g_tracer_next
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_init'
 
-    call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat) 
+    call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time) 
 
     !Allocate and initialize all registered generic tracers
     !JGJ 2013/05/31  merged COBALT into siena_201303

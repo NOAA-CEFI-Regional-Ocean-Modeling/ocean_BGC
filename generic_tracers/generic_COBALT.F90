@@ -8340,14 +8340,15 @@ contains
             afac = (cobalt%densdiff_mld - deltaRhoAtKm1)/(deltaRhoAtK - deltaRhoAtKm1)
             cobalt%mld_aclm(i,j) = afac*dK + (1.0-afac)*dKm1
             deltaRhoFlag = 1.0
-            !if ((i.eq.isc).and.(j.eq.jsc)) then
-            !   write(outunit,*) 'lat,lon=',geolat,geolon
-            !   write(outunit,*) 'kmld_ref, k = ',kmld_ref, k
-            !   write(outunit,*) 'rho_mld_ref = ',rho_mld_ref
-            !   write(outunit,*) 'rho_k = ',rho_k
-            !   write(outunit,*) 'deltaRhoAtK = ',deltaRhoAtK
-            !   write(outunit,*) 'mld_aclm = ',cobalt%mld_aclm(i,j)
-            !endif
+            if ((i.eq.isc).and.(j.eq.jsc)) then
+               write(outunit,*) 'i,j=',i,j     
+               write(outunit,*) 'lat,lon=',geolat(i,j),geolon(i,j)
+               write(outunit,*) 'kmld_ref, k = ',kmld_ref, k
+               write(outunit,*) 'rho_mld_ref = ',rho_mld_ref
+               write(outunit,*) 'rho_k = ',rho_k
+               write(outunit,*) 'deltaRhoAtK = ',deltaRhoAtK
+               write(outunit,*) 'mld_aclm = ',cobalt%mld_aclm(i,j)
+            endif
           endif
         enddo  !} k
 

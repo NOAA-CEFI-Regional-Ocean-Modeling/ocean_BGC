@@ -1612,7 +1612,7 @@ contains
     real, dimension(isd:,jsd:,:),intent(in) :: grid_tmask
     integer,dimension(isd:,jsd:),intent(in) :: grid_kmt
     type(time_type),             intent(in) :: init_time
-    real, dimension(isd:,jsd:),  intent(in) :: geolon,geolat
+    real, dimension(isd:,jsd:),  optional, intent(in) :: geolon,geolat
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_set_common'
     integer :: i,j
@@ -1641,11 +1641,15 @@ contains
 
     if(.NOT. _ALLOCATED(g_tracer_com%grid_mask_coast)) allocate(g_tracer_com%grid_mask_coast(isd:ied,jsd:jed))
 
-    if(.NOT. _ALLOCATED(g_tracer_com%geolon)) allocate(g_tracer_com%geolon(isd:ied,jsd:jed))
-    g_tracer_com%geolon = geolon
+    if(present(geolon)) then
+       if(.NOT. _ALLOCATED(g_tracer_com%geolon)) allocate(g_tracer_com%geolon(isd:ied,jsd:jed))
+       g_tracer_com%geolon = geolon
+    endif   
 
-    if(.NOT. _ALLOCATED(g_tracer_com%geolat)) allocate(g_tracer_com%geolat(isd:ied,jsd:jed))
-    g_tracer_com%geolat = geolat
+    if(present(geolat)) then
+       if(.NOT. _ALLOCATED(g_tracer_com%geolat)) allocate(g_tracer_com%geolat(isd:ied,jsd:jed))
+       g_tracer_com%geolat = geolat
+    endif   
 
     !Determine the coast line.
     !In order to that grid_tmask must have the proper value on the data domain boundaries isd,ied,jsd,jed
