@@ -7853,7 +7853,7 @@ contains
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
   ! If you'd like to pass the thermodynamic variables for a mld calculation
   subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
-       ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff,eqn_of_state)
+       ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff,geolat,eqn_of_state)
   !subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
 
@@ -7871,12 +7871,12 @@ contains
     real, dimension(:,ilb:,jlb:,:), intent(in) :: opacity_band
     real, dimension(ilb:,jlb:),     intent(in) :: internal_heat
     real, dimension(ilb:,jlb:),     intent(in) :: frunoff
+    real, dimension(ilb:,jlb:),     intent(in) :: geolat
     type(EOS_type),                 intent(in)  :: eqn_of_state !< Equation of state structure
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_source'
     integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kbot
     real, dimension(:,:,:) ,pointer :: grid_tmask
-    real, dimension(:,:), pointer :: geolon,geolat
     integer, dimension(:,:),pointer :: mask_coast,grid_kmt
     !
     !------------------------------------------------------------------------
@@ -7951,8 +7951,7 @@ contains
     r_dt = 1.0 / dt
 
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
-         grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt,&
-         geolon=geolon,geolat=geolat)
+         grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt)
 
     call mpp_clock_begin(id_clock_carbon_calculations)
     !Get necessary fields
@@ -8340,15 +8339,15 @@ contains
             afac = (cobalt%densdiff_mld - deltaRhoAtKm1)/(deltaRhoAtK - deltaRhoAtKm1)
             cobalt%mld_aclm(i,j) = afac*dK + (1.0-afac)*dKm1
             deltaRhoFlag = 1.0
-            if ((i.eq.isc).and.(j.eq.jsc)) then
-               write(outunit,*) 'i,j=',i,j     
-               write(outunit,*) 'lat,lon=',geolat(i,j),geolon(i,j)
-               write(outunit,*) 'kmld_ref, k = ',kmld_ref, k
-               write(outunit,*) 'rho_mld_ref = ',rho_mld_ref
-               write(outunit,*) 'rho_k = ',rho_k
-               write(outunit,*) 'deltaRhoAtK = ',deltaRhoAtK
-               write(outunit,*) 'mld_aclm = ',cobalt%mld_aclm(i,j)
-            endif
+!            if ((i.eq.isc).and.(j.eq.jsc)) then
+!               write(outunit,*) 'i,j=',i,j
+!               write(outunit,*) 'lat,lon=',geolat(i,j)
+!               write(outunit,*) 'kmld_ref, k = ',kmld_ref, k
+!               write(outunit,*) 'rho_mld_ref = ',rho_mld_ref
+!               write(outunit,*) 'rho_k = ',rho_k
+!               write(outunit,*) 'deltaRhoAtK = ',deltaRhoAtK
+!               write(outunit,*) 'mld_aclm = ',cobalt%mld_aclm(i,j)
+!            endif
           endif
         enddo  !} k
 
