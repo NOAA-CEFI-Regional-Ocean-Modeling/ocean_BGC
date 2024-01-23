@@ -1597,7 +1597,7 @@ contains
   !   grid_mask array and initial time.
   !  </DESCRIPTION>
   !  <TEMPLATE>
-  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat)
+  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
   !  </TEMPLATE>
   !  <IN NAME="" TYPE="">
   !   
