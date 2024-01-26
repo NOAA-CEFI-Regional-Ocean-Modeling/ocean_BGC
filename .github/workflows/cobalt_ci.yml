@@ -13,6 +13,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  BRANCH_NAME: dev/cefi
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -46,7 +49,7 @@ jobs:
       - name: git clone MOM6_OBGC_examples and build mom6sis2-cobalt
         run: |
           cd ..
-          git clone https://github.com/NOAA-CEFI-Regional-Ocean-Modeling/MOM6_OBGC_examples.git --recursive
+          git clone -b $BRANCH_NAME https://github.com/NOAA-CEFI-Regional-Ocean-Modeling/MOM6_OBGC_examples.git --recursive
           rm -rf MOM6_OBGC_examples/src/ocean_BGC
           cp -r ocean_BGC MOM6_OBGC_examples/src
           cd MOM6_OBGC_examples/builds

@@ -103,9 +103,9 @@ module generic_tracer
   use generic_COBALT,  only : generic_COBALT_init, generic_COBALT_update_from_source,generic_COBALT_register_diag
   use generic_COBALT,  only : generic_COBALT_update_from_bottom,generic_COBALT_update_from_coupler
   use generic_COBALT,  only : generic_COBALT_set_boundary_values, generic_COBALT_end, do_generic_COBALT
-  use generic_COBALT, only : as_param_cobalt
+  use generic_COBALT,  only : as_param_cobalt
 
-  use MOM_variables, only : thermo_var_ptrs
+  use MOM_EOS,         only: EOS_type
 
   implicit none ; private
 
@@ -248,17 +248,16 @@ contains
   !   Grid mask
   !  </IN>
   ! </SUBROUTINE>
-  subroutine generic_tracer_init(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat)
+  subroutine generic_tracer_init(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
     integer,                       intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes(3)
     type(time_type),               intent(in) :: init_time
     real, dimension(:,:,:),target, intent(in) :: grid_tmask
     integer, dimension(:,:)      , intent(in) :: grid_kmt
-    real, dimension(:,:),target,   intent(in) :: geolon,geolat
     type(g_tracer_type), pointer    :: g_tracer,g_tracer_next
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_init'
 
-    call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat) 
+    call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time) 
 
     !Allocate and initialize all registered generic tracers
     !JGJ 2013/05/31  merged COBALT into siena_201303
@@ -505,11 +504,10 @@ contains
   !  </IN>
   ! </SUBROUTINE>
 
-  subroutine generic_tracer_source(Temp,Salt,tv,rho_dzt,dzt,hblt_depth,ilb,jlb,tau,dtts,&
+  subroutine generic_tracer_source(Temp,Salt,rho_dzt,dzt,hblt_depth,ilb,jlb,tau,dtts,&
        grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,&
-       frunoff,grid_ht, current_wave_stress, sosga)
+       frunoff,grid_ht, current_wave_stress, sosga, geolat, eqn_of_state)
     real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,Salt,rho_dzt,dzt
-    type(thermo_var_ptrs),          intent(in) :: tv
     real, dimension(ilb:,jlb:),     intent(in) :: hblt_depth
     integer,                        intent(in) :: ilb,jlb,tau
     real,                           intent(in) :: dtts
@@ -524,7 +522,8 @@ contains
     real, dimension(ilb:,jlb:),optional,  intent(in) :: grid_ht
     real, dimension(ilb:,jlb:),optional , intent(in) :: current_wave_stress
     real,                      optional , intent(in) :: sosga ! global avg. sea surface salinity
-
+    real, dimension(ilb:,jlb:),optional,  intent(in) :: geolat 
+    type(EOS_type),            optional,  intent(in) :: eqn_of_state
 
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_update_from_source'
@@ -554,9 +553,18 @@ contains
          hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
          nbands,max_wavelength_band,sw_pen_band,opacity_band, grid_ht)
 
-    if(do_generic_COBALT)  call generic_COBALT_update_from_source(tracer_list,Temp,Salt,tv,rho_dzt,dzt,&
-         hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
-         nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
+    if (do_generic_COBALT) then
+       if (present(geolat) .and. present(eqn_of_state)) then
+          call generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
+            hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
+            nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff,&
+            geolat,eqn_of_state)
+       else
+          call generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
+            hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
+            nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
+       endif
+    endif
 
     if(do_generic_SF6)  call generic_SF6_update_from_source(tracer_list,rho_dzt,dzt,hblt_depth,&
          ilb,jlb,tau,dtts,grid_dat,model_time)

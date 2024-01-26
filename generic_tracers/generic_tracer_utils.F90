@@ -330,9 +330,6 @@ module g_tracer_utils
      !coast mask
      integer, _ALLOCATABLE, dimension(:,:):: grid_mask_coast    _NULL
 
-     real, _ALLOCATABLE, dimension(:,:) :: geolon  _NULL
-     real, _ALLOCATABLE, dimension(:,:) :: geolat  _NULL
-
      ! IN and OUT (restart) files
      character(len=fm_string_len) :: ice_restart_file, ocean_restart_file
   end type g_tracer_common
@@ -1600,19 +1597,18 @@ contains
   !   grid_mask array and initial time.
   !  </DESCRIPTION>
   !  <TEMPLATE>
-  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat)
+  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
   !  </TEMPLATE>
   !  <IN NAME="" TYPE="">
   !   
   !  </IN>
   ! </SUBROUTINE>
 
-  subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat)
+  subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
     integer,                     intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes(3)
     real, dimension(isd:,jsd:,:),intent(in) :: grid_tmask
     integer,dimension(isd:,jsd:),intent(in) :: grid_kmt
     type(time_type),             intent(in) :: init_time
-    real, dimension(isd:,jsd:),  intent(in) :: geolon,geolat
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_set_common'
     integer :: i,j
@@ -1640,12 +1636,6 @@ contains
     g_tracer_com%grid_kmt = grid_kmt
 
     if(.NOT. _ALLOCATED(g_tracer_com%grid_mask_coast)) allocate(g_tracer_com%grid_mask_coast(isd:ied,jsd:jed))
-
-    if(.NOT. _ALLOCATED(g_tracer_com%geolon)) allocate(g_tracer_com%geolon(isd:ied,jsd:jed))
-    g_tracer_com%geolon = geolon
-
-    if(.NOT. _ALLOCATED(g_tracer_com%geolat)) allocate(g_tracer_com%geolat(isd:ied,jsd:jed))
-    g_tracer_com%geolat = geolat
 
     !Determine the coast line.
     !In order to that grid_tmask must have the proper value on the data domain boundaries isd,ied,jsd,jed
@@ -1681,7 +1671,7 @@ contains
   ! </SUBROUTINE>
 
   subroutine g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
-       axes,grid_tmask,grid_mask_coast,grid_kmt,init_time,diag_CS,geolon,geolat)
+       axes,grid_tmask,grid_mask_coast,grid_kmt,init_time,diag_CS)
 
     integer,               intent(out) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau
     integer,optional,      intent(out) :: axes(3)
@@ -1689,8 +1679,6 @@ contains
     real, optional, dimension(:,:,:),pointer    :: grid_tmask
     integer, optional, dimension(:,:),  pointer :: grid_mask_coast
     integer, optional, dimension(:,:),  pointer :: grid_kmt
-    real, optional, dimension(:,:), pointer :: geolon
-    real, optional, dimension(:,:), pointer :: geolat
     type(g_diag_ctrl), optional,        pointer :: diag_CS
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_get_common'
@@ -1713,8 +1701,6 @@ contains
     if(present(grid_mask_coast))  grid_mask_coast=> g_tracer_com%grid_mask_coast
     if(present(grid_kmt))         grid_kmt => g_tracer_com%grid_kmt
     if(present(diag_CS))          diag_CS => g_tracer_com%diag_CS
-    if(present(geolon))           geolon => g_tracer_com%geolon
-    if(present(geolat))           geolat => g_tracer_com%geolat
 !    if(present(ice_restart_file)) ice_restart_file    = g_tracer_com%ice_restart_file
 !    if(present(ocean_restart_file)) ocean_restart_file  = g_tracer_com%ocean_restart_file
 

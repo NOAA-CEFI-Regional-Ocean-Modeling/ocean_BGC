@@ -144,8 +144,7 @@ module generic_COBALT
 #ifndef INTERNAL_FILE_NML
   use fms_mod,           only: open_namelist_file, close_file
 #endif
-  use MOM_EOS,           only: calculate_density
-  use MOM_variables,     only: thermo_var_ptrs
+  use MOM_EOS,           only: calculate_density, EOS_type
 
   use g_tracer_utils, only : g_tracer_type,g_tracer_start_param_list,g_tracer_end_param_list
   use g_tracer_utils, only : g_tracer_add,g_tracer_add_param, g_tracer_set_files
@@ -7853,13 +7852,12 @@ contains
   !subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
   ! If you'd like to pass the thermodynamic variables for a mld calculation
-  subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,tv,rho_dzt,dzt,hblt_depth,&
-       ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
+  subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
+       ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff,geolat,eqn_of_state)
   !subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
 
     type(g_tracer_type),            pointer    :: tracer_list
-    type(thermo_var_ptrs),          intent(in) :: tv
     real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,Salt,rho_dzt,dzt
     real, dimension(ilb:,jlb:),     intent(in) :: hblt_depth
     integer,                        intent(in) :: ilb,jlb,tau
@@ -7873,11 +7871,12 @@ contains
     real, dimension(:,ilb:,jlb:,:), intent(in) :: opacity_band
     real, dimension(ilb:,jlb:),     intent(in) :: internal_heat
     real, dimension(ilb:,jlb:),     intent(in) :: frunoff
+    real, dimension(ilb:,jlb:), optional, intent(in) :: geolat
+    type(EOS_type),             optional, intent(in) :: eqn_of_state !< Equation of state structure
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_source'
     integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kbot
     real, dimension(:,:,:) ,pointer :: grid_tmask
-    real, dimension(:,:), pointer :: geolon,geolat
     integer, dimension(:,:),pointer :: mask_coast,grid_kmt
     !
     !------------------------------------------------------------------------
@@ -7952,8 +7951,7 @@ contains
     r_dt = 1.0 / dt
 
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
-         grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt,&
-         geolon=geolon,geolat=geolat)
+         grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt)
 
     call mpp_clock_begin(id_clock_carbon_calculations)
     !Get necessary fields
@@ -8317,7 +8315,7 @@ contains
 
 
         ! calculate the mld for the photoacclimation calculations
-        call calculate_density(Temp(i,j,kmld_ref),Salt(i,j,kmld_ref),101325.0,rho_mld_ref,tv%eqn_of_state)
+        call calculate_density(Temp(i,j,kmld_ref),Salt(i,j,kmld_ref),101325.0,rho_mld_ref,eqn_of_state)
         !if ((i.eq.isc).and.(j.eq.jsc)) then
         !  write(outunit,*) 'rho_mld_ref = ',rho_mld_ref
         !endif
@@ -8332,7 +8330,7 @@ contains
           deltaRhoAtKm1 = deltaRhoAtK
           dKm1 = dK
           dK = cobalt%mld_aclm(i,j) + 0.5*dzt(i,j,k)
-          call calculate_density(Temp(i,j,k),Salt(i,j,k),101325.0,rho_k,tv%eqn_of_state)
+          call calculate_density(Temp(i,j,k),Salt(i,j,k),101325.0,rho_k,eqn_of_state)
           cobalt%rho_test(i,j,k) = rho_k
           deltaRhoAtK = rho_k - rho_mld_ref
           if (deltaRhoAtK.lt.cobalt%densdiff_mld) then
@@ -8341,14 +8339,15 @@ contains
             afac = (cobalt%densdiff_mld - deltaRhoAtKm1)/(deltaRhoAtK - deltaRhoAtKm1)
             cobalt%mld_aclm(i,j) = afac*dK + (1.0-afac)*dKm1
             deltaRhoFlag = 1.0
-            !if ((i.eq.isc).and.(j.eq.jsc)) then
-            !   write(outunit,*) 'lat,lon=',geolat,geolon
-            !   write(outunit,*) 'kmld_ref, k = ',kmld_ref, k
-            !   write(outunit,*) 'rho_mld_ref = ',rho_mld_ref
-            !   write(outunit,*) 'rho_k = ',rho_k
-            !   write(outunit,*) 'deltaRhoAtK = ',deltaRhoAtK
-            !   write(outunit,*) 'mld_aclm = ',cobalt%mld_aclm(i,j)
-            !endif
+!            if ((i.eq.isc).and.(j.eq.jsc)) then
+!               write(outunit,*) 'i,j=',i,j
+!               write(outunit,*) 'lat,lon=',geolat(i,j)
+!               write(outunit,*) 'kmld_ref, k = ',kmld_ref, k
+!               write(outunit,*) 'rho_mld_ref = ',rho_mld_ref
+!               write(outunit,*) 'rho_k = ',rho_k
+!               write(outunit,*) 'deltaRhoAtK = ',deltaRhoAtK
+!               write(outunit,*) 'mld_aclm = ',cobalt%mld_aclm(i,j)
+!            endif
           endif
         enddo  !} k
 
