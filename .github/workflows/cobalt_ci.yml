@@ -63,7 +63,7 @@ jobs:
           ln -fs /opt/datasets ./
           cd OM4.single_column.COBALT.p4
           mkdir RESTART
-          mpirun --allow-run-as-root -np 1 ../../builds/build/docker-linux-gnu/ocean_ice/prod/MOM6SIS2
+          mpirun --allow-run-as-root -np 1 ../../builds/build/docker-linux-gnu/ocean_ice/repro/MOM6SIS2
 
       - name: baseline check
         run: |      
