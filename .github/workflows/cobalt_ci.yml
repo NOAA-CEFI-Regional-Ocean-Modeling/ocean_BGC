@@ -6,7 +6,7 @@ name: cobalt CI
 on:
   # Triggers the workflow on push or pull request events but only for the "dev/cefi" branch
   push:
-    branches: [ "dev/cefi" ]
+    branches: [ "develop" ]
   pull_request:
     branches: [ "dev/cefi" ]
 
@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 env:
-  BRANCH_NAME: dev/cefi
+  BRANCH_NAME: develop
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
