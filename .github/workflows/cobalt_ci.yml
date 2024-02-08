@@ -71,7 +71,8 @@ jobs:
           mkdir -p ref
           cp ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/* ./ref
           # check ocean.stats
-          echo "Check with ref ocean.stats" 
+          echo "Check with ref ocean.stats"
+          diff -q ref/ocean.stats ./ocean.stats 
           diff -q ref/ocean.stats ./ocean.stats > /dev/null || { echo "Error: ocean.stats are different, check and update ref! Exiting now..."; exit 1; }
           # check MOM.res.nc
           echo "check with ref MOM.res.nc" 
