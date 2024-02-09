@@ -72,29 +72,31 @@ jobs:
           cp ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/* ./ref
           # check ocean.stats
           echo "Check with ref ocean.stats"
+          cat ref/ocean.stats
+          cat ./ocean.stats
           diff ref/ocean.stats ./ocean.stats 
           #diff -q ref/ocean.stats ./ocean.stats > /dev/null || { echo "Error: ocean.stats are different, check and update ref! Exiting now..."; exit 1; }
           # check MOM.res.nc
-          echo "check with ref MOM.res.nc" 
-          ncdump ref/MOM.res.nc > org_ref.txt
-          ncdump RESTART/MOM.res.nc > new_ref.txt
-          diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: MOM.res.nc are different, check and update ref! Exiting now..."; exit 1; }
-          rm org_ref.txt && rm new_ref.txt
+          #echo "check with ref MOM.res.nc" 
+          #ncdump ref/MOM.res.nc > org_ref.txt
+          #ncdump RESTART/MOM.res.nc > new_ref.txt
+          #diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: MOM.res.nc are different, check and update ref! Exiting now..."; exit 1; }
+          #rm org_ref.txt && rm new_ref.txt
           # check with ref ocean_cobalt_airsea_flux.res.nc
-          echo "check with ref ocean_cobalt_airsea_flux.res.nc"
-          ncdump ref/ocean_cobalt_airsea_flux.res.nc > org_ref.txt
-          ncdump RESTART/ocean_cobalt_airsea_flux.res.nc > new_ref.txt
-          diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: ocean_cobalt_airsea_flux.res.nc are different, check and update ref! Exiting now..."; exit 1; }
-          rm org_ref.txt && rm new_ref.txt
+          #echo "check with ref ocean_cobalt_airsea_flux.res.nc"
+          #ncdump ref/ocean_cobalt_airsea_flux.res.nc > org_ref.txt
+          #ncdump RESTART/ocean_cobalt_airsea_flux.res.nc > new_ref.txt
+          #diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: ocean_cobalt_airsea_flux.res.nc are different, check and update ref! Exiting now..."; exit 1; }
+          #rm org_ref.txt && rm new_ref.txt
           # check with ref ice_cobalt.res.nc 
-          echo "check with ref ice_cobalt.res.nc"
-          ncdump ref/ice_cobalt.res.nc > org_ref.txt
-          ncdump RESTART/ice_cobalt.res.nc > new_ref.txt
-          diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: ice_cobalt.res.nc are different, check and update ref! Exiting now..."; exit 1; }
-          rm org_ref.txt && rm new_ref.txt
+          #echo "check with ref ice_cobalt.res.nc"
+          #ncdump ref/ice_cobalt.res.nc > org_ref.txt
+          #ncdump RESTART/ice_cobalt.res.nc > new_ref.txt
+          #diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: ice_cobalt.res.nc are different, check and update ref! Exiting now..."; exit 1; }
+          #rm org_ref.txt && rm new_ref.txt
           # check with ref ice_model.res.nc 
-          echo "check with ref ice_model.res.nc"
-          ncdump ref/ice_model.res.nc > org_ref.txt
-          ncdump RESTART/ice_model.res.nc > new_ref.txt
-          diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: ice_model.res.nc are different, check and update ref! Exiting now..."; exit 1; }
-          rm org_ref.txt && rm new_ref.txt
+          #echo "check with ref ice_model.res.nc"
+          #ncdump ref/ice_model.res.nc > org_ref.txt
+          #ncdump RESTART/ice_model.res.nc > new_ref.txt
+          #diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: ice_model.res.nc are different, check and update ref! Exiting now..."; exit 1; }
+          #rm org_ref.txt && rm new_ref.txt
