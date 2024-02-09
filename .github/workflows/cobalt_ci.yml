@@ -53,7 +53,7 @@ jobs:
           rm -rf MOM6_OBGC_examples/src/ocean_BGC
           cp -r ocean_BGC MOM6_OBGC_examples/src
           cd MOM6_OBGC_examples/builds
-          ./linux-build.bash -m docker -p linux-gnu -t prod -f mom6sis2
+          ./linux-build.bash -m docker -p linux-gnu -t repro -f mom6sis2
           
 
       # run 1D mom6sis2-cobalt test
@@ -63,7 +63,7 @@ jobs:
           ln -fs /opt/datasets ./
           cd OM4.single_column.COBALT.p4
           mkdir RESTART
-          mpirun --allow-run-as-root -np 1 ../../builds/build/docker-linux-gnu/ocean_ice/prod/MOM6SIS2
+          mpirun --allow-run-as-root -np 1 ../../builds/build/docker-linux-gnu/ocean_ice/repro/MOM6SIS2
 
       - name: baseline check
         run: |      
