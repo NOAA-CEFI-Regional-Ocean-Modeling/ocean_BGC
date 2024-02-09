@@ -35,16 +35,6 @@ jobs:
         with:
           submodules: recursive
 
-      # Install wget and get data
-      #- name: Install wget and get data
-      #  run: |
-      #    apt-get update
-      #    apt-get install -y wget
-      #    cd /opt
-      #    wget https://gfdl-med.s3.amazonaws.com/OceanBGC_dataset/1d_datasets.tar.gz
-      #    tar -zxvf 1d_datasets.tar.gz
-      #    rm -rf 1d_datasets.tar.gz
-
       # git clone MOM6_OBGC_examples and replace ocean_BGC
       - name: git clone MOM6_OBGC_examples
         run: |
@@ -52,8 +42,6 @@ jobs:
           git clone -b $BRANCH_NAME https://github.com/NOAA-CEFI-Regional-Ocean-Modeling/MOM6_OBGC_examples.git --recursive
           rm -rf MOM6_OBGC_examples/src/ocean_BGC
           cp -r ocean_BGC MOM6_OBGC_examples/src
-          #cd MOM6_OBGC_examples/builds
-          #./linux-build.bash -m docker -p linux-gnu -t repro -f mom6sis2
           
 
       # run 1D mom6sis2-cobalt test
@@ -62,15 +50,10 @@ jobs:
           echo "docker image build ..."
           cd ../MOM6_OBGC_examples
           docker build --file "./ci/docker/Dockerfile.ci" -t mom6_obgc_1d:develop . 
-          #cd ../MOM6_OBGC_examples/exps
-          #ln -fs /opt/datasets ./
-          #cd OM4.single_column.COBALT.p4
-          #mkdir RESTART
-          #mpirun --allow-run-as-root -np 1 ../../builds/build/docker-linux-gnu/ocean_ice/repro/MOM6SIS2
 
       - name: Check mom6_obgc 1D Docker Image build 
         run: |      
-          docker omages
+          docker images
           if [[ $(docker image inspect mom6_obgc_1d:develop) ]]; then
                echo "mom6_obgc_1d:develop generated ..."
           else
