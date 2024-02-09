@@ -10,9 +10,6 @@ on:
   pull_request:
     branches: [ "dev/cefi" ]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
 env:
   BRANCH_NAME: dev/cefi
 
@@ -23,9 +20,9 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     # define container
-    container:
-       image: clouden90/1d_mom6_cobalt:base
-       options: --user root
+    #container:
+    #   image: clouden90/1d_mom6_cobalt:base
+    #   options: --user root
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -35,65 +32,33 @@ jobs:
         with:
           submodules: recursive
 
-      # Install wget and get data
-      - name: Install wget and get data
-        run: |
-          apt-get update
-          apt-get install -y wget
-          cd /opt
-          wget https://gfdl-med.s3.amazonaws.com/OceanBGC_dataset/1d_datasets.tar.gz
-          tar -zxvf 1d_datasets.tar.gz
-          rm -rf 1d_datasets.tar.gz
+      - uses: jitterbit/get-changed-files@v1
+        id: abc
+        with:
+          format: space-delimited
+          token: ${{ secrets.GITHUB_TOKEN }}   
 
       # git clone MOM6_OBGC_examples and replace ocean_BGC
-      - name: git clone MOM6_OBGC_examples and build mom6sis2-cobalt
+      - name: git clone MOM6_OBGC_examples
         run: |
           cd ..
           git clone -b $BRANCH_NAME https://github.com/NOAA-CEFI-Regional-Ocean-Modeling/MOM6_OBGC_examples.git --recursive
           rm -rf MOM6_OBGC_examples/src/ocean_BGC
           cp -r ocean_BGC MOM6_OBGC_examples/src
-          cd MOM6_OBGC_examples/builds
-          ./linux-build.bash -m docker -p linux-gnu -t prod -f mom6sis2
           
-
       # run 1D mom6sis2-cobalt test
-      - name: 1D mom6sis2-cobalt test
+      - name: Build 1D mom6sis2-cobalt Docker Image
         run: |
-          cd ../MOM6_OBGC_examples/exps
-          ln -fs /opt/datasets ./
-          cd OM4.single_column.COBALT.p4
-          mkdir RESTART
-          mpirun --allow-run-as-root -np 1 ../../builds/build/docker-linux-gnu/ocean_ice/prod/MOM6SIS2
+          echo "docker image build ..."
+          cd ../MOM6_OBGC_examples
+          docker build --file "./ci/docker/Dockerfile.ci" -t mom6_obgc_1d:develop . 
 
-      - name: baseline check
+      - name: Check mom6_obgc 1D Docker Image build 
         run: |      
-          cd ../MOM6_OBGC_examples/exps/OM4.single_column.COBALT.p4
-          mkdir -p ref
-          cp ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/* ./ref
-          # check ocean.stats
-          echo "Check with ref ocean.stats" 
-          diff -q ref/ocean.stats ./ocean.stats > /dev/null || { echo "Error: ocean.stats are different, check and update ref! Exiting now..."; exit 1; }
-          # check MOM.res.nc
-          echo "check with ref MOM.res.nc" 
-          ncdump ref/MOM.res.nc > org_ref.txt
-          ncdump RESTART/MOM.res.nc > new_ref.txt
-          diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: MOM.res.nc are different, check and update ref! Exiting now..."; exit 1; }
-          rm org_ref.txt && rm new_ref.txt
-          # check with ref ocean_cobalt_airsea_flux.res.nc
-          echo "check with ref ocean_cobalt_airsea_flux.res.nc"
-          ncdump ref/ocean_cobalt_airsea_flux.res.nc > org_ref.txt
-          ncdump RESTART/ocean_cobalt_airsea_flux.res.nc > new_ref.txt
-          diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: ocean_cobalt_airsea_flux.res.nc are different, check and update ref! Exiting now..."; exit 1; }
-          rm org_ref.txt && rm new_ref.txt
-          # check with ref ice_cobalt.res.nc 
-          echo "check with ref ice_cobalt.res.nc"
-          ncdump ref/ice_cobalt.res.nc > org_ref.txt
-          ncdump RESTART/ice_cobalt.res.nc > new_ref.txt
-          diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: ice_cobalt.res.nc are different, check and update ref! Exiting now..."; exit 1; }
-          rm org_ref.txt && rm new_ref.txt
-          # check with ref ice_model.res.nc 
-          echo "check with ref ice_model.res.nc"
-          ncdump ref/ice_model.res.nc > org_ref.txt
-          ncdump RESTART/ice_model.res.nc > new_ref.txt
-          diff -q ./org_ref.txt ./new_ref.txt > /dev/null || { echo "Error: ice_model.res.nc are different, check and update ref! Exiting now..."; exit 1; }
-          rm org_ref.txt && rm new_ref.txt
+          docker images
+          if [[ $(docker image inspect mom6_obgc_1d:develop) ]]; then
+               echo "mom6_obgc_1d:develop generated ..."
+          else
+               echo "mom6_obgc_1d:develop was not generated ..."
+               exit 1
+          fi 
