@@ -248,8 +248,8 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           si_2_n_max,    &
           si_2_n_static, &
           thetamax,      &
-          bresp_frac_mixed, &
-          bresp_frac_strat, &
+          bresp_frac_norm, &
+          bresp_frac_stress, &
           sink_max,      &
           agg,           &
           frac_mu_stress, &
@@ -6272,36 +6272,36 @@ contains
     ! Phytoplankton light limitation/growth rate
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('alpha_Di_hl', phyto(DIAZO)%alpha_hl,  0.4e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Lg_hl', phyto(LARGE)%alpha_hl,  0.4e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Md_hl', phyto(MEDIUM)%alpha_hl, 0.8e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Sm_hl', phyto(SMALL)%alpha_hl,  1.6e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Di_ll', phyto(DIAZO)%alpha_ll,  0.8e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Lg_ll', phyto(LARGE)%alpha_ll,  0.8e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Md_ll', phyto(MEDIUM)%alpha_ll, 1.6e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Sm_ll', phyto(SMALL)%alpha_ll,  3.2e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
+    call g_tracer_add_param('alpha_Di_hl', phyto(DIAZO)%alpha_hl,  0.6e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1 
+    call g_tracer_add_param('alpha_Lg_hl', phyto(LARGE)%alpha_hl,  0.6e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1  
+    call g_tracer_add_param('alpha_Md_hl', phyto(MEDIUM)%alpha_hl, 1.2e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1  
+    call g_tracer_add_param('alpha_Sm_hl', phyto(SMALL)%alpha_hl,  2.4e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
+    call g_tracer_add_param('alpha_Di_ll', phyto(DIAZO)%alpha_ll,  0.6e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
+    call g_tracer_add_param('alpha_Lg_ll', phyto(LARGE)%alpha_ll,  0.6e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
+    call g_tracer_add_param('alpha_Md_ll', phyto(MEDIUM)%alpha_ll, 1.2e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
+    call g_tracer_add_param('alpha_Sm_ll', phyto(SMALL)%alpha_ll,  2.4e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
     call g_tracer_add_param('kappa_eppley', cobalt%kappa_eppley, 0.063)                   ! deg C-1
     call g_tracer_add_param('P_C_max_Di_hl', phyto(DIAZO)%P_C_max_hl, 0.6/sperd)          ! s-1
     call g_tracer_add_param('P_C_max_Lg_hl', phyto(LARGE)%P_C_max_hl, 1.0/sperd)          ! s-1
     call g_tracer_add_param('P_C_max_Md_hl', phyto(MEDIUM)%P_C_max_hl, 1.1/sperd)         ! s-1
     call g_tracer_add_param('P_C_max_Sm_hl', phyto(SMALL)%P_C_max_hl, 1.0/sperd)          ! s-1
-    call g_tracer_add_param('P_C_max_Di_ll', phyto(DIAZO)%P_C_max_ll, 0.3/sperd)     ! s-1
-    call g_tracer_add_param('P_C_max_Lg_ll', phyto(LARGE)%P_C_max_ll, 0.5/sperd)     ! s-1
-    call g_tracer_add_param('P_C_max_Md_ll', phyto(MEDIUM)%P_C_max_ll, 0.55/sperd)    ! s-1
-    call g_tracer_add_param('P_C_max_Sm_ll', phyto(SMALL)%P_C_max_ll, 0.5/sperd)     ! s-1
-    call g_tracer_add_param('numlightadapt', cobalt%numlightadapt, 10)               ! dimensionless
+    call g_tracer_add_param('P_C_max_Di_ll', phyto(DIAZO)%P_C_max_ll, 0.6/sperd)     ! s-1
+    call g_tracer_add_param('P_C_max_Lg_ll', phyto(LARGE)%P_C_max_ll, 1.0/sperd)     ! s-1
+    call g_tracer_add_param('P_C_max_Md_ll', phyto(MEDIUM)%P_C_max_ll, 1.1/sperd)    ! s-1
+    call g_tracer_add_param('P_C_max_Sm_ll', phyto(SMALL)%P_C_max_ll, 1.0/sperd)     ! s-1
+    call g_tracer_add_param('numlightadapt', cobalt%numlightadapt, 2)                ! dimensionless 
     call g_tracer_add_param('thetamax_Di', phyto(DIAZO)%thetamax, 0.035)                  ! g Chl g C-1
     call g_tracer_add_param('thetamax_Lg', phyto(LARGE)%thetamax, 0.07)                  ! g Chl g C-1
     call g_tracer_add_param('thetamax_Md', phyto(MEDIUM)%thetamax, 0.045)                 ! g Chl g C-1
     call g_tracer_add_param('thetamax_Sm', phyto(SMALL)%thetamax, 0.035)                  ! g Chl g C-1
-    call g_tracer_add_param('bresp_frac_mixed_Di', phyto(DIAZO)%bresp_frac_mixed,0.02)   ! none
-    call g_tracer_add_param('bresp_frac_mixed_Lg', phyto(LARGE)%bresp_frac_mixed,0.02)   ! none
-    call g_tracer_add_param('bresp_frac_mixed_Md', phyto(MEDIUM)%bresp_frac_mixed,0.02)  ! none
-    call g_tracer_add_param('bresp_frac_mixed_Sm', phyto(SMALL)%bresp_frac_mixed,0.02)   ! none
-    call g_tracer_add_param('bresp_frac_strat_Di', phyto(DIAZO)%bresp_frac_strat,0.01)   ! none
-    call g_tracer_add_param('bresp_frac_strat_Lg', phyto(LARGE)%bresp_frac_strat,0.01)   ! none
-    call g_tracer_add_param('bresp_frac_strat_Md', phyto(MEDIUM)%bresp_frac_strat,0.01)  ! none
-    call g_tracer_add_param('bresp_frac_strat_Sm', phyto(SMALL)%bresp_frac_strat,0.01)   ! none
+    call g_tracer_add_param('bresp_frac_stress_Di', phyto(DIAZO)%bresp_frac_stress,0.01)  ! none 
+    call g_tracer_add_param('bresp_frac_stress_Lg', phyto(LARGE)%bresp_frac_stress,0.01)  ! none 
+    call g_tracer_add_param('bresp_frac_stress_Md', phyto(MEDIUM)%bresp_frac_stress,0.01) ! none 
+    call g_tracer_add_param('bresp_frac_stress_Sm', phyto(SMALL)%bresp_frac_stress,0.01)  ! none 
+    call g_tracer_add_param('bresp_frac_norm_Di', phyto(DIAZO)%bresp_frac_norm,0.01)     ! none 
+    call g_tracer_add_param('bresp_frac_norm_Lg', phyto(LARGE)%bresp_frac_norm,0.01)     ! none 
+    call g_tracer_add_param('bresp_frac_norm_Md', phyto(MEDIUM)%bresp_frac_norm,0.01)    ! none 
+    call g_tracer_add_param('bresp_frac_norm_Sm', phyto(SMALL)%bresp_frac_norm,0.01)     ! none 
     call g_tracer_add_param('sink_max_Di', phyto(DIAZO)%sink_max,1.0/sperd)              ! m sec-1
     call g_tracer_add_param('sink_max_Lg', phyto(LARGE)%sink_max,5.0/sperd)              ! m sec-1
     call g_tracer_add_param('sink_max_Md', phyto(MEDIUM)%sink_max,1.0/sperd)             ! m sec-1
@@ -6312,7 +6312,7 @@ contains
     call g_tracer_add_param('gamma_irr_aclm', cobalt%gamma_irr_aclm, 1.0 / sperd)        ! s-1
     call g_tracer_add_param('gamma_irr_mem_dp',cobalt%gamma_irr_mem_dp,0.1/sperd)        ! s-1
     call g_tracer_add_param('gamma_mu_mem', cobalt%gamma_mu_mem, 1.0 / sperd)            ! s-1
-    call g_tracer_add_param('ml_aclm_efold', cobalt%ml_aclm_efold, 4.6)                  ! dimensionless
+    call g_tracer_add_param('ml_aclm_efold', cobalt%ml_aclm_efold, 999.0)                ! dimensionless
     call g_tracer_add_param('zmld_ref', cobalt%zmld_ref, 10.0)                           ! m
     call g_tracer_add_param('densdiff_mld', cobalt%densdiff_mld, 0.03)                   ! kg m-3
     call g_tracer_add_param('irrad_day_thresh', cobalt%irrad_day_thresh, 1.0 )           ! watts m-2
@@ -6341,14 +6341,14 @@ contains
     call g_tracer_add_param('p_2_n_min_Di', phyto(DIAZO)%p_2_n_min,1.0/40.0 )               ! mol P mol N-1
     call g_tracer_add_param('p_2_n_slope_Di', phyto(DIAZO)%p_2_n_slope, 0.0*1.0e6)          ! mol P mol N-1 mol P-1 kg
     call g_tracer_add_param('p_2_n_max_Di', phyto(DIAZO)%p_2_n_max,1.0/40.0 )               ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_min_Sm', phyto(SMALL)%p_2_n_min,1.0/31.0 )               ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_slope_Sm', phyto(SMALL)%p_2_n_slope, 0.048*1.0e6)        ! mol P mol N-1 mol P-1 kg
-    call g_tracer_add_param('p_2_n_max_Sm', phyto(SMALL)%p_2_n_max,1.0/20.0 )               ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_min_Md', phyto(MEDIUM)%p_2_n_min,1.0/31.0 )              ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_slope_Md', phyto(MEDIUM)%p_2_n_slope, 0.048*1.0e6)       ! mol P mol N-1 mol P-1 kg
-    call g_tracer_add_param('p_2_n_max_Md', phyto(MEDIUM)%p_2_n_max,1.0/16.0 )              ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_min_Lg', phyto(LARGE)%p_2_n_min,1.0/31.0 )               ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_slope_Lg', phyto(LARGE)%p_2_n_slope, 0.048*1.0e6)        ! mol P mol N-1 mol P-1 kg
+    call g_tracer_add_param('p_2_n_min_Sm', phyto(SMALL)%p_2_n_min,1.0/23.0 )               ! mol P mol N-1
+    call g_tracer_add_param('p_2_n_slope_Sm', phyto(SMALL)%p_2_n_slope, 0.0*1.0e6)        ! mol P mol N-1 mol P-1 kg 
+    call g_tracer_add_param('p_2_n_max_Sm', phyto(SMALL)%p_2_n_max,1.0/23.0 )               ! mol P mol N-1
+    call g_tracer_add_param('p_2_n_min_Md', phyto(MEDIUM)%p_2_n_min,1.0/18.0 )              ! mol P mol N-1
+    call g_tracer_add_param('p_2_n_slope_Md', phyto(MEDIUM)%p_2_n_slope, 0.0*1.0e6)       ! mol P mol N-1 mol P-1 kg
+    call g_tracer_add_param('p_2_n_max_Md', phyto(MEDIUM)%p_2_n_max,1.0/18.0 )              ! mol P mol N-1
+    call g_tracer_add_param('p_2_n_min_Lg', phyto(LARGE)%p_2_n_min,1.0/14.0 )               ! mol P mol N-1
+    call g_tracer_add_param('p_2_n_slope_Lg', phyto(LARGE)%p_2_n_slope, 0.0*1.0e6)        ! mol P mol N-1 mol P-1 kg
     call g_tracer_add_param('p_2_n_max_Lg', phyto(LARGE)%p_2_n_max,1.0/14.0 )               ! mol P mol N-1
     call g_tracer_add_param('si_2_n_static_Lg', phyto(LARGE)%si_2_n_static, 2.0)            ! mol Si mol N-1
     call g_tracer_add_param('si_2_n_static_Md', phyto(MEDIUM)%si_2_n_static, 2.0)           ! mol Si mol N-1
@@ -6363,7 +6363,7 @@ contains
     !-----------------------------------------------------------------------
     !
     call g_tracer_add_param('q_p_2_n_smz',zoo(1)%q_p_2_n, 1.0/20.0)          ! mol P mol N-1
-    call g_tracer_add_param('q_p_2_n_mdz',zoo(2)%q_p_2_n, 1.0/18.0)          ! mol P mol N-1
+    call g_tracer_add_param('q_p_2_n_mdz',zoo(2)%q_p_2_n, 1.0/16.0)          ! mol P mol N-1 
     call g_tracer_add_param('q_p_2_n_lgz',zoo(3)%q_p_2_n, 1.0/16.0)          ! mol P mol N-1
     !
     !-----------------------------------------------------------------------
@@ -6585,7 +6585,7 @@ contains
     call g_tracer_add_param('jpo4_iceberg_ratio', cobalt%jpo4_iceberg_ratio,1.1e-7)          ! mol P kg-1 ice melt
     call g_tracer_add_param('fe_coast', cobalt%fe_coast,0.0 )                                ! mol Fe m kg-1 s-1
     call g_tracer_add_param('alpha_fescav',cobalt%alpha_fescav, 0.0/spery)                   ! sec-1
-    call g_tracer_add_param('beta_fescav',cobalt%beta_fescav, 2.5e9/spery )                  ! sec-1 (mole ndet kg-1)-1
+    call g_tracer_add_param('beta_fescav',cobalt%beta_fescav, 3.5e9/spery )                  ! sec-1 (mole ndet kg-1)-1
     call g_tracer_add_param('remin_eff_fedet',cobalt%remin_eff_fedet, 0.25)                  ! unitless
     call g_tracer_add_param('io_fescav',cobalt%io_fescav, 10.0 )                             ! watts m-2
     call g_tracer_add_param('kfe_eq_lig_ll',cobalt%kfe_eq_lig_ll, 1.0e12)                    ! mol lig-1 kg
@@ -8277,7 +8277,7 @@ contains
           min(phyto(n)%po4lim(i,j,k), phyto(n)%def_fe(i,j,k))
        do n= 2, NUM_PHYTO   !{
           phyto(n)%liebig_lim(i,j,k) = min(phyto(n)%no3lim(i,j,k)+phyto(n)%nh4lim(i,j,k),&
-             phyto(n)%po4lim(i,j,k), max(phyto(n)%def_fe(i,j,k),phyto(n)%felim(i,j,k)))
+             phyto(n)%po4lim(i,j,k), phyto(n)%def_fe(i,j,k))
        enddo !} n
     enddo;  enddo ;  enddo !} i,j,k
     !
@@ -8492,9 +8492,9 @@ contains
           ! maximum photosynthetic rate laters to give units of day-1
           !
           if (k.le.kblt(i,j)) then
-             bresp_temp = phyto(n)%bresp_frac_mixed*cobalt%expkT(i,j,k)
+             bresp_temp = phyto(n)%bresp_frac_stress*cobalt%expkT(i,j,k)
           else
-             bresp_temp = phyto(n)%bresp_frac_strat*cobalt%expkT(i,j,k)
+             bresp_temp = phyto(n)%bresp_frac_norm*cobalt%expkT(i,j,k)
           endif
           ! adjust basal respiration to maintain small refuge
           bresp_temp = bresp_temp*phyto(n)%f_n(i,j,k)/(cobalt%refuge_conc+phyto(n)%f_n(i,j,k))
@@ -9257,7 +9257,7 @@ contains
        !
 
        do n = 1,NUM_PHYTO !{
-            growth_ratio = min(max(phyto(n)%f_mu_mem(i,j,k),0.0)/ &
+            growth_ratio = min(phyto(n)%f_mu_mem(i,j,k)/ &
                            (phyto(n)%frac_mu_stress*phyto(n)%P_C_max(i,j,k)*cobalt%expkT(i,j,k)),1.0)
             phyto(n)%stress_fac(i,j,k) = (1.0-growth_ratio)**2
             phyto(n)%jaggloss_n(i,j,k) = phyto(n)%stress_fac(i,j,k)*phyto(n)%agg*phyto(n)%f_n(i,j,k)**2.0
@@ -9745,7 +9745,7 @@ contains
          cobalt%jfe_ads(i,j,k) = cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
                                  cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet(i,j,k)
        else
-         cobalt%jfe_ads(i,j,k) = 2.0*(cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
+         cobalt%jfe_ads(i,j,k) = 10.0*(cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
                                  cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet(i,j,k))
        endif
        cobalt%jfe_ads(i,j,k) = min(cobalt%jfe_ads(i,j,k),cobalt%f_fed(i,j,k)/(2.0*dt))
