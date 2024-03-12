@@ -11,7 +11,7 @@ on:
     branches: [ "dev/cefi" ]
 
 env:
-  BRANCH_NAME: dev/cefi
+  BRANCH_NAME: stable 
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -28,7 +28,7 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -38,19 +38,19 @@ jobs:
           format: space-delimited
           token: ${{ secrets.GITHUB_TOKEN }}   
 
-      # git clone MOM6_OBGC_examples and replace ocean_BGC
-      - name: git clone MOM6_OBGC_examples
+      # git clone CEFI-regional-MOM6 and replace ocean_BGC
+      - name: git clone CEFI-regional-MOM6 
         run: |
           cd ..
-          git clone -b $BRANCH_NAME https://github.com/NOAA-CEFI-Regional-Ocean-Modeling/MOM6_OBGC_examples.git --recursive
-          rm -rf MOM6_OBGC_examples/src/ocean_BGC
-          cp -r ocean_BGC MOM6_OBGC_examples/src
+          git clone -b $BRANCH_NAME https://github.com/NOAA-GFDL/CEFI-regional-MOM6.git --recursive
+          rm -rf CEFI-regional-MOM6/src/ocean_BGC
+          cp -r ocean_BGC CEFI-regional-MOM6/src
           
       # run 1D mom6sis2-cobalt test
       - name: Build 1D mom6sis2-cobalt Docker Image
         run: |
           echo "docker image build ..."
-          cd ../MOM6_OBGC_examples
+          cd ../CEFI-regional-MOM6
           docker build --file "./ci/docker/Dockerfile.ci" -t mom6_obgc_1d:develop . 
 
       - name: Check mom6_obgc 1D Docker Image build 
