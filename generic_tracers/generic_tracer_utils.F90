@@ -3983,6 +3983,8 @@ contains
       endif
       call post_data_MOM(diag_field_id, field, diag_CS_ptr) 
       g_send_data_0d = .TRUE.
+    else
+      g_send_data_0d = .FALSE.
     endif
 #else
     g_send_data_0d = send_data_FMS(diag_field_id, field, time, err_msg)
@@ -4011,6 +4013,8 @@ contains
       endif
       call post_data_MOM(diag_field_id, field, diag_CS_ptr)     
       g_send_data_1d = .TRUE.
+    else
+      g_send_data_1d = .FALSE.
     endif
 #else
     g_send_data_1d = send_data_FMS(diag_field_id, field, time, is_in, mask, rmask, ie_in, weight, err_msg)
@@ -4040,6 +4044,8 @@ contains
       endif
       call post_data_MOM(diag_field_id, field, diag_CS_ptr)!, mask=rmask)         
       g_send_data_2d = .TRUE.
+    else
+      g_send_data_2d = .FALSE.
     endif
 #else
     g_send_data_2d = send_data_FMS(diag_field_id, field, time, is_in, js_in, &
@@ -4070,6 +4076,8 @@ contains
       endif
       call post_data_MOM(diag_field_id, field, diag_CS_ptr)!, mask=rmask) 
       g_send_data_3d = .TRUE.
+    else
+      g_send_data_3d = .FALSE.
     endif
 #else
     g_send_data_3d = send_data_FMS(diag_field_id, field, time, is_in, js_in, ks_in, &
