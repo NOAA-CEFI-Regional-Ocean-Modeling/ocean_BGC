@@ -3975,14 +3975,15 @@ contains
 
 #ifdef _USE_MOM6_DIAG
     type(g_diag_ctrl), pointer :: diag_CS_ptr 
-    
-    if(present(diag_CS)) then
-       diag_CS_ptr => diag_CS
-    else
-       call g_tracer_get_diagCS(diag_CS_ptr)
+    if(diag_field_id .gt. 0) then
+      if(present(diag_CS)) then
+        diag_CS_ptr => diag_CS
+      else
+        call g_tracer_get_diagCS(diag_CS_ptr)
+      endif
+      call post_data_MOM(diag_field_id, field, diag_CS_ptr) 
+      g_send_data_0d = .TRUE.
     endif
-    call post_data_MOM(diag_field_id, field, diag_CS_ptr) 
-    g_send_data_0d = .TRUE.
 #else
     g_send_data_0d = send_data_FMS(diag_field_id, field, time, err_msg)
 #endif
@@ -4002,14 +4003,15 @@ contains
 
 #ifdef _USE_MOM6_DIAG
     type(g_diag_ctrl), pointer :: diag_CS_ptr 
-    
-    if(present(diag_CS)) then
-       diag_CS_ptr => diag_CS
-    else
-       call g_tracer_get_diagCS(diag_CS_ptr)
+    if(diag_field_id .gt. 0) then
+      if(present(diag_CS)) then
+        diag_CS_ptr => diag_CS
+      else
+        call g_tracer_get_diagCS(diag_CS_ptr)
+      endif
+      call post_data_MOM(diag_field_id, field, diag_CS_ptr)     
+      g_send_data_1d = .TRUE.
     endif
-    call post_data_MOM(diag_field_id, field, diag_CS_ptr)     
-    g_send_data_1d = .TRUE.
 #else
     g_send_data_1d = send_data_FMS(diag_field_id, field, time, is_in, mask, rmask, ie_in, weight, err_msg)
 #endif
@@ -4030,14 +4032,15 @@ contains
 
 #ifdef _USE_MOM6_DIAG
     type(g_diag_ctrl), pointer :: diag_CS_ptr 
-    
-    if(present(diag_CS)) then
-       diag_CS_ptr => diag_CS
-    else
-       call g_tracer_get_diagCS(diag_CS_ptr)
+    if(diag_field_id .gt. 0) then
+      if(present(diag_CS)) then
+        diag_CS_ptr => diag_CS
+      else
+        call g_tracer_get_diagCS(diag_CS_ptr)
+      endif
+      call post_data_MOM(diag_field_id, field, diag_CS_ptr)!, mask=rmask)         
+      g_send_data_2d = .TRUE.
     endif
-    call post_data_MOM(diag_field_id, field, diag_CS_ptr)!, mask=rmask)         
-    g_send_data_2d = .TRUE.
 #else
     g_send_data_2d = send_data_FMS(diag_field_id, field, time, is_in, js_in, &
        & mask, rmask, ie_in, je_in, weight, err_msg)
@@ -4059,14 +4062,15 @@ contains
 
 #ifdef _USE_MOM6_DIAG
     type(g_diag_ctrl), pointer :: diag_CS_ptr 
-    
-    if(present(diag_CS)) then
-       diag_CS_ptr => diag_CS
-    else
-       call g_tracer_get_diagCS(diag_CS_ptr)
+    if(diag_field_id .gt. 0) then
+      if(present(diag_CS)) then
+        diag_CS_ptr => diag_CS
+      else
+        call g_tracer_get_diagCS(diag_CS_ptr)
+      endif
+      call post_data_MOM(diag_field_id, field, diag_CS_ptr)!, mask=rmask) 
+      g_send_data_3d = .TRUE.
     endif
-    call post_data_MOM(diag_field_id, field, diag_CS_ptr)!, mask=rmask) 
-    g_send_data_3d = .TRUE.
 #else
     g_send_data_3d = send_data_FMS(diag_field_id, field, time, is_in, js_in, ks_in, &
              & mask, rmask, ie_in, je_in, ke_in, weight, err_msg)
