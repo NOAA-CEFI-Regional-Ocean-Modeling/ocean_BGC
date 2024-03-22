@@ -164,8 +164,8 @@ module generic_COBALT
 
   implicit none ; private
 !-----------------------------------------------------------------------
-  character(len=128) :: version = '$Id: generic_COBALT.F90,v 20.0.2.1.2.1 2014/09/29 16:40:08 Niki.Zadeh Exp $'
-  character(len=128) :: tag = '$Name: bugfix_nnz $'
+  character(len=128) :: version = '$Id: generic_COBALT.F90,v 20.0.2.1.2.1 2023/03/22 13:46:08 Yi-cheng.Teng Exp $'
+  character(len=128) :: tag = '$Name: COBALTv3.0 $'
 !-----------------------------------------------------------------------
 
   character(len=fm_string_len), parameter :: mod_name       = 'generic_COBALT'
@@ -184,22 +184,21 @@ module generic_COBALT
 
   !The following variables for using this module
   ! are overwritten by generic_tracer_nml namelist
-  logical, save :: do_generic_COBALT = .false.
-  character(len=10), save :: as_param_cobalt = 'W92'
+  logical, save :: do_generic_COBALT = .false.       !< Activate the generic_COBALT module if it is set to true.
+  character(len=10), save :: as_param_cobalt = 'W92' !< air-sea flux parameter settings for COBALT
 
-  real, parameter :: sperd = 24.0 * 3600.0
-  real, parameter :: spery = 365.25 * sperd
-  real, parameter :: epsln=1.0e-30
-  real,parameter :: missing_value1=-1.0e+10
-  real, parameter :: missing_value_diag=-1.0e+10
+  real, parameter :: sperd = 24.0 * 3600.0           !< number of seconds in a day
+  real, parameter :: spery = 365.25 * sperd          !< number of seconds in a year
+  real, parameter :: epsln=1.0e-30                   !< small, but non-zero value for numerical stability
+  real,parameter :: missing_value1=-1.0e+10          !< large negative value to represent missing value in diags 
 
-  real, parameter :: vb_nh3 = 25.
+  real, parameter :: vb_nh3 = 25.                    !< Liquid molar volume at boiling point for NH3 (unit: cm3 mol−1)
 
-  logical :: do_nh3_diag
+  logical :: do_nh3_diag                             !< logic for setting NH3 diagnostic tracer field 
 
 ! Namelist Options
 
-  character(len=10) ::  co2_calc = 'ocmip2'  ! other option is 'mocsy'
+  character(len=10) ::  co2_calc = 'ocmip2'          !< carbonate formalation options. Other option is 'mocsy'
   logical :: do_14c             = .false.
   logical :: debug              = .false.
   logical :: do_nh3_atm_ocean_exchange = .false.
@@ -216,14 +215,15 @@ module generic_COBALT
   real    :: irr_inhibit = 10.
   real    :: gamma_nitrif= 3.5e6 !month(-1)
   real    :: k_nh3_nitrif= 3.1e-9 !mol/kg
-  real    :: imbalance_tolerance=1.0e-10 !the tolerance for non-conservation in C,N,P,Sc,Fe
+  real    :: imbalance_tolerance=1.0e-10 !< the tolerance for non-conservation in C,N,P,Sc,Fe
 
   integer :: scheme_no3_nh4_lim = 2 !1-Frost and Franzen (1992)
                                     !2-O'Neill
 
-  integer :: scheme_nitrif = 3 !1-default COBALT
-                               !2-update with no temperature dependence
-                               !3-update with temperature dependence
+  integer :: scheme_nitrif = 3      !< nitrification scheme options:
+                                    !! 1-default COBALT
+                                    !! 2-update with no temperature dependence
+                                    !! 3-update with temperature dependence
 
 namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange, scheme_nitrif, &
      k_nh4_small,k_nh4_large,k_nh4_diazo,scheme_no3_nh4_lim,k_no3_small,k_no3_large,k_no3_diazo, &
@@ -16070,7 +16070,7 @@ contains
 
   end function calc_pka_nh3
 
-!salting out correction for solubility (Johnson 2010, Ocean Science)
+  !> salting out correction for solubility (Johnson 2010, Ocean Science)
   function saltout_correction(kh,vb,salt) result(C)
     real, intent(in) :: Kh,vb,salt
     real*8 :: T,log_kh,theta2
