@@ -128,6 +128,9 @@
 ! </INFO>
 !----------------------------------------------------------------
 
+!> Generic version of the COBALTv3.0 that includes 4 phytoplankton
+!! functional groups and photoacclimation and photoadaptation improvements.
+!< --------------------------------------------------------------
 module generic_COBALT
 
   use coupler_types_mod, only: coupler_2d_bc_type
