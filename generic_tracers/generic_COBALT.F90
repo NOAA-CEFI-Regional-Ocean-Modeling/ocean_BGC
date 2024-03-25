@@ -187,47 +187,50 @@ module generic_COBALT
   logical, save :: do_generic_COBALT = .false.       !< Activate the generic_COBALT module if it is set to true.
   character(len=10), save :: as_param_cobalt = 'W92' !< air-sea flux parameter settings for COBALT
 
-  real, parameter :: sperd = 24.0 * 3600.0           !< number of seconds in a day
-  real, parameter :: spery = 365.25 * sperd          !< number of seconds in a year
+  real, parameter :: sperd = 24.0 * 3600.0           !< number of seconds in a day (sec)
+  real, parameter :: spery = 365.25 * sperd          !< number of seconds in a year (sec)
   real, parameter :: epsln=1.0e-30                   !< small, but non-zero value for numerical stability
   real,parameter :: missing_value1=-1.0e+10          !< large negative value to represent missing value in diags 
 
-  real, parameter :: vb_nh3 = 25.                    !< Liquid molar volume at boiling point for NH3 (unit: cm3 mol−1)
+  real, parameter :: vb_nh3 = 25.                    !< Liquid molar volume at boiling point for NH3 (cm3 mol−1)
 
   logical :: do_nh3_diag                             !< logic for setting NH3 diagnostic tracer field 
 
 ! Namelist Options
 
   character(len=10) ::  co2_calc = 'ocmip2'          !< carbonate formalation options. Other option is 'mocsy'
-  logical :: do_14c             = .false.
-  logical :: debug              = .false.
-  logical :: do_nh3_atm_ocean_exchange = .false.
+  logical :: do_14c             = .false.            !< If true, then simulate radiocarbon 
+  logical :: do_nh3_atm_ocean_exchange = .false.     ! If true, then do NH3 air-sea exchange 
   ! namelist capabilities for half-sats not used in this run
-  logical :: do_vertfill_pre = .false.
-  real    :: k_nh4_small = 1.e-8
-  real    :: k_nh4_diazo = 1.e-7
-  real    :: k_nh4_large = 5.e-8
-  real    :: k_no3_small = 5.e-7
-  real    :: k_no3_diazo = 5.0e-6
-  real    :: k_no3_large = 2.5e-6
-  real    :: o2_min_nit= 0.01e-6
-  real    :: k_o2_nit  = 3.9e-6
-  real    :: irr_inhibit = 10.
-  real    :: gamma_nitrif= 3.5e6 !month(-1)
-  real    :: k_nh3_nitrif= 3.1e-9 !mol/kg
-  real    :: imbalance_tolerance=1.0e-10 !< the tolerance for non-conservation in C,N,P,Sc,Fe
+  ! YC TODO: I commented out the following unused namelists now, but should we consider to remove them? 
+  !real    :: k_nh4_small = 1.e-8
+  !real    :: k_nh4_diazo = 1.e-7
+  !real    :: k_nh4_large = 5.e-8
+  !real    :: k_no3_small = 5.e-7
+  !real    :: k_no3_diazo = 5.0e-6
+  !real    :: k_no3_large = 2.5e-6
+  !logical :: debug              = .false.
+  !
+  logical :: do_vertfill_pre = .false.             !< Returns tracer arrays with sensible values
+  real    :: o2_min_nit= 0.01e-6                   !< Oxygen threshold for nitrification (mol O2 kg-1)
+  real    :: k_o2_nit  = 3.9e-6                    !< Oxygen half saturation constant for nitrification
+  real    :: irr_inhibit = 10.                     !< Irradiance inhibition term for nitrification (W m-2)
+  real    :: gamma_nitrif= 3.5e6                   !< Rate constant for nitrification (month-1)
+  real    :: k_nh3_nitrif= 3.1e-9                  !< NH3 half-saturation for nitrification (mol NH3 kg-1)  
+  real    :: imbalance_tolerance=1.0e-10           !< the tolerance for non-conservation in C,N,P,Sc,Fe
 
-  integer :: scheme_no3_nh4_lim = 2 !1-Frost and Franzen (1992)
-                                    !2-O'Neill
+  integer :: scheme_no3_nh4_lim = 2 !< Nitrate and ammonia limitation scheme options
+                                    !! 1-Frost and Franzen (1992)
+                                    !! 2-O'Neill
 
   integer :: scheme_nitrif = 3      !< nitrification scheme options:
                                     !! 1-default COBALT
                                     !! 2-update with no temperature dependence
                                     !! 3-update with temperature dependence
 
-namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange, scheme_nitrif, &
-     k_nh4_small,k_nh4_large,k_nh4_diazo,scheme_no3_nh4_lim,k_no3_small,k_no3_large,k_no3_diazo, &
-     o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,gamma_nitrif,do_vertfill_pre,imbalance_tolerance
+namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, scheme_nitrif, &
+     !debug,k_nh4_small,k_nh4_large,k_nh4_diazo,scheme_no3_nh4_lim,k_no3_small,k_no3_large,k_no3_diazo, &
+     o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,amma_nitrif,do_vertfill_pre,imbalance_tolerance
 
   ! Declare phytoplankton, zooplankton and cobalt variable types, which contain
   ! the vast majority of all variables used in this module.
@@ -6657,12 +6660,12 @@ contains
     ! Nitrification / Anammox
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('gamma_nitrif',  cobalt%gamma_nitrif, gamma_nitrif / (30.0 * sperd))     ! s-1
-    call g_tracer_add_param('knh4_nitrif',  cobalt%k_nh3_nitrif, k_nh3_nitrif )                     ! moles kg-1
-    call g_tracer_add_param('irr_inhibit',  cobalt%irr_inhibit, irr_inhibit)                         ! W m-2
-    !call g_tracer_add_param('gamma_nh4amx',  cobalt%gamma_nh4amx, 0.07 / sperd)                      ! s-1
-    call g_tracer_add_param('gamma_nh4amx',  cobalt%gamma_nh4amx, 0.0 / sperd)                       ! s-1
-    call g_tracer_add_param('o2_min_amx', cobalt%o2_min_amx, 4.0e-6 )                                ! mol O2 kg-1
+    call g_tracer_add_param('gamma_nitrif',  cobalt%gamma_nitrif, gamma_nitrif / (30.0 * sperd))     !< s-1
+    call g_tracer_add_param('knh4_nitrif',  cobalt%k_nh3_nitrif, k_nh3_nitrif )                      !< moles kg-1
+    call g_tracer_add_param('irr_inhibit',  cobalt%irr_inhibit, irr_inhibit)                         !< W m-2
+    !call g_tracer_add_param('gamma_nh4amx',  cobalt%gamma_nh4amx, 0.07 / sperd)                     !< s-1
+    call g_tracer_add_param('gamma_nh4amx',  cobalt%gamma_nh4amx, 0.0 / sperd)                       !< s-1
+    call g_tracer_add_param('o2_min_amx', cobalt%o2_min_amx, 4.0e-6 )                                !< mol O2 kg-1
     !
     !-----------------------------------------------------------------------
     ! Miscellaneous
