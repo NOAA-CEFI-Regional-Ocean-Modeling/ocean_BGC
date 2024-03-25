@@ -230,7 +230,7 @@ module generic_COBALT
 
 namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, scheme_nitrif, &
      !debug,k_nh4_small,k_nh4_large,k_nh4_diazo,scheme_no3_nh4_lim,k_no3_small,k_no3_large,k_no3_diazo, &
-     o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,amma_nitrif,do_vertfill_pre,imbalance_tolerance
+     o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,gamma_nitrif,do_vertfill_pre,imbalance_tolerance
 
   ! Declare phytoplankton, zooplankton and cobalt variable types, which contain
   ! the vast majority of all variables used in this module.
@@ -422,35 +422,35 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
           id_fsi_btm          = -1
   end type phytoplankton
 
+  !> zooplankton data type
   type zooplankton
-    real ::  &
-	  imax,             & ! maximum ingestion rate (sec-1)
-          ki,               & ! half-sat for ingestion (moles N m-3)
-          gge_max,          & ! max gross growth efficiciency (approached as i >> bresp, dimensionless)
-          nswitch,          & ! switching parameter (dimensionless)
-          mswitch,          & ! switching parameter (dimensionless)
-          bresp,            & ! basal respiration rate (sec-1)
-          ktemp,            & ! temperature dependence of zooplankton rates (C-1)
-          upswim_chl_thresh, & ! threshold for swimming the the mixed layer (chl/chl_surf < thresh)
-          upswim_I_thresh,  & ! Irradiance threshold for upward swimming (watts m-2)
-          swim_max,         & ! maximum upward swimming speed (m s-2)
-          phi_det,          & ! fraction of ingested N to detritus
-          phi_ldon,         & ! fraction of ingested N/P to labile don
-          phi_sldon,        & ! fraction of ingested N/P to semi-labile don
-          phi_srdon,        & ! fraction of ingested N/P to semi-refractory don
-          phi_ldop,         & ! fraction of ingested N/P to labile dop
-          phi_sldop,        & ! fraction of ingested N/P to semi-labile dop
-          phi_srdop,        & ! fraction of ingested N/P to semi-refractory dop
-          q_p_2_n,          & ! p:n ratio of zooplankton
-          ipa_smp,          & ! innate prey availability of low-light adapt. small phytos
-          ipa_mdp,          & ! innate prey availability of medium phytoplankton
-          ipa_lgp,          & ! innate prey availability of large phytoplankton
-          ipa_diaz,         & ! innate prey availability of diazotrophs
-          ipa_smz,          & ! innate prey availability of small zooplankton
-          ipa_mdz,          & ! innate prey availability of large zooplankton
-          ipa_lgz,          & ! innate prey availability of x-large zooplankton
-          ipa_det,          & ! innate prey availability of detritus
-          ipa_bact            ! innate prey availability for bacteria
+    real imax               !< maximum ingestion rate (sec-1)
+    real ki                !< half-sat for ingestion (moles N m-3)
+    real gge_max           !< max gross growth efficiciency (approached as i >> bresp, dimensionless)
+    real nswitch           !< switching parameter (dimensionless)
+    real mswitch           !< switching parameter (dimensionless)
+    real bresp             !< basal respiration rate (sec-1)
+    real ktemp             !< temperature dependence of zooplankton rates (C-1)
+    real upswim_chl_thresh !< threshold for swimming the the mixed layer (chl/chl_surf < thresh)
+    real upswim_I_thresh   !< Irradiance threshold for upward swimming (watts m-2)
+    real swim_max          !< maximum upward swimming speed (m s-2)
+    real phi_det           !< fraction of ingested N to detritus
+    real phi_ldon          !< fraction of ingested N/P to labile don
+    real phi_sldon         !< fraction of ingested N/P to semi-labile don
+    real phi_srdon         !< fraction of ingested N/P to semi-refractory don
+    real phi_ldop          !< fraction of ingested N/P to labile dop
+    real phi_sldop         !< fraction of ingested N/P to semi-labile dop
+    real phi_srdop         !< fraction of ingested N/P to semi-refractory dop
+    real q_p_2_n           !< p:n ratio of zooplankton
+    real ipa_smp           !< innate prey availability of low-light adapt. small phytos
+    real ipa_mdp           !< innate prey availability of medium phytoplankton
+    real ipa_lgp           !< innate prey availability of large phytoplankton
+    real ipa_diaz          !< innate prey availability of diazotrophs
+    real ipa_smz           !< innate prey availability of small zooplankton
+    real ipa_mdz           !< innate prey availability of large zooplankton
+    real ipa_lgz           !< innate prey availability of x-large zooplankton
+    real ipa_det           !< innate prey availability of detritus
+    real ipa_bact          !< innate prey availability for bacteria
     real, ALLOCATABLE, dimension(:,:)  :: &
           jprod_n_100,      &
           jingest_n_100,    &
@@ -460,35 +460,34 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
           jprod_don_100,    &
           jremin_n_100,     &
           f_n_100
-    real, ALLOCATABLE, dimension(:,:,:) :: &
-          f_n,              & ! zooplankton biomass
-          jzloss_n,         & ! Losses of n due to consumption by other zooplankton groups
-          jzloss_p,	    & ! Losses of p due to consumption by other zooplankton groups
-          jhploss_n,        & ! Losses of n due to consumption by unresolved higher preds
-          jhploss_p,	    & ! Losses of p due to consumption by unresolved higher preds
-          jingest_n,        & ! Total ingestion of n
-          jingest_p,        & ! Total ingestion of p
-          jingest_sio2,     & ! Total ingestion of silicate
-          jingest_fe,	    & ! Total ingestion of iron
-          jprod_ndet,       & ! production of nitrogen detritus by zooplankton group
-          jprod_pdet,       & ! production of phosphorous detritus by zooplankton group
-          jprod_ldon,       & ! production of labile dissolved organic N by zooplankton group
-          jprod_ldop,       & ! production of labile dissolved organic P by zooplankton group
-          jprod_srdon,      & ! production of semi-refractory dissolved organic N by zooplankton group
-          jprod_srdop,      & ! production of semi-refractory dissolved organic P by zooplankton group
-          jprod_sldon,      & ! production of semi-labile dissolved organic N by zooplankton group
-          jprod_sldop,      & ! production of semi-labile dissolved organic P by zooplankton group
-          jprod_fed,	    & ! production of dissolved iron
-          jprod_fedet,      & ! production of iron detritus
-          jprod_sidet,	    & ! production of silica detritus
-          jprod_sio4,       & ! production of silicate via rapid dissolution at surface
-          jprod_po4,        & ! phosphate production by zooplankton
-          jprod_nh4,        & ! ammonia production by zooplankton
-          jprod_n,          & ! zooplankton production
-          o2lim,            & ! oxygen limitation of zooplankton activity
-          temp_lim,         & ! Temperature limitation
-          vmove               ! Vertical movement
-    integer ::		    &
+    real, ALLOCATABLE, dimension(:,:,:) ::      f_n          !< zooplankton biomass
+    real, ALLOCATABLE, dimension(:,:,:) ::      jzloss_n     !< Losses of n due to consumption by other zooplankton groups
+    real, ALLOCATABLE, dimension(:,:,:) ::      jzloss_p     !< Losses of p due to consumption by other zooplankton groups
+    real, ALLOCATABLE, dimension(:,:,:) ::      jhploss_n    !< Losses of n due to consumption by unresolved higher preds
+    real, ALLOCATABLE, dimension(:,:,:) ::      jhploss_p    !< Losses of p due to consumption by unresolved higher preds
+    real, ALLOCATABLE, dimension(:,:,:) ::      jingest_n    !< Total ingestion of n
+    real, ALLOCATABLE, dimension(:,:,:) ::      jingest_p    !< Total ingestion of p
+    real, ALLOCATABLE, dimension(:,:,:) ::      jingest_sio2 !< Total ingestion of silicate
+    real, ALLOCATABLE, dimension(:,:,:) ::      jingest_fe   !< Total ingestion of iron
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_ndet   !< production of nitrogen detritus by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_pdet   !< production of phosphorous detritus by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_ldon   !< production of labile dissolved organic N by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_ldop   !< production of labile dissolved organic P by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_srdon  !< production of semi-refractory dissolved organic N by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_srdop  !< production of semi-refractory dissolved organic P by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_sldon  !< production of semi-labile dissolved organic N by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_sldop  !< production of semi-labile dissolved organic P by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_fed    !< production of dissolved iron
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_fedet  !< production of iron detritus
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_sidet  !< production of silica detritus
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_sio4   !< production of silicate via rapid dissolution at surface
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_po4    !< phosphate production by zooplankton
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_nh4    !< ammonia production by zooplankton
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n      !< zooplankton production
+    real, ALLOCATABLE, dimension(:,:,:) ::      o2lim        !< oxygen limitation of zooplankton activity
+    real, ALLOCATABLE, dimension(:,:,:) ::      temp_lim     !< Temperature limitation
+    real, ALLOCATABLE, dimension(:,:,:) ::      vmove        !< Vertical movement
+    integer ::   &
           id_jzloss_n       = -1, &
           id_jzloss_p       = -1, &
           id_jhploss_n      = -1, &
