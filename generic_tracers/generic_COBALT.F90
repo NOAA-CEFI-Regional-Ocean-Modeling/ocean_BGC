@@ -7746,6 +7746,8 @@ contains
     !
     call g_tracer_get_values(tracer_list,'pdi','btm_reservoir',phyto(DIAZO)%fp_btm,isd,jsd)
     phyto(DIAZO)%fp_btm = phyto(DIAZO)%fp_btm/dt
+    call g_tracer_get_pointer(tracer_list,'pdi_btf','field',temp_field)
+    temp_field(:,:,1) = phyto(DIAZO)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'pdi','btm_reservoir',0.0)
     if (phyto(DIAZO)%id_fp_btm .gt. 0)           &
          used = g_send_data(phyto(DIAZO)%id_fp_btm,phyto(DIAZO)%fp_btm, &
@@ -7754,6 +7756,8 @@ contains
 
     call g_tracer_get_values(tracer_list,'plg','btm_reservoir',phyto(LARGE)%fp_btm,isd,jsd)
     phyto(LARGE)%fp_btm = phyto(LARGE)%fp_btm/dt
+    call g_tracer_get_pointer(tracer_list,'plg_btf','field',temp_field)
+    temp_field(:,:,1) = phyto(LARGE)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'plg','btm_reservoir',0.0)
     if (phyto(LARGE)%id_fp_btm .gt. 0)           &
          used = g_send_data(phyto(LARGE)%id_fp_btm,phyto(LARGE)%fp_btm, &
@@ -7762,6 +7766,8 @@ contains
 
     call g_tracer_get_values(tracer_list,'pmd','btm_reservoir',phyto(MEDIUM)%fp_btm,isd,jsd)
     phyto(MEDIUM)%fp_btm = phyto(MEDIUM)%fp_btm/dt
+    call g_tracer_get_pointer(tracer_list,'pmd_btf','field',temp_field)
+    temp_field(:,:,1) = phyto(MEDIUM)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'pmd','btm_reservoir',0.0)
     if (phyto(MEDIUM)%id_fp_btm .gt. 0)           &
          used = g_send_data(phyto(MEDIUM)%id_fp_btm,phyto(MEDIUM)%fp_btm, &
@@ -7770,6 +7776,8 @@ contains
 
     call g_tracer_get_values(tracer_list,'psm','btm_reservoir',phyto(SMALL)%fp_btm,isd,jsd)
     phyto(SMALL)%fp_btm = phyto(SMALL)%fp_btm/dt
+    call g_tracer_get_pointer(tracer_list,'psm_btf','field',temp_field)
+    temp_field(:,:,1) = phyto(SMALL)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'psm','btm_reservoir',0.0)
     if (phyto(SMALL)%id_fp_btm .gt. 0)           &
          used = g_send_data(phyto(SMALL)%id_fp_btm,phyto(SMALL)%fp_btm, &
