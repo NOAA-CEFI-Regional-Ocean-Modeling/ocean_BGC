@@ -235,191 +235,189 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
   ! Declare phytoplankton, zooplankton and cobalt variable types, which contain
   ! the vast majority of all variables used in this module.
 
+  !> phytoplankton data type
   type phytoplankton
-     real :: alpha_hl,   &
-          alpha_ll,      &
-          fe_2_n_max,    &
-          p_2_n_static,  &
-          p_2_n_min,     &
-          p_2_n_slope,   &
-          p_2_n_max,     &
-          k_fe_2_n,      &
-          k_fed,         &
-          k_nh4,         &
-          k_no3,         &
-          k_po4,         &
-          k_sio4,        &
-          P_C_max_hl,    &
-          P_C_max_ll,    &
-          si_2_n_max,    &
-          si_2_n_static, &
-          thetamax,      &
-          bresp_frac_mixed, &
-          bresp_frac_strat, &
-          sink_max,      &
-          agg,           &
-          frac_mu_stress, &
-          vir,           &
-          mort,          &
-          exu
-     real, ALLOCATABLE, dimension(:,:)  :: &
-          jprod_n_100,      &
-          jprod_n_new_100,  &
-          jprod_n_n2_100,   &
-          jzloss_n_100,     &
-          jaggloss_n_100,   &
-          jvirloss_n_100,   &
-          jmortloss_n_100,  &
-          jexuloss_n_100,   &
-          f_n_100,          &
-          juptake_fe_100,   &
-          juptake_po4_100,  &
-          juptake_sio4_100, &
-          nlim_bw_100,      &
-          plim_bw_100,      &
-          def_fe_bw_100,    &
-          irrlim_bw_100,    &
-          fn_btm,           &
-          ffe_btm,          &
-          fp_btm,           &
-          fsi_btm
-     real, ALLOCATABLE, dimension(:,:,:)  :: &
-          P_C_max     , &
-          alpha       , &
-          bresp       , &
-          def_fe      , &
-          def_p       , &
-          f_fe        , &
-          f_n         , &
-          f_p         , &
-          felim       , &
-          irrlim      , &
-          jzloss_fe   , &
-          jzloss_n    , &
-          jzloss_p    , &
-          jzloss_sio2 , &
-          jaggloss_fe , &
-          jaggloss_n  , &
-          jaggloss_p  , &
-          jaggloss_sio2,&
-          stress_fac  , &
-          jvirloss_fe , &
-          jvirloss_n  , &
-          jvirloss_p  , &
-          jvirloss_sio2,&
-          jmortloss_fe , &
-          jmortloss_n  , &
-          jmortloss_p  , &
-          jmortloss_sio2,&
-          jexuloss_fe , &
-          jexuloss_n  , &
-          jexuloss_p  , &
-          jhploss_fe  , &
-          jhploss_n   , &
-          jhploss_p   , &
-          jhploss_sio2, &
-          juptake_n2  , &
-          juptake_fe  , &
-          juptake_nh4 , &
-          juptake_no3 , &
-          juptake_po4 , &
-          juptake_sio4, &
-          uptake_p_2_n, &
-          jprod_n     , &
-          liebig_lim  , &
-          mu          , &
-          f_mu_mem    , &
-          mu_mix      , &
-          nh4lim      , &
-          no3lim      , &
-          po4lim      , &
-          o2lim       , &
-          q_fe_2_n    , &
-          q_p_2_n     , &
-          silim       , &
-          q_si_2_n    , &
-          theta       , &
-          chl         , &
-          vmove
-     integer ::            &
-          id_P_C_max      = -1, &
-          id_alpha        = -1, &
-          id_bresp        = -1, &
-          id_def_fe       = -1, &
-          id_def_p        = -1, &
-          id_felim        = -1, &
-          id_irrlim       = -1, &
-          id_jzloss_fe    = -1, &
-          id_jzloss_n     = -1, &
-          id_jzloss_p     = -1, &
-          id_jzloss_sio2  = -1, &
-          id_jaggloss_fe  = -1, &
-          id_jaggloss_n   = -1, &
-          id_jaggloss_p   = -1, &
-          id_jaggloss_sio2= -1, &
-          id_stress_fac   = -1, &
-          id_jvirloss_fe  = -1, &
-          id_jvirloss_n   = -1, &
-          id_jvirloss_p   = -1, &
-          id_jvirloss_sio2= -1, &
-          id_jmortloss_fe  = -1, &
-          id_jmortloss_n   = -1, &
-          id_jmortloss_p   = -1, &
-          id_jmortloss_sio2= -1, &
-          id_jexuloss_n   = -1, &
-          id_jexuloss_p   = -1, &
-          id_jexuloss_fe  = -1, &
-          id_jhploss_fe   = -1, &
-          id_jhploss_n    = -1, &
-          id_jhploss_p    = -1, &
-          id_jhploss_sio2 = -1, &
-          id_juptake_n2   = -1, &
-          id_juptake_fe   = -1, &
-          id_juptake_nh4  = -1, &
-          id_juptake_no3  = -1, &
-          id_juptake_po4  = -1, &
-          id_juptake_sio4 = -1, &
-          id_jprod_n      = -1, &
-          id_liebig_lim   = -1, &
-          id_mu           = -1, &
-          id_f_mu_mem     = -1, &
-          id_mu_mix       = -1, &
-          id_nh4lim       = -1, &
-          id_no3lim       = -1, &
-          id_po4lim       = -1, &
-          id_o2lim        = -1, &
-          id_q_fe_2_n     = -1, &
-          id_q_p_2_n      = -1, &
-          id_silim        = -1, &
-          id_q_si_2_n     = -1, &
-          id_theta        = -1, &
-          id_chl          = -1, &
-          id_vmove        = -1, &
-          id_jprod_n_100  = -1, &
-          id_jprod_n_new_100  = -1, &
-          id_jprod_n_n2_100 = -1, &
-          id_jzloss_n_100     = -1, &
-          id_jaggloss_n_100   = -1, &
-          id_jvirloss_n_100   = -1, &
-          id_jmortloss_n_100  = -1, &
-          id_jexuloss_n_100   = -1, &
-          id_f_n_100          = -1, &
-          id_sfc_f_n          = -1, &
-          id_sfc_chl          = -1, &
-          id_sfc_def_fe       = -1, &
-          id_sfc_felim        = -1, &
-          id_sfc_q_fe_2_n     = -1, &
-          id_sfc_q_p_2_n      = -1, &
-          id_sfc_nh4lim       = -1, &
-          id_sfc_no3lim       = -1, &
-          id_sfc_po4lim       = -1, &
-          id_sfc_irrlim       = -1, &
-          id_sfc_theta        = -1, &
-          id_sfc_mu           = -1, &
-          id_fn_btm           = -1, &
-          id_fp_btm           = -1, &
-          id_ffe_btm          = -1, &
-          id_fsi_btm          = -1
+     real ::  alpha_hl          !< Chlorophyll a-specific initial slope of the photosynthesis-irradiance curve high level (g C g Chl-1 sec-1 (W m-2)-1)
+     real ::  alpha_ll          !< Chlorophyll a-specific initial slope of the photosynthesis-irradiance curve low level (g C g Chl-1 sec-1 (W m-2)-1)
+     real ::  fe_2_n_max        !< Maximum iron to nitrogen ratio (mol Fe mol N-1)
+     real ::  p_2_n_static      !< Fixed P:N in phytoplankton
+     real ::  p_2_n_min         !<
+     real ::  p_2_n_slope       !<
+     real ::  p_2_n_max         !<
+     real ::  k_fe_2_n          !<
+     real ::  k_fed             !<
+     real ::  k_nh4             !<
+     real ::  k_no3             !<
+     real ::  k_po4             !<
+     real ::  k_sio4            !<
+     real ::  P_C_max_hl        !< 
+     real ::  P_C_max_ll        !<
+     real ::  si_2_n_max        !<
+     real ::  si_2_n_static     !<
+     real ::  thetamax          !<
+     real ::  bresp_frac_mixed  !<
+     real ::  bresp_frac_strat  !<
+     real ::  sink_max          !<
+     real ::  agg               !< 
+     real ::  frac_mu_stress    !<
+     real ::  vir               !<
+     real ::  mort              !<
+     real ::  exu               !<
+     real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_100      !<
+     real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_new_100  !<
+     real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_n2_100   !<
+     real, ALLOCATABLE, dimension(:,:)  ::  jzloss_n_100     !<
+     real, ALLOCATABLE, dimension(:,:)  ::  jaggloss_n_100   !<
+     real, ALLOCATABLE, dimension(:,:)  ::  jvirloss_n_100   !<
+     real, ALLOCATABLE, dimension(:,:)  ::  jmortloss_n_100  !<
+     real, ALLOCATABLE, dimension(:,:)  ::  jexuloss_n_100   !<
+     real, ALLOCATABLE, dimension(:,:)  ::  f_n_100          !<
+     real, ALLOCATABLE, dimension(:,:)  ::  juptake_fe_100   !<
+     real, ALLOCATABLE, dimension(:,:)  ::  juptake_po4_100  !<
+     real, ALLOCATABLE, dimension(:,:)  ::  juptake_sio4_100 !<
+     real, ALLOCATABLE, dimension(:,:)  ::  nlim_bw_100      !<
+     real, ALLOCATABLE, dimension(:,:)  ::  plim_bw_100      !<
+     real, ALLOCATABLE, dimension(:,:)  ::  def_fe_bw_100    !<
+     real, ALLOCATABLE, dimension(:,:)  ::  irrlim_bw_100    !<
+     real, ALLOCATABLE, dimension(:,:)  ::  fn_btm           !<
+     real, ALLOCATABLE, dimension(:,:)  ::  ffe_btm          !< 
+     real, ALLOCATABLE, dimension(:,:)  ::  fp_btm           !<
+     real, ALLOCATABLE, dimension(:,:)  ::  fsi_btm          !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  P_C_max        !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  alpha          !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  bresp          !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  def_fe         !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  def_p          !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  f_fe           !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  f_n            !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  f_p            !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  felim          !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  irrlim         !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jzloss_fe      !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jzloss_n       !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jzloss_p       !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jzloss_sio2    !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jaggloss_fe    !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jaggloss_n     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jaggloss_p     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jaggloss_sio2  !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  stress_fac     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jvirloss_fe    !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jvirloss_n     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jvirloss_p     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jvirloss_sio2  !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jmortloss_fe   !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jmortloss_n    !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jmortloss_p    !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jmortloss_sio2 !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jexuloss_fe    !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jexuloss_n     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jexuloss_p     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jhploss_fe     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jhploss_n      !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jhploss_p      !< 
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jhploss_sio2   !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  juptake_n2     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  juptake_fe     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  juptake_nh4    !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  juptake_no3    !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  juptake_po4    !< 
+     real, ALLOCATABLE, dimension(:,:,:)  ::  juptake_sio4   !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  uptake_p_2_n   !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jprod_n        !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  liebig_lim     !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  mu             !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  f_mu_mem       !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  mu_mix         !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  nh4lim         !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  no3lim         !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  po4lim         !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  o2lim          !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  q_fe_2_n       !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  q_p_2_n        !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  silim          !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  q_si_2_n       !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  theta          !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  chl            !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  vmove          !<
+     integer ::  id_P_C_max      = -1
+     integer ::  id_alpha        = -1
+     integer ::  id_bresp        = -1
+     integer ::  id_def_fe       = -1
+     integer ::  id_def_p        = -1
+     integer ::  id_felim        = -1
+     integer ::  id_irrlim       = -1
+     integer ::  id_jzloss_fe    = -1
+     integer ::  id_jzloss_n     = -1
+     integer ::  id_jzloss_p     = -1
+     integer ::  id_jzloss_sio2  = -1
+     integer ::  id_jaggloss_fe  = -1
+     integer ::  id_jaggloss_n   = -1
+     integer ::  id_jaggloss_p   = -1
+     integer ::  id_jaggloss_sio2= -1
+     integer ::  id_stress_fac   = -1
+     integer ::  id_jvirloss_fe  = -1
+     integer ::  id_jvirloss_n   = -1
+     integer ::  id_jvirloss_p   = -1
+     integer ::  id_jvirloss_sio2= -1
+     integer ::  id_jmortloss_fe  = -1
+     integer ::  id_jmortloss_n   = -1
+     integer ::  id_jmortloss_p   = -1
+     integer ::  id_jmortloss_sio2= -1
+     integer ::  id_jexuloss_n   = -1
+     integer ::  id_jexuloss_p   = -1
+     integer ::  id_jexuloss_fe  = -1
+     integer ::  id_jhploss_fe   = -1
+     integer ::  id_jhploss_n    = -1
+     integer ::  id_jhploss_p    = -1
+     integer ::  id_jhploss_sio2 = -1
+     integer ::  id_juptake_n2   = -1
+     integer ::  id_juptake_fe   = -1
+     integer ::  id_juptake_nh4  = -1
+     integer ::  id_juptake_no3  = -1
+     integer ::  id_juptake_po4  = -1
+     integer ::  id_juptake_sio4 = -1
+     integer ::  id_jprod_n      = -1
+     integer ::  id_liebig_lim   = -1
+     integer ::  id_mu           = -1
+     integer ::  id_f_mu_mem     = -1
+     integer ::  id_mu_mix       = -1
+     integer ::  id_nh4lim       = -1
+     integer ::  id_no3lim       = -1
+     integer ::  id_po4lim       = -1
+     integer ::  id_o2lim        = -1
+     integer ::  id_q_fe_2_n     = -1
+     integer ::  id_q_p_2_n      = -1
+     integer ::  id_silim        = -1
+     integer ::  id_q_si_2_n     = -1
+     integer ::  id_theta        = -1
+     integer ::  id_chl          = -1
+     integer ::  id_vmove        = -1
+     integer ::  id_jprod_n_100  = -1
+     integer ::  id_jprod_n_new_100  = -1
+     integer ::  id_jprod_n_n2_100 = -1
+     integer ::  id_jzloss_n_100     = -1
+     integer ::  id_jaggloss_n_100   = -1
+     integer ::  id_jvirloss_n_100   = -1
+     integer ::  id_jmortloss_n_100  = -1
+     integer ::  id_jexuloss_n_100   = -1
+     integer ::  id_f_n_100          = -1
+     integer ::  id_sfc_f_n          = -1
+     integer ::  id_sfc_chl          = -1
+     integer ::  id_sfc_def_fe       = -1
+     integer ::  id_sfc_felim        = -1
+     integer ::  id_sfc_q_fe_2_n     = -1
+     integer ::  id_sfc_q_p_2_n      = -1
+     integer ::  id_sfc_nh4lim       = -1
+     integer ::  id_sfc_no3lim       = -1
+     integer ::  id_sfc_po4lim       = -1
+     integer ::  id_sfc_irrlim       = -1
+     integer ::  id_sfc_theta        = -1
+     integer ::  id_sfc_mu           = -1
+     integer ::  id_fn_btm           = -1
+     integer ::  id_fp_btm           = -1
+     integer ::  id_ffe_btm          = -1
+     integer ::  id_fsi_btm          = -1
   end type phytoplankton
 
   !> zooplankton data type
@@ -522,6 +520,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
     integer ::  id_f_n_100        = -1 !< ID associated with diagnostics for zooplankton nitrogen biomass in upper 100m
   end type zooplankton
 
+  !> bacteria data type
   type bacteria
     real ::  mu_max           !< maximum bacterial growth rate (sec-1)
     real ::  k_ldon           !< half-sat for nitrogen-limited growth (mmoles N m-3)
