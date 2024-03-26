@@ -424,7 +424,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
 
   !> zooplankton data type
   type zooplankton
-    real imax               !< maximum ingestion rate (sec-1)
+    real imax              !< maximum ingestion rate (sec-1)
     real ki                !< half-sat for ingestion (moles N m-3)
     real gge_max           !< max gross growth efficiciency (approached as i >> bresp, dimensionless)
     real nswitch           !< switching parameter (dimensionless)
@@ -451,90 +451,87 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
     real ipa_lgz           !< innate prey availability of x-large zooplankton
     real ipa_det           !< innate prey availability of detritus
     real ipa_bact          !< innate prey availability for bacteria
-    real, ALLOCATABLE, dimension(:,:)  :: &
-          jprod_n_100,      &
-          jingest_n_100,    &
-          jzloss_n_100,     &
-          jhploss_n_100,    &
-          jprod_ndet_100,   &
-          jprod_don_100,    &
-          jremin_n_100,     &
-          f_n_100
-    real, ALLOCATABLE, dimension(:,:,:) ::      f_n          !< zooplankton biomass
-    real, ALLOCATABLE, dimension(:,:,:) ::      jzloss_n     !< Losses of n due to consumption by other zooplankton groups
-    real, ALLOCATABLE, dimension(:,:,:) ::      jzloss_p     !< Losses of p due to consumption by other zooplankton groups
-    real, ALLOCATABLE, dimension(:,:,:) ::      jhploss_n    !< Losses of n due to consumption by unresolved higher preds
-    real, ALLOCATABLE, dimension(:,:,:) ::      jhploss_p    !< Losses of p due to consumption by unresolved higher preds
-    real, ALLOCATABLE, dimension(:,:,:) ::      jingest_n    !< Total ingestion of n
-    real, ALLOCATABLE, dimension(:,:,:) ::      jingest_p    !< Total ingestion of p
-    real, ALLOCATABLE, dimension(:,:,:) ::      jingest_sio2 !< Total ingestion of silicate
-    real, ALLOCATABLE, dimension(:,:,:) ::      jingest_fe   !< Total ingestion of iron
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_ndet   !< production of nitrogen detritus by zooplankton group
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_pdet   !< production of phosphorous detritus by zooplankton group
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_ldon   !< production of labile dissolved organic N by zooplankton group
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_ldop   !< production of labile dissolved organic P by zooplankton group
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_srdon  !< production of semi-refractory dissolved organic N by zooplankton group
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_srdop  !< production of semi-refractory dissolved organic P by zooplankton group
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_sldon  !< production of semi-labile dissolved organic N by zooplankton group
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_sldop  !< production of semi-labile dissolved organic P by zooplankton group
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_fed    !< production of dissolved iron
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_fedet  !< production of iron detritus
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_sidet  !< production of silica detritus
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_sio4   !< production of silicate via rapid dissolution at surface
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_po4    !< phosphate production by zooplankton
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_nh4    !< ammonia production by zooplankton
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n      !< zooplankton production
-    real, ALLOCATABLE, dimension(:,:,:) ::      o2lim        !< oxygen limitation of zooplankton activity
-    real, ALLOCATABLE, dimension(:,:,:) ::      temp_lim     !< Temperature limitation
-    real, ALLOCATABLE, dimension(:,:,:) ::      vmove        !< Vertical movement
-    integer ::   &
-          id_jzloss_n       = -1, &
-          id_jzloss_p       = -1, &
-          id_jhploss_n      = -1, &
-          id_jhploss_p      = -1, &
-          id_jingest_n      = -1, &
-          id_jingest_p      = -1, &
-          id_jingest_sio2   = -1, &
-          id_jingest_fe     = -1, &
-          id_jprod_ndet     = -1, &
-          id_jprod_pdet     = -1, &
-          id_jprod_ldon     = -1, &
-          id_jprod_ldop     = -1, &
-          id_jprod_srdon    = -1, &
-          id_jprod_srdop    = -1, &
-          id_jprod_sldon    = -1, &
-          id_jprod_sldop    = -1, &
-          id_jprod_fed      = -1, &
-          id_jprod_fedet    = -1, &
-          id_jprod_sidet    = -1, &
-          id_jprod_sio4     = -1, &
-          id_jprod_po4      = -1, &
-          id_jprod_nh4      = -1, &
-          id_jprod_n        = -1, &
-          id_o2lim          = -1, &
-          id_temp_lim       = -1, &
-          id_vmove          = -1, &
-          id_jprod_n_100    = -1, &
-          id_jingest_n_100  = -1, &
-          id_jzloss_n_100   = -1, &
-          id_jhploss_n_100  = -1, &
-          id_jprod_ndet_100 = -1, &
-          id_jprod_don_100  = -1, &
-          id_jremin_n_100   = -1, &
-          id_f_n_100        = -1
+    real, ALLOCATABLE, dimension(:,:)  ::   jprod_n_100     !< zooplankton nitrogen prod. integral in upper 100m 
+    real, ALLOCATABLE, dimension(:,:)  ::   jingest_n_100   !< zooplankton nitrogen ingestion integral in upper 100m  
+    real, ALLOCATABLE, dimension(:,:)  ::   jzloss_n_100    !< zooplankton nitrogen loss to zooplankton integral in upper 100m  
+    real, ALLOCATABLE, dimension(:,:)  ::   jhploss_n_100   !< zooplankton nitrogen loss to higher preds. integral in upper 100m 
+    real, ALLOCATABLE, dimension(:,:)  ::   jprod_ndet_100  !< zooplankton nitrogen detritus prod. integral in upper 100m 
+    real, ALLOCATABLE, dimension(:,:)  ::   jprod_don_100   !< zooplankton dissolved org. nitrogen prod. integral in upper 100m
+    real, ALLOCATABLE, dimension(:,:)  ::   jremin_n_100    !< zooplankton nitrogen remineralization integral in upper 100m 
+    real, ALLOCATABLE, dimension(:,:)  ::   f_n_100         !< zooplankton nitrogen biomass in upper 100m
+    real, ALLOCATABLE, dimension(:,:,:) ::  f_n          !< zooplankton biomass
+    real, ALLOCATABLE, dimension(:,:,:) ::  jzloss_n     !< Losses of n due to consumption by other zooplankton groups
+    real, ALLOCATABLE, dimension(:,:,:) ::  jzloss_p     !< Losses of p due to consumption by other zooplankton groups
+    real, ALLOCATABLE, dimension(:,:,:) ::  jhploss_n    !< Losses of n due to consumption by unresolved higher preds
+    real, ALLOCATABLE, dimension(:,:,:) ::  jhploss_p    !< Losses of p due to consumption by unresolved higher preds
+    real, ALLOCATABLE, dimension(:,:,:) ::  jingest_n    !< Total ingestion of n
+    real, ALLOCATABLE, dimension(:,:,:) ::  jingest_p    !< Total ingestion of p
+    real, ALLOCATABLE, dimension(:,:,:) ::  jingest_sio2 !< Total ingestion of silicate
+    real, ALLOCATABLE, dimension(:,:,:) ::  jingest_fe   !< Total ingestion of iron
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_ndet   !< production of nitrogen detritus by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_pdet   !< production of phosphorous detritus by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_ldon   !< production of labile dissolved organic N by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_ldop   !< production of labile dissolved organic P by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_srdon  !< production of semi-refractory dissolved organic N by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_srdop  !< production of semi-refractory dissolved organic P by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_sldon  !< production of semi-labile dissolved organic N by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_sldop  !< production of semi-labile dissolved organic P by zooplankton group
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_fed    !< production of dissolved iron
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_fedet  !< production of iron detritus
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_sidet  !< production of silica detritus
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_sio4   !< production of silicate via rapid dissolution at surface
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_po4    !< phosphate production by zooplankton
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_nh4    !< ammonia production by zooplankton
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_n      !< zooplankton production
+    real, ALLOCATABLE, dimension(:,:,:) ::  o2lim        !< oxygen limitation of zooplankton activity
+    real, ALLOCATABLE, dimension(:,:,:) ::  temp_lim     !< Temperature limitation
+    real, ALLOCATABLE, dimension(:,:,:) ::  vmove        !< Vertical movement
+    integer ::  id_jzloss_n       = -1 !< ID associated with diagnostics for losses of n due to consumption by other zooplankton groups
+    integer ::  id_jzloss_p       = -1 !< ID associated with diagnostics for losses of p due to consumption by other zooplankton groups
+    integer ::  id_jhploss_n      = -1 !< ID associated with diagnostics for losses of n due to consumption by unresolved higher preds 
+    integer ::  id_jhploss_p      = -1 !< ID associated with diagnostics for losses of p due to consumption by unresolved higher preds
+    integer ::  id_jingest_n      = -1 !< ID associated with diagnostics for total ingestion of n
+    integer ::  id_jingest_p      = -1 !< ID associated with diagnostics for total ingestion of p
+    integer ::  id_jingest_sio2   = -1 !< ID associated with diagnostics for total ingestion of silicate
+    integer ::  id_jingest_fe     = -1 !< ID associated with diagnostics for total ingestion of iron
+    integer ::  id_jprod_ndet     = -1 !< ID associated with diagnostics for production of nitrogen detritus by zooplankton group
+    integer ::  id_jprod_pdet     = -1 !< ID associated with diagnostics for production of phosphorous detritus by zooplankton group
+    integer ::  id_jprod_ldon     = -1 !< ID associated with diagnostics for production of labile dissolved organic N by zooplankton group
+    integer ::  id_jprod_ldop     = -1 !< ID associated with diagnostics for production of labile dissolved organic P by zooplankton group
+    integer ::  id_jprod_srdon    = -1 !< ID associated with diagnostics for production of semi-refractory dissolved organic N by zooplankton group
+    integer ::  id_jprod_srdop    = -1 !< ID associated with diagnostics for production of semi-refractory dissolved organic P by zooplankton group
+    integer ::  id_jprod_sldon    = -1 !< ID associated with diagnostics for production of semi-labile dissolved organic N by zooplankton group
+    integer ::  id_jprod_sldop    = -1 !< ID associated with diagnostics for production of semi-labile dissolved organic P by zooplankton group
+    integer ::  id_jprod_fed      = -1 !< ID associated with diagnostics for production of dissolved iron
+    integer ::  id_jprod_fedet    = -1 !< ID associated with diagnostics for production of iron detritus
+    integer ::  id_jprod_sidet    = -1 !< ID associated with diagnostics for production of silica detritus
+    integer ::  id_jprod_sio4     = -1 !< ID associated with diagnostics for production of silicate via rapid dissolution at surface
+    integer ::  id_jprod_po4      = -1 !< ID associated with diagnostics for phosphate production by zooplankton
+    integer ::  id_jprod_nh4      = -1 !< ID associated with diagnostics for ammonia production by zooplankton
+    integer ::  id_jprod_n        = -1 !< ID associated with diagnostics for zooplankton production
+    integer ::  id_o2lim          = -1 !< ID associated with diagnostics for oxygen limitation of zooplankton activity
+    integer ::  id_temp_lim       = -1 !< ID associated with diagnostics for temperature limitation
+    integer ::  id_vmove          = -1 !< ID associated with diagnostics for vertical movement
+    integer ::  id_jprod_n_100    = -1 !< ID associated with diagnostics for zooplankton nitrogen prod. integral in upper 100m
+    integer ::  id_jingest_n_100  = -1 !< ID associated with diagnostics for zooplankton nitrogen ingestion integral in upper 100m
+    integer ::  id_jzloss_n_100   = -1 !< ID associated with diagnostics for zooplankton nitrogen loss to zooplankton integral in upper 100m
+    integer ::  id_jhploss_n_100  = -1 !< ID associated with diagnostics for zooplankton nitrogen loss to higher preds. integral in upper 100m
+    integer ::  id_jprod_ndet_100 = -1 !< ID associated with diagnostics for zooplankton nitrogen detritus prod. integral in upper 100m
+    integer ::  id_jprod_don_100  = -1 !< ID associated with diagnostics for zooplankton dissolved org. nitrogen prod. integral in upper 100m
+    integer ::  id_jremin_n_100   = -1 !< ID associated with diagnostics for zooplankton nitrogen remineralization integral in upper 100m
+    integer ::  id_f_n_100        = -1 !< ID associated with diagnostics for zooplankton nitrogen biomass in upper 100m
   end type zooplankton
 
   type bacteria
-    real ::  &
-          mu_max,           & ! maximum bacterial growth rate (sec-1)
-          k_ldon,           & ! half-sat for nitrogen-limited growth (mmoles N m-3)
-          gge_max,          & ! max gross growth efficiciency (dimensionless)
-          amx_ge,           & ! growth efficiency due to anammox reaction (dimensionless)
-          nitrif_ge,        & ! growth efficiency of nitrifying bacteria (dimensionless)
-          bresp,            & ! basal respiration rate (sec-1)
-          ktemp,            & ! temperature dependence of bacterial rates (C-1)
-          vir,              & ! virus-driven loss rate for bacteria (sec-1 mmole N m-3)
-          q_p_2_n             ! p:n ratio for bacteria
+    real ::  mu_max           !< maximum bacterial growth rate (sec-1)
+    real ::  k_ldon           !< half-sat for nitrogen-limited growth (mmoles N m-3)
+    real ::  gge_max          !< max gross growth efficiciency (dimensionless)
+    real ::  amx_ge           !< growth efficiency due to anammox reaction (dimensionless)
+    real ::  nitrif_ge        !< growth efficiency of nitrifying bacteria (dimensionless)
+    real ::  bresp            !< basal respiration rate (sec-1)
+    real ::  ktemp            !< temperature dependence of bacterial rates (C-1)
+    real ::  vir              !< virus-driven loss rate for bacteria (sec-1 mmole N m-3)
+    real ::  q_p_2_n          !< p:n ratio for bacteria
     real, ALLOCATABLE, dimension(:,:)  :: &
           jprod_n_100,      &
           jzloss_n_100,     &
@@ -542,29 +539,28 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
           jremin_n_100,     &
           juptake_ldon_100, &
           f_n_100
-    real, ALLOCATABLE, dimension(:,:,:) :: &
-          f_n,              & ! bacteria biomass
-          jzloss_n,         & ! Losses of n due to consumption by zooplankton
-          jzloss_p,         & ! Losses of p due to consumption by zooplankton
-          jhploss_n,        & ! Losses of n due to consumption by unresolved higher preds
-          jhploss_p,        & ! Losses of p due to consumption by unresolved higher preds
-          jvirloss_n  ,     & ! nitrogen losses via viruses
-          jvirloss_p  ,     & ! phosphorous losses via viruses
-          juptake_ldon,     & ! Total uptake of ldon
-          juptake_ldop,     & ! Total uptake of sldon
-          juptake_po4,      & ! phosphate uptake with anammox/nitrification
-          jprod_nh4,        & ! production of ammonia bacteria
-          jprod_po4,        & ! production of phosphate by bacteria
-          jprod_n,          & ! total free-living bacterial production
-          jprod_n_het,      & ! heterotrophic bacteria production
-          jprod_n_amx,      & ! anammox bacteria production
-          jprod_n_nitrif,   & ! nitrifying bacteria production
-          mu_h,             & ! growth rate of heterotrophic bacteria
-          mu_cstar,         & ! biomass turnover due to chemosynthesis
-          bhet,             & ! heterotrophic bacteria biomass
-          ldonlim,          & ! limitation due to organic substrate
-          o2lim,            & ! limitation due to oxygen
-          temp_lim            ! Temperature limitation
+    real, ALLOCATABLE, dimension(:,:,:) ::      f_n              !< bacteria biomass
+    real, ALLOCATABLE, dimension(:,:,:) ::      jzloss_n         !< Losses of n due to consumption by zooplankton
+    real, ALLOCATABLE, dimension(:,:,:) ::      jzloss_p         !< Losses of p due to consumption by zooplankton
+    real, ALLOCATABLE, dimension(:,:,:) ::      jhploss_n        !< Losses of n due to consumption by unresolved higher preds
+    real, ALLOCATABLE, dimension(:,:,:) ::      jhploss_p        !< Losses of p due to consumption by unresolved higher preds
+    real, ALLOCATABLE, dimension(:,:,:) ::      jvirloss_n       !< nitrogen losses via viruses
+    real, ALLOCATABLE, dimension(:,:,:) ::      jvirloss_p       !< phosphorous losses via viruses
+    real, ALLOCATABLE, dimension(:,:,:) ::      juptake_ldon     !< Total uptake of ldon
+    real, ALLOCATABLE, dimension(:,:,:) ::      juptake_ldop     !< Total uptake of sldon
+    real, ALLOCATABLE, dimension(:,:,:) ::      juptake_po4      !< phosphate uptake with anammox/nitrification
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_nh4        !< production of ammonia bacteria
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_po4        !< production of phosphate by bacteria
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n          !< total free-living bacterial production
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n_het      !< heterotrophic bacteria production
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n_amx      !< anammox bacteria production
+    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n_nitrif   !< nitrifying bacteria production
+    real, ALLOCATABLE, dimension(:,:,:) ::      mu_h             !< growth rate of heterotrophic bacteria
+    real, ALLOCATABLE, dimension(:,:,:) ::      mu_cstar         !< biomass turnover due to chemosynthesis
+    real, ALLOCATABLE, dimension(:,:,:) ::      bhet             !< heterotrophic bacteria biomass
+    real, ALLOCATABLE, dimension(:,:,:) ::      ldonlim          !< limitation due to organic substrate
+    real, ALLOCATABLE, dimension(:,:,:) ::      o2lim            !< limitation due to oxygen
+    real, ALLOCATABLE, dimension(:,:,:) ::      temp_lim         !< Temperature limitation
     integer ::              &
           id_jzloss_n       = -1, &
           id_jzloss_p       = -1, &
@@ -595,7 +591,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
           id_f_n_100
   end type bacteria
 
-  integer, parameter :: NUM_PHYTO  = 4
+  integer, parameter :: NUM_PHYTO  = 4 !< total number of phytoplankton groups
   !
   ! Array allocations and flux calculations assume that phyto(1) is the
   ! only phytoplankton group cabable of nitrogen uptake by N2 fixation while phyto(2:NUM_PHYTO)
