@@ -240,12 +240,12 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
      real ::  alpha_hl          !< Chlorophyll a-specific initial slope of the photosynthesis-irradiance curve high level (g C g Chl-1 sec-1 (W m-2)-1)
      real ::  alpha_ll          !< Chlorophyll a-specific initial slope of the photosynthesis-irradiance curve low level (g C g Chl-1 sec-1 (W m-2)-1)
      real ::  fe_2_n_max        !< Maximum iron to nitrogen ratio (mol Fe mol N-1)
-     real ::  p_2_n_static      !< Fixed P:N in phytoplankton
-     real ::  p_2_n_min         !<
-     real ::  p_2_n_slope       !<
-     real ::  p_2_n_max         !<
-     real ::  k_fe_2_n          !<
-     real ::  k_fed             !<
+     real ::  p_2_n_static      !< Fixed P:N ratio in phytoplankton (mol P mol N-1)
+     real ::  p_2_n_min         !< Minimum P:N ratio (mol P mol N-1)
+     real ::  p_2_n_slope       !< P:N slope (mol P mol N-1 mol P-1 kg)
+     real ::  p_2_n_max         !< Maximum P:N ratio (mol P mol N-1)
+     real ::  k_fe_2_n          !< Half-saturation iron to nitrogen for phytoplankton growth (mol Fe mol N-1)
+     real ::  k_fed             !< Half-saturation constant for iron uptake (mol Fed kg-1)
      real ::  k_nh4             !<
      real ::  k_no3             !<
      real ::  k_po4             !<
@@ -608,6 +608,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
 
   integer, parameter :: NUM_PREY = 9 !< total numbers of prey groups
 
+  !> data type for other variables used in generic_cobalt module 
   type generic_COBALT_type
 
      logical  ::       &
@@ -1718,22 +1719,22 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
 !==============================================================================================================
   end type generic_COBALT_type
 
-  !An auxiliary type for storing varible names
+  !> An auxiliary type for storing varible names
   type, public :: vardesc
-     character(len=fm_string_len) :: name     ! The variable name in a NetCDF file.
-     character(len=fm_string_len) :: longname ! The long name of that variable.
-     character(len=1)  :: hor_grid ! The hor. grid:  u, v, h, q, or 1.
-     character(len=1)  :: z_grid   ! The vert. grid:  L, i, or 1.
-     character(len=1)  :: t_grid   ! The time description: s, a, m, or 1.
-     character(len=fm_string_len) :: units    ! The dimensions of the variable.
-     character(len=1)  :: mem_size ! The size in memory: d or f.
+     character(len=fm_string_len) :: name     !< The variable name in a NetCDF file.
+     character(len=fm_string_len) :: longname !< The long name of that variable.
+     character(len=1)  :: hor_grid !< The hor. grid:  u, v, h, q, or 1.
+     character(len=1)  :: z_grid   !< The vert. grid:  L, i, or 1.
+     character(len=1)  :: t_grid   !< The time description: s, a, m, or 1.
+     character(len=fm_string_len) :: units  !< The dimensions of the variable.
+     character(len=1)  :: mem_size !< The size in memory: d or f.
   end type vardesc
 
   type(generic_COBALT_type) :: cobalt
 
   type(CO2_dope_vector) :: CO2_dope_vec
 
-  ! identification numbers for mpp clocks
+  !> identification numbers for mpp clocks
   integer :: id_clock_carbon_calculations
   integer :: id_clock_phyto_growth
   integer :: id_clock_bacteria_growth
