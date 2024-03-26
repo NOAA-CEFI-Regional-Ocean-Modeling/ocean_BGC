@@ -532,13 +532,12 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
     real ::  ktemp            !< temperature dependence of bacterial rates (C-1)
     real ::  vir              !< virus-driven loss rate for bacteria (sec-1 mmole N m-3)
     real ::  q_p_2_n          !< p:n ratio for bacteria
-    real, ALLOCATABLE, dimension(:,:)  :: &
-          jprod_n_100,      &
-          jzloss_n_100,     &
-          jvirloss_n_100,   &
-          jremin_n_100,     &
-          juptake_ldon_100, &
-          f_n_100
+    real, ALLOCATABLE, dimension(:,:)  ::       jprod_n_100      !< Bacteria nitrogen prod. integral in upper 100m 
+    real, ALLOCATABLE, dimension(:,:)  ::       jzloss_n_100     !< Bacteria nitrogen loss to zooplankton integral in upper 100m
+    real, ALLOCATABLE, dimension(:,:)  ::       jvirloss_n_100   !< Bacteria nitrogen loss to viruses integral in upper 100m
+    real, ALLOCATABLE, dimension(:,:)  ::       jremin_n_100     !< Bacteria nitrogen remineralization integral in upper 100m
+    real, ALLOCATABLE, dimension(:,:)  ::       juptake_ldon_100 !< Bacterial uptake of labile dissolved org. nitrogen in upper 100m
+    real, ALLOCATABLE, dimension(:,:)  ::       f_n_100          !< Bacterial nitrogen biomass in upper 100m
     real, ALLOCATABLE, dimension(:,:,:) ::      f_n              !< bacteria biomass
     real, ALLOCATABLE, dimension(:,:,:) ::      jzloss_n         !< Losses of n due to consumption by zooplankton
     real, ALLOCATABLE, dimension(:,:,:) ::      jzloss_p         !< Losses of p due to consumption by zooplankton
@@ -561,34 +560,33 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
     real, ALLOCATABLE, dimension(:,:,:) ::      ldonlim          !< limitation due to organic substrate
     real, ALLOCATABLE, dimension(:,:,:) ::      o2lim            !< limitation due to oxygen
     real, ALLOCATABLE, dimension(:,:,:) ::      temp_lim         !< Temperature limitation
-    integer ::              &
-          id_jzloss_n       = -1, &
-          id_jzloss_p       = -1, &
-          id_jhploss_n      = -1, &
-          id_jhploss_p      = -1, &
-          id_jvirloss_n     = -1, &
-          id_jvirloss_p     = -1, &
-          id_juptake_ldon   = -1, &
-          id_juptake_ldop   = -1, &
-          id_juptake_po4    = -1, &
-          id_jprod_nh4      = -1, &
-          id_jprod_po4      = -1, &
-          id_jprod_n        = -1, &
-          id_jprod_n_het    = -1, &
-          id_jprod_n_amx    = -1, &
-          id_jprod_n_nitrif = -1, &
-          id_mu_h           = -1, &
-          id_mu_cstar       = -1, &
-          id_bhet           = -1, &
-          id_temp_lim       = -1, &
-          id_o2lim          = -1, &
-          id_ldonlim        = -1, &
-          id_jprod_n_100    = -1, &
-          id_jzloss_n_100   = -1, &
-          id_jvirloss_n_100 = -1, &
-          id_jremin_n_100   = -1, &
-          id_juptake_ldon_100 = -1, &
-          id_f_n_100
+    integer ::  id_jzloss_n         = -1  !< ID associated with diagnostics for losses of n due to consumption by zooplankton
+    integer ::  id_jzloss_p         = -1  !< ID associated with diagnostics for losses of p due to consumption by zooplankton
+    integer ::  id_jhploss_n        = -1  !< ID associated with diagnostics for losses of n due to consumption by unresolved higher preds
+    integer ::  id_jhploss_p        = -1  !< ID associated with diagnostics for losses of p due to consumption by unresolved higher preds
+    integer ::  id_jvirloss_n       = -1  !< ID associated with diagnostics for nitrogen losses via viruses
+    integer ::  id_jvirloss_p       = -1  !< ID associated with diagnostics for phosphorous losses via viruses
+    integer ::  id_juptake_ldon     = -1  !< ID associated with diagnostics for total uptake of ldon
+    integer ::  id_juptake_ldop     = -1  !< ID associated with diagnostics for total uptake of sldon
+    integer ::  id_juptake_po4      = -1  !< ID associated with diagnostics for phosphate uptake with anammox/nitrification
+    integer ::  id_jprod_nh4        = -1  !< ID associated with diagnostics for production of ammonia bacteria
+    integer ::  id_jprod_po4        = -1  !< ID associated with diagnostics for production of phosphate by bacteria
+    integer ::  id_jprod_n          = -1  !< ID associated with diagnostics for total free-living bacterial production
+    integer ::  id_jprod_n_het      = -1  !< ID associated with diagnostics for heterotrophic bacteria production
+    integer ::  id_jprod_n_amx      = -1  !< ID associated with diagnostics for anammox bacteria production
+    integer ::  id_jprod_n_nitrif   = -1  !< ID associated with diagnostics for nitrifying bacteria production
+    integer ::  id_mu_h             = -1  !< ID associated with diagnostics for growth rate of heterotrophic bacteria
+    integer ::  id_mu_cstar         = -1  !< ID associated with diagnostics for biomass turnover due to chemosynthesis
+    integer ::  id_bhet             = -1  !< ID associated with diagnostics for heterotrophic bacteria biomass
+    integer ::  id_temp_lim         = -1  !< ID associated with diagnostics for temperature limitation
+    integer ::  id_o2lim            = -1  !< ID associated with diagnostics for limitation due to oxygen
+    integer ::  id_ldonlim          = -1  !< ID associated with diagnostics for limitation due to organic substrate
+    integer ::  id_jprod_n_100      = -1  !< ID associated with diagnostics for bacteria nitrogen prod. integral in upper 100m
+    integer ::  id_jzloss_n_100     = -1  !< ID associated with diagnostics for bacteria nitrogen loss to zooplankton integral in upper 100m
+    integer ::  id_jvirloss_n_100   = -1  !< ID associated with diagnostics for bacteria nitrogen loss to viruses integral in upper 100m
+    integer ::  id_jremin_n_100     = -1  !< ID associated with diagnostics for bacteria nitrogen remineralization integral in upper 100m
+    integer ::  id_juptake_ldon_100 = -1  !< ID associated with diagnostics for bacterial uptake of labile dissolved org. nitrogen in upper 100m   
+    integer ::  id_f_n_100          = -1  !< ID associated with diagnostics for bacterial nitrogen biomass in upper 100m
   end type bacteria
 
   integer, parameter :: NUM_PHYTO  = 4 !< total number of phytoplankton groups
@@ -597,19 +595,19 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
   ! only phytoplankton group cabable of nitrogen uptake by N2 fixation while phyto(2:NUM_PHYTO)
   ! are only cabable of nitrgen uptake by NH4 and NO3 uptake
   !
-  integer, parameter :: DIAZO      = 1
-  integer, parameter :: LARGE      = 2
-  integer, parameter :: MEDIUM     = 3
-  integer, parameter :: SMALL      = 4
-  type(phytoplankton), dimension(NUM_PHYTO) :: phyto
+  integer, parameter :: DIAZO      = 1 !< ID for diazotrophs
+  integer, parameter :: LARGE      = 2 !< ID for large phytoplankton
+  integer, parameter :: MEDIUM     = 3 !< ID for medium phytoplankton
+  integer, parameter :: SMALL      = 4 !< ID for small phytoplankton 
+  type(phytoplankton), dimension(NUM_PHYTO) :: phyto !< declare array for phytoplankton groups  
 
   ! define three zooplankton types
-  integer, parameter :: NUM_ZOO = 3
-  type(zooplankton), dimension(NUM_ZOO) :: zoo
+  integer, parameter :: NUM_ZOO = 3 !< total number of zooplankton groups
+  type(zooplankton), dimension(NUM_ZOO) :: zoo !< declare array for zooplankton groups
 
-  type(bacteria), dimension(1) :: bact
+  type(bacteria), dimension(1) :: bact !< declare array for bacteria group
 
-  integer, parameter :: NUM_PREY = 9
+  integer, parameter :: NUM_PREY = 9 !< total numbers of prey groups
 
   type generic_COBALT_type
 
