@@ -246,17 +246,17 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
      real ::  p_2_n_max         !< Maximum P:N ratio (mol P mol N-1)
      real ::  k_fe_2_n          !< Half-saturation iron to nitrogen for phytoplankton growth (mol Fe mol N-1)
      real ::  k_fed             !< Half-saturation constant for iron uptake (mol Fed kg-1)
-     real ::  k_nh4             !<
-     real ::  k_no3             !<
-     real ::  k_po4             !<
-     real ::  k_sio4            !<
-     real ::  P_C_max_hl        !< 
-     real ::  P_C_max_ll        !<
-     real ::  si_2_n_max        !<
-     real ::  si_2_n_static     !<
-     real ::  thetamax          !<
-     real ::  bresp_frac_mixed  !<
-     real ::  bresp_frac_strat  !<
+     real ::  k_nh4             !< Half-saturation constant for ammonium limitation (mol NH4 kg-1)
+     real ::  k_no3             !< Half-saturation constant for nitrate limitation (mol NO3 kg-1)
+     real ::  k_po4             !< Half-saturation constant for phosphate limitation (mol PO4 kg-1)
+     real ::  k_sio4            !< Half-saturation constant for silicate limitation (mol SiO4 kg-1)
+     real ::  P_C_max_hl        !< Light-saturated carbon-specific photosynthesis rate high level (s-1)
+     real ::  P_C_max_ll        !< Light-saturated carbon-specific photosynthesis rate low level  (s-1)
+     real ::  si_2_n_max        !< Maximum silica to nitrogen ratio (mol Si mol N-1)
+     real ::  si_2_n_static     !< Fixed SI:N ratio in phytoplankton (mol Si mol N-1)
+     real ::  thetamax          !< Maximum chlorophyll to carbon ratio (g Chl g C-1)
+     real ::  bresp_frac_mixed  !< basal respiration rate in mixed layer
+     real ::  bresp_frac_strat  !< basal respiration rate outside mixed layer
      real ::  sink_max          !<
      real ::  agg               !< 
      real ::  frac_mu_stress    !<
