@@ -255,14 +255,14 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
      real ::  si_2_n_max        !< Maximum silica to nitrogen ratio (mol Si mol N-1)
      real ::  si_2_n_static     !< Fixed SI:N ratio in phytoplankton (mol Si mol N-1)
      real ::  thetamax          !< Maximum chlorophyll to carbon ratio (g Chl g C-1)
-     real ::  bresp_frac_mixed  !< basal respiration rate in mixed layer
-     real ::  bresp_frac_strat  !< basal respiration rate outside mixed layer
-     real ::  sink_max          !<
-     real ::  agg               !< 
-     real ::  frac_mu_stress    !<
-     real ::  vir               !<
-     real ::  mort              !<
-     real ::  exu               !<
+     real ::  bresp_frac_mixed  !< basal respiration rate in mixed layer (dimensionless)
+     real ::  bresp_frac_strat  !< basal respiration rate outside mixed layer (dimensionless)
+     real ::  sink_max          !< sinking rate (m sec-1)
+     real ::  agg               !< aggregation loss coefficient (s-1 (mole N kg)-1) 
+     real ::  frac_mu_stress    !< fraction pf stress-driven loss (dimensionless)
+     real ::  vir               !< Viral lysis loss coefficient (s-1 (mole N kg)-1)
+     real ::  mort              !< mortality loss coefficient (s-1)
+     real ::  exu               !< Maximum ingestion rate (dimensionless (fraction of NPP))
      real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_100      !<
      real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_new_100  !<
      real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_n2_100   !<
