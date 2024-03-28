@@ -28,7 +28,7 @@ import sys
 
 # Parse and check input
 
-if len(sys.argv) < 1:
+if len(sys.argv) < 2:
     formatopt = "original"
 else:
     formatopt = sys.argv[1]
@@ -52,7 +52,7 @@ primary = ["name", "longname", "hor_grid", "z_grid", "t_grid", "units", "mem_siz
 
 # Open file for writing
 
-f = open("generic_COBALT_register_diag_body.f90", "w")
+f = open("generic_COBALT_register_diag_body.inc", "w")
 
 # Reformat each diagnostic into the vardesc and register_diag_field calls
 
@@ -84,7 +84,7 @@ for d in diag:
         
         # This format eliminates the creation of an intermediate vardesc variable 
     
-        mystr = ( "     {var_to_register} = register_diag_field(package_name, {name} {axes}, &\n"
+        mystr = ( "     {var_to_register} = register_diag_field(package_name, {name}, {axes}, &\n"
                  "          init_time, {longname}, {units}"
                 ).format(**d)
         mystr = mystr + nvstr + ")\n"

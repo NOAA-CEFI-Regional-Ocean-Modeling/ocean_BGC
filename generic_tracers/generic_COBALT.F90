@@ -1898,7 +1898,7 @@ contains
     ! 64-bit doubles). For most tracers, only the name, longname and units should
     ! be changed.
 
-    include "generic_COBALT_register_diag_body.f90"
+    include "generic_COBALT_register_diag_body.inc"
 
   end subroutine generic_COBALT_register_diag
 
