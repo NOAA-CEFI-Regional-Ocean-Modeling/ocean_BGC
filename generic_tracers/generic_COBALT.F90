@@ -10077,8 +10077,8 @@ contains
 !
 ! Send phytoplankton diagnostic data
 
-    call cobalt_send_diagnostics(model_time,grid_tmask,Temp,rho_dzt,dzt,isc,iec,jsc,jec, &
-            nk,tau,phyto,zoo,bact,cobalt) 
+    call cobalt_send_diagnostics(model_time,grid_tmask,Temp,rho_dzt,dzt, &
+            isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt,do_14c) 
  
 !==============================================================================================================
 

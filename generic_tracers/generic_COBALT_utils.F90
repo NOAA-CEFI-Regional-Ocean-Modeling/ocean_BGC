@@ -1521,12 +1521,12 @@ module COBALT_utils
 
     !> subroutine that handles send_diag calls for COBALT phyto, zoo, and bact      
     subroutine cobalt_send_diagnostics(model_time,grid_tmask,Temp,rho_dzt,dzt,&
-                                    isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt)         
+                                 isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt,do_14c)         
       type(time_type),                           intent(in) :: model_time
       real, dimension(:,:,:),                    pointer :: grid_tmask
-      real, dimension(isc:,jsc:,:),              intent(in) :: Temp
-      real, dimension(isc:,jsc:,:),              intent(in) :: rho_dzt
-      real, dimension(isc:,jsc:,:),              intent(in) :: dzt
+      real, dimension(isc:,jsc:,:),                    intent(in) :: Temp
+      real, dimension(isc:,jsc:,:),                    intent(in) :: rho_dzt
+      real, dimension(isc:,jsc:,:),                    intent(in) :: dzt
       integer,                                   intent(in) :: isc
       integer,                                   intent(in) :: iec
       integer,                                   intent(in) :: jsc
@@ -1537,6 +1537,7 @@ module COBALT_utils
       type(zooplankton), dimension(NUM_ZOO),     intent(in) :: zoo
       type(bacteria), dimension(NUM_BACT),       intent(in) :: bact
       type(generic_COBALT_type),                 intent(inout) :: cobalt
+      logical, optional,                         intent(in) :: do_14c
       !> local variables
       integer :: n
       logical :: used  
@@ -1592,12 +1593,7 @@ module COBALT_utils
             used = g_send_data(phyto(n)%id_juptake_po4, phyto(n)%juptake_po4*rho_dzt,   &
             model_time, rmask = grid_tmask,&
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-            used = g_send_data(phyto(n)%id_juptake_sio4, phyto(n)%juptake_sio4*rho_dzt,   &
-            model_time, rmask = grid_tmask,&
-            is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-            used = g_send_data(phyto(n)%id_juptake_n2, phyto(n)%juptake_n2*rho_dzt,   &
-            model_time, rmask = grid_tmask,&
-            is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+ 
             used = g_send_data(phyto(n)%id_jprod_n, phyto(n)%jprod_n*rho_dzt,   &
             model_time, rmask = grid_tmask,&
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1650,6 +1646,16 @@ module COBALT_utils
             model_time, rmask = grid_tmask,&
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
       enddo
+
+      do n=2,3
+            used = g_send_data(phyto(n)%id_juptake_sio4, phyto(n)%juptake_sio4*rho_dzt,   &
+            model_time, rmask = grid_tmask,&
+            is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+      enddo 
+
+      used = g_send_data(phyto(DIAZO)%id_juptake_n2, phyto(DIAZO)%juptake_n2*rho_dzt,   &
+      model_time, rmask = grid_tmask,&
+      is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
 
     !--------------------------------------------------------------------------------------
     ! Send bacterial diagnostic data
@@ -2152,36 +2158,38 @@ module COBALT_utils
 !
 ! Radiocarbon fields
 !
-       used = g_send_data(cobalt%id_b_di14c,        cobalt%b_di14c,                &
-       model_time, rmask = grid_tmask(:,:,1),                                  &
-       is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_c14_2_n,        cobalt%c14_2_n,                &
-       model_time, rmask = grid_tmask,                                         &
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(cobalt%id_c14o2_csurf,    cobalt%c14o2_csurf,            &
-       model_time, rmask = grid_tmask(:,:,1),                                  &
-       is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_c14o2_alpha,    cobalt%c14o2_alpha,            &
-       model_time, rmask = grid_tmask(:,:,1),                                  &
-       is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_fpo14c,         cobalt%fpo14c,                 &
-       model_time, rmask = grid_tmask,                                         &
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(cobalt%id_j14c_decay_dic, cobalt%j14c_decay_dic*rho_dzt, &
-       model_time, rmask = grid_tmask,                                         &
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(cobalt%id_j14c_decay_doc, cobalt%j14c_decay_doc*rho_dzt, &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(cobalt%id_j14c_reminp,    cobalt%j14c_reminp*rho_dzt,    &
-       model_time, rmask = grid_tmask,                                         &
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(cobalt%id_jdi14c,         cobalt%jdi14c*rho_dzt,         &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(cobalt%id_jdo14c,         cobalt%jdo14c*rho_dzt,         &
-       model_time, rmask = grid_tmask,                                         &
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+       if (do_14c) then
+         used = g_send_data(cobalt%id_b_di14c,        cobalt%b_di14c,                &
+         model_time, rmask = grid_tmask(:,:,1),                                  &
+         is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_c14_2_n,        cobalt%c14_2_n,                &
+         model_time, rmask = grid_tmask,                                         &
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_c14o2_csurf,    cobalt%c14o2_csurf,            &
+         model_time, rmask = grid_tmask(:,:,1),                                  &
+         is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_c14o2_alpha,    cobalt%c14o2_alpha,            &
+         model_time, rmask = grid_tmask(:,:,1),                                  &
+         is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_fpo14c,         cobalt%fpo14c,                 &
+         model_time, rmask = grid_tmask,                                         &
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_j14c_decay_dic, cobalt%j14c_decay_dic*rho_dzt, &
+         model_time, rmask = grid_tmask,                                         &
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_j14c_decay_doc, cobalt%j14c_decay_doc*rho_dzt, &
+         model_time, rmask = grid_tmask,&
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_j14c_reminp,    cobalt%j14c_reminp*rho_dzt,    &
+         model_time, rmask = grid_tmask,                                         &
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_jdi14c,         cobalt%jdi14c*rho_dzt,         &
+         model_time, rmask = grid_tmask,&
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_jdo14c,         cobalt%jdo14c*rho_dzt,         &
+         model_time, rmask = grid_tmask,                                         &
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+       endif
 !
 ! 2D COBALT fields
 !
