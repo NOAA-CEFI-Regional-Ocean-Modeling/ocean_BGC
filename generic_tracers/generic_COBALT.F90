@@ -157,8 +157,8 @@ module generic_COBALT
   use g_tracer_utils, only : g_send_data
   use g_tracer_utils, only : g_tracer_is_prog, g_tracer_vertfill, g_tracer_get_next
 
-  use COBALT_core_module 
-  use COBALT_utils, only : cobalt_send_diagnostics
+  use cobalt_glbl 
+  use cobalt_diag, only : cobalt_send_diagnostics
 
   use FMS_ocmip2_co2calc_mod, only : FMS_ocmip2_co2calc, CO2_dope_vector
 
@@ -184,44 +184,8 @@ module generic_COBALT
 
   !The following variables for using this module
   ! are overwritten by generic_tracer_nml namelist
-  logical, save :: do_generic_COBALT = .false.
-  character(len=10), save :: as_param_cobalt = 'W92'
-
-  real, parameter :: vb_nh3 = 25.
-
-  logical :: do_nh3_diag
-
-! Namelist Options
-
-  character(len=10) ::  co2_calc = 'ocmip2'  ! other option is 'mocsy'
-  logical :: do_14c             = .false.
-  logical :: debug              = .false.
-  logical :: do_nh3_atm_ocean_exchange = .false.
-  ! namelist capabilities for half-sats not used in this run
-  logical :: do_vertfill_pre = .false.
-  real    :: k_nh4_small = 1.e-8
-  real    :: k_nh4_diazo = 1.e-7
-  real    :: k_nh4_large = 5.e-8
-  real    :: k_no3_small = 5.e-7
-  real    :: k_no3_diazo = 5.0e-6
-  real    :: k_no3_large = 2.5e-6
-  real    :: o2_min_nit= 0.01e-6
-  real    :: k_o2_nit  = 3.9e-6
-  real    :: irr_inhibit = 10.
-  real    :: gamma_nitrif= 3.5e6 !month(-1)
-  real    :: k_nh3_nitrif= 3.1e-9 !mol/kg
-  real    :: imbalance_tolerance=1.0e-10 !the tolerance for non-conservation in C,N,P,Sc,Fe
-
-  integer :: scheme_no3_nh4_lim = 2 !1-Frost and Franzen (1992)
-                                    !2-O'Neill
-
-  integer :: scheme_nitrif = 3 !1-default COBALT
-                               !2-update with no temperature dependence
-                               !3-update with temperature dependence
-
-namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange, scheme_nitrif, &
-     k_nh4_small,k_nh4_large,k_nh4_diazo,scheme_no3_nh4_lim,k_no3_small,k_no3_large,k_no3_diazo, &
-     o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,gamma_nitrif,do_vertfill_pre,imbalance_tolerance
+  logical, save :: do_generic_COBALT = .false.       !< Activate the generic_COBALT module if it is set to true.
+  character(len=10), save :: as_param_cobalt = 'W92' !< air-sea flux parameter settings for COBALT
 
   ! Declare cobalt variable types, which contain
   ! the vast majority of all variables used in this module.
@@ -10078,7 +10042,7 @@ contains
 ! Send phytoplankton diagnostic data
 
     call cobalt_send_diagnostics(model_time,grid_tmask,Temp,rho_dzt,dzt, &
-            isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt,do_14c) 
+            isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt) 
  
 !==============================================================================================================
 
