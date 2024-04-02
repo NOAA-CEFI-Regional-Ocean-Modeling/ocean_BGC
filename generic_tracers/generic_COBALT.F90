@@ -7514,20 +7514,23 @@ contains
   !  </IN>
   ! </SUBROUTINE>
   subroutine generic_COBALT_update_from_coupler(tracer_list)
+    ! Declares input pointer to the tracer list 
     type(g_tracer_type), pointer :: tracer_list
-
-    character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_copler'
-
+    ! Defines the name of the subroutine 
+    character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_coupler'
+    ! Declares the pointers for the different tracers: short term flux of alkalinity, wet and dry NO3 deposition. 
     real, dimension(:,:)  ,pointer    :: stf_alk,dry_no3,wet_no3
 
     !
     ! NO3 has deposition, river flux, and negative deposition contribution to alkalinity
     !
-    call g_tracer_get_pointer(tracer_list,'no3','drydep',dry_no3)
-    call g_tracer_get_pointer(tracer_list,'no3','wetdep',wet_no3)
+    call g_tracer_get_pointer(tracer_list,'no3','drydep',dry_no3) !< NO3 dry deposition 
+    call g_tracer_get_pointer(tracer_list,'no3','wetdep',wet_no3) !< NO3 wet deposition 
 
-    call g_tracer_get_pointer(tracer_list,'alk','stf',stf_alk)
+    call g_tracer_get_pointer(tracer_list,'alk','stf',stf_alk)    !< short term alaklainity flux
 
+    ! Updates the short term flux tracer by subtracting the dry and wet deposition of nitrate. 
+    ! Net alkalinity effect of nitrogen reduction/oxidation cycles. 
     stf_alk = stf_alk - dry_no3 - wet_no3 ! update 'tracer%stf' thru pointer
 
     return
