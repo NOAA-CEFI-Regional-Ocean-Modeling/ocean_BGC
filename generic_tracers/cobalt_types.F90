@@ -1,57 +1,60 @@
 !> COBALT_glbl module consists of core parameters and vars 
 !! to be used by generic COBALT related modules
 !<----------------------------------------------------------------
-module cobalt_glbl
+module cobalt_types
   use field_manager_mod, only: fm_string_len, fm_path_name_len      
-  implicit none
-  public  
+  implicit none; private
+
+  !
+  public phytoplankton
+  public zooplankton
+  public bacteria
+  public generic_COBALT_type
+  public vardesc
 
   !The following variables for using this module
   ! are overwritten by generic_tracer_nml namelist
-  logical :: do_nh3_diag                             !< logic for setting NH3 diagnostic tracer field 
+  logical, public :: do_nh3_diag                             !< logic for setting NH3 diagnostic tracer field 
 
 ! Namelist Options
 
-  character(len=10) ::  co2_calc = 'ocmip2'          !< carbonate formalation options. Other option is 'mocsy'
-  logical :: do_14c             = .false.            !< If true, then simulate radiocarbon 
-  logical :: do_nh3_atm_ocean_exchange = .false.     ! If true, then do NH3 air-sea exchange 
+  character(len=10), public ::  co2_calc = 'mocsy'           !< carbonate formalation options. Default is 'mocsy'
+  logical, public :: do_14c             = .false.            !< If true, then simulate radiocarbon 
+  logical, public :: do_nh3_atm_ocean_exchange = .false.     ! If true, then do NH3 air-sea exchange 
   !
-  logical :: do_vertfill_pre = .false.             !< Returns tracer arrays with sensible values
-  logical :: debug              = .false.          !< not use   
-  real    :: o2_min_nit= 0.01e-6                   !< Oxygen threshold for nitrification (mol O2 kg-1)
-  real    :: k_o2_nit  = 3.9e-6                    !< Oxygen half saturation constant for nitrification
-  real    :: irr_inhibit = 10.                     !< Irradiance inhibition term for nitrification (W m-2)
-  real    :: gamma_nitrif= 3.5e6                   !< Rate constant for nitrification (month-1)
-  real    :: k_nh3_nitrif= 3.1e-9                  !< NH3 half-saturation for nitrification (mol NH3 kg-1)  
-  real    :: imbalance_tolerance=1.0e-10           !< the tolerance for non-conservation in C,N,P,Sc,Fe
+  logical, public :: do_vertfill_pre = .false.             !< Returns tracer arrays with sensible values
+  logical, public :: debug           = .false.             !< not use   
+  real, public    :: o2_min_nit= 0.01e-6                   !< Oxygen threshold for nitrification (mol O2 kg-1)
+  real, public    :: k_o2_nit  = 3.9e-6                    !< Oxygen half saturation constant for nitrification
+  real, public    :: irr_inhibit = 10.                     !< Irradiance inhibition term for nitrification (W m-2)
+  real, public    :: gamma_nitrif= 3.5e6                   !< Rate constant for nitrification (month-1)
+  real, public    :: k_nh3_nitrif= 3.1e-9                  !< NH3 half-saturation for nitrification (mol NH3 kg-1)  
+  real, public    :: imbalance_tolerance=1.0e-10           !< the tolerance for non-conservation in C,N,P,Sc,Fe
 
-  integer :: scheme_no3_nh4_lim = 2 !< Nitrate and ammonia limitation scheme options
-                                    !! 1-Frost and Franzen (1992)
-                                    !! 2-O'Neill
+  integer, public :: scheme_no3_nh4_lim = 2 !< Nitrate and ammonia limitation scheme options
+                                            !! 1-Frost and Franzen (1992)
+                                            !! 2-O'Neill
 
-  integer :: scheme_nitrif = 3      !< nitrification scheme options:
-                                    !! 1-default COBALT
-                                    !! 2-update with no temperature dependence
-                                    !! 3-update with temperature dependence
-
-namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
-     o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,gamma_nitrif,do_vertfill_pre,imbalance_tolerance
+  integer, public :: scheme_nitrif = 3      !< nitrification scheme options:
+                                            !! 1-default COBALT
+                                            !! 2-update with no temperature dependence
+                                            !! 3-update with temperature dependence
 
   ! parameters      
-  integer, parameter :: NUM_PHYTO = 4 !< total number of phytoplankton groups
-  integer, parameter :: NUM_ZOO = 3   !< total number of zooplankton groups
-  integer, parameter :: NUM_BACT = 1  !< total number of bacteria groups
-  integer, parameter :: NUM_PREY = 9  !< total numbers of prey groups
-  integer, parameter :: DIAZO      = 1 !< ID for diazotrophs
-  integer, parameter :: LARGE      = 2 !< ID for large phytoplankton
-  integer, parameter :: MEDIUM     = 3 !< ID for medium phytoplankton
-  integer, parameter :: SMALL      = 4 !< ID for small phytoplankton 
+  integer, parameter, public :: NUM_PHYTO = 4 !< total number of phytoplankton groups
+  integer, parameter, public :: NUM_ZOO = 3   !< total number of zooplankton groups
+  integer, parameter, public :: NUM_BACT = 1  !< total number of bacteria groups
+  integer, parameter, public :: NUM_PREY = 9  !< total numbers of prey groups
+  integer, parameter, public :: DIAZO      = 1 !< ID for diazotrophs
+  integer, parameter, public :: LARGE      = 2 !< ID for large phytoplankton
+  integer, parameter, public :: MEDIUM     = 3 !< ID for medium phytoplankton
+  integer, parameter, public :: SMALL      = 4 !< ID for small phytoplankton 
 
   real, parameter, public :: sperd = 24.0 * 3600.0    !< number of seconds in a day (sec)
   real, parameter, public :: spery = 365.25 * sperd   !< number of seconds in a year (sec)
   real, parameter, public :: epsln=1.0e-30            !< small, but non-zero value for numerical stability
   real, parameter, public :: missing_value1=-1.0e+10  !< large negative value to represent missing value in diags
-  real, parameter :: vb_nh3 = 25.                    !< Liquid molar volume at boiling point for NH3 (cm3 mol−1)
+  real, parameter, public :: vb_nh3 = 25.             !< Liquid molar volume at boiling point for NH3 (cm3 mol−1)
 
   !> An auxiliary type for storing varible names
   type vardesc
@@ -1528,4 +1531,4 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, schem
 !==============================================================================================================
   end type generic_COBALT_type
 
-end module cobalt_glbl
+end module cobalt_types
