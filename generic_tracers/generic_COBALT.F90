@@ -160,10 +160,6 @@ module generic_COBALT
   use FMS_ocmip2_co2calc_mod, only : FMS_ocmip2_co2calc, CO2_dope_vector
 
   implicit none ; private
-!-----------------------------------------------------------------------
-  character(len=128) :: version = '$Id: generic_COBALT.F90,v 20.0.2.1.2.1 2014/09/29 16:40:08 Niki.Zadeh Exp $'
-  character(len=128) :: tag = '$Name: bugfix_nnz $'
-!-----------------------------------------------------------------------
 
   character(len=fm_string_len), parameter :: mod_name       = 'generic_COBALT'
   character(len=fm_string_len), parameter :: package_name   = 'generic_cobalt'
@@ -1881,13 +1877,6 @@ contains
     type(vardesc)  :: vardesc_temp
     integer        :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau, axes(3), axesTi(3)
     type(time_type):: init_time
-    character(len=fm_string_len)          :: cmor_field_name
-    character(len=fm_string_len)          :: cmor_long_name
-    character(len=fm_string_len)          :: cmor_units
-    character(len=fm_string_len)          :: cmor_standard_name
-!    real                                  :: conversion
-
-
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes=axes,init_time=init_time)
 
     !   The following vardesc types contain a package of metadata about each tracer,
@@ -7877,7 +7866,7 @@ contains
     type(EOS_type),             optional, intent(in) :: eqn_of_state !< Equation of state structure
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_source'
-    integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kbot, kmld_ref
+    integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kmld_ref
     real, dimension(:,:,:) ,pointer :: grid_tmask
     integer, dimension(:,:),pointer :: mask_coast,grid_kmt
     !
@@ -7889,9 +7878,7 @@ contains
     integer :: nb
     real :: r_dt
     real :: feprime_temp
-    real :: juptake_di_tot2nterm
     real :: P_C_m, k_po4_adjust
-    real :: p_lim_nhet
     real :: TK, PRESS, PKSPA, PKSPC
     real :: tmp_hblt, tmp_irrad, tmp_irrad_ML,tmp_opacity,tmp_mu_ML
     real :: frac_sfc_irrad_aclm, irrad_aclm_thresh
@@ -7913,7 +7900,6 @@ contains
     real :: fe_salt
     real :: sal,tt,tkb,ts,ts2,ts3,ts4,ts5
     real :: rho_mld_ref,rho_k,dK,dKm1,afac,deltaRhoAtK,deltaRhoAtKm1,deltaRhoFlag
-    real :: depth_limit
     real :: alpha_temp, alpha_step
     real :: P_C_max_temp, P_C_max_step, bresp_temp
     real :: theta_temp, theta_step, irrlim_temp, P_C_m_temp
@@ -16072,7 +16058,7 @@ contains
 !salting out correction for solubility (Johnson 2010, Ocean Science)
   function saltout_correction(kh,vb,salt) result(C)
     real, intent(in) :: Kh,vb,salt
-    real*8 :: T,log_kh,theta2
+    real*8 :: log_kh
     real :: theta,C
     log_kh = log(kh)
     theta = (7.3353282561828962e-04 + (3.3961477466551352e-05*log_kh) + (-2.4088830102075734e-06*(log_kh)**2) + (1.5711393120941302e-07*(log_kh)**3))*log(vb)
