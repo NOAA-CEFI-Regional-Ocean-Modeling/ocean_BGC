@@ -6723,7 +6723,7 @@ contains
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        n=DIAZO
        phyto(n)%liebig_lim(i,j,k) = phyto(n)%o2lim(i,j,k)* &
-          min(phyto(n)%po4lim(i,j,k), phyto(n)%def_fe(i,j,k))
+          min(phyto(n)%po4lim(i,j,k), max(phyto(n)%def_fe(i,j,k),phyto(n)%felim(i,j,k)))
        do n= 2, NUM_PHYTO   !{
           phyto(n)%liebig_lim(i,j,k) = min(phyto(n)%no3lim(i,j,k)+phyto(n)%nh4lim(i,j,k),&
              phyto(n)%po4lim(i,j,k), max(phyto(n)%def_fe(i,j,k),phyto(n)%felim(i,j,k)))
