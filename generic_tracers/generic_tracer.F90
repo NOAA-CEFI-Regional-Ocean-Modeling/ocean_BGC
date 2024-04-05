@@ -522,8 +522,8 @@ contains
     real, dimension(ilb:,jlb:),optional,  intent(in) :: grid_ht
     real, dimension(ilb:,jlb:),optional , intent(in) :: current_wave_stress
     real,                      optional , intent(in) :: sosga ! global avg. sea surface salinity
-    real, dimension(ilb:,jlb:),optional,  intent(in) :: geolat 
-    type(EOS_type),            optional,  intent(in) :: eqn_of_state
+    real, dimension(ilb:,jlb:),  intent(in) :: geolat 
+    type(EOS_type),              intent(in) :: eqn_of_state
 
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_update_from_source'
@@ -553,18 +553,11 @@ contains
          hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
          nbands,max_wavelength_band,sw_pen_band,opacity_band, grid_ht)
 
-    if (do_generic_COBALT) then
-       if (present(geolat) .and. present(eqn_of_state)) then
+    if (do_generic_COBALT) & 
           call generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
             hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
             nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff,&
             geolat,eqn_of_state)
-       else
-          call generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
-            hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
-            nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
-       endif
-    endif
 
     if(do_generic_SF6)  call generic_SF6_update_from_source(tracer_list,rho_dzt,dzt,hblt_depth,&
          ilb,jlb,tau,dtts,grid_dat,model_time)
