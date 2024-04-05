@@ -8315,7 +8315,8 @@ contains
         !  write(outunit,*) 'kmld_ref = ',kmld_ref
         !endif
 
-
+        if (.not. PRESENT(eqn_of_state)) call mpp_error(FATAL,"eqn_of_state is missing! Unable to compute &
+                                         density in COBALT!")
         ! calculate the mld for the photoacclimation calculations
         call calculate_density(Temp(i,j,kmld_ref),Salt(i,j,kmld_ref),101325.0,rho_mld_ref,eqn_of_state)
         !if ((i.eq.isc).and.(j.eq.jsc)) then
@@ -8380,6 +8381,8 @@ contains
           endif !}
        enddo !}
 
+       if (.not. PRESENT(geolat)) call mpp_error(FATAL,"geolat is missing! Unable to compute day length &
+                                  in COBALT!")
        ! calculate day length based on the CBM daylength model as described in:
        !
        ! Forsythe, W.C., et al. (1995). A model comparison for daylength as a function of latitude and day of year.
