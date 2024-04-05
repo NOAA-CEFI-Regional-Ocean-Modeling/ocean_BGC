@@ -7873,8 +7873,8 @@ contains
     real, dimension(:,ilb:,jlb:,:), intent(in) :: opacity_band
     real, dimension(ilb:,jlb:),     intent(in) :: internal_heat
     real, dimension(ilb:,jlb:),     intent(in) :: frunoff
-    real, dimension(ilb:,jlb:), optional, intent(in) :: geolat
-    type(EOS_type),             optional, intent(in) :: eqn_of_state !< Equation of state structure
+    real, dimension(ilb:,jlb:),     intent(in) :: geolat
+    type(EOS_type),                 intent(in) :: eqn_of_state !< Equation of state structure
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_source'
     integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kbot
@@ -8315,8 +8315,6 @@ contains
         !  write(outunit,*) 'kmld_ref = ',kmld_ref
         !endif
 
-        if (.not. PRESENT(eqn_of_state) .or. .not. PRESENT(geolat)) &
-          call mpp_error(FATAL,"eqn_of_state/geolat is missing! Unable to compute density/daylength in COBALT!")
         ! calculate the mld for the photoacclimation calculations
         call calculate_density(Temp(i,j,kmld_ref),Salt(i,j,kmld_ref),101325.0,rho_mld_ref,eqn_of_state)
         !if ((i.eq.isc).and.(j.eq.jsc)) then
