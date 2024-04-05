@@ -37,7 +37,7 @@
 !              fall below 1/4 maximum values
 !           3) The default parameterization has elevated N:P ratios for both
 !              diazotrophs and small phytoplankton
-!	    4) Remineralization of sinking detritus is now based on the temperature
+!           4) Remineralization of sinking detritus is now based on the temperature
 !              and oxygen dependences described in Laufkotter et al., 2017; O2
 !              dependence of other aerobic processes have also been adjusted
 !              for consistency.
@@ -160,10 +160,6 @@ module generic_COBALT
   use FMS_ocmip2_co2calc_mod, only : FMS_ocmip2_co2calc, CO2_dope_vector
 
   implicit none ; private
-!-----------------------------------------------------------------------
-  character(len=128) :: version = '$Id: generic_COBALT.F90,v 20.0.2.1.2.1 2014/09/29 16:40:08 Niki.Zadeh Exp $'
-  character(len=128) :: tag = '$Name: bugfix_nnz $'
-!-----------------------------------------------------------------------
 
   character(len=fm_string_len), parameter :: mod_name       = 'generic_COBALT'
   character(len=fm_string_len), parameter :: package_name   = 'generic_cobalt'
@@ -418,7 +414,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
 
   type zooplankton
     real ::  &
-	  imax,             & ! maximum ingestion rate (sec-1)
+          imax,             & ! maximum ingestion rate (sec-1)
           ki,               & ! half-sat for ingestion (moles N m-3)
           gge_max,          & ! max gross growth efficiciency (approached as i >> bresp, dimensionless)
           nswitch,          & ! switching parameter (dimensionless)
@@ -457,13 +453,13 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
     real, ALLOCATABLE, dimension(:,:,:) :: &
           f_n,              & ! zooplankton biomass
           jzloss_n,         & ! Losses of n due to consumption by other zooplankton groups
-          jzloss_p,	    & ! Losses of p due to consumption by other zooplankton groups
+          jzloss_p,         & ! Losses of p due to consumption by other zooplankton groups
           jhploss_n,        & ! Losses of n due to consumption by unresolved higher preds
-          jhploss_p,	    & ! Losses of p due to consumption by unresolved higher preds
+          jhploss_p,        & ! Losses of p due to consumption by unresolved higher preds
           jingest_n,        & ! Total ingestion of n
           jingest_p,        & ! Total ingestion of p
           jingest_sio2,     & ! Total ingestion of silicate
-          jingest_fe,	    & ! Total ingestion of iron
+          jingest_fe,       & ! Total ingestion of iron
           jprod_ndet,       & ! production of nitrogen detritus by zooplankton group
           jprod_pdet,       & ! production of phosphorous detritus by zooplankton group
           jprod_ldon,       & ! production of labile dissolved organic N by zooplankton group
@@ -472,9 +468,9 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           jprod_srdop,      & ! production of semi-refractory dissolved organic P by zooplankton group
           jprod_sldon,      & ! production of semi-labile dissolved organic N by zooplankton group
           jprod_sldop,      & ! production of semi-labile dissolved organic P by zooplankton group
-          jprod_fed,	    & ! production of dissolved iron
+          jprod_fed,        & ! production of dissolved iron
           jprod_fedet,      & ! production of iron detritus
-          jprod_sidet,	    & ! production of silica detritus
+          jprod_sidet,      & ! production of silica detritus
           jprod_sio4,       & ! production of silicate via rapid dissolution at surface
           jprod_po4,        & ! phosphate production by zooplankton
           jprod_nh4,        & ! ammonia production by zooplankton
@@ -482,7 +478,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           o2lim,            & ! oxygen limitation of zooplankton activity
           temp_lim,         & ! Temperature limitation
           vmove               ! Vertical movement
-    integer ::		    &
+    integer :: &
           id_jzloss_n       = -1, &
           id_jzloss_p       = -1, &
           id_jhploss_n      = -1, &
@@ -720,7 +716,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           ki_hp,            & ! unresolved higher pred. half-sat
           ktemp_hp,         & ! temperature dependence for higher predators
           coef_hp,          & ! scaling between unresolved preds and available prey
-          nswitch_hp,	    & ! higher predator switching behavior
+          nswitch_hp,       & ! higher predator switching behavior
           mswitch_hp,       & ! higher predator switching behavior
           hp_ipa_smp,       & ! innate prey availability of small phytos to hp
           hp_ipa_mdp,       & ! innate prey availability of medium phytos to hp
@@ -745,7 +741,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           mask_z_sat_calc
 
      real, dimension(:,:,:), ALLOCATABLE ::  &
-          f_alk,&				! Other prognostic variables
+          f_alk,& ! Other prognostic variables
           f_cadet_arag,&
           f_cadet_calc,&
           f_dic,&
@@ -954,7 +950,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
 !==============================================================================================================
 
      real, dimension(:,:), ALLOCATABLE :: &
-          b_alk,b_dic,b_fed,b_nh4,b_no3,b_o2,b_po4,b_sio4,b_di14c,&	! bottom flux terms
+          b_alk,b_dic,b_fed,b_nh4,b_no3,b_o2,b_po4,b_sio4,b_di14c,& ! bottom flux terms
           co2_csurf,pco2_csurf,co2_alpha,c14o2_csurf,c14o2_alpha,&
           nh3_csurf,nh3_alpha,pnh3_csurf,&
           fcadet_arag_btm,&
@@ -1223,7 +1219,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           id_irr_aclm_z    = -1,       &
           id_irr_mem_dp    = -1,       &
           id_cased         = -1,       &
-	  id_cadet_arag_btf = -1,      &
+          id_cadet_arag_btf = -1,      &
           id_cadet_calc_btf = -1,      &
           id_fedet_btf     = -1,       &
           id_lithdet_btf   = -1,       &
@@ -1881,13 +1877,6 @@ contains
     type(vardesc)  :: vardesc_temp
     integer        :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau, axes(3), axesTi(3)
     type(time_type):: init_time
-    character(len=fm_string_len)          :: cmor_field_name
-    character(len=fm_string_len)          :: cmor_long_name
-    character(len=fm_string_len)          :: cmor_units
-    character(len=fm_string_len)          :: cmor_standard_name
-!    real                                  :: conversion
-
-
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes=axes,init_time=init_time)
 
     !   The following vardesc types contain a package of metadata about each tracer,
@@ -3240,7 +3229,7 @@ contains
 
     vardesc_temp = vardesc("jprod_n2amx","Fixed N loss via Anammox layer integral",'h','L','s','mol m-2 s-1','f')
     cobalt%id_jprod_n2amx = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-	     init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_nh4amx","NH4 uptake via Anammox layer integral",'h','L','s','mol m-2 s-1','f')
     cobalt%id_juptake_nh4amx = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
@@ -6206,8 +6195,8 @@ contains
     !   Effect is to decrease alkalinity by 2 NH4 equivalents.
     !
     ! New Nitrification stoichiometry from JPD, for ESM4.2:
-	!   (16+106*35)*NH4+ + 106*CO2 + (106*35+449*8)*O2 + 62*H2O <->
-	!    C106H172O38N16 + (106*35)*NO3- + (106*35)*H2O + (16+106*35*2)*H+
+    !   (16+106*35)*NH4+ + 106*CO2 + (106*35+449*8)*O2 + 62*H2O <->
+    !    C106H172O38N16 + (106*35)*NO3- + (106*35)*H2O + (16+106*35*2)*H+
     !   Effect is to decrease alkalinity by 1.996 NH4 equivalents.
     !
     ! Denitrification:
@@ -6218,12 +6207,12 @@ contains
     !
     ! Anammox stoichiometry from JPD, for ESM4.2:
     !
-	!   (16+106*3*5*5+64)*NH4+ + (106*3*3*5-118*4)*NO3- + 106*5*CO2 + 62*5*H2O <->
-	!   5*C106H172O38N16 + (106*3*4*5-118*2)*N2 +
-	!   (106*3*9*5-118*2)*H2O + (16+106*3*2*5+118*4+64)*H+
-	!
-	!   Effect is to decrease alkalinity by
-	!   (16+106*3*2*5+118*4+64)/ (16+106*3*5*5+64) = 0.46 mole equivalents per mole of NH4 removed.
+    !   (16+106*3*5*5+64)*NH4+ + (106*3*3*5-118*4)*NO3- + 106*5*CO2 + 62*5*H2O <->
+    !   5*C106H172O38N16 + (106*3*4*5-118*2)*N2 +
+    !   (106*3*9*5-118*2)*H2O + (16+106*3*2*5+118*4+64)*H+
+    !
+    !   Effect is to decrease alkalinity by
+    !   (16+106*3*2*5+118*4+64)/ (16+106*3*5*5+64) = 0.46 mole equivalents per mole of NH4 removed.
     !
     call g_tracer_add_param('n_2_n_denit', cobalt%n_2_n_denit, 472.0/(5.0*16.0))             ! mol N NO3 mol N org-1
     call g_tracer_add_param('no3_2_nh4_amx', cobalt%no3_2_nh4_amx, &
@@ -6232,7 +6221,7 @@ contains
 !   call g_tracer_add_param('o2_2_nfix', cobalt%o2_2_nfix, (118.0+3.0/(5.0+3.0)*(150.0-118.0))/16.0) ! mol O2 mol N-1
     call g_tracer_add_param('o2_2_nh4', cobalt%o2_2_nh4, 118.0 / 16.0)                       ! mol O2 mol N-1
     !call g_tracer_add_param('o2_2_nitrif', cobalt%o2_2_nitrif, &
-    !	         (106.0*35.0+449.0*8.0)/(16.0+106.0*35.0))                                   ! mol O2 mol N-1
+    !       (106.0*35.0+449.0*8.0)/(16.0+106.0*35.0))                                   ! mol O2 mol N-1
     call g_tracer_add_param('o2_2_nitrif', cobalt%o2_2_nitrif,2.0)
     call g_tracer_add_param('o2_2_no3', cobalt%o2_2_no3, 150.0 / 16.0)                       ! mol O2 mol N-1
     !
@@ -7877,7 +7866,7 @@ contains
     type(EOS_type),             optional, intent(in) :: eqn_of_state !< Equation of state structure
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_source'
-    integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kbot
+    integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kmld_ref
     real, dimension(:,:,:) ,pointer :: grid_tmask
     integer, dimension(:,:),pointer :: mask_coast,grid_kmt
     !
@@ -7889,9 +7878,7 @@ contains
     integer :: nb
     real :: r_dt
     real :: feprime_temp
-    real :: juptake_di_tot2nterm
     real :: P_C_m, k_po4_adjust
-    real :: p_lim_nhet
     real :: TK, PRESS, PKSPA, PKSPC
     real :: tmp_hblt, tmp_irrad, tmp_irrad_ML,tmp_opacity,tmp_mu_ML
     real :: frac_sfc_irrad_aclm, irrad_aclm_thresh
@@ -7912,8 +7899,7 @@ contains
     real :: fpoc_btm, log10_fpoc_btm
     real :: fe_salt
     real :: sal,tt,tkb,ts,ts2,ts3,ts4,ts5
-    real :: rho_mld_ref,rho_k,dK,dKm1,afac,deltaRhoAtK,deltaRhoAtKm1,deltaRhoFlag,kmld_ref
-    real :: depth_limit
+    real :: rho_mld_ref,rho_k,dK,dKm1,afac,deltaRhoAtK,deltaRhoAtKm1,deltaRhoFlag
     real :: alpha_temp, alpha_step
     real :: P_C_max_temp, P_C_max_step, bresp_temp
     real :: theta_temp, theta_step, irrlim_temp, P_C_m_temp
@@ -16072,7 +16058,7 @@ contains
 !salting out correction for solubility (Johnson 2010, Ocean Science)
   function saltout_correction(kh,vb,salt) result(C)
     real, intent(in) :: Kh,vb,salt
-    real*8 :: T,log_kh,theta2
+    real*8 :: log_kh
     real :: theta,C
     log_kh = log(kh)
     theta = (7.3353282561828962e-04 + (3.3961477466551352e-05*log_kh) + (-2.4088830102075734e-06*(log_kh)**2) + (1.5711393120941302e-07*(log_kh)**3))*log(vb)
