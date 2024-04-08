@@ -6301,7 +6301,7 @@ contains
     call g_tracer_add_param('gamma_irr_aclm', cobalt%gamma_irr_aclm, 1.0 / sperd)        ! s-1
     call g_tracer_add_param('gamma_irr_mem_dp',cobalt%gamma_irr_mem_dp,0.1/sperd)        ! s-1
     call g_tracer_add_param('gamma_mu_mem', cobalt%gamma_mu_mem, 1.0 / sperd)            ! s-1
-    call g_tracer_add_param('ml_aclm_efold', cobalt%ml_aclm_efold, 4.6)                  ! dimensionless
+    call g_tracer_add_param('ml_aclm_efold', cobalt%ml_aclm_efold, 2.5)                  ! dimensionless
     call g_tracer_add_param('zmld_ref', cobalt%zmld_ref, 10.0)                           ! m
     call g_tracer_add_param('densdiff_mld', cobalt%densdiff_mld, 0.03)                   ! kg m-3
     call g_tracer_add_param('irrad_day_thresh', cobalt%irrad_day_thresh, 1.0 )           ! watts m-2
@@ -7893,7 +7893,6 @@ contains
     real,dimension(1:NUM_PREY) :: prey_vec,prey_p2n_vec,prey_fe2n_vec,prey_si2n_vec
     real,dimension(1:NUM_ZOO)  :: tot_prey
     real :: a_theta, diff_theta2, diff_theta2_tol
-    integer :: theta_count, theta_count_max
     real :: tot_prey_hp, sw_fac_denom, assim_eff
     real :: bact_uptake_ratio, vmax_bact, growth_ratio, food1, food2
     real :: fpoc_btm, log10_fpoc_btm
@@ -8273,17 +8272,20 @@ contains
     ! 1.2: Light Limitation/Growth Calculations
     !-----------------------------------------------------------------------
     !
-    ! Create relevant light fields based on incident radiation and opacity
-    ! information passed from the ocean code
-    !
 
+    !  
+    ! Calculate the mixed layer for phytoplankton photoacclimation
+    ! The default criteria is de Boyer Montegut et al. (2004), where the
+    ! mixed layer is calculated relative to zmld_ref = 10m and is based on when
+    ! a potential density difference of 0.03 kg m-3.  This definition
+    ! captures mixing on time scale of 1 to a few days.
+    ! de Boyer-Montegut reference:  https://doi.org/10.1029/2004JC002378
+    !
     do j = jsc, jec ; do i = isc, iec   !{
 
       if (grid_tmask(i,j,1).ne.0.0) then
-        ! de Boyer-Montegut calculates relative to the 10m density to isolate
-        ! recent mixing with minimum of a daily cycle and a maximum of a few
-        ! days; note that we are using deltaRhoFlag from the density calculation
-        ! here as a convenience
+
+        ! Find the k index closest to 10m  
         deltaRhoFlag = 0.0
         do k = 1,nk
           if (zmid(i,j,k) .lt. cobalt%zmld_ref) then
@@ -8297,26 +8299,22 @@ contains
             deltaRhoFlag = 1.0
           endif
         enddo
-        !if ((i.eq.isc).and.(j.eq.jsc)) then
-        !  write(outunit,*) 'kmld_ref = ',kmld_ref
-        !endif
 
-        ! calculate the mld for the photoacclimation calculations
+        ! calculate the density at the reference depth
         call calculate_density(Temp(i,j,kmld_ref),Salt(i,j,kmld_ref),101325.0,rho_mld_ref,eqn_of_state)
-        !if ((i.eq.isc).and.(j.eq.jsc)) then
-        !  write(outunit,*) 'rho_mld_ref = ',rho_mld_ref
-        !endif
-        !dK = 0.5*dzt(i,j,1)
+
+        ! Calculate effective mixed layer depth for photoacclimation (mld_aclm)
+        ! (parts of this code were drawn from the MOM6 mld calculation)
         dK = 0.0
         deltaRhoAtK = 0.0
         deltaRhoAtKm1 = 0.0
         deltaRhoFlag = 0.0
-        !cobalt%mld_aclm(i,j) = dzt(i,j,1) ! use mld for cumulative depth before mld calc.
         cobalt%mld_aclm(i,j) = 0.0
         do k = 1,nk !{
           deltaRhoAtKm1 = deltaRhoAtK
           dKm1 = dK
           dK = cobalt%mld_aclm(i,j) + 0.5*dzt(i,j,k)
+          ! Issue: Could MOM6 pass a potential density rather than recalculating
           call calculate_density(Temp(i,j,k),Salt(i,j,k),101325.0,rho_k,eqn_of_state)
           cobalt%rho_test(i,j,k) = rho_k
           deltaRhoAtK = rho_k - rho_mld_ref
@@ -8326,35 +8324,57 @@ contains
             afac = (cobalt%densdiff_mld - deltaRhoAtKm1)/(deltaRhoAtK - deltaRhoAtKm1)
             cobalt%mld_aclm(i,j) = afac*dK + (1.0-afac)*dKm1
             deltaRhoFlag = 1.0
-!            if ((i.eq.isc).and.(j.eq.jsc)) then
-!               write(outunit,*) 'i,j=',i,j
-!               write(outunit,*) 'lat,lon=',geolat(i,j)
-!               write(outunit,*) 'kmld_ref, k = ',kmld_ref, k
-!               write(outunit,*) 'rho_mld_ref = ',rho_mld_ref
-!               write(outunit,*) 'rho_k = ',rho_k
-!               write(outunit,*) 'deltaRhoAtK = ',deltaRhoAtK
-!               write(outunit,*) 'mld_aclm = ',cobalt%mld_aclm(i,j)
-!            endif
           endif
         enddo  !} k
 
         cobalt%mld_aclm(i,j) = cobalt%mld_aclm(i,j)*grid_tmask(i,j,1)
-        !if ((i.eq.isc).and.(j.eq.jsc)) then
-        !  write(outunit,*) 'mld_aclm = ',cobalt%mld_aclm(i,j)
-        !endif
       else
         cobalt%mld_aclm(i,j) = 0.0
       endif
 
     enddo; enddo !} j,i
 
-
-    allocate(tmp_irr_band(nbands))
-    allocate(sfc_irrad(isc:iec,jsc:jec))
-    allocate(kblt(isc:iec,jsc:jec))
-    frac_sfc_irrad_aclm = 1.0/(cobalt%ml_aclm_efold*2.71828)
+    !
+    ! Calculate the underwater light field for the BGC calculations.  By default, COBALT
+    ! receives visible and near-infrared inputs.  Near infrared is currently considered
+    ! anyting with wavelengths longer than ~710 nanometers.  Note that both shortwave and
+    ! near infrared fall into the "shortwave" part of the radiation spectrum.  Following
+    ! Morel and Antoine (1994) and Sweeney et al. (2005), about 57% of the incoming irradiance
+    ! is assumed to lie within the visible range in the standard MOM6 radiation scheme
+    ! with interactive chlorophyll.    
+    ! 
+    ! In COBALTv1/v2, all of the visible wavelengths were included as photosynthically
+    ! active radiation (PAR).  This approach, however, included wavelengths shorter than  
+    ! than the ~350-400 nanometer lower bound applied for PAR.  The "par_adj" parameter
+    ! allows for a downward adjustment.  Its default value of 0.83 gives a PAR of 47%
+    ! of the total shortwave flux, consistent with Baker and Frouin (1987).
+    !
+    ! The instantaneous and acclimation irradiances are then calculated at all depths.  The
+    ! former is eventually used to calculate instaneous phytoplankton growth, while the latter
+    ! is used to calculate the chlorophyll to carbon ratio.  The acclimation irradiance
+    ! is effectively an average of the instantaneous irradiance over daylight hours across 
+    ! an acclimation timescale (typically 24 hours).  The daylength for this calculation is 
+    ! taken from CBM model described in Forsythe et al. (1995). The acclimation irradiance 
+    ! in the surface mixed layer is generally assumed to be the average in the mixed layer,
+    ! except when the mixed layer extends beyond "ml_aclm_efold" e-folding scales for the
+    ! irradiance.  In these deep mixed layer cases the average light down to "ml_aclm_efold" 
+    ! is used for the acclimation irradiance with the mixed layer.  Full details of these 
+    ! calculations and their implications are presented and discussed in Stock et al. (submitted).
+    !
+    ! References:
+    ! Morel and Antoine: https://doi.org/10.1175/1520-0485(1994)024<1652:HRWTUO>2.0.CO;2
+    ! Sweeney et al.: https://doi.org/10.1175/JPO2740.1
+    ! Baker and Frouin:  https://doi.org/10.4319/lo.1987.32.6.1370
+    ! Forsythe et al.: https://www.sciencedirect.com/science/article/pii/030438009400034F
+    ! Stock et al. (submitted) (link to be added as soon as available)
+    !
+    allocate(tmp_irr_band(nbands))        ! irradiance in wavelength bands
+    allocate(sfc_irrad(isc:iec,jsc:jec))  ! surface photosythetically available irradiance
+    allocate(kblt(isc:iec,jsc:jec))       ! tracks of max k index in mixed layer
+    frac_sfc_irrad_aclm = 1.0/(2.71828**cobalt%ml_aclm_efold) ! controls acclimation in deep mixed layers
     do j = jsc, jec ; do i = isc, iec   !{
 
+       ! Calculate photosynthetically available radiation at air-sea interface (sfc_irrad)
        sfc_irrad(i,j) = 0.0
        do nb=1,nbands !{
           if (max_wavelength_band(nb) .lt. 710.0) then !{
@@ -8365,11 +8385,7 @@ contains
           endif !}
        enddo !}
 
-       ! calculate day length based on the CBM daylength model as described in:
-       !
-       ! Forsythe, W.C., et al. (1995). A model comparison for daylength as a function of latitude and day of year.
-       ! Ecological Modeling, 80, pp. 87-95.
-       !
+       ! calculate the day length (cobalt%daylength(i,j) based on the CBM daylength model
        ! rev_angle = revolution angle (eq. (1) of Forsythe et al.)
        ! dec_angle = sun's declination angle (eq. (2) of Forsythe et al.)
        ! daylength (in hours)
@@ -8380,45 +8396,66 @@ contains
                       (cos(geolat(i,j)*3.14/180.0)*cos(dec_angle))
        ! bound to be -1 (complete darkness) or 1 (complete day)
        temp_arg = max(min(temp_arg,1.0),-1.0)
-       cobalt%daylength(i,j) = 24.0 - 24.0/3.14*acos(temp_arg);
-       !cobalt%daylength(i,j) = 24.0
+       cobalt%daylength(i,j) = 24.0 - 24.0/3.14*acos(temp_arg)
 
+       ! Calculate the acclimation irradiance at the surface.  This basic equation relaxes
+       ! the irradiance toward the current value with a an inverse time scale set by gamma:
+       !  
+       ! I_aclm(t+1) = I_aclm(t) + (I*(24/daylength)-I_aclm(t))*gamma*dt
+       !
+       ! multiplication by 24/daylength adjusts the irradiance averaged over 24 hours to
+       ! upward to approximate the irradiance during daylight hours. For photoacclimation 
+       ! the default relaxation timescale is set to 1 day (gamma = 1/86400 sec), and
+       ! "dt" is the time step.
        cobalt%f_irr_aclm_sfc(i,j,1) = (cobalt%f_irr_aclm_sfc(i,j,1) + &
          (sfc_irrad(i,j)*24.0/max(cobalt%daylength(i,j),cobalt%min_daylength)-cobalt%f_irr_aclm_sfc(i,j,1)) * &
          min(1.0,cobalt%gamma_irr_aclm * dt)) * grid_tmask(i,j,1)
 
-       kblt(i,j) = 0 ; tmp_irrad_ML = 0.0 ; tmp_hblt = 0.0
-       tmp_irrad_aclm = 0.0; tmp_zaclm = 0.0
+       !
+       ! Calculate the subsurface and irradiance fields
+       !
+       kblt(i,j) = 0         ! saves the max k index within the mixed layer 
+       tmp_irrad_ML = 0.0    ! integrates the irradiance in the mixed layer
+       tmp_hblt = 0.0        ! tracks depth of the top of the current layer for mld calcs
+       tmp_irrad_aclm = 0.0  ! integrates the irradiance in the surface photoacclimation layer
+       tmp_zaclm = 0.0       ! tracks depth of top of the curent layer photoacclimation layer calcs
+       ! Define the irradiance threshold for a "deep" mixed layer for photoacclimation
        irrad_aclm_thresh = frac_sfc_irrad_aclm*cobalt%f_irr_aclm_sfc(i,j,1)
        do k = 1, nk !{
           tmp_irrad = 0.0
+          ! Sum up the irradiance in all bands at the k level
           do nb=1,nbands !{
 
+             ! Issue: This code currently includes an option to increase opacity in shallow/fresh
+             ! water.  This should be moved to a namelist (and eventually replaced with a more 
+             ! robust coastal optics model with full feedbacks to the physics)
              if ((zmid(i,j,nk).le.30.0).or.(Salt(i,j,k).le.30.0)) then
                tmp_opacity = opacity_band(nb,i,j,k) + 0.05
              else
                tmp_opacity = opacity_band(nb,i,j,k)
              endif
 
+             ! Calculate the irradiance at the mid-point of the grid cell
              tmp_irrad = tmp_irrad + max(0.0,tmp_irr_band(nb) * exp(-tmp_opacity * dzt(i,j,k) * 0.5))
-             ! Change tmp_irr_band from being the value at the middle of layer k to the value
-             ! at the bottom of layer k.
+             ! Calculate the irradiance at the bottom of the grid cell in preparation for the next k 
              tmp_irr_band(nb) = tmp_irr_band(nb) * exp(-tmp_opacity * dzt(i,j,k))
           enddo !}
 
-          ! initialized instantaneous irradiance fields
           cobalt%irr_inst(i,j,k) = tmp_irrad * grid_tmask(i,j,k)
-          cobalt%irr_mix(i,j,k) = tmp_irrad * grid_tmask(i,j,k)
           cobalt%irr_aclm_inst(i,j,k) = tmp_irrad*24.0/max(cobalt%daylength(i,j),cobalt%min_daylength)* &
                                         grid_tmask(i,j,k)
+          ! Issue: evaluate what it would take to remove this variable 
+          cobalt%irr_mix(i,j,k) = tmp_irrad * grid_tmask(i,j,k)
 
+          ! This acclimation irradiance variables saves the full depth structure (even in the mixed layer)
+          ! We need it to determine when a mixed layer is "deep" for purposes of photoacclimation
           cobalt%f_irr_aclm_z(i,j,k) = (cobalt%f_irr_aclm_z(i,j,k) + &
                   (cobalt%irr_inst(i,j,k)*24.0/max(cobalt%daylength(i,j),cobalt%min_daylength) - &
                   cobalt%f_irr_aclm_z(i,j,k)) * min(1.0,cobalt%gamma_irr_aclm * dt)) * grid_tmask(i,j,k)
 
-          ! calculate mixed effective layer depth, number of vertical grids and integrated light
+          ! calculate the integrated light in the mixed layer and in the integrated light and depth of
+          ! the acclimation layer.  These are equal for shallow mixed layers but can depart for deeper layers
           if ( (k == 1) .or. (tmp_hblt .lt. cobalt%mld_aclm(i,j)) ) then
-          !if ( (k == 1) .or. (tmp_hblt .lt. hblt_depth(i,j)) ) then !{
              kblt(i,j) = kblt(i,j)+1
              tmp_irrad_ML = tmp_irrad_ML + cobalt%irr_inst(i,j,k) * dzt(i,j,k)
              tmp_hblt = tmp_hblt + dzt(i,j,k)
@@ -8427,23 +8464,22 @@ contains
                 tmp_irrad_aclm = tmp_irrad_aclm + cobalt%irr_inst(i,j,k) * dzt(i,j,k)
                 tmp_zaclm = tmp_zaclm + dzt(i,j,k)
              endif
-
           endif
 
        enddo !} k-loop
 
-       ! Calculate the instantaneous acclimation irradiance, which will be integrated over the photoacclimation
-       ! timescale (see below)
+       ! Phytoplankton in the surface mixed layer (1:kblt) aclimate to the mean daytime
+       ! light level over the photoacclimation layer: (tmp_irrad_aclm/tmp_zaclm)*24/daylength
        cobalt%irr_aclm_inst(i,j,1:kblt(i,j)) = tmp_irrad_aclm/max(1.0e-6,tmp_zaclm)*24.0/ &
                                                max(cobalt%daylength(i,j),cobalt%min_daylength)
+       Issue: what would it take to remove irr_mix? 
        cobalt%irr_mix(i,j,1:kblt(i,j)) = tmp_irrad_ML / max(1.0e-6,tmp_hblt)
     enddo;  enddo !} i,j
 
     deallocate(tmp_irr_band)
     !
-    ! Calculate the time integrated irradiance (f_irr_aclm)
-    ! for photoacclimation (i.e., the irradiance to
-    ! which the chl:C ratio responds).
+    ! Calculate the final photoacclimation irradiance using the standard relaxation
+    ! scheme (I_aclm(t+1) = I_aclm(t) + (I*(24/daylength)-I_aclm(t))*gamma*dt).
     !
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
          cobalt%f_irr_aclm(i,j,k) = (cobalt%f_irr_aclm(i,j,k) + (cobalt%irr_aclm_inst(i,j,k) - &
@@ -8451,6 +8487,7 @@ contains
     enddo; enddo ; enddo !} i,j,k
 
 
+    ! This needs to be moved! 
     !nh3
     if (do_nh3_diag) then
     cobalt%f_nh3(:,:,:) = 0.
@@ -8461,10 +8498,18 @@ contains
 
 
     !
-    ! Phytoplankton growth rate calculation based on Geider et al. (1997)
+    ! Calculate the phytoplankton growth rate calculation based on Geider et al. (1997).
+    ! This section also allows for low- and high-light adapted "ecotypes" (e.g., Moore
+    ! and Chisholm, 1999).  As described in Stock et al. (submitted), low-light adapted
+    ! ecotypes are characterized by a steep initial slope of the photosynthesis-irradiance
+    ! curve (i.e., high values of Geider's "alpha") and a low maximum photosynthetic rate
+    ! (low P_C_max, and high-light adapted cells have the opposite.  The best suited
+    ! ecotype is the one that achieves maximal growth at the acclimation irradiance.
     !
-    diff_theta2_tol = 1.0e-6 ! gives theta within 0.001
-    theta_count_max = 25
+    ! references:
+    ! Moore and Chisholm: https://doi.org/10.4319/lo.1999.44.3.0628
+    ! Stock et al. (submitted) (link to be added as soon as available)
+    !   
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%f_chl(i,j,k) = 0.0
 
@@ -8474,9 +8519,9 @@ contains
        do n = 1, NUM_PHYTO   !{
 
           !
-          ! determine if basal respiration is mixed layer or stratified value
-          ! since bresp is unitless at this point, but will be multipled by the
-          ! maximum photosynthetic rate laters to give units of day-1
+          ! The basal respiration is a fraction of the maximum photosynthetic rate
+          ! is higher within the mixed layer.  The variable bresp_temp will be multiplied
+          ! by the P_C_max for each ecotype to determine which is most competitive. 
           !
           if (k.le.kblt(i,j)) then
              bresp_temp = phyto(n)%bresp_frac_mixed*cobalt%expkT(i,j,k)
@@ -8486,47 +8531,22 @@ contains
           ! adjust basal respiration to maintain small refuge
           bresp_temp = bresp_temp*phyto(n)%f_n(i,j,k)/(cobalt%refuge_conc+phyto(n)%f_n(i,j,k))
 
+          ! Loop through the ecotypes to find the most competitive.  This is essentially a Geider growth
+          ! rate calculation for each ecotype using the acclimation irradiance.  
           mu_opt = -999.0 ! arbitrarily low value
           do m = 1,cobalt%numlightadapt
-            ! since we test the low and high, divide by n-1 so first step is the low and last is the high
+            ! since we test the low and high, divide by m-1 so first step is the low and last is the high
             alpha_step = (phyto(n)%alpha_ll - phyto(n)%alpha_hl)/(real(cobalt%numlightadapt,8)-1.0)
             alpha_temp = phyto(n)%alpha_hl + (real(m,8)-1.0)*alpha_step
             P_C_max_step = (phyto(n)%P_C_max_hl - phyto(n)%P_C_max_ll)/(real(cobalt%numlightadapt,8)-1.0)
             P_C_max_temp = phyto(n)%P_C_max_hl - (real(m,8)-1.0)*P_C_max_step
             P_C_m_temp = max(phyto(n)%liebig_lim(i,j,k)*P_C_max_temp*cobalt%expkT(i,j,k),epsln)
-            ! Calculate with analytic solution
             theta_temp = max(phyto(n)%thetamax/(1.0 + phyto(n)%thetamax*alpha_temp*cobalt%f_irr_aclm(i,j,k)*0.5/P_C_m_temp), &
                              cobalt%thetamin)
-            ! Calculate with iterative solution
-            !theta_temp = (phyto(n)%thetamax - cobalt%thetamin)/2.0
-            !theta_step = (phyto(n)%thetamax - cobalt%thetamin)/4.0
-            !a_theta = P_C_m_temp/(alpha_temp*max(cobalt%f_irr_aclm(i,j,k),epsln))
-            !if (a_theta.gt.10.0) then
-            !  phyto(n)%theta(i,j,k) = phyto(n)%thetamax
-            !elseif (a_theta.lt.1.0e-4) then
-            !  phyto(n)%theta(i,j,k) = cobalt%thetamin
-            !else
-            !  diff_theta2 = theta_temp**2 - phyto(n)%thetamax*a_theta* &
-            !                (1.0 - exp(-theta_temp/a_theta))
-            !  theta_count = 0
-            !  do while ( (abs(diff_theta2).gt.diff_theta2_tol) .and. &
-            !             (theta_count .lt. theta_count_max) )
-            !    theta_count = theta_count + 1
-            !    if (diff_theta2.gt.0.0) then
-            !      theta_temp = max(theta_temp - theta_step,cobalt%thetamin)
-            !    else
-            !      theta_temp = min(theta_temp + theta_step,phyto(n)%thetamax)
-            !    endif
-            !    diff_theta2 = theta_temp**2 - phyto(n)%thetamax*a_theta* &
-            !                  (1.0 - exp(-theta_temp/a_theta))
-            !    theta_step = theta_step/1.5
-            !  enddo
-              !!phyto(n)%theta(i,j,k) = theta_temp
-            !endif
-
-            ! Calculate growth for a given ecotype
             irrlim_temp = 1.0-exp(-alpha_temp*cobalt%f_irr_aclm(i,j,k)*theta_temp/P_C_m_temp)
             mu_temp = P_C_m_temp/(1.0 + cobalt%zeta)*irrlim_temp - bresp_temp*P_C_max_temp
+            ! test to see if the latest ecotype is better than the current optimum.  If so, replace the
+            ! current best values.
             if (mu_temp.ge.mu_opt) then
               mu_opt = mu_temp
               phyto(n)%irrlim(i,j,k) = 1.0-exp(-alpha_temp*cobalt%irr_inst(i,j,k)*theta_temp/P_C_m_temp)
@@ -8538,17 +8558,10 @@ contains
             endif
           enddo
 
-          !phyto(n)%irrlim(i,j,k) = (1.0-exp(-phyto(n)%alpha*cobalt%irr_inst(i,j,k)*              &
-          !   phyto(n)%theta(i,j,k)/P_C_m))
-
-          ! calculate the growth rate
-          !phyto(n)%mu(i,j,k) = P_C_m / (1.0 + cobalt%zeta) * phyto(n)%irrlim(i,j,k) - &
-          !   cobalt%expkT(i,j,k)*phyto(n)%bresp*cobalt%phytobrespfac(i,j,k)*  &
-          !   phyto(n)%f_n(i,j,k)/(cobalt%refuge_conc + phyto(n)%f_n(i,j,k))
-
-
+          ! Calculate the chlorophyll.  Coversions give mg Chl (1000 kg)-1 ~ mg Chl m-3 
           phyto(n)%chl(i,j,k) = cobalt%c_2_n*12.0e6*phyto(n)%theta(i,j,k)*phyto(n)%f_n(i,j,k)
           cobalt%f_chl(i,j,k) = cobalt%f_chl(i,j,k)+phyto(n)%chl(i,j,k)
+          ! Issue: remnant from a movement experiment, clean up
           cobalt%chl2sfcchl(i,j,k) = cobalt%f_chl(i,j,k)/max(cobalt%f_chl(i,j,1),epsln)
 
           ! calculate net production by phytoplankton group
@@ -8560,11 +8573,16 @@ contains
 
     enddo;  enddo ; enddo !} i,j,k
 
+    !
+    ! Calculate the time averaged growth rate (generally over 24 hours)
+    ! This is used later for phytoplankton stress calculations that can 
+    ! control sinking and aggregation.  First loop provides average growth
+    ! in the mixed layer.  The second averages over all depths.
+    !
     do j = jsc, jec ; do i = isc, iec ; do n = 1,NUM_PHYTO !{
        tmp_mu_ML = 0.0 ; tmp_hblt = 0.0
        do k = 1, nk !{
           if ((k == 1) .or. (tmp_hblt .lt. cobalt%mld_aclm(i,j))) then !{
-          !if ((k == 1) .or. (tmp_hblt .lt. hblt_depth(i,j))) then !{
              tmp_mu_ML = tmp_mu_ML + phyto(n)%mu_mix(i,j,k) * dzt(i,j,k)
              tmp_hblt = tmp_hblt + dzt(i,j,k)
           endif !}
