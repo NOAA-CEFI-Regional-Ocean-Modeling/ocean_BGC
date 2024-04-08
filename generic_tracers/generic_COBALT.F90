@@ -8337,7 +8337,7 @@ contains
     !
     ! Calculate the underwater light field for the BGC calculations.  By default, COBALT
     ! receives visible and near-infrared inputs.  Near infrared is currently considered
-    ! anyting with wavelengths longer than ~710 nanometers.  Note that both shortwave and
+    ! anything with wavelengths longer than ~710 nanometers.  Note that both shortwave and
     ! near infrared fall into the "shortwave" part of the radiation spectrum.  Following
     ! Morel and Antoine (1994) and Sweeney et al. (2005), about 57% of the incoming irradiance
     ! is assumed to lie within the visible range in the standard MOM6 radiation scheme
@@ -8345,7 +8345,7 @@ contains
     ! 
     ! In COBALTv1/v2, all of the visible wavelengths were included as photosynthically
     ! active radiation (PAR).  This approach, however, included wavelengths shorter than  
-    ! than the ~350-400 nanometer lower bound applied for PAR.  The "par_adj" parameter
+    ! the ~350-400 nanometer lower bound applied for PAR.  The "par_adj" parameter
     ! allows for a downward adjustment.  Its default value of 0.83 gives a PAR of 47%
     ! of the total shortwave flux, consistent with Baker and Frouin (1987).
     !
@@ -8472,7 +8472,7 @@ contains
        ! light level over the photoacclimation layer: (tmp_irrad_aclm/tmp_zaclm)*24/daylength
        cobalt%irr_aclm_inst(i,j,1:kblt(i,j)) = tmp_irrad_aclm/max(1.0e-6,tmp_zaclm)*24.0/ &
                                                max(cobalt%daylength(i,j),cobalt%min_daylength)
-       Issue: what would it take to remove irr_mix? 
+       ! Issue: what would it take to remove irr_mix? 
        cobalt%irr_mix(i,j,1:kblt(i,j)) = tmp_irrad_ML / max(1.0e-6,tmp_hblt)
     enddo;  enddo !} i,j
 
