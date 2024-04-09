@@ -181,10 +181,14 @@ module generic_COBALT
   !The following variables for using this module
   ! are overwritten by generic_tracer_nml namelist
   logical, save :: do_generic_COBALT = .false.       !< Activate the generic_COBALT module if it is set to true.
-  character(len=10), save :: as_param_cobalt = 'W92' !< air-sea flux parameter settings for COBALT
+  character(len=10), save :: as_param_cobalt !< air-sea flux parameter settings for COBALT. Set from
+                                             !! as_param in generic_tracer_nml by generic_tracer.F90, 
+                                             !! but can be replaced by setting as_param_cobalt
+                                             !! in generic_COBALT_nml.
 
-namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
-     o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,gamma_nitrif,do_vertfill_pre,imbalance_tolerance
+  namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
+     o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,gamma_nitrif,do_vertfill_pre,imbalance_tolerance, &
+     as_param_cobalt
   
   !
   ! Array allocations and flux calculations assume that phyto(1) is the

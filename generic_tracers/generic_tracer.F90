@@ -170,13 +170,15 @@ contains
     write (stdlogunit, generic_tracer_nml)
 
     ! Use Wanninkhoff 2014 parameters for air-sea gas exchange if as_param='W14' in generic_tracer_nml
-    if (as_param == 'gfdl_cmip6') then
-      if (do_generic_abiotic) as_param_abiotic = as_param
-      if (do_generic_CFC)     as_param_cfc     = as_param
-      if (do_generic_SF6)     as_param_sf6     = as_param
-      if (do_generic_BLING)   as_param_bling   = as_param
-      if (do_generic_COBALT)  as_param_cobalt  = as_param
-    endif
+    ! The air-sea parameters for each generic tracer package default
+    ! to being the same as as_param.
+    ! For generic_COBALT, the as_param can be overwritten by setting
+    ! as_param_cobalt in generic_COBALT_nml.
+    if (do_generic_abiotic) as_param_abiotic = as_param
+    if (do_generic_CFC)     as_param_cfc     = as_param
+    if (do_generic_SF6)     as_param_sf6     = as_param
+    if (do_generic_BLING)   as_param_bling   = as_param
+    if (do_generic_COBALT)  as_param_cobalt  = as_param
 
     call read_mocsy_namelist()
 
