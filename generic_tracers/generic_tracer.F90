@@ -141,7 +141,7 @@ module generic_tracer
   logical :: do_vertfill_post = .false.
   logical :: generic_tracer_register_called = .false.
   logical :: force_update_fluxes = .false.
-  character(len=10) :: as_param   = 'gfdl_cmip6'     ! Use default Wanninkhoff/OCMIP2 parameters for air-sea gas transfer
+  character(len=10) :: as_param   = 'W14'     ! Use Wanninkhoff 2014 parameters for air-sea gas transfer by default
 
   namelist /generic_tracer_nml/ do_generic_tracer, do_generic_abiotic, do_generic_age, do_generic_argon, do_generic_CFC, &
       do_generic_SF6, do_generic_TOPAZ,do_generic_ERGOM, do_generic_BLING, do_generic_miniBLING, do_generic_COBALT, &
@@ -169,14 +169,15 @@ contains
     write (stdoutunit, generic_tracer_nml)
     write (stdlogunit, generic_tracer_nml)
 
-    ! Use Wanninkhoff 2014 parameters for air-sea gas exchange if as_param='W14' in generic_tracer_nml
-    if (as_param == 'gfdl_cmip6') then
-      if (do_generic_abiotic) as_param_abiotic = as_param
-      if (do_generic_CFC)     as_param_cfc     = as_param
-      if (do_generic_SF6)     as_param_sf6     = as_param
-      if (do_generic_BLING)   as_param_bling   = as_param
-      if (do_generic_COBALT)  as_param_cobalt  = as_param
-    endif
+    ! The air-sea parameters for each generic tracer package default
+    ! to being the same as as_param.
+    ! For generic_COBALT, the as_param can be overwritten by setting
+    ! as_param_cobalt in generic_COBALT_nml.
+    if (do_generic_abiotic) as_param_abiotic = as_param
+    if (do_generic_CFC)     as_param_cfc     = as_param
+    if (do_generic_SF6)     as_param_sf6     = as_param
+    if (do_generic_BLING)   as_param_bling   = as_param
+    if (do_generic_COBALT)  as_param_cobalt  = as_param
 
     call read_mocsy_namelist()
 
