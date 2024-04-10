@@ -1,5 +1,5 @@
-!> COBALT_utils module consists of utility subroutines
-!! to be used by generic COBALT module.
+!> The COBALT_send_diag module contains a subroutine
+!! to handle sending diagnostics.
 !<----------------------------------------------------------------
 module COBALT_send_diag
 
