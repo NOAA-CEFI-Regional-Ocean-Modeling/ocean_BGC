@@ -6393,15 +6393,15 @@ contains
 
     call mpp_clock_begin(id_clock_carbon_calculations)
     !Get necessary fields
-    call g_tracer_get_values(tracer_list,'htotal','field', cobalt%f_htotal,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'po4'   ,'field', cobalt%f_po4,isd,jsd,ntau=tau)
-    call g_tracer_get_values(tracer_list,'sio4'  ,'field', cobalt%f_sio4,isd,jsd,ntau=tau)
-    call g_tracer_get_values(tracer_list,'alk'   ,'field', cobalt%f_alk,isd,jsd,ntau=tau)
-    call g_tracer_get_values(tracer_list,'dic'   ,'field', cobalt%f_dic  ,isd,jsd,ntau=tau)
+    call g_tracer_get_values(tracer_list,'htotal','field', cobalt%f_htotal,isd,jsd)
+    call g_tracer_get_values(tracer_list,'po4'   ,'field', cobalt%f_po4,isd,jsd)
+    call g_tracer_get_values(tracer_list,'sio4'  ,'field', cobalt%f_sio4,isd,jsd)
+    call g_tracer_get_values(tracer_list,'alk'   ,'field', cobalt%f_alk,isd,jsd)
+    call g_tracer_get_values(tracer_list,'dic'   ,'field', cobalt%f_dic  ,isd,jsd)
     if (do_nh3_diag) then
        allocate(pka_nh3(isd:ied,jsd:jed))
        pka_nh3 = 0.
-       call g_tracer_get_values(tracer_list,'nh4'   ,'field', cobalt%f_nh4  ,isd,jsd,ntau=tau)
+       call g_tracer_get_values(tracer_list,'nh4'   ,'field', cobalt%f_nh4  ,isd,jsd)
     end if
     allocate(phos_nh3_exchange(isd:ied,jsd:jed))
 
@@ -6481,8 +6481,8 @@ contains
             omega_calc=cobalt%omegac(:,:,k))
     enddo
 
-    call g_tracer_set_values(tracer_list,'htotal','field',cobalt%f_htotal  ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd,ntau=1)
+    call g_tracer_set_values(tracer_list,'htotal','field',cobalt%f_htotal  ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd)
     call g_tracer_set_values(tracer_list,'dic','alpha',cobalt%co2_alpha    ,isd,jsd)
     call g_tracer_set_values(tracer_list,'dic','csurf',cobalt%co2_csurf    ,isd,jsd)
 
@@ -6522,10 +6522,10 @@ contains
       ! Normally, the alpha would be multiplied by the atmospheric 14C/12C ratio. However,
       ! here that is set to 1, so that alpha_14C = alpha_12C. This needs to be changed!
 
-   call g_tracer_get_values(tracer_list,'di14c' ,'field', cobalt%f_di14c,isd,jsd,ntau=tau,positive=.true.)
+   call g_tracer_get_values(tracer_list,'di14c' ,'field', cobalt%f_di14c,isd,jsd,positive=.true.)
 
     ! This is not used until later, but get it now
-    call g_tracer_get_values(tracer_list,'do14c' ,'field', cobalt%f_do14c,isd,jsd,ntau=tau,positive=.true.)
+    call g_tracer_get_values(tracer_list,'do14c' ,'field', cobalt%f_do14c,isd,jsd,positive=.true.)
 
        do j = jsc, jec ; do i = isc, iec  !{
        cobalt%c14o2_csurf(i,j) =  cobalt%co2_csurf(i,j) *                &
@@ -6544,89 +6544,89 @@ contains
 
     call mpp_clock_begin(id_clock_phyto_growth)
 
-    call g_tracer_get_values(tracer_list,'cadet_arag','field',cobalt%f_cadet_arag ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'cadet_calc','field',cobalt%f_cadet_calc ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'fed'    ,'field',cobalt%f_fed      ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'fedet'  ,'field',cobalt%f_fedet    ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'ldon'   ,'field',cobalt%f_ldon     ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'ldop'   ,'field',cobalt%f_ldop     ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'lith'   ,'field',cobalt%f_lith     ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'lithdet','field',cobalt%f_lithdet  ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'ndet'   ,'field',cobalt%f_ndet     ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'nh4'    ,'field',cobalt%f_nh4      ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'no3'    ,'field',cobalt%f_no3      ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'o2'     ,'field',cobalt%f_o2       ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'pdet'   ,'field',cobalt%f_pdet     ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'po4'    ,'field',cobalt%f_po4      ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'srdon'   ,'field',cobalt%f_srdon   ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'srdop'   ,'field',cobalt%f_srdop   ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'sldon'   ,'field',cobalt%f_sldon   ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'sldop'   ,'field',cobalt%f_sldop   ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'sidet'  ,'field',cobalt%f_sidet    ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'sio4'   ,'field',cobalt%f_sio4     ,isd,jsd,ntau=tau,positive=.true.)
+    call g_tracer_get_values(tracer_list,'cadet_arag','field',cobalt%f_cadet_arag ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'cadet_calc','field',cobalt%f_cadet_calc ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'fed'    ,'field',cobalt%f_fed      ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'fedet'  ,'field',cobalt%f_fedet    ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'ldon'   ,'field',cobalt%f_ldon     ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'ldop'   ,'field',cobalt%f_ldop     ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'lith'   ,'field',cobalt%f_lith     ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'lithdet','field',cobalt%f_lithdet  ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'ndet'   ,'field',cobalt%f_ndet     ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nh4'    ,'field',cobalt%f_nh4      ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'no3'    ,'field',cobalt%f_no3      ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'o2'     ,'field',cobalt%f_o2       ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'pdet'   ,'field',cobalt%f_pdet     ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'po4'    ,'field',cobalt%f_po4      ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'srdon'   ,'field',cobalt%f_srdon   ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'srdop'   ,'field',cobalt%f_srdop   ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'sldon'   ,'field',cobalt%f_sldon   ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'sldop'   ,'field',cobalt%f_sldop   ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'sidet'  ,'field',cobalt%f_sidet    ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'sio4'   ,'field',cobalt%f_sio4     ,isd,jsd,positive=.true.)
 !
     ! phytoplankton fields
     !
-    call g_tracer_get_values(tracer_list,'fedi'   ,'field',phyto(DIAZO)%f_fe(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'felg'   ,'field',phyto(LARGE)%f_fe(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'femd'   ,'field',phyto(MEDIUM)%f_fe(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'fesm'   ,'field',phyto(SMALL)%f_fe(:,:,:),isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'pdi'   ,'field',phyto(DIAZO)%f_p(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'plg'   ,'field',phyto(LARGE)%f_p(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'pmd'   ,'field',phyto(MEDIUM)%f_p(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'psm'   ,'field',phyto(SMALL)%f_p(:,:,:),isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'ndi'    ,'field',phyto(DIAZO)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'nlg'    ,'field',phyto(LARGE)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'nmd'    ,'field',phyto(MEDIUM)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'nsm'    ,'field',phyto(SMALL)%f_n(:,:,:),isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'silg'   ,'field',cobalt%f_silg     ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'simd'   ,'field',cobalt%f_simd     ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'mu_mem_ndi' ,'field',phyto(DIAZO)%f_mu_mem,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LARGE)%f_mu_mem,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MEDIUM)%f_mu_mem,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'mu_mem_nsm' ,'field',phyto(SMALL)%f_mu_mem,isd,jsd,ntau=1)
+    call g_tracer_get_values(tracer_list,'fedi'   ,'field',phyto(DIAZO)%f_fe(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'felg'   ,'field',phyto(LARGE)%f_fe(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'femd'   ,'field',phyto(MEDIUM)%f_fe(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'fesm'   ,'field',phyto(SMALL)%f_fe(:,:,:),isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'pdi'   ,'field',phyto(DIAZO)%f_p(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'plg'   ,'field',phyto(LARGE)%f_p(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'pmd'   ,'field',phyto(MEDIUM)%f_p(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'psm'   ,'field',phyto(SMALL)%f_p(:,:,:),isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'ndi'    ,'field',phyto(DIAZO)%f_n(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nlg'    ,'field',phyto(LARGE)%f_n(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nmd'    ,'field',phyto(MEDIUM)%f_n(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nsm'    ,'field',phyto(SMALL)%f_n(:,:,:),isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'silg'   ,'field',cobalt%f_silg     ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'simd'   ,'field',cobalt%f_simd     ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'mu_mem_ndi' ,'field',phyto(DIAZO)%f_mu_mem,isd,jsd)
+    call g_tracer_get_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LARGE)%f_mu_mem,isd,jsd)
+    call g_tracer_get_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MEDIUM)%f_mu_mem,isd,jsd)
+    call g_tracer_get_values(tracer_list,'mu_mem_nsm' ,'field',phyto(SMALL)%f_mu_mem,isd,jsd)
     !
     ! zooplankton fields
     !
-    call g_tracer_get_values(tracer_list,'nsmz'    ,'field',zoo(1)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'nmdz'    ,'field',zoo(2)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'nlgz'    ,'field',zoo(3)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nsmz'    ,'field',zoo(1)%f_n(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nmdz'    ,'field',zoo(2)%f_n(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nlgz'    ,'field',zoo(3)%f_n(:,:,:) ,isd,jsd,positive=.true.)
     !
     ! bacteria
     !
-    call g_tracer_get_values(tracer_list,'nbact'   ,'field',bact(1)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nbact'   ,'field',bact(1)%f_n(:,:,:) ,isd,jsd,positive=.true.)
     !
     ! diagnostic tracers that are passed between time steps (except chlorophyll)
     !
-    call g_tracer_get_values(tracer_list,'cased'  ,'field',cobalt%f_cased    ,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd,ntau=1,positive=.true.)
-    call g_tracer_get_values(tracer_list,'cadet_arag_btf','field',cobalt%f_cadet_arag_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'cadet_calc_btf','field',cobalt%f_cadet_calc_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'lithdet_btf','field',cobalt%f_lithdet_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'ndet_btf','field',cobalt%f_ndet_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'pdet_btf','field',cobalt%f_pdet_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'sidet_btf','field',cobalt%f_sidet_btf,isd,jsd,ntau=1)
+    call g_tracer_get_values(tracer_list,'cased'  ,'field',cobalt%f_cased    ,isd,jsd)
+    call g_tracer_get_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'cadet_arag_btf','field',cobalt%f_cadet_arag_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'cadet_calc_btf','field',cobalt%f_cadet_calc_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'lithdet_btf','field',cobalt%f_lithdet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'ndet_btf','field',cobalt%f_ndet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pdet_btf','field',cobalt%f_pdet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'sidet_btf','field',cobalt%f_sidet_btf,isd,jsd)
     ! add phytoplankton because they now sink
-    call g_tracer_get_values(tracer_list,'ndi_btf','field',cobalt%f_ndi_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'nlg_btf','field',cobalt%f_nlg_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'nmd_btf','field',cobalt%f_nmd_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'nsm_btf','field',cobalt%f_nsm_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'fedi_btf','field',cobalt%f_fedi_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'felg_btf','field',cobalt%f_felg_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'femd_btf','field',cobalt%f_femd_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'fesm_btf','field',cobalt%f_fesm_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'pdi_btf','field',cobalt%f_pdi_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'plg_btf','field',cobalt%f_plg_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'pmd_btf','field',cobalt%f_pmd_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'psm_btf','field',cobalt%f_psm_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'silg_btf','field',cobalt%f_silg_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'simd_btf','field',cobalt%f_simd_btf,isd,jsd,ntau=1)
+    call g_tracer_get_values(tracer_list,'ndi_btf','field',cobalt%f_ndi_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'nlg_btf','field',cobalt%f_nlg_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'nmd_btf','field',cobalt%f_nmd_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'nsm_btf','field',cobalt%f_nsm_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'fedi_btf','field',cobalt%f_fedi_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'felg_btf','field',cobalt%f_felg_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'femd_btf','field',cobalt%f_femd_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'fesm_btf','field',cobalt%f_fesm_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pdi_btf','field',cobalt%f_pdi_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'plg_btf','field',cobalt%f_plg_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pmd_btf','field',cobalt%f_pmd_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'psm_btf','field',cobalt%f_psm_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'silg_btf','field',cobalt%f_silg_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'simd_btf','field',cobalt%f_simd_btf,isd,jsd)
     ! uncomment for "no mass change" test
-    !call g_tracer_get_values(tracer_list,'fedet_btf','field',cobalt%f_fedet_btf,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'irr_aclm_sfc','field',cobalt%f_irr_aclm_sfc ,isd,jsd,ntau=1)
-    call g_tracer_get_values(tracer_list,'irr_mem_dp','field',cobalt%f_irr_mem_dp ,isd,jsd,ntau=1)
+    !call g_tracer_get_values(tracer_list,'fedet_btf','field',cobalt%f_fedet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
+    call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
+    call g_tracer_get_values(tracer_list,'irr_aclm_sfc','field',cobalt%f_irr_aclm_sfc ,isd,jsd)
+    call g_tracer_get_values(tracer_list,'irr_mem_dp','field',cobalt%f_irr_mem_dp ,isd,jsd)
 
     ! zero out cumulative COBALT-wide production diagnostics
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec
@@ -9054,18 +9054,18 @@ contains
     !
     !Set the diagnostics tracer fields.
     !
-    call g_tracer_set_values(tracer_list,'cased',  'field',cobalt%f_cased    ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'chl',    'field',cobalt%f_chl      ,isd,jsd,ntau=1)
-    if (do_nh3_diag) call g_tracer_set_values(tracer_list,'nh3',    'field',cobalt%f_nh3      ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'irr_aclm' ,'field',cobalt%f_irr_aclm ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'irr_aclm_z' ,'field',cobalt%f_irr_aclm_z ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'irr_aclm_sfc' ,'field',cobalt%f_irr_aclm_sfc ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'irr_mem_dp' ,'field',cobalt%f_irr_mem_dp ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'mu_mem_ndi' ,'field',phyto(DIAZO)%f_mu_mem ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LARGE)%f_mu_mem ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MEDIUM)%f_mu_mem ,isd,jsd,ntau=1)
-    call g_tracer_set_values(tracer_list,'mu_mem_nsm' ,'field',phyto(SMALL)%f_mu_mem ,isd,jsd,ntau=1)
+    call g_tracer_set_values(tracer_list,'cased',  'field',cobalt%f_cased    ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'chl',    'field',cobalt%f_chl      ,isd,jsd)
+    if (do_nh3_diag) call g_tracer_set_values(tracer_list,'nh3',    'field',cobalt%f_nh3      ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'irr_aclm' ,'field',cobalt%f_irr_aclm ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'irr_aclm_z' ,'field',cobalt%f_irr_aclm_z ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'irr_aclm_sfc' ,'field',cobalt%f_irr_aclm_sfc ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'irr_mem_dp' ,'field',cobalt%f_irr_mem_dp ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'mu_mem_ndi' ,'field',phyto(DIAZO)%f_mu_mem ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LARGE)%f_mu_mem ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MEDIUM)%f_mu_mem ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'mu_mem_nsm' ,'field',phyto(SMALL)%f_mu_mem ,isd,jsd)
 
     ! CAS calculate totals after source/sinks have been applied
     imbal_flag = 0;
@@ -10125,8 +10125,8 @@ contains
        call g_tracer_get_pointer(tracer_list,'alk'   ,'field', alk_field)
        call g_tracer_get_pointer(tracer_list,'nh4'   ,'field', nh4_field)
 
-       call g_tracer_get_values(tracer_list,'htotal' ,'field', htotal_field,isd,jsd,ntau=1)
-       call g_tracer_get_values(tracer_list,'co3_ion','field',co3_ion_field,isd,jsd,ntau=1)
+       call g_tracer_get_values(tracer_list,'htotal' ,'field', htotal_field,isd,jsd)
+       call g_tracer_get_values(tracer_list,'co3_ion','field',co3_ion_field,isd,jsd)
 
        do j = jsc, jec ; do i = isc, iec  !{
           cobalt%htotallo(i,j) = cobalt%htotal_scale_lo * htotal_field(i,j,1)
@@ -10164,8 +10164,8 @@ contains
             omega_calc=cobalt%omegac(:,:,1))
 
        !Set fields !nnz: if These are pointers do I need to do this?
-       call g_tracer_set_values(tracer_list,'htotal' ,'field',htotal_field ,isd,jsd,ntau=1)
-       call g_tracer_set_values(tracer_list,'co3_ion','field',co3_ion_field,isd,jsd,ntau=1)
+       call g_tracer_set_values(tracer_list,'htotal' ,'field',htotal_field ,isd,jsd)
+       call g_tracer_set_values(tracer_list,'co3_ion','field',co3_ion_field,isd,jsd)
 
        call g_tracer_set_values(tracer_list,'dic','alpha',co2_alpha    ,isd,jsd)
        call g_tracer_set_values(tracer_list,'dic','csurf',co2_csurf    ,isd,jsd)
