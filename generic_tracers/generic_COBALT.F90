@@ -154,7 +154,7 @@ module generic_COBALT
   use g_tracer_utils, only : g_tracer_get_values
   use g_tracer_utils, only : g_diag_type, g_diag_field_add
   use g_tracer_utils, only : register_diag_field=>g_register_diag_field
-  use g_tracer_utils, only : g_send_data
+  use g_tracer_utils, only : g_send_data, is_root_pe
   use g_tracer_utils, only : g_tracer_is_prog, g_tracer_vertfill, g_tracer_get_next
 
   use cobalt_types 
@@ -4580,7 +4580,7 @@ contains
     !This implementation enables runtime overwrite via field_table.
 
     stdoutunit=stdout()
-    write(stdoutunit,*) '!!! START ', trim(package_name), ' parameter check START !!!'
+    if (is_root_pe()) write(stdoutunit,*) '!!! START ', trim(package_name), ' parameter check START !!!'
 
     call g_tracer_start_param_list(package_name)
     call g_tracer_add_param('init', cobalt%init, .false. )
@@ -5140,7 +5140,7 @@ contains
     !===========
     !Block Ends: g_tracer_add_param
     !===========
-    write(stdoutunit,*) '!!! END ', trim(package_name), ' parameter check END !!!'
+    if (is_root_pe()) write(stdoutunit,*) '!!! END ', trim(package_name), ' parameter check END !!!'
   end subroutine user_add_params
 
   subroutine user_add_tracers(tracer_list)

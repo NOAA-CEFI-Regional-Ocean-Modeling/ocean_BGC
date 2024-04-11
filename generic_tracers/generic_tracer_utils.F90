@@ -607,7 +607,7 @@ contains
     if (local_do_log) then
       if (is_root_pe()) then
         stdoutunit=stdout()
-        write(var_string, '(e30.16)') var
+        write(var_string, '(e0.16)') var
         write(mesg, '(" ",a,"= ", a)') trim(name), trim(var_string)
         write(stdoutunit,'(a)') trim(mesg)
       endif !is_root_pe
