@@ -4568,6 +4568,8 @@ contains
     !User also adds the definition of each parameter in generic_COBALT_params type
     !==============================================================
 
+    integer :: stdoutunit 
+
     !=============
     !Block Starts: g_tracer_add_param
     !=============
@@ -4576,6 +4578,9 @@ contains
     !All the g_tracer_add_param calls must happen between
     !g_tracer_start_param_list and g_tracer_end_param_list  calls.
     !This implementation enables runtime overwrite via field_table.
+
+    stdoutunit=stdout()
+    write(stdoutunit,*) '!!! START ', trim(package_name), ' parameter check START !!!'
 
     call g_tracer_start_param_list(package_name)
     call g_tracer_add_param('init', cobalt%init, .false. )
@@ -5135,7 +5140,7 @@ contains
     !===========
     !Block Ends: g_tracer_add_param
     !===========
-
+    write(stdoutunit,*) '!!! END ', trim(package_name), ' parameter check END !!!'
   end subroutine user_add_params
 
   subroutine user_add_tracers(tracer_list)
