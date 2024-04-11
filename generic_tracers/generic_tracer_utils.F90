@@ -625,7 +625,7 @@ contains
     logical :: x
     integer :: stdoutunit
     logical :: local_do_log
-    character(len=240) :: mesg
+    character(len=240) :: mesg, var_string
 
     local_do_log  = .true. ; if (present(do_not_log))  local_do_log  = .false.
 
@@ -638,11 +638,17 @@ contains
 
     if(.NOT. fm_get_value(name, var))  var = x
 
+    if (var) then
+      var_string = 'True'
+    else
+      var_string = 'False'        
+    endif        
+
     ! print var to stdout
     if (local_do_log) then
       if (is_root_pe()) then
         stdoutunit=stdout()
-        write(mesg, '(" ",a,"= ", a)') trim(name), trim(var)
+        write(mesg, '(" ",a,"= ", a)') trim(name), trim(var_string)
         write(stdoutunit,'(a)') trim(mesg)
       endif !is_root_pe
     endif !local_do_log
