@@ -1827,7 +1827,7 @@ contains
        array_ptr => g_tracer%deltap
     case ('kw') 
        array_ptr => g_tracer%kw
-    case ('btf') 
+    case ('btf')
        array_ptr => g_tracer%btf
     case ('btm_reservoir') 
        array_ptr => g_tracer%btm_reservoir
@@ -1963,7 +1963,7 @@ contains
        array = g_tracer%deltap
     case ('kw') 
        array = g_tracer%kw
-    case ('btf') 
+    case ('btf')
        array = g_tracer%btf
     case ('btm_reservoir') 
        array = g_tracer%btm_reservoir
