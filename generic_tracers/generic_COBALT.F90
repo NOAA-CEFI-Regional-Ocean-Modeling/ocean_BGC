@@ -4580,7 +4580,7 @@ contains
     !This implementation enables runtime overwrite via field_table.
 
     stdoutunit=stdout()
-    if (is_root_pe()) write(stdoutunit,*) '!!! START ', trim(package_name), ' parameter check START !!!'
+    if (is_root_pe()) write(stdoutunit,*) '% START % ', trim(package_name), ' parameter check % START %'
 
     call g_tracer_start_param_list(package_name)
     call g_tracer_add_param('init', cobalt%init, .false. )
@@ -5140,7 +5140,7 @@ contains
     !===========
     !Block Ends: g_tracer_add_param
     !===========
-    if (is_root_pe()) write(stdoutunit,*) '!!! END ', trim(package_name), ' parameter check END !!!'
+    if (is_root_pe()) write(stdoutunit,*) '% END ', trim(package_name), ' parameter check END %'
   end subroutine user_add_params
 
   subroutine user_add_tracers(tracer_list)
