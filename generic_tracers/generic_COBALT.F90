@@ -4818,8 +4818,8 @@ contains
     call g_tracer_add_param('si_2_n_static_Md', phyto(MEDIUM)%si_2_n_static, 2.0)           ! mol Si mol N-1
     call g_tracer_add_param('si_2_n_max_Lg', phyto(LARGE)%si_2_n_max, 3.0)                  ! mol Si mol N-1
     call g_tracer_add_param('si_2_n_max_Lg', phyto(MEDIUM)%si_2_n_max, 1.0)                 ! mol Si mol N-1
-    call g_tracer_add_param('ca_2_n_arag', cobalt%ca_2_n_arag, 0.050 * 106.0 / 16.0)        ! mol Ca mol N-1
-    call g_tracer_add_param('ca_2_n_calc', cobalt%ca_2_n_calc, 0.015 * 106.0 / 16.0)        ! mol Ca mol N-1
+    call g_tracer_add_param('ca_2_n_arag', cobalt%ca_2_n_arag, 0.055 * 106.0 / 16.0)        ! mol Ca mol N-1
+    call g_tracer_add_param('ca_2_n_calc', cobalt%ca_2_n_calc, 0.050 * 106.0 / 16.0)        ! mol Ca mol N-1
     call g_tracer_add_param('caco3_sat_max', cobalt%caco3_sat_max,10.0)                     ! dimensionless
     !
     !-----------------------------------------------------------------------
