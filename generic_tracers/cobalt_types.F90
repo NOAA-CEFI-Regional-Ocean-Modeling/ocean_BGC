@@ -6,6 +6,10 @@ module cobalt_types
   implicit none; private
 
   !
+  character(len=fm_string_len), parameter, public :: mod_name       = 'generic_COBALT'
+  character(len=fm_string_len), parameter, public :: package_name   = 'generic_cobalt'
+
+  !
   public phytoplankton
   public zooplankton
   public bacteria
