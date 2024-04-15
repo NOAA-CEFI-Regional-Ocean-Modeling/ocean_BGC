@@ -77,15 +77,15 @@ module generic_tracer
   use generic_SF6,    only : generic_SF6_register_diag
   use generic_SF6, only : as_param_sf6
 
-  use generic_ERGOM, only : generic_ERGOM_register, generic_ERGOM_register_diag
-  use generic_ERGOM, only : generic_ERGOM_init, generic_ERGOM_update_from_source,generic_ERGOM_update_from_coupler
-  use generic_ERGOM, only : generic_ERGOM_set_boundary_values, generic_ERGOM_end, do_generic_ERGOM
-  use generic_ERGOM, only : generic_ERGOM_update_from_bottom
+!  use generic_ERGOM, only : generic_ERGOM_register, generic_ERGOM_register_diag
+!  use generic_ERGOM, only : generic_ERGOM_init, generic_ERGOM_update_from_source,generic_ERGOM_update_from_coupler
+!  use generic_ERGOM, only : generic_ERGOM_set_boundary_values, generic_ERGOM_end, do_generic_ERGOM
+!  use generic_ERGOM, only : generic_ERGOM_update_from_bottom
 
-  use generic_TOPAZ,  only : generic_TOPAZ_register
-  use generic_TOPAZ,  only : generic_TOPAZ_init, generic_TOPAZ_update_from_source,generic_TOPAZ_register_diag
-  use generic_TOPAZ,  only : generic_TOPAZ_update_from_bottom,generic_TOPAZ_update_from_coupler
-  use generic_TOPAZ,  only : generic_TOPAZ_set_boundary_values, generic_TOPAZ_end, do_generic_TOPAZ
+!  use generic_TOPAZ,  only : generic_TOPAZ_register
+!  use generic_TOPAZ,  only : generic_TOPAZ_init, generic_TOPAZ_update_from_source,generic_TOPAZ_register_diag
+!  use generic_TOPAZ,  only : generic_TOPAZ_update_from_bottom,generic_TOPAZ_update_from_coupler
+!  use generic_TOPAZ,  only : generic_TOPAZ_set_boundary_values, generic_TOPAZ_end, do_generic_TOPAZ
 
   use generic_BLING,  only : generic_BLING_register
   use generic_BLING,  only : generic_BLING_init, generic_BLING_update_from_source,generic_BLING_register_diag
@@ -93,11 +93,11 @@ module generic_tracer
   use generic_BLING,  only : generic_BLING_set_boundary_values, generic_BLING_end, do_generic_BLING
   use generic_BLING, only : as_param_bling
 
-  use generic_miniBLING_mod,  only : generic_miniBLING_init, generic_miniBLING_register
-  use generic_miniBLING_mod,  only : generic_miniBLING_update_from_source,generic_miniBLING_register_diag
-  use generic_miniBLING_mod,  only : generic_miniBLING_update_from_bottom,generic_miniBLING_update_from_coupler
-  use generic_miniBLING_mod,  only : generic_miniBLING_set_boundary_values, generic_miniBLING_end, do_generic_miniBLING
-  use generic_miniBLING_mod,  only : generic_miniBLING_diag
+!  use generic_miniBLING_mod,  only : generic_miniBLING_init, generic_miniBLING_register
+!  use generic_miniBLING_mod,  only : generic_miniBLING_update_from_source,generic_miniBLING_register_diag
+!  use generic_miniBLING_mod,  only : generic_miniBLING_update_from_bottom,generic_miniBLING_update_from_coupler
+!  use generic_miniBLING_mod,  only : generic_miniBLING_set_boundary_values, generic_miniBLING_end, do_generic_miniBLING
+!  use generic_miniBLING_mod,  only : generic_miniBLING_diag
 
   use generic_COBALT,  only : generic_COBALT_register
   use generic_COBALT,  only : generic_COBALT_init, generic_COBALT_update_from_source,generic_COBALT_register_diag
@@ -199,17 +199,17 @@ contains
     if(do_generic_SF6) &
          call generic_SF6_register(tracer_list)
 
-    if(do_generic_TOPAZ) &
-         call generic_TOPAZ_register(tracer_list)
+!    if(do_generic_TOPAZ) &
+!         call generic_TOPAZ_register(tracer_list)
 
-    if(do_generic_ERGOM) &
-         call generic_ERGOM_register(tracer_list)
+!    if(do_generic_ERGOM) &
+!         call generic_ERGOM_register(tracer_list)
 
     if(do_generic_BLING) &
          call generic_BLING_register(tracer_list)
 
-    if(do_generic_miniBLING) &
-         call generic_miniBLING_register(tracer_list)
+!    if(do_generic_miniBLING) &
+!         call generic_miniBLING_register(tracer_list)
 
     if(do_generic_COBALT) &
          call generic_COBALT_register(tracer_list)
@@ -296,17 +296,17 @@ contains
     if(do_generic_SF6) &
          call generic_SF6_init(tracer_list)
 
-    if(do_generic_TOPAZ) &
-         call generic_TOPAZ_init(tracer_list)
+!    if(do_generic_TOPAZ) &
+!         call generic_TOPAZ_init(tracer_list)
 
-    if(do_generic_ERGOM) &
-         call generic_ERGOM_init(tracer_list)
+!    if(do_generic_ERGOM) &
+!         call generic_ERGOM_init(tracer_list)
 
     if(do_generic_BLING) &
          call generic_BLING_init(tracer_list, force_update_fluxes)
 
-    if(do_generic_miniBLING) &
-         call generic_miniBLING_init(tracer_list)
+!    if(do_generic_miniBLING) &
+!         call generic_miniBLING_init(tracer_list)
 
     if(do_generic_COBALT) &
          call generic_COBALT_init(tracer_list, force_update_fluxes)
@@ -340,13 +340,13 @@ contains
 
     if(do_generic_abiotic)  call generic_abiotic_register_diag(diag_list)
     
-    if(do_generic_TOPAZ)  call generic_TOPAZ_register_diag(diag_list)    
+!    if(do_generic_TOPAZ)  call generic_TOPAZ_register_diag(diag_list)    
 
-    if(do_generic_ERGOM)  call generic_ERGOM_register_diag(diag_list)    
+!    if(do_generic_ERGOM)  call generic_ERGOM_register_diag(diag_list)    
 
     if(do_generic_BLING)  call generic_BLING_register_diag(diag_list)    
     
-    if(do_generic_miniBLING)  call generic_miniBLING_register_diag()    
+!    if(do_generic_miniBLING)  call generic_miniBLING_register_diag()    
 
     if(do_generic_COBALT)  call generic_COBALT_register_diag(diag_list)
 
@@ -393,11 +393,11 @@ contains
 
     !    if(do_generic_SF6)    call generic_SF6_update_from_coupler(tracer_list) !Nothing to do for SF6
 
-    if(do_generic_TOPAZ)  call generic_TOPAZ_update_from_coupler(tracer_list)
+!    if(do_generic_TOPAZ)  call generic_TOPAZ_update_from_coupler(tracer_list)
 
     if(do_generic_BLING)  call generic_BLING_update_from_coupler(tracer_list)
 
-    if(do_generic_miniBLING)  call generic_miniBLING_update_from_coupler(tracer_list)
+!    if(do_generic_miniBLING)  call generic_miniBLING_update_from_coupler(tracer_list)
 
     if(do_generic_COBALT)  call generic_COBALT_update_from_coupler(tracer_list)
 
@@ -538,21 +538,21 @@ contains
     if(do_generic_abiotic) call generic_abiotic_update_from_source(tracer_list,Temp,Salt,sosga,rho_dzt,dzt,&
          hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time)
 
-    if(do_generic_TOPAZ)  call generic_TOPAZ_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
-         hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
-         nbands,max_wavelength_band,sw_pen_band,opacity_band)
+!    if(do_generic_TOPAZ)  call generic_TOPAZ_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
+!         hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
+!         nbands,max_wavelength_band,sw_pen_band,opacity_band)
 
-    if(do_generic_ERGOM)  call generic_ERGOM_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
-         hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
-         nbands,max_wavelength_band,sw_pen_band,opacity_band,current_wave_stress)
+!    if(do_generic_ERGOM)  call generic_ERGOM_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
+!         hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
+!         nbands,max_wavelength_band,sw_pen_band,opacity_band,current_wave_stress)
 
     if(do_generic_BLING)  call generic_BLING_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
          hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
          nbands,max_wavelength_band,sw_pen_band,opacity_band)
 
-    if(do_generic_miniBLING)  call generic_miniBLING_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
-         hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
-         nbands,max_wavelength_band,sw_pen_band,opacity_band, grid_ht)
+!    if(do_generic_miniBLING)  call generic_miniBLING_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
+!         hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
+!         nbands,max_wavelength_band,sw_pen_band,opacity_band, grid_ht)
 
     if (do_generic_COBALT) & 
           call generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
@@ -605,13 +605,13 @@ contains
 
     !    if(do_generic_SF6)    call generic_SF6_update_from_bottom(tracer_list)!Nothing to do for SF6 
 
-    if(do_generic_TOPAZ)  call generic_TOPAZ_update_from_bottom(tracer_list,dt, tau, model_time)
+!    if(do_generic_TOPAZ)  call generic_TOPAZ_update_from_bottom(tracer_list,dt, tau, model_time)
 
-    if(do_generic_ERGOM)  call generic_ERGOM_update_from_bottom(tracer_list,dt, tau, model_time)
+!    if(do_generic_ERGOM)  call generic_ERGOM_update_from_bottom(tracer_list,dt, tau, model_time)
    
     if(do_generic_BLING)  call generic_BLING_update_from_bottom(tracer_list,dt, tau)
 
-    if(do_generic_miniBLING)  call generic_miniBLING_update_from_bottom(tracer_list,dt, tau)
+!    if(do_generic_miniBLING)  call generic_miniBLING_update_from_bottom(tracer_list,dt, tau)
 
     if(do_generic_COBALT)  call generic_COBALT_update_from_bottom(tracer_list,dt, tau, model_time)
 
@@ -772,17 +772,17 @@ contains
     if(do_generic_SF6) &
          call generic_SF6_set_boundary_values(tracer_list,ST,SS,rho,ilb,jlb,tau)
 
-    if(do_generic_TOPAZ) &
-         call generic_TOPAZ_set_boundary_values(tracer_list,ST,SS,rho,ilb,jlb,tau)
+!    if(do_generic_TOPAZ) &
+!         call generic_TOPAZ_set_boundary_values(tracer_list,ST,SS,rho,ilb,jlb,tau)
 
-    if(do_generic_ERGOM) &
-         call generic_ERGOM_set_boundary_values(tracer_list,ST,SS,rho,ilb,jlb,tau)
+!    if(do_generic_ERGOM) &
+!         call generic_ERGOM_set_boundary_values(tracer_list,ST,SS,rho,ilb,jlb,tau)
 
     if(do_generic_BLING) &
          call generic_BLING_set_boundary_values(tracer_list,ST,SS,rho,ilb,jlb,tau,dzt)
     !
-    if(do_generic_miniBLING) &
-         call generic_miniBLING_set_boundary_values(tracer_list,ST,SS,rho,ilb,jlb,tau)
+!    if(do_generic_miniBLING) &
+!         call generic_miniBLING_set_boundary_values(tracer_list,ST,SS,rho,ilb,jlb,tau)
 
     if(do_generic_COBALT) &
          call generic_COBALT_set_boundary_values(tracer_list,ST,SS,rho,ilb,jlb,tau,dzt,model_time)
@@ -834,10 +834,10 @@ contains
     if(do_generic_argon) call generic_argon_end
     if(do_generic_CFC) call generic_CFC_end
     if(do_generic_SF6) call generic_SF6_end
-    if(do_generic_TOPAZ)  call generic_TOPAZ_end
-    if(do_generic_ERGOM)  call generic_ERGOM_end
+!    if(do_generic_TOPAZ)  call generic_TOPAZ_end
+!    if(do_generic_ERGOM)  call generic_ERGOM_end
     if(do_generic_BLING)  call generic_BLING_end
-    if(do_generic_miniBLING)  call generic_miniBLING_end
+!    if(do_generic_miniBLING)  call generic_miniBLING_end
     if(do_generic_COBALT)  call generic_COBALT_end
 
   end subroutine generic_tracer_end
