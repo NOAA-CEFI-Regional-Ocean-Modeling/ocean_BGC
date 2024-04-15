@@ -144,7 +144,7 @@ module generic_tracer
   character(len=10) :: as_param   = 'W14'     ! Use Wanninkhoff 2014 parameters for air-sea gas transfer by default
 
   namelist /generic_tracer_nml/ do_generic_tracer, do_generic_abiotic, do_generic_age, do_generic_argon, do_generic_CFC, &
-      do_generic_SF6, do_generic_TOPAZ,do_generic_ERGOM, do_generic_BLING, do_generic_miniBLING, do_generic_COBALT, &
+      do_generic_SF6, do_generic_BLING, do_generic_COBALT, &
       force_update_fluxes, do_generic_blres, as_param, do_vertfill_post
 
 contains
@@ -262,8 +262,8 @@ contains
 
     !Allocate and initialize all registered generic tracers
     !JGJ 2013/05/31  merged COBALT into siena_201303
-    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6 .or. do_generic_TOPAZ &
-       .or. do_generic_ERGOM .or. do_generic_BLING .or. do_generic_miniBLING .or. do_generic_COBALT .or. do_generic_blres) then
+    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6  &
+       .or. do_generic_BLING .or. do_generic_COBALT .or. do_generic_blres) then
        g_tracer => tracer_list        
        !Go through the list of tracers 
        do  
@@ -320,8 +320,8 @@ contains
     !Diagnostics register for the fields common to All generic tracers
     !JGJ 2013/05/31  merged COBALT into siena_201303
 
-    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6 .or. do_generic_TOPAZ &
-       .or. do_generic_ERGOM .or. do_generic_BLING .or. do_generic_miniBLING .or. do_generic_COBALT .or. do_generic_blres) then
+    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6 &
+       .or. do_generic_BLING .or. do_generic_COBALT .or. do_generic_blres) then
 
        g_tracer => tracer_list        
        !Go through the list of tracers 
@@ -645,8 +645,8 @@ contains
 
     !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?    
     !JGJ 2013/05/31  merged COBALT into siena_201303
-    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6 .or. do_generic_TOPAZ &
-       .or. do_generic_ERGOM .or. do_generic_BLING .or. do_generic_miniBLING .or. do_generic_COBALT .or. do_generic_blres) then
+    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6  &
+       .or. do_generic_BLING .or. do_generic_COBALT .or. do_generic_blres) then
 
        g_tracer => tracer_list        
        !Go through the list of tracers 
@@ -687,8 +687,8 @@ contains
 
     !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?    
     !JGJ 2013/05/31  merged COBALT into siena_201303
-    if(do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_TOPAZ .or. do_generic_ERGOM &
-       .or. do_generic_BLING .or. do_generic_miniBLING .or. do_generic_COBALT .or. do_generic_blres) then
+    if(do_generic_age .or. do_generic_argon .or. do_generic_CFC &
+       .or. do_generic_BLING .or. do_generic_COBALT .or. do_generic_blres) then
 
        g_tracer => tracer_list        
        !Go through the list of tracers 
@@ -792,8 +792,8 @@ contains
     !for each tracer in the tracer_list that has been marked by the user routine above
     !JGJ 2013/05/31  merged COBALT into siena_201303
     !
-    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6 .or. do_generic_TOPAZ &
-      .or. do_generic_ERGOM .or. do_generic_BLING .or. do_generic_miniBLING .or. do_generic_COBALT .or. do_generic_blres) &
+    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6  &
+      .or. do_generic_BLING .or. do_generic_COBALT .or. do_generic_blres) &
        call g_tracer_coupler_set(tracer_list,IOB_struc)
 
   end subroutine generic_tracer_coupler_set
