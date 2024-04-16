@@ -262,8 +262,8 @@ contains
 
     !Allocate and initialize all registered generic tracers
     !JGJ 2013/05/31  merged COBALT into siena_201303
-    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6  &
-       .or. do_generic_BLING .or. do_generic_COBALT .or. do_generic_blres) then
+    if(do_generic_tracer) then
+
        g_tracer => tracer_list        
        !Go through the list of tracers 
        do  
@@ -320,8 +320,7 @@ contains
     !Diagnostics register for the fields common to All generic tracers
     !JGJ 2013/05/31  merged COBALT into siena_201303
 
-    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6 &
-       .or. do_generic_BLING .or. do_generic_COBALT .or. do_generic_blres) then
+    if(do_generic_tracer) then
 
        g_tracer => tracer_list        
        !Go through the list of tracers 
@@ -645,8 +644,7 @@ contains
 
     !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?    
     !JGJ 2013/05/31  merged COBALT into siena_201303
-    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6  &
-       .or. do_generic_BLING .or. do_generic_COBALT .or. do_generic_blres) then
+    if(do_generic_tracer) then
 
        g_tracer => tracer_list        
        !Go through the list of tracers 
@@ -687,8 +685,7 @@ contains
 
     !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?    
     !JGJ 2013/05/31  merged COBALT into siena_201303
-    if(do_generic_age .or. do_generic_argon .or. do_generic_CFC &
-       .or. do_generic_BLING .or. do_generic_COBALT .or. do_generic_blres) then
+    if(do_generic_tracer) then
 
        g_tracer => tracer_list        
        !Go through the list of tracers 
