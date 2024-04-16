@@ -789,8 +789,7 @@ contains
     !for each tracer in the tracer_list that has been marked by the user routine above
     !JGJ 2013/05/31  merged COBALT into siena_201303
     !
-    if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6  &
-      .or. do_generic_BLING .or. do_generic_COBALT .or. do_generic_blres) &
+    if(do_generic_tracer)  &
        call g_tracer_coupler_set(tracer_list,IOB_struc)
 
   end subroutine generic_tracer_coupler_set
