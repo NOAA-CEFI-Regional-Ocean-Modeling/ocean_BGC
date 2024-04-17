@@ -63,7 +63,7 @@ jobs:
         run: |
           echo "build mom6sis2..."
           cd ../CEFI-regional-MOM6/builds
-          singularity exec ../ci/singularity/1d_mom6_cobalt.sif ./linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2
+          singularity exec --bind /__w:/__w ../ci/singularity/1d_mom6_cobalt.sif bash linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2
           ls -l -h build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
 
 #      - name: Check mom6_obgc 1D Docker Image build 
