@@ -45,7 +45,6 @@ jobs:
       - name: git clone CEFI-regional-MOM6 
         run: |
           which singularity
-          pwd
           cd ..
           git clone -b $BRANCH_NAME https://github.com/NOAA-GFDL/CEFI-regional-MOM6.git --recursive
           rm -rf CEFI-regional-MOM6/src/ocean_BGC
@@ -57,7 +56,6 @@ jobs:
           echo "image build ..."
           cd ../CEFI-regional-MOM6/ci/singularity
           singularity build 1d_mom6_cobalt.sif ./build_1d_mom6_cobalt.def
-          pwd
 
       - name: Build mom6sis2-cobalt
         run: |
@@ -65,6 +63,13 @@ jobs:
           cd ../CEFI-regional-MOM6/builds
           singularity exec --bind /__w:/__w ../ci/singularity/1d_mom6_cobalt.sif bash linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2
           ls -l -h build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
+
+      - name: Download model input dataset
+        run: |
+          echo "Download dataset..."
+          cd ../CEFI-regional-MOM6/exps
+          wget -q ftp.gfdl.noaa.gov:/pub/Yi-cheng.Teng/1d_datasets.tar.gz && tar -zxvf 1d_datasets.tar.gz && rm -rf 1d_datasets.tar.gz
+          ls -l -h 
 
 #      - name: Check mom6_obgc 1D Docker Image build 
 #        run: |      
