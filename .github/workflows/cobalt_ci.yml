@@ -58,7 +58,7 @@ jobs:
           cd ../CEFI-regional-MOM6/ci/singularity
           singularity build 1d_mom6_cobalt.sif ./build_1d_mom6_cobalt.def
           pwd
-          ls. 
+          ls -l -h
 
 #      - name: Check mom6_obgc 1D Docker Image build 
 #        run: |      
