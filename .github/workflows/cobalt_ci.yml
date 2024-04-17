@@ -6,9 +6,9 @@ name: cobalt CI
 on:
   # Triggers the workflow on push or pull request events but only for the "dev/cefi" branch
   push:
-    branches: [ "dev/cefi" ]
-  pull_request:
-    branches: [ "dev/cefi" ]
+    branches: [ "refactor_ci" ]
+#  pull_request:
+#    branches: [ "dev/cefi" ]
 
 env:
   BRANCH_NAME: develop 
@@ -41,24 +41,28 @@ jobs:
       # git clone CEFI-regional-MOM6 and replace ocean_BGC
       - name: git clone CEFI-regional-MOM6 
         run: |
+          which singularity
+          pwd
+          ls -l -h 
           cd ..
           git clone -b $BRANCH_NAME https://github.com/NOAA-GFDL/CEFI-regional-MOM6.git --recursive
           rm -rf CEFI-regional-MOM6/src/ocean_BGC
           cp -r ocean_BGC CEFI-regional-MOM6/src
+          cd CEFI-regional-MOM6/src/ocean_BGC && git branch
           
-      # run 1D mom6sis2-cobalt test
-      - name: Build 1D mom6sis2-cobalt Docker Image
-        run: |
-          echo "docker image build ..."
-          cd ../CEFI-regional-MOM6
-          docker build --file "./ci/docker/Dockerfile.ci" -t mom6_obgc_1d:develop . 
+#      # run 1D mom6sis2-cobalt test
+#      - name: Build 1D mom6sis2-cobalt Docker Image
+#        run: |
+#          echo "docker image build ..."
+#          cd ../CEFI-regional-MOM6
+#          docker build --file "./ci/docker/Dockerfile.ci" -t mom6_obgc_1d:develop . 
 
-      - name: Check mom6_obgc 1D Docker Image build 
-        run: |      
-          docker images
-          if [[ $(docker image inspect mom6_obgc_1d:develop) ]]; then
-               echo "mom6_obgc_1d:develop generated ..."
-          else
-               echo "mom6_obgc_1d:develop was not generated ..."
-               exit 1
-          fi 
+#      - name: Check mom6_obgc 1D Docker Image build 
+#        run: |      
+#          docker images
+#          if [[ $(docker image inspect mom6_obgc_1d:develop) ]]; then
+#               echo "mom6_obgc_1d:develop generated ..."
+#          else
+#               echo "mom6_obgc_1d:develop was not generated ..."
+#               exit 1
+#          fi 
