@@ -11,7 +11,6 @@ on:
 env:
   BRANCH_NAME: main_update 
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
@@ -50,16 +49,16 @@ jobs:
           cd CEFI-regional-MOM6/src/ocean_BGC && git branch
 
       - name: Download model input dataset
+        working-directory: ../CEFI-regional-MOM6/exps
         run: |
           echo "Download dataset..."
-          cd ../CEFI-regional-MOM6/exps
           wget -q ftp://ftp.gfdl.noaa.gov/pub/Yi-cheng.Teng/1d_datasets.tar.gz && tar -zxvf 1d_datasets.tar.gz && rm -rf 1d_datasets.tar.gz
           ls -l -h
           
       - name: Build 1D mom6sis2-cobalt Image
+        working-directory: ../CEFI-regional-MOM6/ci/singularity
         run: |
           echo "image build ..."
-          cd ../CEFI-regional-MOM6/ci/singularity
           singularity build 1d_mom6_cobalt.sif ./build_1d_mom6_cobalt.def
 
       - name: Build mom6sis2-cobalt
@@ -76,19 +75,18 @@ jobs:
           pwd
           ln -fs ./input.nml_48hr ./input.nml
           singularity exec --bind /__w:/__w ../../ci/singularity/1d_mom6_cobalt.sif ../../builds/build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
-          cat ./RESTART/ocean.stats
+          cat ./ocean.stats
 
       - name: Check with ref 
         working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
         run: |      
-          cd ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
           echo "new 48 hrs ocean.stats: "
-          cat ./RESTART/ocean.stats
+          cat ./ocean.stats
           echo "baseline 48 hrs ocean.stats : "
           cat ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats
-          diff ./RESTART/ocean.stats ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats > /dev/null
+          diff ./ocean.stats ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats > /dev/null
           if [[ $? -ne 0 ]]; then
               echo "Warning: ocean.stats are different, please update reference under ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats!"
-              #cat ./RESTART_48hrs/ocean.stats | github-commenter comment "New ocean.stats are different. Please update the ref under ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats."
+              #cat ./ocean.stats | github-commenter comment "New ocean.stats are different. Please update the ref under ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats."
               #exit 1
           fi
