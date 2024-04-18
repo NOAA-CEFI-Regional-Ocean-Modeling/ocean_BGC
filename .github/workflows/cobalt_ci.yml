@@ -63,26 +63,30 @@ jobs:
           singularity build 1d_mom6_cobalt.sif ./build_1d_mom6_cobalt.def
 
       - name: Build mom6sis2-cobalt
+        working-directory: ../CEFI-regional-MOM6/builds
         run: |
           echo "build mom6sis2..."
-          cd ../CEFI-regional-MOM6/builds
           singularity exec --bind /__w:/__w ../ci/singularity/1d_mom6_cobalt.sif bash linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2
           ls -l -h build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
 
       - name: Run 1D toy case
+        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
         run: |
           echo "Start 1D toy case ..."
-          cd ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
-          singularity exec --bind /__w:/__w ../../ci/singularity/1d_mom6_cobalt.sif bash driver.sh
+          pwd
+          ln -fs ./input.nml_48hr ./input.nml
+          singularity exec --bind /__w:/__w ../../ci/singularity/1d_mom6_cobalt.sif ../../builds/build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
+          cat ./RESTART/ocean.stats
 
       - name: Check with ref 
+        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
         run: |      
           cd ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
           echo "new 48 hrs ocean.stats: "
-          cat ./RESTART_48hrs/ocean.stats
+          cat ./RESTART/ocean.stats
           echo "baseline 48 hrs ocean.stats : "
           cat ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats
-          diff ./RESTART_48hrs/ocean.stats ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats > /dev/null
+          diff ./RESTART/ocean.stats ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats > /dev/null
           if [[ $? -ne 0 ]]; then
               echo "Warning: ocean.stats are different, please update reference under ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats!"
               #cat ./RESTART_48hrs/ocean.stats | github-commenter comment "New ocean.stats are different. Please update the ref under ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats."
