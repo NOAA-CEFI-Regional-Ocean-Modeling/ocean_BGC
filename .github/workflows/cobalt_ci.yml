@@ -4,7 +4,7 @@ name: cobalt CI
 on:
   # Triggers the workflow on push or pull request events but only for the "dev/cefi" branch
   push:
-    branches: [ "refactor_ci" ]
+    branches: [ "dev/cefi" ]
   pull_request:
     branches: [ "dev/cefi" ]
 
@@ -86,4 +86,4 @@ jobs:
           echo "baseline 48 hrs ocean.stats: "
           cat ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats
           #
-          diff -q ./RESTART_48hrs/ocean.stats ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats > /dev/null || { echo "Error: ocean.stats are different."; echo "Plz update ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats with the following: "; cat ./ocean.stats; exit 1; }
+          diff -q ./RESTART_48hrs/ocean.stats ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats > /dev/null || { echo "Error: ocean.stats are different."; echo "Plz update ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats with the following: "; cat ./RESTART_48hrs/ocean.stats; exit 1; }
