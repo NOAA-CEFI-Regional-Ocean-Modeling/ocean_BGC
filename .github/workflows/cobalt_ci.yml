@@ -1,14 +1,12 @@
-# This is a basic workflow to help you get started with Actions
-
 name: cobalt CI
 
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the "dev/cefi" branch
   push:
-    branches: [ "refactor_ci" ]
-#  pull_request:
-#    branches: [ "dev/cefi" ]
+    branches: [ "dev/cefi" ]
+  pull_request:
+    branches: [ "dev/cefi" ]
 
 env:
   BRANCH_NAME: main_update 
@@ -76,18 +74,17 @@ jobs:
           echo "Start 1D toy case ..."
           cd ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
           singularity exec --bind /__w:/__w ../../ci/singularity/1d_mom6_cobalt.sif bash driver.sh
-          echo "48 hrs ocean.stats: "
+
+      - name: Check with ref 
+        run: |      
+          cd ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
+          echo "new 48 hrs ocean.stats: "
           cat ./RESTART_48hrs/ocean.stats
-          echo "48 hrs ocean.stats with restart: "
-          cat ./RESTART_24hrs_rst/ocean.stats
           echo "baseline 48 hrs ocean.stats : "
           cat ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats
-#      - name: Check mom6_obgc 1D Docker Image build 
-#        run: |      
-#          docker images
-#          if [[ $(docker image inspect mom6_obgc_1d:develop) ]]; then
-#               echo "mom6_obgc_1d:develop generated ..."
-#          else
-#               echo "mom6_obgc_1d:develop was not generated ..."
-#               exit 1
-#          fi 
+          diff ./RESTART_48hrs/ocean.stats ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats > /dev/null
+          if [[ $? -ne 0 ]]; then
+              echo "Warning: ocean.stats are different, please update reference!"
+              cat ./RESTART_48hrs/ocean.stats | github-commenter comment "New ocean.stats are different. Please update the ref under ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats."
+              exit 1
+          fi
