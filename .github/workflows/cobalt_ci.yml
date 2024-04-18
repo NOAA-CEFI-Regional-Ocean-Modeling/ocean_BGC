@@ -1,19 +1,16 @@
-# This is a basic workflow to help you get started with Actions
-
 name: cobalt CI
 
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the "dev/cefi" branch
   push:
-    branches: [ "dev/cefi" ]
+    branches: [ "refactor_ci" ]
   pull_request:
     branches: [ "dev/cefi" ]
 
 env:
   BRANCH_NAME: develop 
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
@@ -23,6 +20,9 @@ jobs:
     #container:
     #   image: clouden90/1d_mom6_cobalt:base
     #   options: --user root
+    container:
+        image: quay.io/singularity/singularity:v4.1.0
+        options: --privileged    
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -41,24 +41,49 @@ jobs:
       # git clone CEFI-regional-MOM6 and replace ocean_BGC
       - name: git clone CEFI-regional-MOM6 
         run: |
+          which singularity
           cd ..
           git clone -b $BRANCH_NAME https://github.com/NOAA-GFDL/CEFI-regional-MOM6.git --recursive
           rm -rf CEFI-regional-MOM6/src/ocean_BGC
           cp -r ocean_BGC CEFI-regional-MOM6/src
-          
-      # run 1D mom6sis2-cobalt test
-      - name: Build 1D mom6sis2-cobalt Docker Image
-        run: |
-          echo "docker image build ..."
-          cd ../CEFI-regional-MOM6
-          docker build --file "./ci/docker/Dockerfile.ci" -t mom6_obgc_1d:develop . 
+          cd CEFI-regional-MOM6/src/ocean_BGC && git branch
 
-      - name: Check mom6_obgc 1D Docker Image build 
+      - name: Download model input dataset
+        working-directory: ../CEFI-regional-MOM6/exps
+        run: |
+          echo "Download dataset..."
+          wget -q ftp://ftp.gfdl.noaa.gov/pub/Yi-cheng.Teng/1d_datasets.tar.gz && tar -zxvf 1d_datasets.tar.gz && rm -rf 1d_datasets.tar.gz
+          ls -l -h
+          
+      - name: Build 1D mom6sis2-cobalt Image
+        working-directory: ../CEFI-regional-MOM6/ci/singularity
+        run: |
+          echo "image build ..."
+          singularity build 1d_mom6_cobalt.sif ./build_1d_mom6_cobalt.def
+
+      - name: Build mom6sis2-cobalt
+        working-directory: ../CEFI-regional-MOM6/builds
+        run: |
+          echo "build mom6sis2..."
+          singularity exec --bind /__w:/__w ../ci/singularity/1d_mom6_cobalt.sif bash linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2
+          ls -l -h build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
+
+      - name: Run 1D toy case
+        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
+        run: |
+          echo "Start 1D toy case ..."
+          pwd
+          ln -fs ./input.nml_48hr ./input.nml
+          singularity exec --bind /__w:/__w ../../ci/singularity/1d_mom6_cobalt.sif ./driver.sh
+          #singularity exec --bind /__w:/__w ../../ci/singularity/1d_mom6_cobalt.sif ../../builds/build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
+          cat ./RESTART_48hrs/ocean.stats
+
+      - name: Check with ref 
+        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
         run: |      
-          docker images
-          if [[ $(docker image inspect mom6_obgc_1d:develop) ]]; then
-               echo "mom6_obgc_1d:develop generated ..."
-          else
-               echo "mom6_obgc_1d:develop was not generated ..."
-               exit 1
-          fi 
+          echo "new 48 hrs ocean.stats: "
+          cat ./RESTART_48hrs/ocean.stats
+          echo "baseline 48 hrs ocean.stats: "
+          cat ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats
+          #
+          diff -q ./RESTART_48hrs/ocean.stats ../../src/ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats > /dev/null || { echo "Error: ocean.stats are different."; echo "Plz update ocean_BGC/.github/ref/OM4.single_column.COBALT.p4/docker-linux-gnu/ocean.stats with the following: "; cat ./ocean.stats; exit 1; }
