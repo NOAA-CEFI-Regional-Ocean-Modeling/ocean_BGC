@@ -581,12 +581,18 @@ contains
   end subroutine g_tracer_end_param_list
 
   !Overload interface g_tracer_add_param for real parameter
-  subroutine g_tracer_add_param_real(name, var,  value)
+  subroutine g_tracer_add_param_real(name, var, value, do_not_log)
     character(len=*), intent(in)  :: name
     real,             intent(in)  :: value
     real,             intent(out) :: var
+    logical,          optional, intent(in)    :: do_not_log !< If present and true, no stdout for parameter
 
     real :: x
+    integer :: stdoutunit
+    logical :: local_do_log
+    character(len=240) :: mesg, var_string
+
+    local_do_log  = .true. ; if (present(do_not_log))  local_do_log  = .false.
 
     ! Need to save "value" since if "var" and "value" are the same
     ! variable, and "name" does not exist, then "var/value" will be
@@ -597,15 +603,31 @@ contains
 
     if(.NOT. fm_get_value(name, var))  var = x
 
+    ! print var to stdout
+    if (local_do_log) then
+      if (is_root_pe()) then
+        stdoutunit=stdout()
+        write(var_string, '(e0.16)') var
+        write(mesg, '(" ",a,"= ", a)') trim(name), trim(var_string)
+        write(stdoutunit,'(a)') trim(mesg)
+      endif !is_root_pe
+    endif !local_do_log   
+
   end subroutine g_tracer_add_param_real
 
   !Overload interface g_tracer_add_param for logical parameter
-  subroutine g_tracer_add_param_logical(name, var,  value)
+  subroutine g_tracer_add_param_logical(name, var, value, do_not_log)
     character(len=*), intent(in)  :: name
     logical,          intent(in)  :: value
     logical,          intent(out) :: var
+    logical,          optional, intent(in)    :: do_not_log !< If present and true, no stdout for parameter
 
     logical :: x
+    integer :: stdoutunit
+    logical :: local_do_log
+    character(len=240) :: mesg, var_string
+
+    local_do_log  = .true. ; if (present(do_not_log))  local_do_log  = .false.
 
     ! Need to save "value" since if "var" and "value" are the same
     ! variable, and "name" does not exist, then "var/value" will be
@@ -616,15 +638,36 @@ contains
 
     if(.NOT. fm_get_value(name, var))  var = x
 
+    if (var) then
+      var_string = 'True'
+    else
+      var_string = 'False'        
+    endif        
+
+    ! print var to stdout
+    if (local_do_log) then
+      if (is_root_pe()) then
+        stdoutunit=stdout()
+        write(mesg, '(" ",a,"= ", a)') trim(name), trim(var_string)
+        write(stdoutunit,'(a)') trim(mesg)
+      endif !is_root_pe
+    endif !local_do_log
+
   end subroutine g_tracer_add_param_logical
 
   !Overload interface g_tracer_add_param for integer parameter
-  subroutine g_tracer_add_param_integer(name, var,  value)
+  subroutine g_tracer_add_param_integer(name, var, value, do_not_log)
     character(len=*), intent(in)  :: name
     integer,          intent(in)  :: value
     integer,          intent(out) :: var
+    logical,          optional, intent(in)    :: do_not_log !< If present and true, no stdout for parameter
 
     real :: x
+    integer :: stdoutunit
+    logical :: local_do_log
+    character(len=240) :: mesg, var_string
+
+    local_do_log  = .true. ; if (present(do_not_log))  local_do_log  = .false.
 
     ! Need to save "value" since if "var" and "value" are the same
     ! variable, and "name" does not exist, then "var/value" will be
@@ -635,15 +678,31 @@ contains
 
     if(.NOT. fm_get_value(name, var))  var = x
 
+    ! print var to stdout
+    if (local_do_log) then
+      if (is_root_pe()) then
+        stdoutunit=stdout()
+        write(var_string, '(i16)') var
+        write(mesg, '(" ",a,"= ", a)') trim(name), trim(var_string)
+        write(stdoutunit,'(a)') trim(mesg)
+      endif !is_root_pe
+    endif !local_do_log
+
   end subroutine g_tracer_add_param_integer
 
   !Overload interface g_tracer_add_param for string parameter
-  subroutine g_tracer_add_param_string(name, var,  value)
+  subroutine g_tracer_add_param_string(name, var, value, do_not_log)
     character(len=*), intent(in)  :: name
     character(len=*), intent(in)  :: value
     character(len=*), intent(out) :: var
+    logical,          optional, intent(in)    :: do_not_log !< If present and true, no stdout for parameter
 
     character(len=fm_string_len) :: x
+    integer :: stdoutunit
+    logical :: local_do_log
+    character(len=240) :: mesg
+
+    local_do_log  = .true. ; if (present(do_not_log))  local_do_log  = .false.
 
     ! Need to save "value" since if "var" and "value" are the same
     ! variable, and "name" does not exist, then "var/value" will be
@@ -653,6 +712,15 @@ contains
     x = value
 
     if(.NOT. fm_get_value(name, var))  var = x
+
+    ! print var to stdout
+    if (local_do_log) then
+      if (is_root_pe()) then
+        stdoutunit=stdout()
+        write(mesg, '(" ",a,"= ", a)') trim(name), trim(var)
+        write(stdoutunit,'(a)') trim(mesg)
+      endif !is_root_pe
+    endif !local_do_log
 
   end subroutine g_tracer_add_param_string
 
@@ -1827,7 +1895,7 @@ contains
        array_ptr => g_tracer%deltap
     case ('kw') 
        array_ptr => g_tracer%kw
-    case ('btf')
+    case ('btf') 
        array_ptr => g_tracer%btf
     case ('btm_reservoir') 
        array_ptr => g_tracer%btm_reservoir
@@ -1963,7 +2031,7 @@ contains
        array = g_tracer%deltap
     case ('kw') 
        array = g_tracer%kw
-    case ('btf')
+    case ('btf') 
        array = g_tracer%btf
     case ('btm_reservoir') 
        array = g_tracer%btm_reservoir

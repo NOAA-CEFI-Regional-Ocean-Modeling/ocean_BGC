@@ -596,6 +596,27 @@ module cobalt_types
           f_irr_aclm_sfc, &
           f_irr_mem_dp,&
           f_cased,&
+          f_cadet_arag_btf,&
+          f_cadet_calc_btf,&
+          f_fedet_btf, &
+          f_lithdet_btf, &
+          f_ndet_btf,&
+          f_pdet_btf,&
+          f_sidet_btf,&
+          f_nsm_btf,&
+          f_nmd_btf,&
+          f_nlg_btf,&
+          f_ndi_btf,&
+          f_simd_btf,&
+          f_silg_btf,&
+          f_fesm_btf,&
+          f_femd_btf,&
+          f_felg_btf,&
+          f_fedi_btf,&
+          f_psm_btf,&
+          f_pmd_btf,&
+          f_plg_btf,&
+          f_pdi_btf,&
           jnbact,&
           jndi,&
           jnsm,&
@@ -748,30 +769,9 @@ module cobalt_types
 !==============================================================================================================
 
      real, dimension(:,:), ALLOCATABLE :: &
-          b_alk,b_dic,b_fed,b_nh4,b_no3,b_o2,b_po4,b_sio4,b_di14c,& ! bottom flux terms
+          b_alk,b_dic,b_fed,b_nh4,b_no3,b_o2,b_po4,b_sio4,b_di14c,&	! bottom flux terms
           co2_csurf,pco2_csurf,co2_alpha,c14o2_csurf,c14o2_alpha,&
           nh3_csurf,nh3_alpha,pnh3_csurf,&
-          f_cadet_arag_btf,&
-          f_cadet_calc_btf,&
-          f_fedet_btf, &
-          f_lithdet_btf, &
-          f_ndet_btf,&
-          f_pdet_btf,&
-          f_sidet_btf,&
-          f_nsm_btf,&
-          f_nmd_btf,&
-          f_nlg_btf,&
-          f_ndi_btf,&
-          f_simd_btf,&
-          f_silg_btf,&
-          f_fesm_btf,&
-          f_femd_btf,&
-          f_felg_btf,&
-          f_fedi_btf,&
-          f_psm_btf,&
-          f_pmd_btf,&
-          f_plg_btf,&
-          f_pdi_btf,&
           fcadet_arag_btm,&
           fcadet_calc_btm,&
           ffedet_btm,&
