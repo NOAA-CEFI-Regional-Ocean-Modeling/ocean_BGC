@@ -1,53 +1,52 @@
-
 ! <CONTACT EMAIL="Charles.Stock@noaa.gov"> Charles Stock
 ! </CONTACT>
 !
 ! <OVERVIEW>
-! This module contains the generic version of the COBALT4Pv1 model: "Carbon Ocean
-! Biogeochemistry and Lower Trophics".  COBALT augments the foodweb dynamics
-! in TOPAZ to enable anaylisis of the energy flow through the planktonic
-! foodweb and improve the mechanistic resolution of foodweb dynamics that
-! influence biogeochemical processes.  COBALT4Pv1 includes the dynamics of
-! COBALTv2 but includes 4 phytoplankton groups
+! This module contains the generic version of the version 3 of the Carbon Ocean
+! Biogeochemistry and Lower Trophics model (COBALTv3.0)
 ! </OVERVIEW>
 !<DESCRIPTION>
-!       COBALT simulates the biogeochemical cycling of carbon, nitrogen,
-!       phosphorous, iron, silica, calcium carbonate, and lithogenic
-!       material in the ocean.  The code is built upon the TOPAZ code
-!       developed by John Dunne.  The primary changes to TOPAZ are:
+!  COBALT simulates plankton food webs and the cycling of carbon, nitrogen,
+!  phosphorus, iron, silica, calcium carbonate, and lithogenic material in ocean
+!  and coastal environments.  COBALT's construction attempts to balance the need
+!  for sufficient complexity to resolve prominent global and regional patterns
+!  in these processes, while being mindful of computational efficiency and
+!  the desire to rely on dynamics which are well supported by empirical studies.
+!  In some cases, this means forgoing less understood interactions of uncertain
+!  quantitative importance to establish a robustly supported baseline simulation
+!  until constraints improve.  The COBALT code releases reflect this approach:
 !
-!          1) the addition of three zooplankton groups
-!          2) The addition of bacteria
-!          3) The expansion of the dissolved organic nitrogen and
-!             phosphorous groups to include three types each: labile,
-!             semi-labile, and refractory
-!          4) Constant Stoichiometry by plankton functional type
+!  COBALTv1 (Stock et al., 2014) augmented the plankton foodweb dynamics of
+!  GFDL's prior biogeochemical model (TOPAZ, Dunne et al., 2013) by adding 3
+!  zooplankton groups, free living bacteria, and expanding the resolution of
+!  dissolved organic material to include labile, semi-labile and semi-refractory
+!  forms.  This produced quantitatively credible estimates of energy flows through
+!  plankton foodwebs.
 !
-!       The primary COBALT reference is:
+!  COBALTv2 served as the ocean biogeochemical component of GFDL's CMIP6 earth
+!  system model (Stock et al., 2020).  The structure of COBALTv2 was largely
+!  analogous to COBALTv1, but notable adjustments included: 1) the addition of
+!  temperature and O2-dependent particle remineralization following Laufkotter
+!  et al. (2017); 2) retuning of ammonia dynamics and the addition air-sea ammonia
+!  exchanges (Paulot et al., 2020); 3) adjustments to iron sources and
+!  scavenging; and 4) movement of the defaul carbon chemistry to MOCSY.
 !
-!       Stock, CA, Dunne, JP, John, JG. 2014. Global-scale carbon and energy
-!         flows through the marine planktonic food web: An analysis with a'
-!         coupled physical-biological model.  Progress in Oceanography 120, 1-18.
+!  COBALTv3 (Stock et al., submitted) was developed to enhance the robustness of COBALT
+!  across open ocean and coastal regions.  It now divides the phytoplankton community
+!  into 3 rather than 2 size classes to better resolve phytoplankton commmunities from
+!  oligotrophic gyres to highly productive coastal regions (Van Oostende et al., 2018).
+!  The flexibility of plankton foodweb links has been increased and relevant parameters
+!  recalibrated to better reflect observed constraints.  Dynamic P:N stoichiometry has
+!  been added using a truncated variant of the Galbraith and Martiny (2015) scheme
+!  to allow COBALT to better integrate riverine inputs with highly perturbed stoichiometry
+!  (Ross et al., 2023).  Photoacclimation and photoadaptation dynamics have been enhanced
+!  to better represent observed chlorophyll patterns (Stock et al., submitted).
+!  Direct phytoplankton sinking has been added and phytoplankton loss terms generalized.
+!  Temperature dependence has been added to the decay of dissolved organic material to
+!  improve seasonal dynamics.
 !
-!       Version 2.0 has a number of refinements:
-!
-!           1) Ammonia uptake parameters are now based on the "high-affinity"
-!              settings from Paulot et al., 2015; GBC; 29(8)
-!           2) Phytoplankton aggregation is initiated only when growth rates
-!              fall below 1/4 maximum values
-!           3) The default parameterization has elevated N:P ratios for both
-!              diazotrophs and small phytoplankton
-!           4) Remineralization of sinking detritus is now based on the temperature
-!              and oxygen dependences described in Laufkotter et al., 2017; O2
-!              dependence of other aerobic processes have also been adjusted
-!              for consistency.
-!           5) The default carbon chemistry routine is now MOCSY
-!           6) The iron scavenging has been re-tuned to new atmospheric (Ginoux-AM4),
-!              sediment, river and hydrothermal vent (Tagliabue) sources.
-!
-!       parameterizations used herein, as well as definitions for all variables
-!       and parameters.  The 33 model state variables are:
-!
+!  COBALTv3 now includes 40 prognostic state variables:
+!  
 !       alk: alkalinity
 !       cadet_arag: calcium carbonate detritus (aragonite)
 !       cadet_calc: calcium carbonate detritus (calcite)
@@ -56,8 +55,8 @@
 !       fedi: diazotroph iron
 !       felg: large phytoplankton iron
 !       femd: medium phytoplankton iron
-!       fedet: iron detritus
 !       fesm: small phytoplankton iron
+!       fedet: iron detritus
 !       ldon: labile dissolved organic nitrogen
 !       ldop: labile dissolved organic phosphorous
 !       lith: lithogenic aluminosilicate particles
@@ -72,15 +71,15 @@
 !       no3: nitrate
 !       o2: oxygen
 !       pdet: phosphorous detritus
+!       pdi: diazotroph phosphorus 
+!       plg: large phytoplankton phosphorus 
+!       pmd: medium phytoplankton phosphorus 
+!       psm: small phytoplankton phosphorus 
 !       po4: phosphate
 !       srdon: semi-refractory dissolved organic nitrogen
-!             (decays over years to decades)
 !       srdop: semi-refractory dissolved organic phosphorous
-!             (decays over years to decades)
 !       sldon: semi-labile dissolved organic nitrogen
-!             (decays on monthly time scales)
 !       sldop: semi-labile dissolved organic phosphorous
-!             (decays on monthly time scales)
 !       sidet: silica detritus
 !       silg: large phytoplankton silica
 !       simd: medium phytoplankton silica
@@ -110,18 +109,19 @@
 !
 ! <INFO>
 ! <REFERENCE>
-! Stock, Charles A., John P Dunne, and Jasmin G John, 2014: Global-scale carbon and energy flows
-! through the marine food web: an analysis with a coupled physical-biological mode. Progress in Oceanography,
-! 120, DOI:10.1016/j.pocean.2013.07.001.
 !
-! Stock, Charles A., and John P Dunne, 2010: Controls on the ratio of mesozooplankton production to
-! primary production in marine ecosystems. Deep-Sea Research, Part I, 57(1), DOI:10.1016/j.dsr.2009.10.006.
+! Stock et al. (submitted).  Photoacclimation and photoadaptation sensitivity
+! in a global ocean ecosystem model.  JAMES 
 !
-! Dunne, John P., Jasmin G John, Elena Shevliakova, Ronald J Stouffer, John P Krasting, Sergey Malyshev,
-! P C D Milly, Lori T Sentman, Alistair Adcroft, William F Cooke, Krista A Dunne, Stephen M Griffies,
-! Robert Hallberg, Matthew J Harrison, Hiram Levy II, Andrew T Wittenberg, Peter Phillipps, and Niki Zadeh,
-! 2013: GFDL's ESM2 global coupled climate-carbon Earth System Models Part II: Carbon system formulation and
-! baseline simulation characteristics. Journal of Climate, 26(7), DOI:10.1175/JCLI-D-12-00150.1.
+! Stock et al. (2020). https://doi.org/10.1029/2019MS002043
+! Stock, Dunne and John (2014). https://doi.org/10.1016/j.pocean.2013.07.001
+! Dunne et al. (2013). https://doi.org/10.1175/JCLI-D-12-00150.1
+! Ross et al. (2023) https://doi.org/10.5194/gmd-16-6943-2023
+! Van Oostende et al. (2018) https://doi.org/10.1016/j.pocean.2018.10.009
+! Laufkotter et al. (2017)  https://doi.org/10.1002/2017GB005643 
+! Paulot et al. (2020)  https://doi.org/10.1029/2019MS002026
+! Galbraith and Martiny (2015) https://doi.org/10.1073/pnas.1423917112
+! 
 ! </REFERENCE>
 ! <DEVELOPER_NOTES>
 ! </DEVELOPER_NOTES>
