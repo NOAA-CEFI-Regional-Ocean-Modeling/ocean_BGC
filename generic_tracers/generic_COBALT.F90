@@ -29,12 +29,13 @@
 !  temperature and O2-dependent particle remineralization following Laufkotter
 !  et al. (2017); 2) retuning of ammonia dynamics and the addition air-sea ammonia
 !  exchanges (Paulot et al., 2020); 3) adjustments to iron sources and
-!  scavenging; and 4) movement of the defaul carbon chemistry to MOCSY.
+!  scavenging; and 4) movement of the default carbon chemistry to MOCSY.
 !
 !  COBALTv3 (Stock et al., submitted) was developed to enhance the robustness of COBALT
 !  across open ocean and coastal regions.  It now divides the phytoplankton community
-!  into 3 rather than 2 size classes to better resolve phytoplankton commmunities from
+!  into 3 rather than 2 size classes to better resolve phytoplankton communities from
 !  oligotrophic gyres to highly productive coastal regions (Van Oostende et al., 2018).
+!  Thus, COBALTv3 includes small, medium, and large phytoplankton, and a large diazotroph.
 !  The flexibility of plankton foodweb links has been increased and relevant parameters
 !  recalibrated to better reflect observed constraints.  Dynamic P:N stoichiometry has
 !  been added using a truncated variant of the Galbraith and Martiny (2015) scheme
