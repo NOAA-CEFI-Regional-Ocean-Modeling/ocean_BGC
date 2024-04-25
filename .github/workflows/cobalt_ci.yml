@@ -52,7 +52,7 @@ jobs:
         working-directory: ../CEFI-regional-MOM6/exps
         run: |
           echo "Download dataset..."
-          wget -q ftp://ftp.gfdl.noaa.gov/pub/Yi-cheng.Teng/1d_datasets.tar.gz && tar -zxvf 1d_datasets.tar.gz && rm -rf 1d_datasets.tar.gz
+          wget -q ftp://ftp.gfdl.noaa.gov/pub/Yi-cheng.Teng/1d_ci_datasets.tar.gz && tar -zxvf 1d_ci_datasets.tar.gz && rm -rf 1d_ci_datasets.tar.gz
           ls -l -h
           
       - name: Build 1D mom6sis2-cobalt Image
