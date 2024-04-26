@@ -37,6 +37,7 @@ module generic_SF6
   use mpp_mod, only : mpp_error, NOTE, WARNING, FATAL, stdout
   use time_manager_mod, only : time_type
   use fm_util_mod,       only: fm_util_start_namelist, fm_util_end_namelist  
+  use fms_mod,          only: stdout, stdlog, mpp_pe, mpp_root_pe
 
   use g_tracer_utils, only : g_tracer_type,g_tracer_start_param_list,g_tracer_end_param_list
   use g_tracer_utils, only : g_tracer_add,g_tracer_add_param, g_tracer_set_files
