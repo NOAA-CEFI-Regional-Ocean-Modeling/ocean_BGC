@@ -9,7 +9,7 @@ on:
     branches: [ "dev/cefi" ]
 
 env:
-  BRANCH_NAME: develop 
+  BRANCH_NAME: stable/nightly_release 
 
 jobs:
   # This workflow contains a single job called "build"
