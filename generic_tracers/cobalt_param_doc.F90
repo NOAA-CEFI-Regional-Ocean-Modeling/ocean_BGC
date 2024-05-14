@@ -78,7 +78,7 @@ subroutine get_COBALT_param_file(param_file)
        call open_param_file(trim(parameter_filename(io)), param_file, &
                             component="COBALT", doc_file_dir=output_dir)
         valid_param_files = valid_param_files + 1
-     endif
+     endif 
    enddo
 
 end subroutine get_COBALT_param_file
