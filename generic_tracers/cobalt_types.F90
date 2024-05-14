@@ -461,6 +461,9 @@ module cobalt_types
           zmld_ref,         &
           densdiff_mld,     &
           irrad_day_thresh, &
+          case2_depth,      & ! depth threshold for case 2 (coastal) waters
+          case2_salt,       & ! salt threshold for case 2 (coastal) waters
+          case2_opac_add,   & ! added opacity for case 2 (coastal) waters
           min_daylength,    &
           gamma_irr_mem_dp, &
           gamma_mu_mem,     &
