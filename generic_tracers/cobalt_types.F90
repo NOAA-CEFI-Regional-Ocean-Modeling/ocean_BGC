@@ -429,6 +429,7 @@ module cobalt_types
 
      logical  ::       &
           init,             &                  ! If tracers should be initializated
+          do_case2_mod,     &                  ! Flag to include augmented opacity in shallow/river-influenced systems
           force_update_fluxes,&                ! If OCMIP2 tracers fluxes should be updated every coupling timesteps
                                                !    when update_from_source is not called every coupling timesteps
                                                !    as is the case with MOM6  THERMO_SPANS_COUPLING option
