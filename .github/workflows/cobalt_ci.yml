@@ -68,11 +68,9 @@ jobs:
           singularity exec --bind /__w:/__w ../ci/singularity/1d_mom6_cobalt.sif bash linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2
           ls -l -h build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
 
-      - name: Run 1D toy case
+      - name: Create COBALT_input and COBALT_override
         working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
         run: |
-          echo "Start 1D toy case ..."
-          pwd
           cp ./input.nml_48hr ./input.nml
           echo "add cobalt_input_nml ..."
           cat <<EOL >> ./input.nml
@@ -80,10 +78,19 @@ jobs:
                   parameter_filename = 'COBALT_input','COBALT_override'
            /
           EOL
+          cat input.nml
           echo "touch COBALT_input ..."
           echo "remin_ramp_scale = 100.0" > COBALT_input
+          cat COBALT_input
           echo "touch COBALT_override ..."
-          echo "#override remin_ramp_scale = 50.0" > COBALT_override          
+          echo "#override remin_ramp_scale = 50.0" > COBALT_override
+          cat COBALT_override
+        
+      - name: Run 1D toy case
+        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
+        run: |
+          echo "Start 1D toy case ..."
+          pwd
           #singularity exec --bind /__w:/__w ../../ci/singularity/1d_mom6_cobalt.sif ./driver.sh
           singularity exec --bind /__w:/__w ../../ci/singularity/1d_mom6_cobalt.sif ../../builds/build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
           mv RESTART RESTART_48hrs
