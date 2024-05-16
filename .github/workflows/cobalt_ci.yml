@@ -92,9 +92,11 @@ jobs:
           sed -i 's/use_modern_diag=.true./use_modern_diag=.false./' ./input.nml_24hr_rst
           cat input.nml_24hr_rst
           echo "touch COBALT_input ..."
+          [[ -f COBALT_input ]] && rm COBALT_input
           echo "remin_ramp_scale = 100.0" > COBALT_input
           cat COBALT_input
           echo "touch COBALT_override ..."
+          [[ -f COBALT_override ]] && rm COBALT_override
           echo "#override remin_ramp_scale = 50.0" > COBALT_override
           cat COBALT_override
         
