@@ -1912,7 +1912,7 @@ module COBALT_reg_diag
     cobalt%id_btm_omega_calc = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("cased_2d","calcium carbonite in sediment",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("cased_2d","calcium carbonate in sediment",'h','1','s','mol m-3','f')
     cobalt%id_cased_2d = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
