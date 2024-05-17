@@ -385,6 +385,7 @@ contains
 
     call g_tracer_start_param_list(package_name)
     call g_tracer_add_param('init', cobalt%init, .false. )
+    call g_tracer_add_param('do_case2_mod',cobalt%do_case2_mod, .true. )
 
     call g_tracer_add_param('htotal_scale_lo', cobalt%htotal_scale_lo, 0.01)
     call g_tracer_add_param('htotal_scale_hi', cobalt%htotal_scale_hi, 100.0)
@@ -586,6 +587,15 @@ contains
     call g_tracer_add_param('zmld_ref', cobalt%zmld_ref, 10.0)                           ! m
     call g_tracer_add_param('densdiff_mld', cobalt%densdiff_mld, 0.03)                   ! kg m-3
     call g_tracer_add_param('irrad_day_thresh', cobalt%irrad_day_thresh, 1.0 )           ! watts m-2
+    if (cobalt%do_case2_mod) then
+      call g_tracer_add_param('case2_depth', cobalt%case2_depth, 30.0 )                  ! m
+      call g_tracer_add_param('case2_salt', cobalt%case2_salt, 30.0 )                    ! PSU
+      call g_tracer_add_param('case2_opac_add', cobalt%case2_opac_add, 0.05 )            ! m-1
+    else
+      cobalt%case2_depth = 0.0                                                           ! m
+      cobalt%case2_salt = 0.0                                                            ! PSU
+      cobalt%case2_opac_add = 0.0                                                        ! m-1
+    endif
     call g_tracer_add_param('min_daylength', cobalt%min_daylength, 6.0 )                 ! hours
     call g_tracer_add_param('refuge_conc', cobalt%refuge_conc, 1.0e-10)                  ! moles N kg-1
     !
@@ -2688,8 +2698,8 @@ contains
              ! Issue: This code currently includes an option to increase opacity in shallow/fresh
              ! water.  This should be moved to a namelist (and eventually replaced with a more 
              ! robust coastal optics model with full feedbacks to the physics)
-             if ((zmid(i,j,nk).le.30.0).or.(Salt(i,j,k).le.30.0)) then
-               tmp_opacity = opacity_band(nb,i,j,k) + 0.05
+             if ((zmid(i,j,nk).le.cobalt%case2_depth).or.(Salt(i,j,k).le.cobalt%case2_salt)) then
+               tmp_opacity = opacity_band(nb,i,j,k) + cobalt%case2_opac_add
              else
                tmp_opacity = opacity_band(nb,i,j,k)
              endif
