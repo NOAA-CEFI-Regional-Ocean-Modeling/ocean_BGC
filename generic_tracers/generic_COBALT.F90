@@ -2465,7 +2465,6 @@ contains
        cobalt%jno3denit_wc(i,j,k) = 0.0
        cobalt%jremin_ndet(i,j,k) = 0.0
        cobalt%jo2resp_wc(i,j,k) = 0.0
-       cobalt%net_phyto_resp(i,j,k) = 0.0
     enddo;  enddo ;  enddo !} i,j,k
 !
 !-----------------------------------------------------------------------------------
@@ -2876,22 +2875,20 @@ contains
           phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
        phyto(n)%juptake_nh4(i,j,k) = max(0.0,phyto(n)%nh4lim(i,j,k)* phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
        phyto(n)%juptake_no3(i,j,k) = max(0.0,phyto(n)%no3lim(i,j,k)* phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
-       ! uncomment for "no mass change" test (next 2 lines)
-       ! phyto(n)%juptake_nh4(i,j,k) = phyto(n)%juptake_nh4(i,j,k) + phyto(n)%juptake_n2(i,j,k)
-       ! phyto(n)%juptake_n2(i,j,k) = 0.0
 
        ! If growth is negative, results in net respiration and production of nh4, aerobic loss in all cases
+       ! jo2resp_wc is a cumulative variable that tracks the total oxygen consumption in the water column
        cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
        cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))*cobalt%o2_2_nh4
-       cobalt%net_phyto_resp(i,j,k) = cobalt%net_phyto_resp(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
        do n = 2, NUM_PHYTO !{
+          ! Nitrate versus ammonia uptake proportional to their relative limitations
           phyto(n)%juptake_no3(i,j,k) = max( 0.0, phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k)*   &
              phyto(n)%no3lim(i,j,k)/(phyto(n)%no3lim(i,j,k)+phyto(n)%nh4lim(i,j,k)+epsln) )
           phyto(n)%juptake_nh4(i,j,k) = max( 0.0, phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k)*   &
              phyto(n)%nh4lim(i,j,k)/(phyto(n)%no3lim(i,j,k)+phyto(n)%nh4lim(i,j,k)+epsln) )
+          ! If growth is negative, results in net respiration and production of nh4, aerobic loss in all cases
           cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
           cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))*cobalt%o2_2_nh4
-          cobalt%net_phyto_resp(i,j,k) = cobalt%net_phyto_resp(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
        enddo !} n
     enddo;  enddo ; enddo !} i,j,k
     !
@@ -2901,11 +2898,13 @@ contains
        n=DIAZO
        phyto(n)%juptake_po4(i,j,k) = (phyto(n)%juptake_n2(i,j,k)+phyto(n)%juptake_nh4(i,j,k) + &
           phyto(n)%juptake_no3(i,j,k))*phyto(n)%uptake_p_2_n(i,j,k)
+       ! If growth is negative, results in net release of po4
        cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) - &
           min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
        do n = 2, NUM_PHYTO
           phyto(n)%juptake_po4(i,j,k) = (phyto(n)%juptake_nh4(i,j,k)+phyto(n)%juptake_no3(i,j,k))* &
             phyto(n)%uptake_p_2_n(i,j,k)
+          ! If growth is negative, results in net release of po4
           cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) - &
             min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
        enddo !} n
@@ -2916,12 +2915,14 @@ contains
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        do n = 1, NUM_PHYTO  !{
           if (phyto(n)%q_fe_2_n(i,j,k).lt.phyto(n)%fe_2_n_max) then
+             ! Scaling fe uptake with the maximum iron-limited photosynthesis allows for luxury iron uptake
+             ! when other nutrients are limiting but iron is not
              phyto(n)%juptake_fe(i,j,k) = phyto(n)%P_C_max(i,j,k)*cobalt%expkT(i,j,k)*phyto(n)%f_n(i,j,k)* &
                 phyto(n)%felim(i,j,k)*cobalt%fe_2_n_upt_fac
              phyto(n)%jexuloss_fe(i,j,k) = 0.0
           else
+             ! if you've exceeded the maximum quota, stop uptake and exude extra
              phyto(n)%juptake_fe(i,j,k) = 0.0
-             !phyto(n)%jexuloss_fe(i,j,k) = (phyto(n)%q_fe_2_n(i,j,k)-phyto(n)%fe_2_n_max)*phyto(n)%f_n(i,j,k)/dt
              phyto(n)%jexuloss_fe(i,j,k) = cobalt%expkT(i,j,k)*phyto(n)%bresp(i,j,k)*phyto(n)%f_fe(i,j,k)
           endif
        enddo   !} n
@@ -2946,9 +2947,8 @@ contains
        ! Note that this is si_2_n in large phytoplankton pool, not in diatoms themselves (q_si_2_n_lg_diatoms)
        phyto(LARGE)%q_si_2_n(i,j,k) = cobalt%f_silg(i,j,k)/(phyto(LARGE)%f_n(i,j,k)+epsln)
        phyto(MEDIUM)%q_si_2_n(i,j,k) = cobalt%f_simd(i,j,k)/(phyto(MEDIUM)%f_n(i,j,k)+epsln)
-
     enddo; enddo ; enddo !} i,j,k
-!
+
     call mpp_clock_end(id_clock_phyto_growth)
 !
 !-----------------------------------------------------------------------
@@ -5092,7 +5092,6 @@ contains
        cobalt%wc_vert_int_o2(i,j) = 0.0
        cobalt%wc_vert_int_alk(i,j) = 0.0
        cobalt%wc_vert_int_chemoautopp(i,j) = 0.0
-       cobalt%wc_vert_int_net_phyto_resp(i,j) = 0.0
        cobalt%wc_vert_int_npp(i,j) = 0.0
        cobalt%wc_vert_int_jdiss_sidet(i,j) = 0.0
        cobalt%wc_vert_int_jdiss_cadet(i,j) = 0.0
@@ -5122,8 +5121,6 @@ contains
           cobalt%wc_vert_int_alk(i,j) = cobalt%wc_vert_int_alk(i,j) + cobalt%tot_layer_int_alk(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_chemoautopp(i,j) = cobalt%wc_vert_int_chemoautopp(i,j) +                 &
              (bact(1)%jprod_n_nitrif(i,j,k) + bact(1)%jprod_n_amx(i,j,k)) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
-          cobalt%wc_vert_int_net_phyto_resp(i,j) = cobalt%wc_vert_int_net_phyto_resp(i,j) +                 &
-             cobalt%net_phyto_resp(i,j,k) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_npp(i,j) = cobalt%wc_vert_int_npp(i,j) + (phyto(SMALL)%jprod_n(i,j,k) +  &
               phyto(MEDIUM)%jprod_n(i,j,k) + phyto(LARGE)%jprod_n(i,j,k) + phyto(DIAZO)%jprod_n(i,j,k))* &
               rho_dzt(i,j,k)*grid_tmask(i,j,k)
@@ -6511,7 +6508,6 @@ contains
     allocate(cobalt%jprod_nh4(isd:ied, jsd:jed, 1:nk))    ; cobalt%jprod_nh4=0.0
     allocate(cobalt%jprod_nh4_plus_btm(isd:ied, jsd:jed, 1:nk))    ; cobalt%jprod_nh4_plus_btm=0.0
     allocate(cobalt%jprod_po4(isd:ied, jsd:jed, 1:nk))    ; cobalt%jprod_po4=0.0
-    allocate(cobalt%net_phyto_resp(isd:ied, jsd:jed, 1:nk)) ; cobalt%net_phyto_resp=0.0
     allocate(cobalt%det_jzloss_n(isd:ied, jsd:jed, 1:nk)) ; cobalt%det_jzloss_n=0.0
     allocate(cobalt%det_jzloss_p(isd:ied, jsd:jed, 1:nk)) ; cobalt%det_jzloss_p=0.0
     allocate(cobalt%det_jzloss_fe(isd:ied, jsd:jed, 1:nk)); cobalt%det_jzloss_fe=0.0
@@ -6640,7 +6636,6 @@ contains
     allocate(cobalt%wc_vert_int_o2(isd:ied, jsd:jed))         ; cobalt%wc_vert_int_o2=0.0
     allocate(cobalt%wc_vert_int_alk(isd:ied, jsd:jed))        ; cobalt%wc_vert_int_alk=0.0
     allocate(cobalt%wc_vert_int_chemoautopp(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_chemoautopp=0.0
-    allocate(cobalt%wc_vert_int_net_phyto_resp(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_net_phyto_resp=0.0
     allocate(cobalt%wc_vert_int_npp(isd:ied, jsd:jed))     ; cobalt%wc_vert_int_npp=0.0
     allocate(cobalt%wc_vert_int_jdiss_sidet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jdiss_sidet=0.0
     allocate(cobalt%wc_vert_int_jdiss_cadet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jdiss_cadet=0.0
@@ -7079,7 +7074,6 @@ contains
     deallocate(cobalt%jprod_nh4)
     deallocate(cobalt%jprod_nh4_plus_btm)
     deallocate(cobalt%jprod_po4)
-    deallocate(cobalt%net_phyto_resp)
     deallocate(cobalt%det_jzloss_n)
     deallocate(cobalt%det_jzloss_p)
     deallocate(cobalt%det_jzloss_fe)
@@ -7275,7 +7269,6 @@ contains
     deallocate(cobalt%wc_vert_int_o2)
     deallocate(cobalt%wc_vert_int_alk)
     deallocate(cobalt%wc_vert_int_chemoautopp)
-    deallocate(cobalt%wc_vert_int_net_phyto_resp)
     deallocate(cobalt%wc_vert_int_npp)
     deallocate(cobalt%wc_vert_int_jdiss_sidet)
     deallocate(cobalt%wc_vert_int_jdiss_cadet)

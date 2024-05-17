@@ -688,7 +688,6 @@ module cobalt_types
           jprod_nh4,&
           jprod_nh4_plus_btm,&
           jprod_po4,&
-          net_phyto_resp,&
           det_jzloss_n,&
           det_jzloss_p,&
           det_jzloss_fe,&
@@ -885,7 +884,6 @@ module cobalt_types
           wc_vert_int_o2,&
           wc_vert_int_alk,&
           wc_vert_int_chemoautopp,&
-          wc_vert_int_net_phyto_resp,&
           wc_vert_int_npp, &
           wc_vert_int_jdiss_sidet,&
           wc_vert_int_jdiss_cadet,&
@@ -1017,7 +1015,6 @@ module cobalt_types
           id_jprod_po4     = -1,       &
           id_jprod_nh4     = -1,       &
           id_jprod_nh4_plus_btm = -1,  &
-          id_net_phyto_resp = -1,      &
           id_det_jzloss_n  = -1,       &
           id_det_jhploss_n = -1,       &
           id_jdiss_sidet   = -1,       &
@@ -1187,7 +1184,6 @@ module cobalt_types
           id_wc_vert_int_alk = -1,     &
           id_wc_vert_int_chemoautopp = -1, &
           id_wc_vert_int_npp = -1, &
-          id_wc_vert_int_net_phyto_resp = -1, &
           id_wc_vert_int_jdiss_sidet = -1, &
           id_wc_vert_int_jdiss_cadet = -1, &
           id_wc_vert_int_jo2resp = -1,     &
