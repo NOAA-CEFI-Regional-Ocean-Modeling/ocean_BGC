@@ -328,9 +328,6 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_jprod_po4, cobalt%jprod_po4*rho_dzt,           &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(cobalt%id_net_phyto_resp, cobalt%net_phyto_resp*rho_dzt,           &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        used = g_send_data(cobalt%id_jprod_fed, cobalt%jprod_fed*rho_dzt,           &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1170,9 +1167,6 @@ module COBALT_send_diag
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_wc_vert_int_chemoautopp, cobalt%wc_vert_int_chemoautopp, &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_net_phyto_resp, cobalt%wc_vert_int_net_phyto_resp, &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_wc_vert_int_npp,    cobalt%wc_vert_int_npp,         &
