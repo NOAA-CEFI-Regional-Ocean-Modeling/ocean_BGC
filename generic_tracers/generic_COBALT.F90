@@ -600,7 +600,7 @@ contains
     call get_param(param_file, "generic_COBALT", "densdiff_mld",        cobalt%densdiff_mld,            "densdiff_mld",        units="kg m-3",      default= 0.03)                   ! kg m-3
     call get_param(param_file, "generic_COBALT", "irrad_day_thresh",    cobalt%irrad_day_thresh,        "irrad_day_thresh",    units="watts m-2",   default= 1.0 )           ! watts m-2
     call get_param(param_file, "generic_COBALT", "do_case2_mod",        cobalt%do_case2_mod, &
-                   "When ture, modify the opacity of case 2 (coastal) waters"\\&
+                   "When ture, modify the opacity of case 2 (coastal) waters"//&
                    "which are identified based on a temperature and depth threshold", default=.false. )
     if (cobalt%do_case2_mod) then
       call get_param(param_file, "generic_COBALT", "case2_depth",    cobalt%case2_depth, &
