@@ -405,8 +405,8 @@ contains
     !  Rho_0 is used in the Boussinesq
     !  approximation to calculations of pressure and
     !  pressure gradients, in units of kg m-3.
-    call get_param(param_file, "generic_COBALT", "RHO_0", cobalt%Rho_0, units=" ", default=1035.0)
-    call get_param(param_file, "generic_COBALT", "NKML" , cobalt%nkml,  units=" ", default=1)
+    call get_param(param_file, "generic_COBALT", "RHO_0", cobalt%Rho_0, "RHO_0", units=" ", default=1035.0)
+    call get_param(param_file, "generic_COBALT", "NKML" , cobalt%nkml,  "NKML" , units=" ", default=1)
     !-----------------------------------------------------------------------
     !       coefficients for O2 saturation
     !----------------------------------------------------------------------
