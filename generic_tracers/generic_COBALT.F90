@@ -523,63 +523,80 @@ contains
     ! Nutrient Limitation Parameters (phytoplankton)
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "k_fed_Di", phyto(DIAZO)%k_fed,            "k_fed_Di",       units="mol Fed kg-1", default=4.0e-9)                  ! mol Fed kg-1
-    call get_param(param_file, "generic_COBALT", "k_fed_Lg", phyto(LARGE)%k_fed,            "k_fed_Lg",       units="mol Fed kg-1", default=2.0e-9)                  ! mol Fed kg-1
-    call get_param(param_file, "generic_COBALT", "k_fed_Md", phyto(MEDIUM)%k_fed,           "k_fed_Md",       units="mol Fed kg-1", default=8.0e-10)                 ! mol Fed kg-1
-    call get_param(param_file, "generic_COBALT", "k_fed_Sm", phyto(SMALL)%k_fed,            "k_fed_Sm",       units="mol Fed kg-1", default=4.0e-10)                 ! mol Fed kg-1
-    call get_param(param_file, "generic_COBALT", "k_nh4_Lg", phyto(LARGE)%k_nh4,            "k_nh4_Lg",       units="mol NH4 kg-1", default=5.0e-8)                  ! mol NH4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_nh4_Md", phyto(MEDIUM)%k_nh4,           "k_nh4_Md",       units="mol NH4 kg-1", default=2.0e-8)                  ! mol NH4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_nh4_Sm", phyto(SMALL)%k_nh4,            "k_nh4_Sm",       units="mol NH4 kg-1", default=1.0e-8)                  ! mol NH4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_nh4_Di", phyto(DIAZO)%k_nh4,            "k_nh4_Di",       units="mol NH4 kg-1", default=1.0e-7)                  ! mol NH4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_no3_Lg", phyto(LARGE)%k_no3,            "k_no3_Lg",       units="mol NO3 kg-1", default=2.5e-6)                  ! mol NO3 kg-1
-    call get_param(param_file, "generic_COBALT", "k_no3_Md", phyto(MEDIUM)%k_no3,           "k_no3_Md",       units="mol NO3 kg-1", default=1.0e-6)                  ! mol NO3 kg-1
-    call get_param(param_file, "generic_COBALT", "k_no3_Sm", phyto(SMALL)%k_no3,            "k_no3_Sm",       units="mol NO3 kg-1", default=5.0e-7)                  ! mol NO3 kg-1
-    call get_param(param_file, "generic_COBALT", "k_no3_Di", phyto(DIAZO)%k_no3,            "k_no3_Di",       units="mol NO3 kg-1", default=5.0e-6)                  ! mol NO3 kg-1
-    call get_param(param_file, "generic_COBALT", "k_po4_Di", phyto(DIAZO)%k_po4,            "k_po4_Di",       units="mol PO4 kg-1", default=1.0e-7)                  ! mol PO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_po4_Lg", phyto(LARGE)%k_po4,            "k_po4_Lg",       units="mol PO4 kg-1", default=5.0e-8)                  ! mol PO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_po4_Md", phyto(MEDIUM)%k_po4,           "k_po4_Md",       units="mol PO4 kg-1", default=2.0e-8)                  ! mol PO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_po4_Sm", phyto(SMALL)%k_po4,            "k_po4_Sm",       units="mol PO4 kg-1", default=1.0e-8)                  ! mol PO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_sio4_Lg",phyto(LARGE)%k_sio4,           "k_sio4_Lg",      units="mol SiO4 kg-1", default=2.0e-6)                  ! mol SiO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_sio4_Md",phyto(MEDIUM)%k_sio4,          "k_sio4_Md",      units="mol SiO4 kg-1", default=1.0e-6)                  ! mol SiO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Di", phyto(DIAZO)%k_fe_2_n,      "k_fe_2_n_Di",    units="mol Fe kg-1", default= 12.0e-6 * 106.0 / 16.0)   ! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Lg", phyto(LARGE)%k_fe_2_n,      "k_fe_2_n_Lg",    units="mol Fe kg-1", default= 10.0e-6 * 106.0 / 16.0)    ! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Md", phyto(MEDIUM)%k_fe_2_n,     "k_fe_2_n_Md",    units="mol Fe kg-1", default= 4.0e-6 * 106.0 / 16.0)    ! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Sm",phyto(SMALL)%k_fe_2_n,       "k_fe_2_n_Sm",    units="mol Fe kg-1", default= 2.0e-6*106.0/16.0)        ! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Sm",phyto(SMALL)%fe_2_n_max,   "fe_2_n_max_Sm",  units="mol Fe kg-1", default= 50.e-6*106.0/16.0)     ! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Md", phyto(MEDIUM)%fe_2_n_max, "fe_2_n_max_Md",  units="mol Fe kg-1", default= 250.0e-6*106.0/16.0) ! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Lg", phyto(LARGE)%fe_2_n_max,  "fe_2_n_max_Lg",  units="mol Fe kg-1", default= 500.0e-6*106.0/16.0)  ! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Di", phyto(DIAZO)%fe_2_n_max,  "fe_2_n_max_Di",  units="mol Fe kg-1", default= 500.0e-6*106.0/16.0)  ! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_upt_fac", cobalt%fe_2_n_upt_fac,   "fe_2_n_upt_fac", units="mol Fe kg-1", default= 60.0e-6)               ! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "k_fed_Di", phyto(DIAZO)%k_fed,            "k_fed_Di",       units="mol Fed kg-1", default=4.0e-9)  ! mol Fed kg-1
+    call get_param(param_file, "generic_COBALT", "k_fed_Lg", phyto(LARGE)%k_fed,            "k_fed_Lg",       units="mol Fed kg-1", default=2.0e-9)  ! mol Fed kg-1
+    call get_param(param_file, "generic_COBALT", "k_fed_Md", phyto(MEDIUM)%k_fed,           "k_fed_Md",       units="mol Fed kg-1", default=8.0e-10) ! mol Fed kg-1
+    call get_param(param_file, "generic_COBALT", "k_fed_Sm", phyto(SMALL)%k_fed,            "k_fed_Sm",       units="mol Fed kg-1", default=4.0e-10) ! mol Fed kg-1
+    call get_param(param_file, "generic_COBALT", "k_nh4_Lg", phyto(LARGE)%k_nh4,            "k_nh4_Lg",       units="mol NH4 kg-1", default=5.0e-8)  ! mol NH4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_nh4_Md", phyto(MEDIUM)%k_nh4,           "k_nh4_Md",       units="mol NH4 kg-1", default=2.0e-8)  ! mol NH4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_nh4_Sm", phyto(SMALL)%k_nh4,            "k_nh4_Sm",       units="mol NH4 kg-1", default=1.0e-8)  ! mol NH4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_nh4_Di", phyto(DIAZO)%k_nh4,            "k_nh4_Di",       units="mol NH4 kg-1", default=1.0e-7)  ! mol NH4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_no3_Lg", phyto(LARGE)%k_no3,            "k_no3_Lg",       units="mol NO3 kg-1", default=2.5e-6)  ! mol NO3 kg-1
+    call get_param(param_file, "generic_COBALT", "k_no3_Md", phyto(MEDIUM)%k_no3,           "k_no3_Md",       units="mol NO3 kg-1", default=1.0e-6)  ! mol NO3 kg-1
+    call get_param(param_file, "generic_COBALT", "k_no3_Sm", phyto(SMALL)%k_no3,            "k_no3_Sm",       units="mol NO3 kg-1", default=5.0e-7)  ! mol NO3 kg-1
+    call get_param(param_file, "generic_COBALT", "k_no3_Di", phyto(DIAZO)%k_no3,            "k_no3_Di",       units="mol NO3 kg-1", default=5.0e-6)  ! mol NO3 kg-1
+    call get_param(param_file, "generic_COBALT", "k_po4_Di", phyto(DIAZO)%k_po4,            "k_po4_Di",       units="mol PO4 kg-1", default=1.0e-7)  ! mol PO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_po4_Lg", phyto(LARGE)%k_po4,            "k_po4_Lg",       units="mol PO4 kg-1", default=5.0e-8)  ! mol PO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_po4_Md", phyto(MEDIUM)%k_po4,           "k_po4_Md",       units="mol PO4 kg-1", default=2.0e-8)  ! mol PO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_po4_Sm", phyto(SMALL)%k_po4,            "k_po4_Sm",       units="mol PO4 kg-1", default=1.0e-8)  ! mol PO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_sio4_Lg",phyto(LARGE)%k_sio4,           "k_sio4_Lg",      units="mol SiO4 kg-1", default=2.0e-6) ! mol SiO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_sio4_Md",phyto(MEDIUM)%k_sio4,          "k_sio4_Md",      units="mol SiO4 kg-1", default=1.0e-6) ! mol SiO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Di", phyto(DIAZO)%k_fe_2_n,      "k_fe_2_n_Di",    units="mol Fe kg-1", &
+                   default= 12.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Lg", phyto(LARGE)%k_fe_2_n,      "k_fe_2_n_Lg",    units="mol Fe kg-1", &
+                   default= 10.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Md", phyto(MEDIUM)%k_fe_2_n,     "k_fe_2_n_Md",    units="mol Fe kg-1", &
+                   default= 4.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Sm",phyto(SMALL)%k_fe_2_n,       "k_fe_2_n_Sm",    units="mol Fe kg-1", &
+                   default= 2.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Sm",phyto(SMALL)%fe_2_n_max,   "fe_2_n_max_Sm",  units="mol Fe kg-1", &
+                   default= 50.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Md", phyto(MEDIUM)%fe_2_n_max, "fe_2_n_max_Md",  units="mol Fe kg-1", &
+                   default= 250.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Lg", phyto(LARGE)%fe_2_n_max,  "fe_2_n_max_Lg",  units="mol Fe kg-1", &
+                   default= 500.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Di", phyto(DIAZO)%fe_2_n_max,  "fe_2_n_max_Di",  units="mol Fe kg-1", &
+                   default= 500.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "fe_2_n_upt_fac", cobalt%fe_2_n_upt_fac,   "fe_2_n_upt_fac", units="mol Fe kg-1", default= 60.0e-6) ! mol Fe mol N-1
     !
     !-----------------------------------------------------------------------
     ! Phytoplankton light limitation/growth rate
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "alpha_Di_hl",         phyto(DIAZO)%alpha_hl,          "alpha_Di_hl",         units="g C g chl-1 s-1", default= 0.4e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Lg_hl",         phyto(LARGE)%alpha_hl,          "alpha_Lg_hl",         units="g C g chl-1 s-1", default= 0.4e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Md_hl",         phyto(MEDIUM)%alpha_hl,         "alpha_Md_hl",         units="g C g chl-1 s-1", default= 0.8e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Sm_hl",         phyto(SMALL)%alpha_hl,          "alpha_Sm_hl",         units="g C g chl-1 s-1", default= 1.6e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Di_ll",         phyto(DIAZO)%alpha_ll,          "alpha_Di_ll",         units="g C g chl-1 s-1", default= 0.8e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Lg_ll",         phyto(LARGE)%alpha_ll,          "alpha_Lg_ll",         units="g C g chl-1 s-1", default= 0.8e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Md_ll",         phyto(MEDIUM)%alpha_ll,         "alpha_Md_ll",         units="g C g chl-1 s-1", default= 1.6e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Sm_ll",         phyto(SMALL)%alpha_ll,          "alpha_Sm_ll",         units="g C g chl-1 s-1", default= 3.2e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Di_hl", phyto(DIAZO)%alpha_hl,  "alpha_Di_hl", units="g C g chl-1 s-1", &
+                   default= 0.4e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Lg_hl", phyto(LARGE)%alpha_hl,  "alpha_Lg_hl", units="g C g chl-1 s-1", &
+                   default= 0.4e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Md_hl", phyto(MEDIUM)%alpha_hl, "alpha_Md_hl", units="g C g chl-1 s-1", &
+                   default= 0.8e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Sm_hl", phyto(SMALL)%alpha_hl,  "alpha_Sm_hl", units="g C g chl-1 s-1", &
+                   default= 1.6e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Di_ll", phyto(DIAZO)%alpha_ll,  "alpha_Di_ll", units="g C g chl-1 s-1", &
+                   default= 0.8e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Lg_ll", phyto(LARGE)%alpha_ll,  "alpha_Lg_ll", units="g C g chl-1 s-1", &
+                   default= 0.8e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Md_ll", phyto(MEDIUM)%alpha_ll, "alpha_Md_ll", units="g C g chl-1 s-1", & 
+                   default= 1.6e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Sm_ll", phyto(SMALL)%alpha_ll,  "alpha_Sm_ll", units="g C g chl-1 s-1", &
+                   default= 3.2e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+
     call get_param(param_file, "generic_COBALT", "kappa_eppley",        cobalt%kappa_eppley,            "kappa_eppley",        units="deg C-1",         default= 0.063)                   ! deg C-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Di_hl",       phyto(DIAZO)%P_C_max_hl,        "P_C_max_Di_hl",       units="day-1",           default= 0.6)
-      phyto(DIAZO)%P_C_max_hl = phyto(DIAZO)%P_C_max_hl/sperd   ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Lg_hl",       phyto(LARGE)%P_C_max_hl,        "P_C_max_Lg_hl",       units="day-1",           default= 1.0)
-      phyto(LARGE)%P_C_max_hl = phyto(LARGE)%P_C_max_hl/sperd   ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Md_hl",       phyto(MEDIUM)%P_C_max_hl,       "P_C_max_Md_hl",       units="day-1",           default= 1.1)
-      phyto(MEDIUM)%P_C_max_hl = phyto(MEDIUM)%P_C_max_hl/sperd   ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Sm_hl",       phyto(SMALL)%P_C_max_hl,        "P_C_max_Sm_hl",       units="day-1",           default= 1.0)
-      phyto(SMALL)%P_C_max_hl = phyto(SMALL)%P_C_max_hl/sperd   ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Di_ll",       phyto(DIAZO)%P_C_max_ll,        "P_C_max_Di_ll",       units="day-1",           default= 0.3)
-      phyto(DIAZO)%P_C_max_ll = phyto(DIAZO)%P_C_max_ll/sperd   ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Lg_ll",       phyto(LARGE)%P_C_max_ll,        "P_C_max_Lg_ll",       units="day-1",           default= 0.5)
-      phyto(LARGE)%P_C_max_ll = phyto(LARGE)%P_C_max_ll/sperd   ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Md_ll",       phyto(MEDIUM)%P_C_max_ll,       "P_C_max_Md_ll",       units="day-1",           default= 0.55)
-      phyto(MEDIUM)%P_C_max_ll = phyto(MEDIUM)%P_C_max_ll/sperd   ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Sm_ll",       phyto(SMALL)%P_C_max_ll,        "P_C_max_Sm_ll",       units="day-1",           default= 0.5)
-      phyto(SMALL)%P_C_max_ll = phyto(SMALL)%P_C_max_ll/sperd   ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Di_hl", phyto(DIAZO)%P_C_max_hl, "P_C_max_Di_hl", units="day-1", &
+                   default= 0.6, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Lg_hl", phyto(LARGE)%P_C_max_hl, "P_C_max_Lg_hl", units="day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Md_hl", phyto(MEDIUM)%P_C_max_hl,"P_C_max_Md_hl", units="day-1", &
+                   default= 1.1, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Sm_hl", phyto(SMALL)%P_C_max_hl, "P_C_max_Sm_hl", units="day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Di_ll", phyto(DIAZO)%P_C_max_ll, "P_C_max_Di_ll", units="day-1", &
+                   default= 0.3, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Lg_ll", phyto(LARGE)%P_C_max_ll, "P_C_max_Lg_ll", units="day-1", &
+                   default= 0.5, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Md_ll", phyto(MEDIUM)%P_C_max_ll,"P_C_max_Md_ll", units="day-1", &
+                   default= 0.55, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Sm_ll", phyto(SMALL)%P_C_max_ll, "P_C_max_Sm_ll", units="day-1", &
+                   default= 0.5, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "numlightadapt",       cobalt%numlightadapt,           "numlightadapt",       units="",                default= 10)               ! dimensionless
     call get_param(param_file, "generic_COBALT", "thetamax_Di",         phyto(DIAZO)%thetamax,          "thetamax_Di",         units="g chl g C-1",     default= 0.035)                  ! g Chl g C-1
     call get_param(param_file, "generic_COBALT", "thetamax_Lg",         phyto(LARGE)%thetamax,          "thetamax_Lg",         units="g chl g C-1",     default= 0.07)                  ! g Chl g C-1
@@ -593,27 +610,27 @@ contains
     call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Lg", phyto(LARGE)%bresp_frac_strat,  "bresp_frac_strat_Lg", units="",                default= 0.01)   ! none
     call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Md", phyto(MEDIUM)%bresp_frac_strat, "bresp_frac_strat_Md", units="",                default= 0.01)  ! none
     call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Sm", phyto(SMALL)%bresp_frac_strat,  "bresp_frac_strat_Sm", units="",                default= 0.01)   ! none
-    call get_param(param_file, "generic_COBALT", "sink_max_Di",         phyto(DIAZO)%sink_max,          "sink_max_Di",         units="m day-1",     default= 1.0)
-      phyto(DIAZO)%sink_max = phyto(DIAZO)%sink_max/sperd ! m sec-1
-    call get_param(param_file, "generic_COBALT", "sink_max_Lg",         phyto(LARGE)%sink_max,          "sink_max_Lg",         units="m day-1",     default= 5.0)
-      phyto(LARGE)%sink_max = phyto(LARGE)%sink_max/sperd ! m sec-1
-    call get_param(param_file, "generic_COBALT", "sink_max_Md",         phyto(MEDIUM)%sink_max,         "sink_max_Md",         units="m day-1",     default= 1.0)
-      phyto(MEDIUM)%sink_max = phyto(MEDIUM)%sink_max/sperd ! m sec-1
-    call get_param(param_file, "generic_COBALT", "sink_max_Sm",         phyto(SMALL)%sink_max,          "sink_max_Sm",         units="m day-1",     default= 0.0)
-      phyto(SMALL)%sink_max = phyto(SMALL)%sink_max/sperd ! m sec-1
-    call get_param(param_file, "generic_COBALT", "thetamin",            cobalt%thetamin,                "thetamin",            units="g chl g C-1", default= 0.002)                          ! g Chl g C-1
-    call get_param(param_file, "generic_COBALT", "zeta",                cobalt%zeta,                    "zeta",                units="",            default= 0.05)                                   ! dimensionless
-    call get_param(param_file, "generic_COBALT", "par_adj",             cobalt%par_adj,                 "par_adj",             units="",            default= 0.83)                              ! dimensionless
-    call get_param(param_file, "generic_COBALT", "gamma_irr_aclm",      cobalt%gamma_irr_aclm,          "gamma_irr_aclm",      units="day-1",       default= 1.0)
-      cobalt%gamma_irr_aclm = cobalt%gamma_irr_aclm/sperd ! s-1
-    call get_param(param_file, "generic_COBALT", "gamma_irr_mem_dp",    cobalt%gamma_irr_mem_dp,        "gamma_irr_mem_dp",    units="day-1",       default= 0.1)
-      cobalt%gamma_irr_mem_dp= cobalt%gamma_irr_mem_dp/sperd ! s-1
-    call get_param(param_file, "generic_COBALT", "gamma_mu_mem",        cobalt%gamma_mu_mem,            "gamma_mu_mem",        units="day-1",       default= 1.0)
-      cobalt%gamma_mu_mem= cobalt%gamma_mu_mem/sperd ! s-1
-    call get_param(param_file, "generic_COBALT", "ml_aclm_efold",       cobalt%ml_aclm_efold,           "ml_aclm_efold",       units="",            default= 2.5)                  ! dimensionless
-    call get_param(param_file, "generic_COBALT", "zmld_ref",            cobalt%zmld_ref,                "zmld_ref",            units="m",           default= 10.0)                           ! m
-    call get_param(param_file, "generic_COBALT", "densdiff_mld",        cobalt%densdiff_mld,            "densdiff_mld",        units="kg m-3",      default= 0.03)                   ! kg m-3
-    call get_param(param_file, "generic_COBALT", "irrad_day_thresh",    cobalt%irrad_day_thresh,        "irrad_day_thresh",    units="watts m-2",   default= 1.0 )           ! watts m-2
+    call get_param(param_file, "generic_COBALT", "sink_max_Di",         phyto(DIAZO)%sink_max,          "sink_max_Di",         units="m day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "sink_max_Lg",         phyto(LARGE)%sink_max,          "sink_max_Lg",         units="m day-1", &
+                   default= 5.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "sink_max_Md",         phyto(MEDIUM)%sink_max,         "sink_max_Md",         units="m day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "sink_max_Sm",         phyto(SMALL)%sink_max,          "sink_max_Sm",         units="m day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "thetamin",            cobalt%thetamin,                "thetamin",            units="g chl g C-1", default= 0.002) ! g Chl g C-1
+    call get_param(param_file, "generic_COBALT", "zeta",                cobalt%zeta,                    "zeta",                units="",            default= 0.05)  ! dimensionless
+    call get_param(param_file, "generic_COBALT", "par_adj",             cobalt%par_adj,                 "par_adj",             units="",            default= 0.83)  ! dimensionless
+    call get_param(param_file, "generic_COBALT", "gamma_irr_aclm",      cobalt%gamma_irr_aclm,          "gamma_irr_aclm",      units="day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_irr_mem_dp",    cobalt%gamma_irr_mem_dp,        "gamma_irr_mem_dp",    units="day-1", &
+                   default= 0.1, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_mu_mem",        cobalt%gamma_mu_mem,            "gamma_mu_mem",        units="day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "ml_aclm_efold",       cobalt%ml_aclm_efold,           "ml_aclm_efold",       units="",            default= 2.5)   ! dimensionless
+    call get_param(param_file, "generic_COBALT", "zmld_ref",            cobalt%zmld_ref,                "zmld_ref",            units="m",           default= 10.0)  ! m
+    call get_param(param_file, "generic_COBALT", "densdiff_mld",        cobalt%densdiff_mld,            "densdiff_mld",        units="kg m-3",      default= 0.03)  ! kg m-3
+    call get_param(param_file, "generic_COBALT", "irrad_day_thresh",    cobalt%irrad_day_thresh,        "irrad_day_thresh",    units="watts m-2",   default= 1.0 )  ! watts m-2
     call get_param(param_file, "generic_COBALT", "do_case2_mod",        cobalt%do_case2_mod, &
                    "When ture, modify the opacity of case 2 (coastal) waters"//&
                    "which are identified based on a temperature and depth threshold", default=.false. )
@@ -667,8 +684,10 @@ contains
     call get_param(param_file, "generic_COBALT", "si_2_n_static_Md", phyto(MEDIUM)%si_2_n_static,  "si_2_n_static_Md",units="mol Si mol N-1", default= 2.0)           ! mol Si mol N-1
     call get_param(param_file, "generic_COBALT", "si_2_n_max_Lg",    phyto(LARGE)%si_2_n_max,      "si_2_n_max_Lg",   units="mol Si mol N-1", default= 3.0)                  ! mol Si mol N-1
     call get_param(param_file, "generic_COBALT", "si_2_n_max_Lg",    phyto(MEDIUM)%si_2_n_max,     "si_2_n_max_Lg",   units="mol Si mol N-1", default= 1.0)                 ! mol Si mol N-1
-    call get_param(param_file, "generic_COBALT", "ca_2_n_arag",      cobalt%ca_2_n_arag,           "ca_2_n_arag",     units="mol Ca mol N-1", default= 0.055 * 106.0 / 16.0)        ! mol Ca mol N-1
-    call get_param(param_file, "generic_COBALT", "ca_2_n_calc",      cobalt%ca_2_n_calc,           "ca_2_n_calc",     units="mol CA mol N-1", default= 0.050 * 106.0 / 16.0)        ! mol Ca mol N-1
+    call get_param(param_file, "generic_COBALT", "ca_2_n_arag",      cobalt%ca_2_n_arag,           "ca_2_n_arag",     units="mol Ca mol N-1", &
+                   default= 0.055, scale = c2n )        ! mol Ca mol N-1
+    call get_param(param_file, "generic_COBALT", "ca_2_n_calc",      cobalt%ca_2_n_calc,           "ca_2_n_calc",     units="mol CA mol N-1", &
+                   default= 0.050, scale = c2n )        ! mol Ca mol N-1
     call get_param(param_file, "generic_COBALT", "caco3_sat_max",    cobalt%caco3_sat_max,         "caco3_sat_max",   units="", default= 10.0)                     ! dimensionless
     !
     !-----------------------------------------------------------------------
@@ -690,14 +709,14 @@ contains
     ! Phytoplankton aggregation
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "agg_Sm",           phyto(SMALL)%agg,             "agg_Sm",           units="1e6*day-1(mol N kg)-1", default=0.05)
-      phyto(SMALL)%agg = phyto(SMALL)%agg*1e6 / sperd          ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "agg_Di",           phyto(DIAZO)%agg,             "agg_Di",           units="1e6*day-1(mol N kg)-1", default=0.0 )           ! s-1 (mole N kg)-1
-      phyto(DIAZO)%agg = phyto(DIAZO)%agg*1e6 / sperd          ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "agg_Lg",           phyto(LARGE)%agg,             "agg_Lg",           units="1e6*day-1(mol N kg)-1", default=0.25)            ! s-1 (mole N kg)-1
-      phyto(LARGE)%agg = phyto(LARGE)%agg*1e6 / sperd          ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "agg_Md",           phyto(MEDIUM)%agg,            "agg_Md",           units="1e6*day-1(mol N kg)-1", default=0.10)           ! s-1 (mole N kg)-1
-      phyto(MEDIUM)%agg = phyto(MEDIUM)%agg*1e6 / sperd          ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "agg_Sm",           phyto(SMALL)%agg,  "agg_Sm", units="day-1(mol N kg)-1", &
+                   default=0.05, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "agg_Di",           phyto(DIAZO)%agg,  "agg_Di", units="day-1(mol N kg)-1", & 
+                   default=0.0 , scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "agg_Lg",           phyto(LARGE)%agg,  "agg_Lg", units="day-1(mol N kg)-1", &
+                   default=0.25, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "agg_Md",           phyto(MEDIUM)%agg, "agg_Md", units="day-1(mol N kg)-1", &
+                   default=0.10, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
     call get_param(param_file, "generic_COBALT", "frac_mu_stress_Sm",phyto(SMALL)%frac_mu_stress,  "frac_mu_stress_Sm",units="", default=0.25)  ! none
     call get_param(param_file, "generic_COBALT", "frac_mu_stress_Di",phyto(DIAZO)%frac_mu_stress,  "frac_mu_stress_Di",units="", default=0.25)  ! none
     call get_param(param_file, "generic_COBALT", "frac_mu_stress_Lg",phyto(LARGE)%frac_mu_stress,  "frac_mu_stress_Lg",units="", default=0.25)  ! none
@@ -707,30 +726,30 @@ contains
     ! Phytoplankton and bacterial losses to viruses
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "vir_Sm",    phyto(SMALL)%vir,  "vir_Sm",    units="1e6*day-1 (mole N kg)-1", default= 0.25 )    ! s-1 (mole N kg)-1
-      phyto(SMALL)%vir = phyto(SMALL)%vir*1e6/sperd ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "vir_Di",    phyto(DIAZO)%vir,  "vir_Di",    units="1e6*day-1 (mole N kg)-1", default= 0.05 )    ! s-1 (mole N kg)-1
-      phyto(DIAZO)%vir = phyto(DIAZO)%vir*1e6/sperd ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "vir_Lg",    phyto(LARGE)%vir,  "vir_Lg",    units="1e6*day-1 (mole N kg)-1", default= 0.05 )    ! s-1 (mole N kg)-1
-      phyto(LARGE)%vir = phyto(LARGE)%vir*1e6/sperd ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "vir_Md",    phyto(MEDIUM)%vir, "vir_Md",    units="1e6*day-1 (mole N kg)-1", default= 0.125)  ! s-1 (mole N kg)-1
-      phyto(MEDIUM)%vir = phyto(MEDIUM)%vir*1e6/sperd ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "vir_Bact",  bact(1)%vir,       "vir_Bact",  units="1e6*day-1 (mole N kg)-1", default= 0.25)      ! s-1 (mole N kg)-1
-      bact(1)%vir = bact(1)%vir*1e6/sperd ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "ktemp_vir", cobalt%vir_ktemp,  "ktemp_vir", units="C-1              ", default= 0.063)           ! C-1
+    call get_param(param_file, "generic_COBALT", "vir_Sm",    phyto(SMALL)%vir,  "vir_Sm",   units="day-1 (mole N kg)-1", &
+                   default=0.25, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "vir_Di",    phyto(DIAZO)%vir,  "vir_Di",   units="day-1 (mole N kg)-1", &
+                   default=0.05, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "vir_Lg",    phyto(LARGE)%vir,  "vir_Lg",   units="day-1 (mole N kg)-1", &
+                   default=0.05, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "vir_Md",    phyto(MEDIUM)%vir, "vir_Md",   units="day-1 (mole N kg)-1", &
+                   default=0.125, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "vir_Bact",  bact(1)%vir,       "vir_Bact", units="day-1 (mole N kg)-1", &
+                   default=0.25, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "ktemp_vir", cobalt%vir_ktemp,  "ktemp_vir", units="C-1", default= 0.063)           ! C-1
     !
     !-----------------------------------------------------------------------
     ! Phytoplankton losses to mortality
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "mort_Sm",phyto(SMALL)%mort,  "mort_Sm",units="day-1", default= 0.0 )
-      phyto(SMALL)%mort = phyto(SMALL)%mort/sperd ! s-1
-    call get_param(param_file, "generic_COBALT", "mort_Di",phyto(DIAZO)%mort,  "mort_Di",units="day-1", default= 0.0 )
-      phyto(DIAZO)%mort = phyto(DIAZO)%mort/sperd ! s-1
-    call get_param(param_file, "generic_COBALT", "mort_Lg",phyto(LARGE)%mort,  "mort_Lg",units="day-1", default= 0.0 )
-      phyto(LARGE)%mort = phyto(LARGE)%mort/sperd ! s-1
-    call get_param(param_file, "generic_COBALT", "mort_Md",phyto(MEDIUM)%mort, "mort_Md",units="day-1", default= 0.0 )
-      phyto(MEDIUM)%mort = phyto(MEDIUM)%mort/sperd ! s-1
+    call get_param(param_file, "generic_COBALT", "mort_Sm",phyto(SMALL)%mort,  "mort_Sm",units="day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "mort_Di",phyto(DIAZO)%mort,  "mort_Di",units="day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "mort_Lg",phyto(LARGE)%mort,  "mort_Lg",units="day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "mort_Md",phyto(MEDIUM)%mort, "mort_Md",units="day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
     !
     !-----------------------------------------------------------------------
     ! Phytoplankton losses to exudation
@@ -745,12 +764,12 @@ contains
     ! Zooplankton ingestion parameterization and temperature dependence
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "imax_smz",         zoo(1)%imax,              "imax_smz",         units="day-1", default=0.8*1.42 )          ! s-1
-      zoo(1)%imax = zoo(1)%imax/sperd   ! s-1
-    call get_param(param_file, "generic_COBALT", "imax_mdz",         zoo(2)%imax,              "imax_mdz",         units="day-1", default=0.57 )              ! s-1
-      zoo(2)%imax = zoo(2)%imax/sperd   ! s-1
-    call get_param(param_file, "generic_COBALT", "imax_lgz",         zoo(3)%imax,              "imax_lgz",         units="day-1", default=0.23 )              ! s-1
-      zoo(3)%imax = zoo(3)%imax/sperd   ! s-1
+    call get_param(param_file, "generic_COBALT", "imax_smz", zoo(1)%imax, "imax_smz", units="day-1", & 
+                   default= 0.8*1.42, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "imax_mdz", zoo(2)%imax, "imax_mdz", units="day-1", & 
+                   default= 0.57, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "imax_lgz", zoo(3)%imax, "imax_lgz", units="day-1", & 
+                   default= 0.23, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "ki_smz",           zoo(1)%ki,                "ki_smz",           units="mol N kg-1", default=1.25e-6)                        ! moles N kg-1
     call get_param(param_file, "generic_COBALT", "ki_mdz",           zoo(2)%ki,                "ki_mdz",           units="mol N kg-1", default=1.25e-6)                        ! moles N kg-1
     call get_param(param_file, "generic_COBALT", "ki_lgz",           zoo(3)%ki,                "ki_lgz",           units="mol N kg-1", default=1.25e-6)                        ! moles N kg-1
@@ -766,24 +785,24 @@ contains
     call get_param(param_file, "generic_COBALT", "upswim_I_thresh",  zoo(1)%upswim_I_thresh,   "upswim_I_thresh",  units="", default=0.0)     ! dimensionless
     call get_param(param_file, "generic_COBALT", "upswim_I_thresh",  zoo(2)%upswim_I_thresh,   "upswim_I_thresh",  units="", default=0.0)     ! dimensionless
     call get_param(param_file, "generic_COBALT", "upswim_I_thresh",  zoo(3)%upswim_I_thresh,   "upswim_I_thresh",  units="", default=0.0)     ! dimensionless
-    call get_param(param_file, "generic_COBALT", "swim_max",         zoo(1)%swim_max,          "swim_max",         units="m day-1", default=100.0)
-      zoo(1)%swim_max = zoo(1)%swim_max/sperd! max swimming (m sec-1)
-    call get_param(param_file, "generic_COBALT", "swim_max",         zoo(2)%swim_max,          "swim_max",         units="m day-1", default=500.0)
-      zoo(2)%swim_max = zoo(2)%swim_max/sperd! max swimming (m sec-1)
-    call get_param(param_file, "generic_COBALT", "swim_max",         zoo(3)%swim_max,          "swim_max",         units="m day-1", default=2000.0)
-      zoo(3)%swim_max = zoo(3)%swim_max/sperd! max swimming (m sec-1)
+    call get_param(param_file, "generic_COBALT", "swim_max", zoo(1)%swim_max, "swim_max", units="m day-1", &
+                   default= 100.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "swim_max", zoo(2)%swim_max, "swim_max", units="m day-1", &
+                   default= 500.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "swim_max", zoo(3)%swim_max, "swim_max", units="m day-1", &
+                   default=2000.0, scale = I_sperd ) ! s-1
     !
     !-----------------------------------------------------------------------
     ! Bacterial growth and uptake parameters
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "mu_max_bact",   bact(1)%mu_max,     "mu_max_bact",   units="day-1", default= 1.0)
-      bact(1)%mu_max = bact(1)%mu_max/sperd ! s-1
+    call get_param(param_file, "generic_COBALT", "mu_max_bact",   bact(1)%mu_max,     "mu_max_bact",   units="day-1", & 
+                   default= 1.0, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "k_ldon_bact",   bact(1)%k_ldon,     "k_ldon_bact",   units="mol ldon kg-1", default= 5.0e-7)            ! mol ldon kg-1
     call get_param(param_file, "generic_COBALT", "ktemp_bact",    bact(1)%ktemp,      "ktemp_bact",    units="C-1", default= 0.063)                ! C-1
     call get_param(param_file, "generic_COBALT", "gge_max_bact",  bact(1)%gge_max,    "gge_max_bact",  units="", default= 0.4)                ! dimensionless
-    call get_param(param_file, "generic_COBALT", "bresp_bact",    bact(1)%bresp,      "bresp_bact",    units="day-1", default= 0.0075)             ! s-1
-      bact(1)%bresp = bact(1)%bresp/sperd ! s-1
+    call get_param(param_file, "generic_COBALT", "bresp_bact",    bact(1)%bresp,      "bresp_bact",    units="day-1", & 
+                   default= 0.0075, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "amx_ge_bact",   bact(1)%amx_ge,     "amx_ge_bact",   units="", default= 0.0) ! dimensionless
     call get_param(param_file, "generic_COBALT", "nitrif_ge_bact",bact(1)%nitrif_ge,  "nitrif_ge_bact",units="", default= 0.0) ! dimensionless
     !
@@ -837,12 +856,12 @@ contains
     call get_param(param_file, "generic_COBALT", "gge_max_smz",zoo(1)%gge_max, "gge_max_smz",  units="unitless", default=0.4)              ! dimensionless
     call get_param(param_file, "generic_COBALT", "gge_max_mdz",zoo(2)%gge_max, "gge_max_mdz",  units="unitless", default=0.4)              ! dimensionless
     call get_param(param_file, "generic_COBALT", "gge_max_lgz",zoo(3)%gge_max, "gge_max_lgz",  units="unitless", default=0.4)              ! dimensionless
-    call get_param(param_file, "generic_COBALT", "bresp_smz",  zoo(1)%bresp,   "bresp_smz",    units="day-1", default=0.8*0.020)
-      zoo(1)%bresp = zoo(1)%bresp/sperd ! s-1
-    call get_param(param_file, "generic_COBALT", "bresp_mdz",  zoo(2)%bresp,   "bresp_mdz",    units="day-1", default=0.008)
-      zoo(2)%bresp = zoo(2)%bresp/sperd ! s-1
-    call get_param(param_file, "generic_COBALT", "bresp_lgz",  zoo(3)%bresp,   "bresp_lgz",    units="day-1", default=0.0032)   
-      zoo(3)%bresp = zoo(3)%bresp/sperd ! s-1
+    call get_param(param_file, "generic_COBALT", "bresp_smz",  zoo(1)%bresp,   "bresp_smz",    units="day-1", & 
+                   default= 0.8*0.020, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "bresp_mdz",  zoo(2)%bresp,   "bresp_mdz",    units="day-1", & 
+                   default= 0.008, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "bresp_lgz",  zoo(3)%bresp,   "bresp_lgz",    units="day-1", & 
+                   default= 0.0032, scale = I_sperd ) ! s-1
     !
     !----------------------------------------------------------------------
     ! Partitioning of zooplankton ingestion to other compartments
@@ -885,8 +904,8 @@ contains
     ! Parameters for unresolved higher predators
     !----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "imax_hp",     cobalt%imax_hp,     "imax_hp",      units="day-1", default=0.09)     ! s-1
-      cobalt%imax_hp = cobalt%imax_hp/sperd   ! s-1
+    call get_param(param_file, "generic_COBALT", "imax_hp",     cobalt%imax_hp,     "imax_hp",      units="day-1", &
+                   default= 0.09, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "ki_hp",       cobalt%ki_hp,       "ki_hp",        units="mol N kg-1", default=1.25e-6)           ! mol N kg-1
     call get_param(param_file, "generic_COBALT", "coef_hp",     cobalt%coef_hp,     "coef_hp",      units="unitless", default=2.0)            ! dimensionless
     call get_param(param_file, "generic_COBALT", "ktemp_hp",    cobalt%ktemp_hp,    "ktemp_hp",     units="C-1", default=0.063)         ! C-1
@@ -910,17 +929,17 @@ contains
     call get_param(param_file, "generic_COBALT", "felig_bkg",          cobalt%felig_bkg,           "felig_bkg",         units="mol Fe kg-1", default= 0.5e-9)                          ! mol Fe kg-1
     call get_param(param_file, "generic_COBALT", "felig_2_don",        cobalt%felig_2_don,         "felig_2_don",       units="mol lig kg-1", default= 0.5e-3)                          ! mol lig mol N-1
     call get_param(param_file, "generic_COBALT", "fe_2_n_sed",         cobalt%fe_2_n_sed,          "fe_2_n_sed",        units="mol Fe kg-1", default= 100.0e-5 * 106 / 16)            ! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "ffe_sed_max",        cobalt%ffe_sed_max,         "ffe_sed_max",       units="1e-6 mol Fe m-2 day-1", default= 170.0)            ! mol Fe m-2 s-1
-      cobalt%ffe_sed_max = cobalt%ffe_sed_max/1.0e6/sperd          ! mol Fe m-2 s-1
+    call get_param(param_file, "generic_COBALT", "ffe_sed_max",        cobalt%ffe_sed_max,         "ffe_sed_max",       units="mol Fe m-2 day-1", & 
+                   default= 170.0, scale = I_sperd*(1/micromol2mol) )
     call get_param(param_file, "generic_COBALT", "ffe_geotherm_ratio", cobalt%ffe_geotherm_ratio,  "ffe_geotherm_ratio",units="mol Fe m-2 s-1 (W m-2)-1", default= 2.0e-12)         ! mol Fe m-2 s-1 (watt m-2)-1
     call get_param(param_file, "generic_COBALT", "jfe_iceberg_ratio",  cobalt%jfe_iceberg_ratio,   "jfe_iceberg_ratio", units="mol Fe kg-1 ice melt", default= 1.0e-7)            ! mol Fe kg-1 ice melt
     call get_param(param_file, "generic_COBALT", "jno3_iceberg_ratio", cobalt%jno3_iceberg_ratio,  "jno3_iceberg_ratio",units="mol N kg-1 ice melt", default= 2.0e-6)          ! mol N kg-1 ice melt
     call get_param(param_file, "generic_COBALT", "jpo4_iceberg_ratio", cobalt%jpo4_iceberg_ratio,  "jpo4_iceberg_ratio",units="mol P kg-1 ice melt", default= 1.1e-7)          ! mol P kg-1 ice melt
     call get_param(param_file, "generic_COBALT", "fe_coast",           cobalt%fe_coast,            "fe_coast",          units="mol Fe m kg-1 s-1", default= 0.0 )                                ! mol Fe m kg-1 s-1
-    call get_param(param_file, "generic_COBALT", "alpha_fescav",       cobalt%alpha_fescav,        "alpha_fescav",      units="year-1", default= 0.0)                   ! sec-1
-      cobalt%alpha_fescav = cobalt%alpha_fescav/spery ! sec-1
-    call get_param(param_file, "generic_COBALT", "beta_fescav",        cobalt%beta_fescav,         "beta_fescav",       units="year-1 (mol ndet kg-1)-1", default= 2.5e9 )                  ! sec-1 (mole ndet kg-1)-1
-      cobalt%beta_fescav = cobalt%beta_fescav/spery ! sec-1 (mole ndet kg-1)-1
+    call get_param(param_file, "generic_COBALT", "alpha_fescav", cobalt%alpha_fescav, "alpha_fescav", units="year-1", &
+                   default= 0.0, scale = I_spery ) 
+    call get_param(param_file, "generic_COBALT", "beta_fescav",  cobalt%beta_fescav,  "beta_fescav", units="year-1 (mol ndet kg-1)-1", &
+                   default= 2.5e9, scale = I_spery ) 
     call get_param(param_file, "generic_COBALT", "remin_eff_fedet",    cobalt%remin_eff_fedet,     "remin_eff_fedet",   units="unitless", default= 0.25)                  ! unitless
     call get_param(param_file, "generic_COBALT", "io_fescav",          cobalt%io_fescav,           "io_fescav",         units="W m-2", default= 10.0 )                             ! watts m-2
     call get_param(param_file, "generic_COBALT", "kfe_eq_lig_ll",      cobalt%kfe_eq_lig_ll,       "kfe_eq_lig_ll",     units="mol lig-1 kg", default= 1.0e12)                    ! mol lig-1 kg
@@ -928,45 +947,46 @@ contains
 
     ! Radiocarbon
     call get_param(param_file, "generic_COBALT", "half_life_14c", cobalt%half_life_14c, "half_life_14c", units="s", default= 5730.0 )                  ! s
-    call get_param(param_file, "generic_COBALT", "lambda_14c",    cobalt%lambda_14c,    "lambda_14c",    units="-s", default= log(2.0) / (cobalt%half_life_14c * spery)) ! s-1
+    call get_param(param_file, "generic_COBALT", "lambda_14c",    cobalt%lambda_14c,    "lambda_14c",    units="-s", & 
+                   default= log(2.0) / (cobalt%half_life_14c), scale = I_spery ) 
     !-------------------------------------------------------------------------
     ! Remineralization
     !-------------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "k_o2",             cobalt%k_o2,              "k_o2",             units="mol O2 kg-1   ", default= 8.0e-6)                                     ! mol O2 kg-1
-    call get_param(param_file, "generic_COBALT", "o2_min",           cobalt%o2_min,            "o2_min",           units="mol O2 kg-1   ", default= 0.8e-6 )                                ! mol O2 kg-1
-    call get_param(param_file, "generic_COBALT", "k_o2_nit",         cobalt%k_o2_nit,          "k_o2_nit",         units="mol O2 kg-1   ", default= k_o2_nit)                           ! mol O2 kg-1
-    call get_param(param_file, "generic_COBALT", "o2_min_nit",       cobalt%o2_min_nit,        "o2_min_nit",       units="mol O2 kg-1   ", default= o2_min_nit )                    ! mol O2 kg-1
-    call get_param(param_file, "generic_COBALT", "kappa_remin",       cobalt%kappa_remin,      "kappa_remin",      units="deg C-1       ", default= 0.063 )                       ! deg C-1
-    call get_param(param_file, "generic_COBALT", "remin_ramp_scale", cobalt%remin_ramp_scale,  "remin_ramp_scale", units="m             ", default= 50.0 )              ! m
-    call get_param(param_file, "generic_COBALT", "rpcaco3",          cobalt%rpcaco3,           "rpcaco3",          units="mol N mol Ca-1", default= 0.070/12.0*16.0/106.0*100.0)          ! mol N mol Ca-1
-    call get_param(param_file, "generic_COBALT", "rplith",           cobalt%rplith,            "rplith",           units="mol N g lith-1", default= 0.065/12.0*16.0/106.0)                ! mol N g lith-1
-    call get_param(param_file, "generic_COBALT", "rpsio2",           cobalt%rpsio2,            "rpsio2",           units="mol N mol Si-1", default= 0.026/12.0*16.0/106.0*60.0)           ! mol N mol Si-1
-    call get_param(param_file, "generic_COBALT", "gamma_ndet",       cobalt%gamma_ndet,        "gamma_ndet",       units="s-1           ", default= cobalt%wsink / 350.0 )         ! s-1
-    call get_param(param_file, "generic_COBALT", "gamma_cadet_arag", cobalt%gamma_cadet_arag,  "gamma_cadet_arag", units="s-1           ", default= cobalt%wsink/760.0)   ! s-1
-    call get_param(param_file, "generic_COBALT", "gamma_cadet_calc", cobalt%gamma_cadet_calc,  "gamma_cadet_calc", units="s-1           ", default= cobalt%wsink/1343.0)  ! s-1
+    call get_param(param_file, "generic_COBALT", "k_o2",             cobalt%k_o2,              "k_o2",             units="mol O2 kg-1   ", default= 8.0e-6)                      ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "o2_min",           cobalt%o2_min,            "o2_min",           units="mol O2 kg-1   ", default= 0.8e-6 )                     ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "k_o2_nit",         cobalt%k_o2_nit,          "k_o2_nit",         units="mol O2 kg-1   ", default= k_o2_nit)                    ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "o2_min_nit",       cobalt%o2_min_nit,        "o2_min_nit",       units="mol O2 kg-1   ", default= o2_min_nit )                 ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "kappa_remin",       cobalt%kappa_remin,      "kappa_remin",      units="deg C-1       ", default= 0.063 )                      ! deg C-1
+    call get_param(param_file, "generic_COBALT", "remin_ramp_scale", cobalt%remin_ramp_scale,  "remin_ramp_scale", units="m             ", default= 50.0 )                       ! m
+    call get_param(param_file, "generic_COBALT", "rpcaco3",          cobalt%rpcaco3,           "rpcaco3",          units="mol N mol Ca-1", default= 0.070/12.0*16.0/106.0*100.0) ! mol N mol Ca-1
+    call get_param(param_file, "generic_COBALT", "rplith",           cobalt%rplith,            "rplith",           units="mol N g lith-1", default= 0.065/12.0*16.0/106.0)       ! mol N g lith-1
+    call get_param(param_file, "generic_COBALT", "rpsio2",           cobalt%rpsio2,            "rpsio2",           units="mol N mol Si-1", default= 0.026/12.0*16.0/106.0*60.0)  ! mol N mol Si-1
+    call get_param(param_file, "generic_COBALT", "gamma_ndet",       cobalt%gamma_ndet,        "gamma_ndet",       units="s-1           ", default= cobalt%wsink / 350.0 )       ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_cadet_arag", cobalt%gamma_cadet_arag,  "gamma_cadet_arag", units="s-1           ", default= cobalt%wsink/760.0)          ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_cadet_calc", cobalt%gamma_cadet_calc,  "gamma_cadet_calc", units="s-1           ", default= cobalt%wsink/1343.0)         ! s-1
     call get_param(param_file, "generic_COBALT", "kappa_sidet",      cobalt%kappa_sidet,       "kappa_sidet",      units="deg C -1      ", default= 0.063 )                      ! deg C -1
     call get_param(param_file, "generic_COBALT", "gamma_sidet",      cobalt%gamma_sidet,       "gamma_sidet",      units="s-1           ", default= cobalt%wsink / 1.0e4 )       ! s-1
-    call get_param(param_file, "generic_COBALT", "phi_lith" ,        cobalt%phi_lith,          "phi_lith" ,        units="dimensionless ", default= 0.002)                            ! dimensionless
-    call get_param(param_file, "generic_COBALT", "k_lith",           cobalt%k_lith,            "k_lith",           units="year-1        ", default= 0.5)                            ! year-1
-      cobalt%k_lith = cobalt%k_lith/spery ! s-1
-    call get_param(param_file, "generic_COBALT", "bottom_thickness", cobalt%bottom_thickness,  "bottom_thickness", units="m             ", default= 1.0 )                ! m
-    call get_param(param_file, "generic_COBALT", "z_sed",            cobalt%z_sed,             "z_sed",            units="m             ", default= 0.1 )                                    ! m
-    call get_param(param_file, "generic_COBALT", "k_no3_denit",      cobalt%k_no3_denit,       "k_no3_denit",      units="mol NO3 kg-1  ", default= 1.0e-6)                         ! mol NO3 kg-1
-    call get_param(param_file, "generic_COBALT", "z_burial",         cobalt%z_burial,          "z_burial",         units="m             ", default= 10.0)                                 ! m
+    call get_param(param_file, "generic_COBALT", "phi_lith" ,        cobalt%phi_lith,          "phi_lith" ,        units="dimensionless ", default= 0.002)                       ! dimensionless
+    call get_param(param_file, "generic_COBALT", "k_lith",           cobalt%k_lith,            "k_lith",           units="year-1", &
+                   default= 0.5, scale = I_spery ) 
+    call get_param(param_file, "generic_COBALT", "bottom_thickness", cobalt%bottom_thickness,  "bottom_thickness", units="m             ", default= 1.0 )                        ! m
+    call get_param(param_file, "generic_COBALT", "z_sed",            cobalt%z_sed,             "z_sed",            units="m             ", default= 0.1 )                        ! m
+    call get_param(param_file, "generic_COBALT", "k_no3_denit",      cobalt%k_no3_denit,       "k_no3_denit",      units="mol NO3 kg-1  ", default= 1.0e-6)                      ! mol NO3 kg-1
+    call get_param(param_file, "generic_COBALT", "z_burial",         cobalt%z_burial,          "z_burial",         units="m             ", default= 10.0)                        ! m
     !
     !-----------------------------------------------------------------------
     ! Calcium carbonate in sediments (see Dunne et al., 2012, GBC, 26)
     !-----------------------------------------------------------------------
     !
     call get_param(param_file, "generic_COBALT", "cased_steady",       cobalt%cased_steady,       "cased_steady",       default=.false. )
-    call get_param(param_file, "generic_COBALT", "phi_surfresp_cased", cobalt%phi_surfresp_cased, "phi_surfresp_cased", units="unitless", default=0.14307)      ! none
-    call get_param(param_file, "generic_COBALT", "phi_deepresp_cased", cobalt%phi_deepresp_cased, "phi_deepresp_cased", units="unitless", default=4.1228)       ! none
-    call get_param(param_file, "generic_COBALT", "alpha_cased",        cobalt%alpha_cased,        "alpha_cased",        units="unitless", default=2.7488)                     ! none
-    call get_param(param_file, "generic_COBALT", "beta_cased",         cobalt%beta_cased,         "beta_cased",         units="unitless", default=-2.2185)                      ! none
-    call get_param(param_file, "generic_COBALT", "gamma_cased",        cobalt%gamma_cased,        "gamma_cased",        units="year-1"  , default=0.03607)              ! 
-      cobalt%gamma_cased = cobalt%gamma_cased/spery ! sec-1
-    call get_param(param_file, "generic_COBALT", "Co_cased",           cobalt%Co_cased,           "Co_cased",           units="mol m-3", default=8.1e3)                            ! moles m-3
+    call get_param(param_file, "generic_COBALT", "phi_surfresp_cased", cobalt%phi_surfresp_cased, "phi_surfresp_cased", units="unitless", default=0.14307)
+    call get_param(param_file, "generic_COBALT", "phi_deepresp_cased", cobalt%phi_deepresp_cased, "phi_deepresp_cased", units="unitless", default=4.1228)
+    call get_param(param_file, "generic_COBALT", "alpha_cased",        cobalt%alpha_cased,        "alpha_cased",        units="unitless", default=2.7488)
+    call get_param(param_file, "generic_COBALT", "beta_cased",         cobalt%beta_cased,         "beta_cased",         units="unitless", default=-2.2185)
+    call get_param(param_file, "generic_COBALT", "gamma_cased",        cobalt%gamma_cased,        "gamma_cased", units="year-1", &
+                   default=0.03607, scale = I_spery ) 
+    call get_param(param_file, "generic_COBALT", "Co_cased",           cobalt%Co_cased,           "Co_cased",           units="mol m-3", default=8.1e3) ! moles m-3
     !
     !-----------------------------------------------------------------------
     ! Dissolved Organic Material
@@ -1000,8 +1020,8 @@ contains
     call get_param(param_file, "generic_COBALT", "knh4_nitrif",   cobalt%k_nh3_nitrif, "knh4_nitrif",  units="mol kg-1", default=k_nh3_nitrif )                     ! moles kg-1
     call get_param(param_file, "generic_COBALT", "irr_inhibit",   cobalt%irr_inhibit,  "irr_inhibit",  units="W m-2", default=irr_inhibit)                         ! W m-2
     !call get_param(param_file, "generic_COBALT", "gamma_nh4amx",  cobalt%gamma_nh4amx, "gamma_nh4amx", units="s-1", default=0.07 / sperd)                      ! s-1
-    call get_param(param_file, "generic_COBALT", "gamma_nh4amx",  cobalt%gamma_nh4amx, "gamma_nh4amx", units="day-1", default=0.0)                       ! s-1
-      cobalt%gamma_nh4amx = cobalt%gamma_nh4amx/sperd  ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_nh4amx",  cobalt%gamma_nh4amx, "gamma_nh4amx", units="day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "o2_min_amx",    cobalt%o2_min_amx,   "o2_min_amx",   units="mol O2 kg-1", default=4.0e-6 )                                ! mol O2 kg-1
     !
     !-----------------------------------------------------------------------
@@ -1057,8 +1077,8 @@ contains
     ! is more in line with the deep water synthesis of Berelson (2002; Particel settling rates increase
     ! with depth in the ocean, DSR-II, 49, 237-252).
     !
-    call get_param(param_file, "generic_COBALT", "wsink",  cobalt%wsink, "wsink", units="m day-1", default=100.0 )                             ! m s-1
-      cobalt%wsink = cobalt%wsink/sperd ! m s-1
+    call get_param(param_file, "generic_COBALT", "wsink",  cobalt%wsink, "wsink", units="m day-1", &
+                   default= 100.0, scale = I_sperd ) ! s-1
 
     call get_param(param_file, "generic_COBALT", "ice_restart_file"   , cobalt%ice_restart_file   ,  "ice_restart_file", default="ice_cobalt.res.nc")
     call get_param(param_file, "generic_COBALT", "ocean_restart_file" , cobalt%ocean_restart_file ,  "ocean_restart_file", default="ocean_cobalt.res.nc")
