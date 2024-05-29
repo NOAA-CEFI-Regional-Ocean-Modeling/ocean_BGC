@@ -55,10 +55,16 @@ module cobalt_types
   integer, parameter, public :: SMALL      = 4 !< ID for small phytoplankton 
 
   real, parameter, public :: sperd = 24.0 * 3600.0    !< number of seconds in a day (sec)
+  real, parameter, public :: I_sperd = 1.0/sperd      !< inverse of number of seconds in a day (sec)
   real, parameter, public :: spery = 365.25 * sperd   !< number of seconds in a year (sec)
+  real, parameter, public :: I_spery = 1.0/spery      !< inverse of number of seconds in a year (sec)
   real, parameter, public :: epsln=1.0e-30            !< small, but non-zero value for numerical stability
   real, parameter, public :: missing_value1=-1.0e+10  !< large negative value to represent missing value in diags
   real, parameter, public :: vb_nh3 = 25.             !< Liquid molar volume at boiling point for NH3 (cm3 mol−1)
+  real, parameter, public :: micromol2mol = 1.0e6     !< convert micromoles to moles (used in concentration parameters)
+  real, parameter, public :: c2n = 106.0/16.0         !< convert nutrient ratios relative to carbon to ratios relative to nitrogen
+  real, parameter, public :: micromolQpersec2W = 2.77e18/6.022e17 !< convert photosynthetically available radiation (micromole quanta
+                                                      !! per-second) to watts. 
 
   !> An auxiliary type for storing varible names
   type vardesc
