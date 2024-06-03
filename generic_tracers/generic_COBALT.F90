@@ -419,7 +419,7 @@ contains
                    units="ml L-1", default=4.05010)
     call get_param(param_file, "generic_COBALT", "a_3", cobalt%a_3, "O2 sat. regression coefficient", &
                    units="ml L-1", default= 4.94457)
-    call get_param(param_file, "generic_COBALT", "a_4", cobalt%a_4, "O2 sat. regression coefficient", & 
+    call get_param(param_file, "generic_COBALT", "a_4", cobalt%a_4, "O2 sat. regression coefficient", &
                    units="ml L-1", default= -2.56847e-01)
     call get_param(param_file, "generic_COBALT", "a_5", cobalt%a_5, "O2 sat. regression coefficient", &
                    units="ml L-1", default= 3.88767)
@@ -437,11 +437,12 @@ contains
     !     Schmidt number coefficients for calculating air-sea exchanges
     !------------------------------------------------------------------------------------------------------------------
     if (trim(as_param_cobalt) == "W92") then
-        !  Compute the Schmidt number of CO2 in seawater using the formulation presented by Wanninkhof, 1992.
-        !  Relationship between wind speed and gas exchanges over the ocean,J. Geophys. Res. Oceans, 97,
-        !  pp. 7373-7382. https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/92JC00188
-        !  Issue: These appear to be updated relative to the values in Wanninkhof's Table A1; 
-        !  Sent inquiries to JPD and JGJ
+        !  Compute the Schmidt number of CO2 in seawater using a modified version of the coefficients presented by 
+        !  Wanninkhof, 1992a Relationship between wind speed and gas exchanges over the ocean. J. Geophys. Res. Oceans,
+        !  97, pp. 7373-7382. https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/92JC00188.  Modifications were
+        !  made to ensure the robustness of the Schmidt number relationship from -2-40 deg. C and were communicated to
+        !  by Wanninkhof to John Dunne via e-mail on April 20, 2007.  Note that these are technically for seawater at
+        ! 35 ppt.  ISSUE: Should we change this option to W92_extended?
         call get_param(param_file, "generic_COBALT", "a1_co2", cobalt%a1_co2, "CO2 Schmidt # regression coefficient", &
                        units="dimensionless", default= 2068.9)
         call get_param(param_file, "generic_COBALT", "a2_co2", cobalt%a2_co2, "CO2 Schmidt # regression coefficient", &
@@ -452,9 +453,7 @@ contains
                        units="deg. C-3", default= -0.027)
         call get_param(param_file, "generic_COBALT", "a5_co2", cobalt%a5_co2, "CO2 Schmidt # regression coefficient", &
                        units="deg. C-4", default=  0.0)     ! Not used for W92
-        !  Compute the Schmidt number of O2 in seawater. 
-        !  Prior comment suggests that this uses the formulation proposed by Keeling et al. (1998) GBC, 12 141-163
-        !  but that does not appear to be the case. Sent inquiries to JPD and JGJ 
+        !  Compute the Schmidt number of O2 in seawater using the W92_extended relationships as above
         call get_param(param_file, "generic_COBALT", "a1_o2", cobalt%a1_o2, "O2 Schmidt # regression coefficient", &
                        units="dimensionless", default= 1929.7)
         call get_param(param_file, "generic_COBALT", "a2_o2", cobalt%a2_o2, "O2 Schmidt # regression coefficient", &
@@ -468,7 +467,9 @@ contains
     else if ((trim(as_param_cobalt) == "W14") .or. (trim(as_param_cobalt) == "gfdl_cmip6")) then
         !  Compute the Schmidt number of CO2 in seawater using the formulation presented in Wanninkhof et al., 2014.
         !  Relationship between wind speed and gas exchange over the ocean revisited.  Limnol. Oceanogr: Methods. 12,
-        !  pp. 361-362 https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lom.2014.12.351
+        !  pp. 361-362 https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lom.2014.12.351.  Note that these are
+        !  technically for seawater at 35 ppt.  Alternatives values for freshwater are available in W14 but would need
+        !  to be implemented 
         call get_param(param_file, "generic_COBALT", "a1_co2", cobalt%a1_co2, "CO2 Schmidt # regression coefficient", &
                        units="dimensionless", default= 2116.8)
         call get_param(param_file, "generic_COBALT", "a2_co2", cobalt%a2_co2, "CO2 Schmidt # regression coefficient", &
