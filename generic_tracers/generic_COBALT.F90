@@ -399,67 +399,97 @@ contains
     call g_tracer_start_param_list(package_name)
     call get_param(param_file, "generic_COBALT", "init", cobalt%init, "init", default=.false.)
 
-    call get_param(param_file, "generic_COBALT", "htotal_scale_lo", cobalt%htotal_scale_lo, "htotal_scale_lo", units=" ", default=0.01)
-    call get_param(param_file, "generic_COBALT", "htotal_scale_hi", cobalt%htotal_scale_hi, "htotal_scale_hi", units=" ", default=100.0)
+    call get_param(param_file, "generic_COBALT", "htotal_scale_lo", cobalt%htotal_scale_lo, &
+                   "scaling factor for initializing carbon chemistry solver", units=" ", default=0.01)
+    call get_param(param_file, "generic_COBALT", "htotal_scale_hi", cobalt%htotal_scale_hi, &
+                   "scaling factor for initializing carbon chemistry solver", units=" ", default=100.0)
 
-    !  Rho_0 is used in the Boussinesq
-    !  approximation to calculations of pressure and
-    !  pressure gradients, in units of kg m-3.
-    call get_param(param_file, "generic_COBALT", "RHO_0", cobalt%Rho_0, "RHO_0", units=" ", default=1035.0)
-    call get_param(param_file, "generic_COBALT", "NKML" , cobalt%nkml,  "NKML" , units=" ", default=1)
-    !-----------------------------------------------------------------------
-    !       coefficients for O2 saturation
-    !----------------------------------------------------------------------
-    call get_param(param_file, "generic_COBALT", "a_0", cobalt%a_0, "a_0", units=" ", default=2.00907)
-    call get_param(param_file, "generic_COBALT", "a_1", cobalt%a_1, "a_1", units=" ", default=3.22014)
-    call get_param(param_file, "generic_COBALT", "a_2", cobalt%a_2, "a_2", units=" ", default=4.05010)
-    call get_param(param_file, "generic_COBALT", "a_3", cobalt%a_3, "a_3", units=" ", default= 4.94457)
-    call get_param(param_file, "generic_COBALT", "a_4", cobalt%a_4, "a_4", units=" ", default= -2.56847e-01)
-    call get_param(param_file, "generic_COBALT", "a_5", cobalt%a_5, "a_5", units=" ", default= 3.88767)
-    call get_param(param_file, "generic_COBALT", "b_0", cobalt%b_0, "b_0", units=" ", default= -6.24523e-03)
-    call get_param(param_file, "generic_COBALT", "b_1", cobalt%b_1, "b_1", units=" ", default= -7.37614e-03)
-    call get_param(param_file, "generic_COBALT", "b_2", cobalt%b_2, "b_2", units=" ", default= -1.03410e-02 )
-    call get_param(param_file, "generic_COBALT", "b_3", cobalt%b_3, "b_3", units=" ", default= -8.17083e-03)
-    call get_param(param_file, "generic_COBALT", "c_0", cobalt%c_0, "c_0", units=" ", default= -4.88682e-07)
-    !-----------------------------------------------------------------------
-    !     Schmidt number coefficients
-    !-----------------------------------------------------------------------
+    call get_param(param_file, "generic_COBALT", "RHO_0", cobalt%Rho_0, "reference density", &
+                   units="kg m-3", default=1035.0)
+    !------------------------------------------------------------------------------------------------------------------
+    ! Coefficients for O2 saturation based on Garcia and Gordon, 1992.  Oxygen solubility in seawater: Better fitting  
+    ! equations.  Limnol. Oceanogr., 37(6), pp. 1307-1312. 
+    ! https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lo.1992.37.6.1307
+    !------------------------------------------------------------------------------------------------------------------
+    call get_param(param_file, "generic_COBALT", "a_0", cobalt%a_0, "O2 sat. regression coefficient", &
+                   units="ml L-1", default=2.00907)
+    call get_param(param_file, "generic_COBALT", "a_1", cobalt%a_1, "O2 sat. regression coefficient", &
+                   units="ml L-1", default=3.22014)
+    call get_param(param_file, "generic_COBALT", "a_2", cobalt%a_2, "O2 sat. regression coefficient", &
+                   units="ml L-1", default=4.05010)
+    call get_param(param_file, "generic_COBALT", "a_3", cobalt%a_3, "O2 sat. regression coefficient", &
+                   units="ml L-1", default= 4.94457)
+    call get_param(param_file, "generic_COBALT", "a_4", cobalt%a_4, "O2 sat. regression coefficient", & 
+                   units="ml L-1", default= -2.56847e-01)
+    call get_param(param_file, "generic_COBALT", "a_5", cobalt%a_5, "O2 sat. regression coefficient", &
+                   units="ml L-1", default= 3.88767)
+    call get_param(param_file, "generic_COBALT", "b_0", cobalt%b_0, "O2 sat. regression coefficient", &
+                   units="ml L-1 (ppt salt)-1)", default= -6.24523e-03)
+    call get_param(param_file, "generic_COBALT", "b_1", cobalt%b_1, "O2 sat. regression coefficient", &
+                   units="ml L-1 (ppt salt)-1", default= -7.37614e-03)
+    call get_param(param_file, "generic_COBALT", "b_2", cobalt%b_2, "O2 sat. regression coefficient", &
+                   units="ml L-1 (ppt salt)-1", default= -1.03410e-02)
+    call get_param(param_file, "generic_COBALT", "b_3", cobalt%b_3, "O2 sat. regression coefficient", &
+                   units="ml L-1 (ppt salt)-1", default= -8.17083e-03)
+    call get_param(param_file, "generic_COBALT", "c_0", cobalt%c_0, "O2 sat. regression coefficient", &
+                   units="ml L-1 (ppt salt)-2", default= -4.88682e-07)
+    !------------------------------------------------------------------------------------------------------------------
+    !     Schmidt number coefficients for calculating air-sea exchanges
+    !------------------------------------------------------------------------------------------------------------------
     if (trim(as_param_cobalt) == "W92") then
-        !  Compute the Schmidt number of CO2 in seawater using the
-        !  formulation presented by Wanninkhof (1992, J. Geophys. Res., 97,
-        !  7373-7382).
-        call get_param(param_file, "generic_COBALT", "a1_co2", cobalt%a1_co2, "a1_co2", units=" ", default= 2068.9)
-        call get_param(param_file, "generic_COBALT", "a2_co2", cobalt%a2_co2, "a2_co2", units=" ", default= -118.63)
-        call get_param(param_file, "generic_COBALT", "a3_co2", cobalt%a3_co2, "a3_co2", units=" ", default=  2.9311)
-        call get_param(param_file, "generic_COBALT", "a4_co2", cobalt%a4_co2, "a4_co2", units=" ", default= -0.027)
-        call get_param(param_file, "generic_COBALT", "a5_co2", cobalt%a5_co2, "a5_co2", units=" ", default=  0.0)     ! Not used for W92
-        !  Compute the Schmidt number of O2 in seawater using the
-        !  formulation proposed by Keeling et al. (1998, Global Biogeochem.
-        !  Cycles, 12, 141-163).
-        call get_param(param_file, "generic_COBALT", "a1_o2", cobalt%a1_o2, "a1_o2", units=" ", default= 1929.7)
-        call get_param(param_file, "generic_COBALT", "a2_o2", cobalt%a2_o2, "a2_o2", units=" ", default= -117.46)
-        call get_param(param_file, "generic_COBALT", "a3_o2", cobalt%a3_o2, "a3_o2", units=" ", default= 3.116)
-        call get_param(param_file, "generic_COBALT", "a4_o2", cobalt%a4_o2, "a4_o2", units=" ", default= -0.0306)
-        call get_param(param_file, "generic_COBALT", "a5_o2", cobalt%a5_o2, "a5_o2", units=" ", default= 0.0)       ! Not used for W92
-        !if (is_root_pe()) call mpp_error(NOTE,"generic_cobalt: Using Schmidt number coefficients for W92")
+        !  Compute the Schmidt number of CO2 in seawater using the formulation presented by Wanninkhof, 1992.
+        !  Relationship between wind speed and gas exchanges over the ocean,J. Geophys. Res. Oceans, 97,
+        !  pp. 7373-7382. https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/92JC00188
+        !  Issue: These appear to be updated relative to the values in Wanninkhof's Table A1; 
+        !  Sent inquiries to JPD and JGJ
+        call get_param(param_file, "generic_COBALT", "a1_co2", cobalt%a1_co2, "CO2 Schmidt # regression coefficient", &
+                       units="dimensionless", default= 2068.9)
+        call get_param(param_file, "generic_COBALT", "a2_co2", cobalt%a2_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-1", default= -118.63)
+        call get_param(param_file, "generic_COBALT", "a3_co2", cobalt%a3_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-2", default=  2.9311)
+        call get_param(param_file, "generic_COBALT", "a4_co2", cobalt%a4_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-3", default= -0.027)
+        call get_param(param_file, "generic_COBALT", "a5_co2", cobalt%a5_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-4", default=  0.0)     ! Not used for W92
+        !  Compute the Schmidt number of O2 in seawater. 
+        !  Prior comment suggests that this uses the formulation proposed by Keeling et al. (1998) GBC, 12 141-163
+        !  but that does not appear to be the case. Sent inquiries to JPD and JGJ 
+        call get_param(param_file, "generic_COBALT", "a1_o2", cobalt%a1_o2, "O2 Schmidt # regression coefficient", &
+                       units="dimensionless", default= 1929.7)
+        call get_param(param_file, "generic_COBALT", "a2_o2", cobalt%a2_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C=1", default= -117.46)
+        call get_param(param_file, "generic_COBALT", "a3_o2", cobalt%a3_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-2", default= 3.116)
+        call get_param(param_file, "generic_COBALT", "a4_o2", cobalt%a4_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-3", default= -0.0306)
+        call get_param(param_file, "generic_COBALT", "a5_o2", cobalt%a5_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-4", default= 0.0)       ! Not used for W92
     else if ((trim(as_param_cobalt) == "W14") .or. (trim(as_param_cobalt) == "gfdl_cmip6")) then
-        !  Compute the Schmidt number of CO2 in seawater using the
-        !  formulation presented by Wanninkhof
-        !  (2014, Limnol. Oceanogr., 12, 351-362)
-        call get_param(param_file, "generic_COBALT", "a1_co2", cobalt%a1_co2, "a1_co2", units=" ", default=    2116.8)
-        call get_param(param_file, "generic_COBALT", "a2_co2", cobalt%a2_co2, "a2_co2", units=" ", default=   -136.25)
-        call get_param(param_file, "generic_COBALT", "a3_co2", cobalt%a3_co2, "a3_co2", units=" ", default=    4.7353)
-        call get_param(param_file, "generic_COBALT", "a4_co2", cobalt%a4_co2, "a4_co2", units=" ", default= -0.092307)
-        call get_param(param_file, "generic_COBALT", "a5_co2", cobalt%a5_co2, "a5_co2", units=" ", default= 0.0007555)
-        !  Compute the Schmidt number of O2 in seawater using the
-        !  formulation presented by Wanninkhof
-        !  (2014, Limnol. Oceanogr., 12, 351-362)
-        call get_param(param_file, "generic_COBALT", "a1_o2", cobalt%a1_o2, "a1_o2", units=" ", default= 1920.4)
-        call get_param(param_file, "generic_COBALT", "a2_o2", cobalt%a2_o2, "a2_o2", units=" ", default= -135.6)
-        call get_param(param_file, "generic_COBALT", "a3_o2", cobalt%a3_o2, "a3_o2", units=" ", default= 5.2122)
-        call get_param(param_file, "generic_COBALT", "a4_o2", cobalt%a4_o2, "a4_o2", units=" ", default= -0.10939)
-        call get_param(param_file, "generic_COBALT", "a5_o2", cobalt%a5_o2, "a5_o2", units=" ", default= 0.00093777)
-        !if (is_root_pe()) call mpp_error(NOTE,"generic_cobalt: Using Schmidt number coefficients for W14")
+        !  Compute the Schmidt number of CO2 in seawater using the formulation presented in Wanninkhof et al., 2014.
+        !  Relationship between wind speed and gas exchange over the ocean revisited.  Limnol. Oceanogr: Methods. 12,
+        !  pp. 361-362 https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lom.2014.12.351
+        call get_param(param_file, "generic_COBALT", "a1_co2", cobalt%a1_co2, "CO2 Schmidt # regression coefficient", &
+                       units="dimensionless", default= 2116.8)
+        call get_param(param_file, "generic_COBALT", "a2_co2", cobalt%a2_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-1", default= -136.25)
+        call get_param(param_file, "generic_COBALT", "a3_co2", cobalt%a3_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-2", default= 4.7353)
+        call get_param(param_file, "generic_COBALT", "a4_co2", cobalt%a4_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-3", default= -0.092307)
+        call get_param(param_file, "generic_COBALT", "a5_co2", cobalt%a5_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-4", default= 0.0007555)
+        !  Compute the Schmidt number of O2 in seawater using the W14 relationships as above 
+        call get_param(param_file, "generic_COBALT", "a1_o2", cobalt%a1_o2, "O2 Schmidt # regression coefficient", &
+                       units="dimensionless", default= 1920.4)
+        call get_param(param_file, "generic_COBALT", "a2_o2", cobalt%a2_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-1", default= -135.6)
+        call get_param(param_file, "generic_COBALT", "a3_o2", cobalt%a3_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-2", default= 5.2122)
+        call get_param(param_file, "generic_COBALT", "a4_o2", cobalt%a4_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-3", default= -0.10939)
+        call get_param(param_file, "generic_COBALT", "a5_o2", cobalt%a5_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-4", default= 0.00093777)
     else
         call mpp_error(FATAL,"generic_cobalt: unable to set Schmidt number coefficients for as_param "//trim(as_param_cobalt))
     endif
@@ -5095,7 +5125,9 @@ contains
       endif !}
     enddo; enddo ; enddo  !} i,j,k
 
-    ! O2 saturation
+    ! Calculate the oxygen saturation using the relationships of Garcia and Gordon, 1992. Oxygen solubility in
+    ! seawater: Better fitting equations.  Limnol. Oceanogr., 37(6), pp. 1307-1312.
+    ! https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lo.1992.37.6.1307
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec
        sal = min(42.0,max(0.0,Salt(i,j,k)))
        tt = 298.15 - min(40.0,max(0.0,Temp(i,j,k)))

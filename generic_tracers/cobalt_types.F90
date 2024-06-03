@@ -977,7 +977,6 @@ module cobalt_types
           deltap_dic,&
           deltap_o2
 
-     integer :: nkml
      integer :: numlightadapt
      character(len=fm_string_len)          :: file
      character(len=fm_string_len) :: ice_restart_file
