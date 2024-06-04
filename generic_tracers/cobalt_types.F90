@@ -367,8 +367,6 @@ module cobalt_types
     real ::  mu_max           !< maximum bacterial growth rate (sec-1)
     real ::  k_ldon           !< half-sat for nitrogen-limited growth (mmoles N m-3)
     real ::  gge_max          !< max gross growth efficiciency (dimensionless)
-    real ::  amx_ge           !< growth efficiency due to anammox reaction (dimensionless)
-    real ::  nitrif_ge        !< growth efficiency of nitrifying bacteria (dimensionless)
     real ::  bresp            !< basal respiration rate (sec-1)
     real ::  ktemp            !< temperature dependence of bacterial rates (C-1)
     real ::  vir              !< virus-driven loss rate for bacteria (sec-1 mmole N m-3)
@@ -388,15 +386,10 @@ module cobalt_types
     real, ALLOCATABLE, dimension(:,:,:) ::      jvirloss_p       !< phosphorous losses via viruses
     real, ALLOCATABLE, dimension(:,:,:) ::      juptake_ldon     !< Total uptake of ldon
     real, ALLOCATABLE, dimension(:,:,:) ::      juptake_ldop     !< Total uptake of sldon
-    real, ALLOCATABLE, dimension(:,:,:) ::      juptake_po4      !< phosphate uptake with anammox/nitrification
     real, ALLOCATABLE, dimension(:,:,:) ::      jprod_nh4        !< production of ammonia bacteria
     real, ALLOCATABLE, dimension(:,:,:) ::      jprod_po4        !< production of phosphate by bacteria
     real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n          !< total free-living bacterial production
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n_het      !< heterotrophic bacteria production
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n_amx      !< anammox bacteria production
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n_nitrif   !< nitrifying bacteria production
-    real, ALLOCATABLE, dimension(:,:,:) ::      mu_h             !< growth rate of heterotrophic bacteria
-    real, ALLOCATABLE, dimension(:,:,:) ::      mu_cstar         !< biomass turnover due to chemosynthesis
+    real, ALLOCATABLE, dimension(:,:,:) ::      mu               !< growth rate of heterotrophic bacteria
     real, ALLOCATABLE, dimension(:,:,:) ::      bhet             !< heterotrophic bacteria biomass
     real, ALLOCATABLE, dimension(:,:,:) ::      ldonlim          !< limitation due to organic substrate
     real, ALLOCATABLE, dimension(:,:,:) ::      o2lim            !< limitation due to oxygen
@@ -409,15 +402,10 @@ module cobalt_types
     integer ::  id_jvirloss_p       = -1  !< ID associated with diagnostics for phosphorous losses via viruses
     integer ::  id_juptake_ldon     = -1  !< ID associated with diagnostics for total uptake of ldon
     integer ::  id_juptake_ldop     = -1  !< ID associated with diagnostics for total uptake of sldon
-    integer ::  id_juptake_po4      = -1  !< ID associated with diagnostics for phosphate uptake with anammox/nitrification
     integer ::  id_jprod_nh4        = -1  !< ID associated with diagnostics for production of ammonia bacteria
     integer ::  id_jprod_po4        = -1  !< ID associated with diagnostics for production of phosphate by bacteria
     integer ::  id_jprod_n          = -1  !< ID associated with diagnostics for total free-living bacterial production
-    integer ::  id_jprod_n_het      = -1  !< ID associated with diagnostics for heterotrophic bacteria production
-    integer ::  id_jprod_n_amx      = -1  !< ID associated with diagnostics for anammox bacteria production
-    integer ::  id_jprod_n_nitrif   = -1  !< ID associated with diagnostics for nitrifying bacteria production
-    integer ::  id_mu_h             = -1  !< ID associated with diagnostics for growth rate of heterotrophic bacteria
-    integer ::  id_mu_cstar         = -1  !< ID associated with diagnostics for biomass turnover due to chemosynthesis
+    integer ::  id_mu               = -1  !< ID associated with diagnostics for growth rate of heterotrophic bacteria
     integer ::  id_bhet             = -1  !< ID associated with diagnostics for heterotrophic bacteria biomass
     integer ::  id_temp_lim         = -1  !< ID associated with diagnostics for temperature limitation
     integer ::  id_o2lim            = -1  !< ID associated with diagnostics for limitation due to oxygen
@@ -734,7 +722,7 @@ module cobalt_types
           jno3denit_wc,&
           juptake_no3amx,&
           juptake_nh4amx,&
-          jprod_n2amx,&
+          jnamx,&
           juptake_nh4nitrif,&
           jprod_no3nitrif,&
           jo2resp_wc,&
@@ -901,7 +889,7 @@ module cobalt_types
           wc_vert_int_jprod_nh4,&
           wc_vert_int_juptake_no3,&
           wc_vert_int_nfix,&
-          wc_vert_int_jprod_n2amx,&
+          wc_vert_int_jnamx,&
           wc_vert_int_jfe_iceberg,&
           wc_vert_int_jno3_iceberg,&
           wc_vert_int_jpo4_iceberg
@@ -1063,7 +1051,7 @@ module cobalt_types
           id_jno3denit_wc  = -1,       &
           id_juptake_no3amx = -1,      &
           id_juptake_nh4amx = -1,      &
-          id_jprod_n2amx = -1,         &
+          id_jnamx = -1,               &
           id_juptake_nh4nitrif = -1,   &
           id_jprod_no3nitrif = -1,     &
           id_jo2resp_wc    = -1,       &
@@ -1203,7 +1191,7 @@ module cobalt_types
           id_wc_vert_int_jfe_iceberg = -1, &
           id_wc_vert_int_jno3_iceberg = -1, &
           id_wc_vert_int_jpo4_iceberg = -1, &
-          id_wc_vert_int_jprod_n2amx = -1, &
+          id_wc_vert_int_jnamx = -1, &
           id_total_filter_feeding = -1,&
           id_nlg_diatoms = -1,         &
           id_nmd_diatoms = -1,         &

@@ -467,7 +467,6 @@ contains
     ! Stoichiometry
     !-----------------------------------------------------------------------
     !
-    !
     ! Values taken from OCMIP-II Biotic protocols after Anderson (1995) for an
     ! organic material of C106H172O38N16(H3PO4) which gives an average oxidation state
     ! for carbon of (3*16+2*38-172)/106 = -0.4528.  These calculations ignore H3PO4.
@@ -480,44 +479,43 @@ contains
     !   16*NH4+ + 106*CO2 + 62*H2O <-> C106H172O38N16 + 118*O2 + 16*H+
     !   Effect is to decrease (increase for remineralization) alkalinity by 16 NH4 equivalents.
     !
-    ! N2 Production:
+    ! Primary production via nitrogen fixation:
     !   8*N2 + 106*CO2 + 86*H2O <-> C106H172O38N16 + 130*O2
     !   No effect on alkalinity.
     !
-    ! Nitrification [old]:
+    ! Nitrification:
     !   NH4+ + 2*O2 <-> NO3- + H2O + 2*H+
     !   Effect is to decrease alkalinity by 2 NH4 equivalents.
-    !
-    ! New Nitrification stoichiometry from JPD, for ESM4.2:
-    !   (16+106*35)*NH4+ + 106*CO2 + (106*35+449*8)*O2 + 62*H2O <->
-    !    C106H172O38N16 + (106*35)*NO3- + (106*35)*H2O + (16+106*35*2)*H+
-    !   Effect is to decrease alkalinity by 1.996 NH4 equivalents.
     !
     ! Denitrification:
     !   C106H172O38N16 + 472/5*NO3- + 552/5*H+ <-> 106*CO2 + 16*NH4+ + 236/5*N2 + 546/5*H2O
     !   Effect is to increase alkalinity by 552/472 = 1.169 NO3 equivalents.
     !
-    !-----------------------------------------------------------------------
+    ! Anammox:
+    !   5NH4+ + 3NO3- --> 4N2 + 9H2O + 2H+
+    !   Effect is to decrease alkalinity by 0.4 mole equivalents per mole of NH4 removed
     !
-    ! Anammox stoichiometry from JPD, for ESM4.2:
-    !
-    !   (16+106*3*5*5+64)*NH4+ + (106*3*3*5-118*4)*NO3- + 106*5*CO2 + 62*5*H2O <->
-    !   5*C106H172O38N16 + (106*3*4*5-118*2)*N2 +
-    !   (106*3*9*5-118*2)*H2O + (16+106*3*2*5+118*4+64)*H+
-    !
-    !   Effect is to decrease alkalinity by
-    !   (16+106*3*2*5+118*4+64)/ (16+106*3*5*5+64) = 0.46 mole equivalents per mole of NH4 removed.
-    !
-    call get_param(param_file, "generic_COBALT", "n_2_n_denit",   cobalt%n_2_n_denit,  "n_2_n_denit",  units="mol N NO3 mol N org -1", default= 472.0/(5.0*16.0))             ! mol N NO3 mol N org-1
-    call get_param(param_file, "generic_COBALT", "no3_2_nh4_amx", cobalt%no3_2_nh4_amx,"no3_2_nh4_amx",units="mol N NO3 mol N-1", default = &
-            (106.0*3.0*3.0*5.0-118.0*4.0)/(16.0+106.0*3.0*5.0*5.0+64.0))                     ! mol N NO3 mol N-1
-    call get_param(param_file, "generic_COBALT", "o2_2_nfix",     cobalt%o2_2_nfix,    "o2_2_nfix",    units="mol O2 mol N -1", default=  130.0/16.0)                       ! mol O2 mol N-1
-!   call get_param(param_file, "generic_COBALT", "o2_2_nfix",     cobalt%o2_2_nfix,    "o2_2_nfix",    units="mol O2 mol N -1", default= (118.0+3.0/(5.0+3.0)*(150.0-118.0))/16.0) ! mol O2 mol N-1
-    call get_param(param_file, "generic_COBALT", "o2_2_nh4",      cobalt%o2_2_nh4,     "o2_2_nh4",     units="mol O2 mol N-1", default=  118.0 / 16.0)                       ! mol O2 mol N-1
-    !call get_param(param_file, "generic_COBALT", "o2_2_nitrif",   cobalt%o2_2_nitrif,  "o2_2_nitrif",  units="mol O2 mol N-1", default=  &
-    !       (106.0*35.0+449.0*8.0)/(16.0+106.0*35.0))                                   ! mol O2 mol N-1
-    call get_param(param_file, "generic_COBALT", "o2_2_nitrif",   cobalt%o2_2_nitrif,  "o2_2_nitrif",  units=" ", default=2.0)
-    call get_param(param_file, "generic_COBALT", "o2_2_no3",      cobalt%o2_2_no3,     "o2_2_no3",     units="mol O2 mol N-1", default=  150.0 / 16.0)                       ! mol O2 mol N-1
+    call get_param(param_file, "generic_COBALT", "n_2_n_denit", cobalt%n_2_n_denit, &
+                   "moles NO3 used per mole org. N remineralized via denitrification", &
+                   units="mol N mol N-1",default= 472.0/(5.0*16.0))
+    call get_param(param_file, "generic_COBALT", "no3_2_nh4_amx", cobalt%no3_2_nh4_amx, &
+                   "moles NO3 used per mole NH4+ oxidized to N2 via anammox",units="mol N mol N-1", &
+                   default = 3.0/5.0)
+    call get_param(param_file, "generic_COBALT", "o2_2_nfix", cobalt%o2_2_nfix, &
+                   "moles O2 created per mole of N fixed", units="mol O2 mol N-1", default= 130.0/16.0)
+    call get_param(param_file, "generic_COBALT", "o2_2_nh4", cobalt%o2_2_nh4, &
+                   "moles O2 created (consumed) per mole NH4-based prim. prod. (aerobic remineralization to NH4+)", &
+                   units="mol O2 mol N-1", default=  118.0 / 16.0)
+    call get_param(param_file, "generic_COBALT", "o2_2_nitrif", cobalt%o2_2_nitrif, &
+                   "moles O2 consumed per mole of NH4+ nitrified to NO3-" , units="mol O2 mol N-1", default=2.0)
+    call get_param(param_file, "generic_COBALT", "o2_2_no3", cobalt%o2_2_no3, &
+                   "moles O2 created per mole of NO3-based prim. prod. ", units="mol O2 mol N-1", default=  150.0/16.0)
+    call get_param(param_file, "generic_COBALT", "alk_2_n_denit", cobalt%alk_2_n_denit, &
+                   "moles alkalinity created per mole NO3- consumed during denitrification", & 
+                   units="mol alk mol N-1 ", default= 552.0/472.0)
+    call get_param(param_file, "generic_COBALT", "alk_2_nh4_amx", cobalt%alk_2_nh4_amx, &
+                   "moles alkalinity removed per mole NH4+ consumed via anammox", units="mol alk mol N-1", &
+                   default= 2.0/5.0)
     !
     !-----------------------------------------------------------------------
     ! Nutrient Limitation Parameters (phytoplankton)
@@ -662,8 +660,6 @@ contains
     !
     call get_param(param_file, "generic_COBALT", "p_2_n_static",     cobalt%p_2_n_static,          "p_2_n_static",    default=.false. )
     call get_param(param_file, "generic_COBALT", "c_2_n",            cobalt%c_2_n,                 "c_2_n",           units="", default= 106.0 / 16.0)
-    call get_param(param_file, "generic_COBALT", "alk_2_n_denit",    cobalt%alk_2_n_denit,         "alk_2_n_denit",   units=" ", default= 552.0/472.0)             ! eq. alk mol NO3-1
-    call get_param(param_file, "generic_COBALT", "alk_2_nh4_amx",    cobalt%alk_2_nh4_amx,         "alk_2_nh4_amx",   units=" ", default= 3732.0/8030.0)           ! eq. alk mol NH4-1
     call get_param(param_file, "generic_COBALT", "p_2_n_static_Di",  phyto(DIAZO)%p_2_n_static,    "p_2_n_static_Di", units="mol P mol N-1", default= 1.0/40.0 )         ! mol P mol N-1
     call get_param(param_file, "generic_COBALT", "p_2_n_static_Lg",  phyto(LARGE)%p_2_n_static,    "p_2_n_static_Lg", units="mol P mol N-1", default= 1.0/14.0 )         ! mol P mol N-1
     call get_param(param_file, "generic_COBALT", "p_2_n_static_Md",  phyto(MEDIUM)%p_2_n_static,   "p_2_n_static_Md", units="mol P mol N-1", default= 1.0/20.0 )        ! mol P mol N-1
@@ -803,8 +799,6 @@ contains
     call get_param(param_file, "generic_COBALT", "gge_max_bact",  bact(1)%gge_max,    "gge_max_bact",  units="", default= 0.4)                ! dimensionless
     call get_param(param_file, "generic_COBALT", "bresp_bact",    bact(1)%bresp,      "bresp_bact",    units="day-1", & 
                    default= 0.0075, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "amx_ge_bact",   bact(1)%amx_ge,     "amx_ge_bact",   units="", default= 0.0) ! dimensionless
-    call get_param(param_file, "generic_COBALT", "nitrif_ge_bact",bact(1)%nitrif_ge,  "nitrif_ge_bact",units="", default= 0.0) ! dimensionless
     !
     !-----------------------------------------------------------------------
     ! Zooplankton switching and prey preference parameters
@@ -3045,46 +3039,41 @@ contains
 
     call mpp_clock_end(id_clock_phyto_growth)
 !
-!-----------------------------------------------------------------------
-! 2: Bacterial Growth and Uptake Calculations
-!-----------------------------------------------------------------------
+!---------------------------------------------------------------------------
+! 2: Free-living bacterial transformatioins and growth/uptake calculations
+!---------------------------------------------------------------------------
 !
-    !
-    ! Move chemoautotrophic processes here since we now account for
-    ! their production
-    !
+    call mpp_clock_begin(id_clock_bacteria_growth)
+
+    ! Anammox converts NH4+ to N2 using NO3- in low O2 environments.
+    ! This was not included in ESM4.1 and gamma_nh4amx is currently 0.0
+    ! by default. 
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
 
        if (cobalt%f_o2(i,j,k) .lt. cobalt%o2_min_amx) then !{
-         !
-         ! Anammox Reaction: here we convert ammonia and nitrate to dinitrogen
-         ! Here, Anammox is NO3 dependent
-         !
+         ! Uptake of NH4+ and NO3- through the anammox process
          cobalt%juptake_nh4amx(i,j,k) = cobalt%gamma_nh4amx * &
-            cobalt%f_no3(i,j,k) / ((phyto(SMALL)%k_no3 * 3.0) + cobalt%f_no3(i,j,k)) * &
+            cobalt%f_no3(i,j,k) / (phyto(SMALL)%k_no3 + cobalt%f_no3(i,j,k)) * &
             cobalt%f_nh4(i,j,k)
-
          cobalt%juptake_no3amx(i,j,k) = cobalt%juptake_nh4amx(i,j,k)*&
             cobalt%no3_2_nh4_amx
-
-         ! bacteria production from anammox:
-         bact(1)%jprod_n_amx(i,j,k) = min(cobalt%juptake_nh4amx(i,j,k)*bact(1)%amx_ge, &
-                                        0.5*cobalt%f_po4(i,j,k)/(dt*bact(1)%q_p_2_n))
-         bact(1)%juptake_po4(i,j,k) = bact(1)%jprod_n_amx(i,j,k)*bact(1)%q_p_2_n
-         cobalt%jprod_n2amx(i,j,k) = cobalt%juptake_nh4amx(i,j,k) + cobalt%juptake_no3amx(i,j,k) - &
-                                       bact(1)%jprod_n_amx(i,j,k)
+         ! N lost to N2 via anammox
+         cobalt%jnamx(i,j,k) = cobalt%juptake_nh4amx(i,j,k) + cobalt%juptake_no3amx(i,j,k)
        else
          cobalt%juptake_nh4amx(i,j,k) = 0.0
          cobalt%juptake_no3amx(i,j,k) = 0.0
-         bact(1)%jprod_n_amx(i,j,k) = 0.0
-         bact(1)%juptake_po4(i,j,k) = 0.0
-         cobalt%jprod_n2amx(i,j,k) = 0.0
+         cobalt%jnamx(i,j,k) = 0.0
        endif !}
 
     enddo; enddo; enddo  !} i,j,k
 
     !
-    !  Nitrification
+    !  Calculate nitrification rates.  There are three possible schemes to use.  Schemes 2 and 3 are
+    !  described in Paulot et al., 2020.  Ocean Ammonia Outgassing: Modulation by CO2 and Anthropogenic
+    !  Nitrogen Deposition.  JAMES. https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2019MS002026
+    !  They rely on the calculated partitioning of reduced nitrogen species between ammonium (NH4) and
+    !  ammonia (NH3).  Scheme 1 is from COBALTv1.  Note that the acclimation irradiance, which reflects
+    !  the irradiance during daylight hours, has been used to impose nitrification photoinhibition.
     !
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%juptake_nh4nitrif(i,j,k) = 0.0
@@ -3107,38 +3096,33 @@ contains
                   ( cobalt%k_o2 + cobalt%f_o2(i,j,k) )
           end if
        end if
+       ! Add the oxygen used for nitrification to the total water column respiration
        cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k)+cobalt%juptake_nh4nitrif(i,j,k)*cobalt%o2_2_nitrif
-
-       ! bacterial production from nitrifying bacteria
-       bact(1)%jprod_n_nitrif(i,j,k) = min(cobalt%juptake_nh4nitrif(i,j,k)*bact(1)%nitrif_ge, &
-                                        0.5*cobalt%f_po4(i,j,k)/(dt*bact(1)%q_p_2_n))
-       bact(1)%juptake_po4(i,j,k)=bact(1)%juptake_po4(i,j,k) + &
-               bact(1)%jprod_n_nitrif(i,j,k)*bact(1)%q_p_2_n
-       cobalt%jprod_no3nitrif(i,j,k) = cobalt%juptake_nh4nitrif(i,j,k) - bact(1)%jprod_n_nitrif(i,j,k)
-
+       ! Calculate the production of NO3 from nitrification
+       cobalt%jprod_no3nitrif(i,j,k) = cobalt%juptake_nh4nitrif(i,j,k)
     enddo; enddo; enddo  !} i,j,k
 
     !
-    ! calculate an effective maximum ldon uptake rate (at 0 deg. C) for bacteria
-    ! from specified values of bact(1)%gge_max, bact(1)%mu_max and bact(1)%bresp
+    ! Calculate production by free-living heterotrophic bacteria, which consume labile dissolved organic material
     !
 
-    call mpp_clock_begin(id_clock_bacteria_growth)
+    ! back calculate an effective maximum ldon uptake rate (at 0 deg. C) for bacteria, i.e.:
+    ! mu_max = gge_max*vmax - bresp; so (vmax = mu_max+bresp)/gge_max
     vmax_bact = (1.0/bact(1)%gge_max)*(bact(1)%mu_max + bact(1)%bresp)
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec   !{
+       !
+       ! Calculate the growth rate of heterotrophic bacteria (bact%mu)
+       !
        bact(1)%temp_lim(i,j,k) = exp(bact(1)%ktemp*Temp(i,j,k))
        bact(1)%ldonlim(i,j,k) = cobalt%f_ldon(i,j,k)/(bact(1)%k_ldon + cobalt%f_ldon(i,j,k))
+       ! Note that the minimum value of o2lim, o2_min/(k_o2+o2_min), sets the rate for
+       ! anaerobic remineralization.
        bact(1)%o2lim(i,j,k) = max(cobalt%f_o2(i,j,k),cobalt%o2_min)/  &
                               (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))
-       !
-       ! CAS: Adjust heterotrophic biomass to account for chemoautotrophs
-       !
-       bact(1)%mu_h(i,j,k) = bact(1)%mu_max*bact(1)%temp_lim(i,j,k)*bact(1)%ldonlim(i,j,k)* &
+       bact(1)%mu(i,j,k) = bact(1)%mu_max*bact(1)%temp_lim(i,j,k)*bact(1)%ldonlim(i,j,k)* &
             bact(1)%o2lim(i,j,k) - bact(1)%temp_lim(i,j,k)*bact(1)%bresp
-       bact(1)%mu_cstar(i,j,k) = (bact(1)%jprod_n_nitrif(i,j,k) + bact(1)%jprod_n_amx(i,j,k))/ &
-            max(bact(1)%f_n(i,j,k),epsln)
-       bact(1)%bhet(i,j,k) = max(bact(1)%mu_h(i,j,k),0.0)*bact(1)%f_n(i,j,k)/ &
-               (2.0*bact(1)%mu_cstar(i,j,k) + max(bact(1)%mu_h(i,j,k),epsln))
+       bact(1)%bhet(i,j,k) = max(bact(1)%mu(i,j,k),0.0)*bact(1)%f_n(i,j,k)/ &
+               max(bact(1)%mu(i,j,k),epsln)
        !bact(1)%bhet(i,j,k) = bact(1)%f_n(i,j,k)
 
        bact(1)%juptake_ldon(i,j,k) = vmax_bact*bact(1)%temp_lim(i,j,k)*bact(1)%ldonlim(i,j,k)* &
@@ -3146,13 +3130,14 @@ contains
        bact_uptake_ratio = ( cobalt%f_ldop(i,j,k)/max(cobalt%f_ldon(i,j,k),epsln) )
        bact(1)%juptake_ldop(i,j,k) = bact(1)%juptake_ldon(i,j,k)*bact_uptake_ratio
        ! calculate bacteria production if N-limited, adjust down if P-limited
-       bact(1)%jprod_n_het(i,j,k) = bact(1)%gge_max*bact(1)%juptake_ldon(i,j,k) - &
+       bact(1)%jprod_n(i,j,k) = bact(1)%gge_max*bact(1)%juptake_ldon(i,j,k) - &
           bact(1)%bhet(i,j,k)/(cobalt%refuge_conc + bact(1)%bhet(i,j,k)) * &
           bact(1)%temp_lim(i,j,k)*bact(1)%bresp*bact(1)%bhet(i,j,k)
-       bact(1)%jprod_n_het(i,j,k) = min(bact(1)%jprod_n_het(i,j,k), &
+       bact(1)%jprod_n(i,j,k) = min(bact(1)%jprod_n(i,j,k), &
                                     bact(1)%juptake_ldop(i,j,k)/bact(1)%q_p_2_n)
        ! remineralization of organic N to nh4 = difference between uptake and production
-       bact(1)%jprod_nh4(i,j,k) = bact(1)%juptake_ldon(i,j,k) - max(bact(1)%jprod_n_het(i,j,k),0.0)
+       ! bact(1)%jprod_n < 0 results in dissolved organic matter production addressed later
+       bact(1)%jprod_nh4(i,j,k) = bact(1)%juptake_ldon(i,j,k) - max(bact(1)%jprod_n(i,j,k),0.0)
        cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + bact(1)%jprod_nh4(i,j,k)
 
        if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then  !{
@@ -3164,14 +3149,9 @@ contains
                                        bact(1)%jprod_nh4(i,j,k)*cobalt%n_2_n_denit
        endif  !}
 
-       ! produce phosphate at the same rate regardless of whether aerobic/anaerobic
-       bact(1)%jprod_po4(i,j,k) = bact(1)%juptake_ldop(i,j,k) - max(bact(1)%jprod_n_het(i,j,k)*bact(1)%q_p_2_n,0.0)
+       ! produce phosphate
+       bact(1)%jprod_po4(i,j,k) = bact(1)%juptake_ldop(i,j,k) - max(bact(1)%jprod_n(i,j,k)*bact(1)%q_p_2_n,0.0)
        cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + bact(1)%jprod_po4(i,j,k)
-
-       ! Calculate the total bacterial production
-       bact(1)%jprod_n(i,j,k) = bact(1)%jprod_n_het(i,j,k) + bact(1)%jprod_n_nitrif(i,j,k) + &
-               bact(1)%jprod_n_amx(i,j,k)
-
     enddo; enddo ; enddo !} i,j,k
 !
     call mpp_clock_end(id_clock_bacteria_growth)
@@ -3831,17 +3811,17 @@ contains
        !
 
        cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) - cobalt%lysis_phi_ldon* &
-                                  min(bact(1)%jprod_n_het(i,j,k),0.0)
+                                  min(bact(1)%jprod_n(i,j,k),0.0)
        cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) - cobalt%lysis_phi_sldon* &
-                                  min(bact(1)%jprod_n_het(i,j,k),0.0)
+                                  min(bact(1)%jprod_n(i,j,k),0.0)
        cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) - cobalt%lysis_phi_srdon* &
-                                  min(bact(1)%jprod_n_het(i,j,k),0.0)
+                                  min(bact(1)%jprod_n(i,j,k),0.0)
        cobalt%jprod_ldop(i,j,k) = cobalt%jprod_ldop(i,j,k) - cobalt%lysis_phi_ldop* &
-                                  min(bact(1)%jprod_n_het(i,j,k)*bact(1)%q_p_2_n,0.0)
+                                  min(bact(1)%jprod_n(i,j,k)*bact(1)%q_p_2_n,0.0)
        cobalt%jprod_sldop(i,j,k) = cobalt%jprod_sldop(i,j,k) - cobalt%lysis_phi_sldop* &
-                                  min(bact(1)%jprod_n_het(i,j,k)*bact(1)%q_p_2_n,0.0)
+                                  min(bact(1)%jprod_n(i,j,k)*bact(1)%q_p_2_n,0.0)
        cobalt%jprod_srdop(i,j,k) = cobalt%jprod_srdop(i,j,k) - cobalt%lysis_phi_srdop* &
-                                  min(bact(1)%jprod_n_het(i,j,k)*bact(1)%q_p_2_n,0.0)
+                                  min(bact(1)%jprod_n(i,j,k)*bact(1)%q_p_2_n,0.0)
 
 
        !
@@ -4456,7 +4436,7 @@ contains
                     cobalt%p_nsmz(i,j,k,tau) + cobalt%p_nmdz(i,j,k,tau) + &
                     cobalt%p_nlgz(i,j,k,tau))*grid_tmask(i,j,k)
          net_srcn(i,j,k) = (phyto(DIAZO)%juptake_n2(i,j,k) - cobalt%jno3denit_wc(i,j,k) - &
-                    cobalt%jprod_n2amx(i,j,k) + cobalt%jno3_iceberg(i,j,k))*dt*grid_tmask(i,j,k)
+                    cobalt%jnamx(i,j,k) + cobalt%jno3_iceberg(i,j,k))*dt*grid_tmask(i,j,k)
          net_srcc(i,j,k) = 0.0
          pre_totc(i,j,k) = (cobalt%p_dic(i,j,k,tau) + &
                     cobalt%p_cadet_arag(i,j,k,tau) + cobalt%p_cadet_calc(i,j,k,tau) + &
@@ -4693,7 +4673,7 @@ contains
        !
        cobalt%jpo4(i,j,k) = cobalt%jprod_po4(i,j,k) - phyto(DIAZO)%juptake_po4(i,j,k) - &
                             phyto(LARGE)%juptake_po4(i,j,k) - phyto(MEDIUM)%juptake_po4(i,j,k) - &
-                            phyto(SMALL)%juptake_po4(i,j,k) - bact(1)%juptake_po4(i,j,k)
+                            phyto(SMALL)%juptake_po4(i,j,k)
        cobalt%p_po4(i,j,k,tau) = cobalt%p_po4(i,j,k,tau) + &
               (cobalt%jpo4(i,j,k)+cobalt%jpo4_iceberg(i,j,k)) * dt * grid_tmask(i,j,k)
        !
@@ -4858,20 +4838,13 @@ contains
        !
        ! Dissolved Inorganic Carbon
        !
-       !cobalt%jdic(i,j,k) =(cobalt%c_2_n * (cobalt%jno3(i,j,k) + &
-       !   cobalt%jnh4(i,j,k) + cobalt%jno3denit_wc(i,j,k) + &
-       !   cobalt%jprod_n2amx(i,j,k) - &
-       !   phyto(DIAZO)%juptake_n2(i,j,k)) + &
-       !   cobalt%jdiss_cadet_arag(i,j,k) + cobalt%jdiss_cadet_calc(i,j,k) - &
-       !   cobalt%jprod_cadet_arag(i,j,k) - cobalt%jprod_cadet_calc(i,j,k))
 
        cobalt%jdic(i,j,k) =(cobalt%c_2_n * (cobalt%jprod_nh4(i,j,k) - &
           phyto(DIAZO)%juptake_no3(i,j,k) - phyto(LARGE)%juptake_no3(i,j,k) - &
           phyto(MEDIUM)%juptake_no3(i,j,k) - phyto(SMALL)%juptake_no3(i,j,k) - &
           phyto(DIAZO)%juptake_nh4(i,j,k) - phyto(LARGE)%juptake_nh4(i,j,k) - &
           phyto(MEDIUM)%juptake_nh4(i,j,k) - phyto(SMALL)%juptake_nh4(i,j,k) - &
-          phyto(DIAZO)%juptake_n2(i,j,k) -  bact(1)%jprod_n_amx(i,j,k) - &
-          bact(1)%jprod_n_nitrif(i,j,k)) + &
+          phyto(DIAZO)%juptake_n2(i,j,k) + &
           cobalt%jdiss_cadet_arag(i,j,k) + cobalt%jdiss_cadet_calc(i,j,k) - &
           cobalt%jprod_cadet_arag(i,j,k) - cobalt%jprod_cadet_calc(i,j,k))
 
@@ -5185,7 +5158,6 @@ contains
        cobalt%wc_vert_int_si(i,j) = 0.0
        cobalt%wc_vert_int_o2(i,j) = 0.0
        cobalt%wc_vert_int_alk(i,j) = 0.0
-       cobalt%wc_vert_int_chemoautopp(i,j) = 0.0
        cobalt%wc_vert_int_npp(i,j) = 0.0
        cobalt%wc_vert_int_jdiss_sidet(i,j) = 0.0
        cobalt%wc_vert_int_jdiss_cadet(i,j) = 0.0
@@ -5200,7 +5172,7 @@ contains
        cobalt%wc_vert_int_jfe_iceberg(i,j) = 0.0
        cobalt%wc_vert_int_jno3_iceberg(i,j) = 0.0
        cobalt%wc_vert_int_jpo4_iceberg(i,j) = 0.0
-       cobalt%wc_vert_int_jprod_n2amx(i,j) = 0.0
+       cobalt%wc_vert_int_jnamx(i,j) = 0.0
     enddo; enddo !} i,j
     do j = jsc, jec ; do i = isc, iec ; do k = 1, nk  !{
           cobalt%wc_vert_int_c(i,j) = cobalt%wc_vert_int_c(i,j) + cobalt%tot_layer_int_c(i,j,k)*grid_tmask(i,j,k)
@@ -5213,8 +5185,6 @@ contains
           cobalt%wc_vert_int_si(i,j) = cobalt%wc_vert_int_si(i,j) + cobalt%tot_layer_int_si(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_o2(i,j) = cobalt%wc_vert_int_o2(i,j) + cobalt%tot_layer_int_o2(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_alk(i,j) = cobalt%wc_vert_int_alk(i,j) + cobalt%tot_layer_int_alk(i,j,k)*grid_tmask(i,j,k)
-          cobalt%wc_vert_int_chemoautopp(i,j) = cobalt%wc_vert_int_chemoautopp(i,j) +                 &
-             (bact(1)%jprod_n_nitrif(i,j,k) + bact(1)%jprod_n_amx(i,j,k)) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_npp(i,j) = cobalt%wc_vert_int_npp(i,j) + (phyto(SMALL)%jprod_n(i,j,k) +  &
               phyto(MEDIUM)%jprod_n(i,j,k) + phyto(LARGE)%jprod_n(i,j,k) + phyto(DIAZO)%jprod_n(i,j,k))* &
               rho_dzt(i,j,k)*grid_tmask(i,j,k)
@@ -5244,7 +5214,7 @@ contains
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_nfix(i,j) = cobalt%wc_vert_int_nfix(i,j) + phyto(DIAZO)%juptake_n2(i,j,k) *&
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
-          cobalt%wc_vert_int_jprod_n2amx(i,j)=cobalt%wc_vert_int_jprod_n2amx(i,j)+cobalt%jprod_n2amx(i,j,k)* &
+          cobalt%wc_vert_int_jnamx(i,j)=cobalt%wc_vert_int_jnamx(i,j)+cobalt%jnamx(i,j,k)* &
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
 
           cobalt%wc_vert_int_jfe_iceberg(i,j) = cobalt%wc_vert_int_jfe_iceberg(i,j) + cobalt%jfe_iceberg(i,j,k) *&
@@ -6425,15 +6395,10 @@ contains
     allocate(bact(1)%jhploss_p(isd:ied,jsd:jed,nk))        ; bact(1)%jhploss_p       = 0.0
     allocate(bact(1)%juptake_ldon(isd:ied,jsd:jed,nk))     ; bact(1)%juptake_ldon    = 0.0
     allocate(bact(1)%juptake_ldop(isd:ied,jsd:jed,nk))     ; bact(1)%juptake_ldop    = 0.0
-    allocate(bact(1)%juptake_po4(isd:ied,jsd:jed,nk))      ; bact(1)%juptake_po4     = 0.0
     allocate(bact(1)%jprod_nh4(isd:ied,jsd:jed,nk))        ; bact(1)%jprod_nh4       = 0.0
     allocate(bact(1)%jprod_po4(isd:ied,jsd:jed,nk))        ; bact(1)%jprod_po4       = 0.0
     allocate(bact(1)%jprod_n(isd:ied,jsd:jed,nk))          ; bact(1)%jprod_n         = 0.0
-    allocate(bact(1)%jprod_n_het(isd:ied,jsd:jed,nk))      ; bact(1)%jprod_n_het     = 0.0
-    allocate(bact(1)%jprod_n_amx(isd:ied,jsd:jed,nk))      ; bact(1)%jprod_n_amx     = 0.0
-    allocate(bact(1)%jprod_n_nitrif(isd:ied,jsd:jed,nk))   ; bact(1)%jprod_n_nitrif  = 0.0
-    allocate(bact(1)%mu_h(isd:ied,jsd:jed,nk))             ; bact(1)%mu_h            = 0.0
-    allocate(bact(1)%mu_cstar(isd:ied,jsd:jed,nk))         ; bact(1)%mu_cstar        = 0.0
+    allocate(bact(1)%mu(isd:ied,jsd:jed,nk))               ; bact(1)%mu              = 0.0
     allocate(bact(1)%bhet(isd:ied,jsd:jed,nk))             ; bact(1)%bhet            = 0.0
     allocate(bact(1)%o2lim(isd:ied,jsd:jed,nk))            ; bact(1)%o2lim           = 0.0
     allocate(bact(1)%ldonlim(isd:ied,jsd:jed,nk))          ; bact(1)%ldonlim         = 0.0
@@ -6641,7 +6606,7 @@ contains
     allocate(cobalt%jo2resp_wc(isd:ied, jsd:jed, 1:nk))   ; cobalt%jo2resp_wc=0.0
     allocate(cobalt%jprod_no3nitrif(isd:ied, jsd:jed, 1:nk)) ; cobalt%jprod_no3nitrif=0.0
     allocate(cobalt%juptake_nh4nitrif(isd:ied, jsd:jed, 1:nk)) ; cobalt%juptake_nh4nitrif=0.0
-    allocate(cobalt%jprod_n2amx(isd:ied, jsd:jed, 1:nk)) ; cobalt%jprod_n2amx=0.0
+    allocate(cobalt%jnamx(isd:ied, jsd:jed, 1:nk)) ; cobalt%jnamx=0.0
     allocate(cobalt%omega_arag(isd:ied, jsd:jed, 1:nk))   ; cobalt%omega_arag=0.0
     allocate(cobalt%omega_calc(isd:ied, jsd:jed, 1:nk))   ; cobalt%omega_calc=0.0
     allocate(cobalt%omegaa(isd:ied, jsd:jed, 1:nk))       ; cobalt%omegaa=0.0
@@ -6729,7 +6694,6 @@ contains
     allocate(cobalt%wc_vert_int_si(isd:ied, jsd:jed))         ; cobalt%wc_vert_int_si=0.0
     allocate(cobalt%wc_vert_int_o2(isd:ied, jsd:jed))         ; cobalt%wc_vert_int_o2=0.0
     allocate(cobalt%wc_vert_int_alk(isd:ied, jsd:jed))        ; cobalt%wc_vert_int_alk=0.0
-    allocate(cobalt%wc_vert_int_chemoautopp(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_chemoautopp=0.0
     allocate(cobalt%wc_vert_int_npp(isd:ied, jsd:jed))     ; cobalt%wc_vert_int_npp=0.0
     allocate(cobalt%wc_vert_int_jdiss_sidet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jdiss_sidet=0.0
     allocate(cobalt%wc_vert_int_jdiss_cadet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jdiss_cadet=0.0
@@ -6737,7 +6701,7 @@ contains
     allocate(cobalt%wc_vert_int_jprod_cadet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jprod_cadet=0.0
     allocate(cobalt%wc_vert_int_jno3denit(isd:ied, jsd:jed))    ; cobalt%wc_vert_int_jno3denit=0.0
     allocate(cobalt%wc_vert_int_jprod_no3nitrif(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_jprod_no3nitrif=0.0
-    allocate(cobalt%wc_vert_int_jprod_n2amx(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_jprod_n2amx=0.0
+    allocate(cobalt%wc_vert_int_jnamx(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_jnamx=0.0
     allocate(cobalt%wc_vert_int_juptake_nh4(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_juptake_nh4=0.0
     allocate(cobalt%wc_vert_int_jprod_nh4(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jprod_nh4=0.0
     allocate(cobalt%wc_vert_int_juptake_no3(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_juptake_no3=0.0
@@ -6999,15 +6963,10 @@ contains
     deallocate(bact(1)%jhploss_p)
     deallocate(bact(1)%juptake_ldon)
     deallocate(bact(1)%juptake_ldop)
-    deallocate(bact(1)%juptake_po4)
     deallocate(bact(1)%jprod_nh4)
     deallocate(bact(1)%jprod_po4)
     deallocate(bact(1)%jprod_n)
-    deallocate(bact(1)%jprod_n_het)
-    deallocate(bact(1)%jprod_n_amx)
-    deallocate(bact(1)%jprod_n_nitrif)
-    deallocate(bact(1)%mu_h)
-    deallocate(bact(1)%mu_cstar)
+    deallocate(bact(1)%mu)
     deallocate(bact(1)%bhet)
     deallocate(bact(1)%o2lim)
     deallocate(bact(1)%ldonlim)
@@ -7211,7 +7170,7 @@ contains
     deallocate(cobalt%jo2resp_wc)
     deallocate(cobalt%jprod_no3nitrif)
     deallocate(cobalt%juptake_nh4nitrif)
-    deallocate(cobalt%jprod_n2amx)
+    deallocate(cobalt%jnamx)
     deallocate(cobalt%omega_arag)
     deallocate(cobalt%omega_calc)
     deallocate(cobalt%omegaa)
@@ -7362,7 +7321,6 @@ contains
     deallocate(cobalt%wc_vert_int_si)
     deallocate(cobalt%wc_vert_int_o2)
     deallocate(cobalt%wc_vert_int_alk)
-    deallocate(cobalt%wc_vert_int_chemoautopp)
     deallocate(cobalt%wc_vert_int_npp)
     deallocate(cobalt%wc_vert_int_jdiss_sidet)
     deallocate(cobalt%wc_vert_int_jdiss_cadet)
@@ -7370,7 +7328,7 @@ contains
     deallocate(cobalt%wc_vert_int_jprod_cadet)
     deallocate(cobalt%wc_vert_int_jno3denit)
     deallocate(cobalt%wc_vert_int_jprod_no3nitrif)
-    deallocate(cobalt%wc_vert_int_jprod_n2amx)
+    deallocate(cobalt%wc_vert_int_jnamx)
     deallocate(cobalt%wc_vert_int_juptake_nh4)
     deallocate(cobalt%wc_vert_int_jprod_nh4)
     deallocate(cobalt%wc_vert_int_juptake_no3)

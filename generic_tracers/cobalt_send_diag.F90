@@ -167,9 +167,6 @@ module COBALT_send_diag
        used = g_send_data(bact(1)%id_juptake_ldop, bact(1)%juptake_ldop*rho_dzt,           &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_juptake_po4, bact(1)%juptake_po4*rho_dzt,           &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        used = g_send_data(bact(1)%id_jprod_nh4, bact(1)%jprod_nh4*rho_dzt,           &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -179,19 +176,7 @@ module COBALT_send_diag
        used = g_send_data(bact(1)%id_jprod_n, bact(1)%jprod_n*rho_dzt,           &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_jprod_n_het, bact(1)%jprod_n_het*rho_dzt,           &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_jprod_n_nitrif, bact(1)%jprod_n_nitrif*rho_dzt,  &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_jprod_n_amx, bact(1)%jprod_n_amx*rho_dzt,  &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_mu_h, bact(1)%mu_h,           &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_mu_cstar, bact(1)%mu_cstar,     &
+       used = g_send_data(bact(1)%id_mu, bact(1)%mu,           &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        used = g_send_data(bact(1)%id_bhet, bact(1)%bhet,   &
@@ -444,7 +429,7 @@ module COBALT_send_diag
         used = g_send_data(cobalt%id_juptake_nh4nitrif, cobalt%juptake_nh4nitrif*rho_dzt,       &
         model_time, rmask = grid_tmask,&
         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-        used = g_send_data(cobalt%id_jprod_n2amx, cobalt%jprod_n2amx*rho_dzt,       &
+        used = g_send_data(cobalt%id_jnamx, cobalt%jnamx*rho_dzt,       &
         model_time, rmask = grid_tmask,&
         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
         used = g_send_data(cobalt%id_tot_layer_int_c, cobalt%tot_layer_int_c,&
@@ -1190,7 +1175,7 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_wc_vert_int_jprod_no3nitrif,    cobalt%wc_vert_int_jprod_no3nitrif,  &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_jprod_n2amx,    cobalt%wc_vert_int_jprod_n2amx,  &
+       used = g_send_data(cobalt%id_wc_vert_int_jnamx,    cobalt%wc_vert_int_jnamx,  &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_wc_vert_int_juptake_nh4,    cobalt%wc_vert_int_juptake_nh4,  &
@@ -2230,7 +2215,7 @@ module COBALT_send_diag
 
 ! JYL: Updated on 3/21/2021 to include anammox
         used = g_send_data(cobalt%id_frn,  cobalt%fno3denit_sed + cobalt%wc_vert_int_jno3denit + &
-        cobalt%wc_vert_int_jprod_n2amx + cobalt%fn_burial, &
+        cobalt%wc_vert_int_jnamx + cobalt%fn_burial, &
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
