@@ -1024,10 +1024,6 @@ module COBALT_reg_diag
     bact(1)%id_juptake_ldop = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("juptake_po4_Bact","Bacterial uptake of po4",'h','L','s','mol P m-2 s-1','f')
-    bact(1)%id_juptake_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
     !
     ! Register dissolved inorganic production terms for bacteria
     !

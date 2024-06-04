@@ -4844,7 +4844,7 @@ contains
           phyto(MEDIUM)%juptake_no3(i,j,k) - phyto(SMALL)%juptake_no3(i,j,k) - &
           phyto(DIAZO)%juptake_nh4(i,j,k) - phyto(LARGE)%juptake_nh4(i,j,k) - &
           phyto(MEDIUM)%juptake_nh4(i,j,k) - phyto(SMALL)%juptake_nh4(i,j,k) - &
-          phyto(DIAZO)%juptake_n2(i,j,k) + &
+          phyto(DIAZO)%juptake_n2(i,j,k)) + &
           cobalt%jdiss_cadet_arag(i,j,k) + cobalt%jdiss_cadet_calc(i,j,k) - &
           cobalt%jprod_cadet_arag(i,j,k) - cobalt%jprod_cadet_calc(i,j,k))
 
