@@ -410,6 +410,7 @@ contains
     ! Coefficients for O2 saturation based on Garcia and Gordon, 1992.  Oxygen solubility in seawater: Better fitting  
     ! equations.  Limnol. Oceanogr., 37(6), pp. 1307-1312. 
     ! https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lo.1992.37.6.1307
+    ! Coefficients fit the Benson and Krause data in Table 1 were used.
     !------------------------------------------------------------------------------------------------------------------
     call get_param(param_file, "generic_COBALT", "a_0", cobalt%a_0, "O2 sat. regression coefficient", &
                    units="ml L-1", default=2.00907)
