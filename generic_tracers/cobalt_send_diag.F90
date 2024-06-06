@@ -176,12 +176,6 @@ module COBALT_send_diag
        used = g_send_data(bact(1)%id_jprod_n, bact(1)%jprod_n*rho_dzt,           &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_mu, bact(1)%mu,           &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_bhet, bact(1)%bhet,   &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        used = g_send_data(bact(1)%id_o2lim, bact(1)%o2lim,           &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)

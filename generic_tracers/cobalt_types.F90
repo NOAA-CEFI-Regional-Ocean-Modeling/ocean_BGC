@@ -389,8 +389,6 @@ module cobalt_types
     real, ALLOCATABLE, dimension(:,:,:) ::      jprod_nh4        !< production of ammonia bacteria
     real, ALLOCATABLE, dimension(:,:,:) ::      jprod_po4        !< production of phosphate by bacteria
     real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n          !< total free-living bacterial production
-    real, ALLOCATABLE, dimension(:,:,:) ::      mu               !< growth rate of heterotrophic bacteria
-    real, ALLOCATABLE, dimension(:,:,:) ::      bhet             !< heterotrophic bacteria biomass
     real, ALLOCATABLE, dimension(:,:,:) ::      ldonlim          !< limitation due to organic substrate
     real, ALLOCATABLE, dimension(:,:,:) ::      o2lim            !< limitation due to oxygen
     real, ALLOCATABLE, dimension(:,:,:) ::      temp_lim         !< Temperature limitation
@@ -405,8 +403,6 @@ module cobalt_types
     integer ::  id_jprod_nh4        = -1  !< ID associated with diagnostics for production of ammonia bacteria
     integer ::  id_jprod_po4        = -1  !< ID associated with diagnostics for production of phosphate by bacteria
     integer ::  id_jprod_n          = -1  !< ID associated with diagnostics for total free-living bacterial production
-    integer ::  id_mu               = -1  !< ID associated with diagnostics for growth rate of heterotrophic bacteria
-    integer ::  id_bhet             = -1  !< ID associated with diagnostics for heterotrophic bacteria biomass
     integer ::  id_temp_lim         = -1  !< ID associated with diagnostics for temperature limitation
     integer ::  id_o2lim            = -1  !< ID associated with diagnostics for limitation due to oxygen
     integer ::  id_ldonlim          = -1  !< ID associated with diagnostics for limitation due to organic substrate

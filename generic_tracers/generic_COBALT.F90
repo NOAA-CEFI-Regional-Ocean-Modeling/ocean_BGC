@@ -3119,20 +3119,14 @@ contains
        ! anaerobic remineralization.
        bact(1)%o2lim(i,j,k) = max(cobalt%f_o2(i,j,k),cobalt%o2_min)/  &
                               (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))
-       bact(1)%mu(i,j,k) = bact(1)%mu_max*bact(1)%temp_lim(i,j,k)*bact(1)%ldonlim(i,j,k)* &
-            bact(1)%o2lim(i,j,k) - bact(1)%temp_lim(i,j,k)*bact(1)%bresp
-       bact(1)%bhet(i,j,k) = max(bact(1)%mu(i,j,k),0.0)*bact(1)%f_n(i,j,k)/ &
-               max(bact(1)%mu(i,j,k),epsln)
-       !bact(1)%bhet(i,j,k) = bact(1)%f_n(i,j,k)
-
        bact(1)%juptake_ldon(i,j,k) = vmax_bact*bact(1)%temp_lim(i,j,k)*bact(1)%ldonlim(i,j,k)* &
-               bact(1)%o2lim(i,j,k)*bact(1)%bhet(i,j,k)
+               bact(1)%o2lim(i,j,k)*bact(1)%f_n(i,j,k)
        bact_uptake_ratio = ( cobalt%f_ldop(i,j,k)/max(cobalt%f_ldon(i,j,k),epsln) )
        bact(1)%juptake_ldop(i,j,k) = bact(1)%juptake_ldon(i,j,k)*bact_uptake_ratio
        ! calculate bacteria production if N-limited, adjust down if P-limited
        bact(1)%jprod_n(i,j,k) = bact(1)%gge_max*bact(1)%juptake_ldon(i,j,k) - &
-          bact(1)%bhet(i,j,k)/(cobalt%refuge_conc + bact(1)%bhet(i,j,k)) * &
-          bact(1)%temp_lim(i,j,k)*bact(1)%bresp*bact(1)%bhet(i,j,k)
+          bact(1)%f_n(i,j,k)/(cobalt%refuge_conc + bact(1)%f_n(i,j,k)) * &
+          bact(1)%temp_lim(i,j,k)*bact(1)%bresp*bact(1)%f_n(i,j,k)
        bact(1)%jprod_n(i,j,k) = min(bact(1)%jprod_n(i,j,k), &
                                     bact(1)%juptake_ldop(i,j,k)/bact(1)%q_p_2_n)
        ! remineralization of organic N to nh4 = difference between uptake and production
@@ -6398,8 +6392,6 @@ contains
     allocate(bact(1)%jprod_nh4(isd:ied,jsd:jed,nk))        ; bact(1)%jprod_nh4       = 0.0
     allocate(bact(1)%jprod_po4(isd:ied,jsd:jed,nk))        ; bact(1)%jprod_po4       = 0.0
     allocate(bact(1)%jprod_n(isd:ied,jsd:jed,nk))          ; bact(1)%jprod_n         = 0.0
-    allocate(bact(1)%mu(isd:ied,jsd:jed,nk))               ; bact(1)%mu              = 0.0
-    allocate(bact(1)%bhet(isd:ied,jsd:jed,nk))             ; bact(1)%bhet            = 0.0
     allocate(bact(1)%o2lim(isd:ied,jsd:jed,nk))            ; bact(1)%o2lim           = 0.0
     allocate(bact(1)%ldonlim(isd:ied,jsd:jed,nk))          ; bact(1)%ldonlim         = 0.0
     allocate(bact(1)%temp_lim(isd:ied,jsd:jed,nk))         ; bact(1)%temp_lim        = 0.0
@@ -6966,8 +6958,6 @@ contains
     deallocate(bact(1)%jprod_nh4)
     deallocate(bact(1)%jprod_po4)
     deallocate(bact(1)%jprod_n)
-    deallocate(bact(1)%mu)
-    deallocate(bact(1)%bhet)
     deallocate(bact(1)%o2lim)
     deallocate(bact(1)%ldonlim)
     deallocate(bact(1)%temp_lim)

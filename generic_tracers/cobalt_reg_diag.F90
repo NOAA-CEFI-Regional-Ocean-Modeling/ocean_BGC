@@ -1048,16 +1048,6 @@ module COBALT_reg_diag
     bact(1)%id_jprod_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("mu","growth rate of heterotrophic bacteria",&
-                           'h','L','s','s-1','f')
-    bact(1)%id_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-     vardesc_temp = vardesc("bhet","heterotrophic bacterial biomass",&
-                           'h','L','s','moles N kg-1','f')
-     bact(1)%id_bhet = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
     vardesc_temp = vardesc("o2lim_Bact","Oxygen limitation of bacteria",'h','L','s','dimensionless','f')
     bact(1)%id_o2lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
