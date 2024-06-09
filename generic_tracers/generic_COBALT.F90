@@ -653,8 +653,6 @@ contains
     call get_param(param_file, "generic_COBALT", "par_adj",             cobalt%par_adj,                 "par_adj",             units="",            default= 0.83)  ! dimensionless
     call get_param(param_file, "generic_COBALT", "gamma_irr_aclm",      cobalt%gamma_irr_aclm,          "gamma_irr_aclm",      units="day-1", &
                    default= 1.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "gamma_irr_mem_dp",    cobalt%gamma_irr_mem_dp,        "gamma_irr_mem_dp",    units="day-1", &
-                   default= 0.1, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "gamma_mu_mem",        cobalt%gamma_mu_mem,            "gamma_mu_mem",        units="day-1", &
                    default= 1.0, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "ml_aclm_efold",       cobalt%ml_aclm_efold,           "ml_aclm_efold",       units="",            default= 2.5)   ! dimensionless
@@ -804,9 +802,6 @@ contains
     call get_param(param_file, "generic_COBALT", "ktemp_smz",        zoo(1)%ktemp,             "ktemp_smz",        units="C-1", default=0.063)                   ! C-1
     call get_param(param_file, "generic_COBALT", "ktemp_mdz",        zoo(2)%ktemp,             "ktemp_mdz",        units="C-1", default=0.063)                   ! C-1
     call get_param(param_file, "generic_COBALT", "ktemp_lgz",        zoo(3)%ktemp,             "ktemp_lgz",        units="C-1", default=0.063)                   ! C-1
-    call get_param(param_file, "generic_COBALT", "irr_mem_dpthresh1",cobalt%irr_mem_dpthresh1, "irr_mem_dpthresh1",units="watts m-2", default=30.0) ! watts m-2
-    call get_param(param_file, "generic_COBALT", "irr_mem_dpthresh2",cobalt%irr_mem_dpthresh2, "irr_mem_dpthresh2",units="watts m-2", default=10.0) ! watts m-2
-    call get_param(param_file, "generic_COBALT", "dpause_max",       cobalt%dpause_max,        "dpause_max",       units="", default=0.0)           ! dimensionless
     call get_param(param_file, "generic_COBALT", "upswim_chl_thresh",zoo(1)%upswim_chl_thresh, "upswim_chl_thresh",units="", default=0.0) ! dimensionless
     call get_param(param_file, "generic_COBALT", "upswim_chl_thresh",zoo(2)%upswim_chl_thresh, "upswim_chl_thresh",units="", default=0.0) ! dimensionless
     call get_param(param_file, "generic_COBALT", "upswim_chl_thresh",zoo(3)%upswim_chl_thresh, "upswim_chl_thresh",units="", default=0.0) ! dimensionless
@@ -1859,12 +1854,6 @@ contains
          units      = 'Watts/m^2',         &
          prog       = .false.              )
 
-     call g_tracer_add(tracer_list,package_name,&
-         name       = 'irr_mem_dp',        &
-         longname   = 'Irradiance memory, diapause', &
-         units      = 'Watts/m^2',         &
-         prog       = .false.              )
-
     call g_tracer_add(tracer_list,package_name,&
          name       = 'mu_mem_ndi',           &
          longname   = 'Growth memory', &
@@ -2564,7 +2553,6 @@ contains
     call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_sfc','field',cobalt%f_irr_aclm_sfc ,isd,jsd)
-    call g_tracer_get_values(tracer_list,'irr_mem_dp','field',cobalt%f_irr_mem_dp ,isd,jsd)
 
     ! zero out cumulative COBALT-wide production diagnostics
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec
@@ -3189,31 +3177,49 @@ contains
     !
     ! 3.1 Plankton foodweb dynamics: consumption by zooplankton and higher predators
     !
+    ! Zooplankton feeding is parameterized with observed allometric (i.e., size-dependent) feeding rates and predator-
+    ! prey linkages (i.e., Hansen, B.W. et al., 1994; Hansen, P.J., et al. 1997).  Feeding relationships are based on
+    ! simple saturating (Holling Type 2) relationships when there is a single prey type.  A density dependent switching
+    ! response, however, is included when multiple prey types are present (Stock et al., 2008).  A small "refuge
+    ! concentration has also been included as an extra safeguard against negative values and as a reflection of the 
+    ! paradigm that Baas Becking's hypothesis that "Everything is everywhere, but the environment selects".  Predation
+    ! by higher predators (e.g., planktivorous fish) is modeled in a manner analogous to zooplankton, but assuming that
+    ! the biomass of these unresolved predators scales in proportion to the available prey.
+    !
+    ! References: 
+    ! Hansen, B.W., Bjornsen, P.K., Hansen, P.J., 1994. The size ratio between planktonic predators and their prey.
+    !    Limnol. & Oceanogr. 39, 395–402. https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1994.39.2.0395
+    ! Hansen, P.J., Bjornsen, P.K., Hansen, B.W., 1997. Zooplankton grazing and growth: scaling within the 
+    !    2–2000-micron body size range. Limnol. & Oceanogr. 42, 687–704.
+    !    https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1997.42.4.0687 
+    ! Stock, C.A., Powell, T.M., and Levin, S.A., 2008. Bottom-up and top-down forcing in a simple size-structured
+    !    plankton dynamics model.  Journal of Marine Systems. 74 (1-2), 134-152. 
+    !    https://doi.org/10.1016/j.jmarsys.2007.12.004 
 
     call mpp_clock_begin(id_clock_zooplankton_calculations)
 
     !
-    ! Set-up local matrices for calculating zooplankton ingestion of
-    ! multiple prey types.  The rows are consumers (i.e., NUM_ZOO zooplankton
-    ! groups), the columns are food sources (i.e., NUM_PREY potential food sources)
+    ! Set-up local matrices for calculating zooplankton ingestion of multiple prey types.  The rows are consumers
+    ! (i.e., NUM_ZOO zooplankton) and the columns are food sources (i.e., NUM_PREY potential food sources)
     !
-    ! ipa_matrix = the innate prey availability matrix
-    ! pa_matrix = prey availability matrix after accounting for switching
-    ! ingest_matrix = ingestion matrix
-    ! tot_prey = total prey available to predator m
+    ! ipa_matrix = the innate prey availability matrix (dimensionless, between 0-1)
+    ! pa_matrix = prey availability matrix after accounting for switching (dimensionless, between 0-1)
+    ! tot_prey = total prey available to predator m (moles kg-1)
+    ! ingest_matrix = NUM_ZOO x NUM_PREY matrix of ingestion (moles kg-1 sec-1)
     !
-    ! The definition of predator-prey matrices is intended to allow for
-    ! efficient experimentation with predator-prey interconnections.
-    ! However, we are still working to reduce the runtime required to
-    ! include this feature.  The matrix structures are thus included,
-    ! but the standard COBALT interactions have been hard-coded.  This
-    ! makes the code faster, but adding consumer-resource linkages
-    ! requires new code rather than just changing parameters
+    ! Note: The definition of predator-prey matrices is intended to allow for efficient experimentation with
+    ! predator-prey interconnections.  Initial attempts to include a sweep over all elements of the predator-prey
+    ! matrix, however, proved to be computationally costly.  Thus, while matrix structures are included, the
+    ! standard COBALTv3 interactions are hard-coded.  This makes the code faster, but adding new consumer-
+    ! resource linkages requires new code rather than just changing innate prey availability parameters.
+    ! A computationally efficient and flexible scheme will be pursued in future work.
     !
-    ! Note that the primary ingestion calculations allow for variable
-    ! stoichiometry.
+    ! Note: The ipa_matrix must be ordered phytoplankton, bacteria, zooplankton, then detritus.  The order
+    ! of the phytoplankton and zooplankton is dictated by the phytoplankton and zooplankton type definitions in
+    ! cobalt_types.F90.  In the case of phytoplankton, the code expects diazotrophs to be first.  For legacy
+    ! reasons this has also led the phytoplankton to be ordered from large to small and the zooplankton from
+    ! small to large.
     !
-
     do m = 1,NUM_ZOO !{
        ipa_matrix(m,1) = zoo(m)%ipa_diaz
        ipa_matrix(m,2) = zoo(m)%ipa_lgp
@@ -3231,8 +3237,8 @@ contains
     enddo !} m
 
     !
-    ! Set-up local matrices for calculating higher predator ingestion
-    ! of multiple prey types
+    ! Set-up local matrices for calculating higher predator ingestion of multiple prey types.
+    ! Note: Order must be the same as zooplankton
     !
 
     hp_ipa_vec(1) = cobalt%hp_ipa_diaz
@@ -3253,10 +3259,6 @@ contains
     ! Set all static stoichiometric ratios outside k,j,i loop
     !
 
-    !prey_p2n_vec(1) = phyto(DIAZO)%p_2_n_static
-    !prey_p2n_vec(2) = phyto(LARGE)%p_2_n_static
-    !prey_p2n_vec(3) = phyto(MEDIUM)%p_2_n_static
-    !prey_p2n_vec(4) = phyto(SMALL)%p_2_n_static
     prey_p2n_vec(5) = bact(1)%q_p_2_n
     prey_p2n_vec(6) = zoo(1)%q_p_2_n
     prey_p2n_vec(7) = zoo(2)%q_p_2_n
@@ -3274,21 +3276,9 @@ contains
     prey_si2n_vec(7) = 0.0
     prey_si2n_vec(8) = 0.0
 
-    ! Do diapause calculation.  Right now this is only linked to the top grid cell
-    do j = jsc, jec ; do i = isc, iec   !{
-       k = 1
-       cobalt%f_irr_mem_dp(i,j,k) = (cobalt%f_irr_mem_dp(i,j,k) + (cobalt%irr_mix(i,j,k) - &
-          cobalt%f_irr_mem_dp(i,j,k)) * min(1.0,cobalt%gamma_irr_mem_dp * dt)) * grid_tmask(i,j,k)
-       if (cobalt%f_irr_mem_dp(i,j,k).gt.cobalt%irr_mem_dpthresh1) then
-          cobalt%dp_fac(i,j) = 1.0
-       elseif (cobalt%f_irr_mem_dp(i,j,k).lt.cobalt%irr_mem_dpthresh2) then
-          cobalt%dp_fac(i,j) = 1.0 - cobalt%dpause_max
-       else
-          cobalt%dp_fac(i,j) = 1.0 - cobalt%dpause_max * &
-                 (cobalt%irr_mem_dpthresh1 - cobalt%f_irr_mem_dp(i,j,k)) / &
-                 (cobalt%irr_mem_dpthresh1 - cobalt%irr_mem_dpthresh2)
-       endif
-    enddo ; enddo !} i,j
+    !
+    ! Main loop for calculating predation by zooplankton and higher predators
+    !
 
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec; !{
 
@@ -3296,8 +3286,8 @@ contains
        ! 3.1.1: Calculate zooplankton ingestion fluxes
        !
 
-       ! Calculate the temperature and oxygen limitations, no ingestion
-       ! in low o2 environments
+       ! Calculate the temperature and oxygen limitations for zooplankton feeding and growth
+       ! Since zooplankton ingestion uses oxygen, there is no zooplankton feeding when f_o2 is less than o2_min.
        do m = 1,3  !{
           zoo(m)%temp_lim(i,j,k) = exp(zoo(m)%ktemp*Temp(i,j,k))
           zoo(m)%o2lim(i,j,k) = max((cobalt%f_o2(i,j,k) - cobalt%o2_min),0.0)/ &
@@ -3308,9 +3298,7 @@ contains
                                 (cobalt%k_o2 + max(cobalt%f_o2(i,j,k)-cobalt%o2_min,0.0))
 
        ! Prey vectors for ingestion and loss calculations
-       ! (note: ordering of phytoplankton must be consistent with
-       !  DIAZO, LARGE, SMALL ordering inherited from TOPAZ)
-       !
+       ! Note: ordering must match that used for the prey availability matrices above 
        prey_vec(1) = max(phyto(DIAZO)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(2) = max(phyto(LARGE)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(3) = max(phyto(MEDIUM)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
@@ -3318,10 +3306,10 @@ contains
        prey_vec(5) = max(bact(1)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(6) = max(zoo(1)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(7) = max(zoo(2)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
-       prey_vec(8) = max(zoo(3)%f_n(i,j,k) - cobalt%refuge_conc,0.0)*cobalt%dp_fac(i,j)
+       prey_vec(8) = max(zoo(3)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(9) = max(cobalt%f_ndet(i,j,k) - cobalt%refuge_conc,0.0)
-       !
-       ! Set dynamic stoichiometric rations inside k,j,i loop
+
+       ! Set dynamic prey stoichiometric ratios inside k,j,i loop
        prey_p2n_vec(1) = phyto(DIAZO)%q_p_2_n(i,j,k)
        prey_p2n_vec(2) = phyto(LARGE)%q_p_2_n(i,j,k)
        prey_p2n_vec(3) = phyto(MEDIUM)%q_p_2_n(i,j,k)
@@ -3339,88 +3327,52 @@ contains
        !
        ! Calculate zooplankton ingestion
        !
-       ! Small zooplankton (m = 1) consuming medium phytoplankton (3),
-       ! small phytoplankton (4) and bacteria (5).
-       ! sw_fac_denom is the denominator of the abundance-
-       ! based switching factor, tot_prey is the total available prey
-       ! after accounting for switching.
+       ! Small zooplankton (m = 1) consuming medium phytoplankton (3), small phytoplankton (4) and bacteria (5).
+       ! Density-dependent switching occurs between phytoplankton and bacterial prey.
        !
-       ! CAS: speed up code by using integer "switch" terms and sqrt?
-
        m = 1
-       !sw_fac_denom = (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,4)*prey_vec(4))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,5)*prey_vec(5))**zoo(m)%nswitch
-       !pa_matrix(m,3) = ipa_matrix(m,3)* &
-       !                 ( (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,4) = ipa_matrix(m,4)* &
-       !                 ( (ipa_matrix(m,4)*prey_vec(4))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,5) = ipa_matrix(m,5)* &
-       !                 ( (ipa_matrix(m,5)*prey_vec(5))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       food1 = ipa_matrix(m,3)*prey_vec(3)+ipa_matrix(m,4)*prey_vec(4)+ &
-               ipa_matrix(m,6)*prey_vec(6)
+       ! alternative prey items for the switching calculation
+       food1 = ipa_matrix(m,3)*prey_vec(3)+ipa_matrix(m,4)*prey_vec(4)
        food2 = ipa_matrix(m,5)*prey_vec(5)
+       ! calculate realized prey availability from innate availability and relative abundance of alternative prey
        sw_fac_denom = food1**zoo(m)%nswitch+food2**zoo(m)%nswitch
        pa_matrix(m,3) = ipa_matrix(m,3)*(food1**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
        pa_matrix(m,4) = ipa_matrix(m,4)*(food1**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       pa_matrix(m,6) = ipa_matrix(m,6)*(food1**zoo(m)%nswitch / &
-               (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
        pa_matrix(m,5) = ipa_matrix(m,5)*(food2**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
+       ! calculate the total prey from the realized prey availability
        tot_prey(m) = pa_matrix(m,3)*prey_vec(3) + pa_matrix(m,4)*prey_vec(4) + &
-                     pa_matrix(m,5)*prey_vec(5) + pa_matrix(m,6)*prey_vec(6)
+                     pa_matrix(m,5)*prey_vec(5)
+       ! calculate the rate at which small zooplankton ingests each prey type
        ingest_matrix(m,3) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                  pa_matrix(m,3)*prey_vec(3)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
        ingest_matrix(m,4) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                  pa_matrix(m,4)*prey_vec(4)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
        ingest_matrix(m,5) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                  pa_matrix(m,5)*prey_vec(5)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,6) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
-                 pa_matrix(m,6)*prey_vec(6)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       zoo(m)%jingest_n(i,j,k) = ingest_matrix(m,3) + ingest_matrix(m,4) + ingest_matrix(m,5) + &
-                                 ingest_matrix(m,6)
+       ! calculate the total ingestion of each element by small zooplankton 
+       zoo(m)%jingest_n(i,j,k) = ingest_matrix(m,3) + ingest_matrix(m,4) + ingest_matrix(m,5)
        zoo(m)%jingest_p(i,j,k) = ingest_matrix(m,3)*prey_p2n_vec(3) + &
                                  ingest_matrix(m,4)*prey_p2n_vec(4) + &
-                                 ingest_matrix(m,5)*prey_p2n_vec(5) + &
-                                 ingest_matrix(m,6)*prey_p2n_vec(6)
+                                 ingest_matrix(m,5)*prey_p2n_vec(5)
        zoo(m)%jingest_fe(i,j,k) = ingest_matrix(m,3)*prey_fe2n_vec(3) + &
                                   ingest_matrix(m,4)*prey_fe2n_vec(4)
        zoo(m)%jingest_sio2(i,j,k) = ingest_matrix(m,3)*prey_si2n_vec(3)
 
+       ! Medium zooplankton (m = 2) consuming diazotrophs (1), large phytoplankton (2), medium phytoplankton (3),
+       ! small phytoplankton (4), and small zooplankton (6).  Switching occurs between herbivory (1-4) and carnivory.
        !
-       ! Medium zooplankton (m = 2) consuming diazotrophs (1), large phytoplankton (2)
-       ! medium phytoplankton (3), small phytoplankton (4), and small zooplankton (6)
+       ! Note: The default availability of large phytoplankton to medium zooplankton is 0.  The optimal setting for
+       ! this parameter, however, is still being actively investigated.
        !
-
        m = 2
-       !sw_fac_denom = (ipa_matrix(m,1)*prey_vec(1))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,2)*prey_vec(2))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,4)*prey_vec(4))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,6)*prey_vec(6))**zoo(m)%nswitch
-       !pa_matrix(m,1) = ipa_matrix(m,1)* &
-       !                 ( (ipa_matrix(m,1)*prey_vec(1))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,2) = ipa_matrix(m,2)* &
-       !                 ( (ipa_matrix(m,2)*prey_vec(2))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,3) = ipa_matrix(m,3)* &
-       !                 ( (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,4) = ipa_matrix(m,4)* &
-       !                 ( (ipa_matrix(m,4)*prey_vec(4))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,6) = ipa_matrix(m,6)* &
-       !                 ( (ipa_matrix(m,6)*prey_vec(6))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
+       ! alternative prey items for the switching calculation (herbivory versus carnivory)
        food1 = ipa_matrix(m,1)*prey_vec(1)+ipa_matrix(m,2)*prey_vec(2)+ &
                ipa_matrix(m,3)*prey_vec(3)+ipa_matrix(m,4)*prey_vec(4)
-       food2 = ipa_matrix(m,6)*prey_vec(6)+ipa_matrix(m,7)*prey_vec(7)
+       food2 = ipa_matrix(m,6)*prey_vec(6)
+       ! calculate realized prey availability from innate availability and relative abundance of alternative prey
        sw_fac_denom = food1**zoo(m)%nswitch+food2**zoo(m)%nswitch
        pa_matrix(m,1) = ipa_matrix(m,1)*(food1**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
@@ -3432,11 +3384,11 @@ contains
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
        pa_matrix(m,6) = ipa_matrix(m,6)*(food2**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       pa_matrix(m,7) = ipa_matrix(m,7)*(food2**zoo(m)%nswitch / &
-               (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
+       ! calculate the total prey from the realized prey availability
        tot_prey(m) = pa_matrix(m,1)*prey_vec(1) + pa_matrix(m,2)*prey_vec(2) + &
                      pa_matrix(m,3)*prey_vec(3) + pa_matrix(m,4)*prey_vec(4) + &
-                     pa_matrix(m,6)*prey_vec(6) + pa_matrix(m,7)*prey_vec(7)
+                     pa_matrix(m,6)*prey_vec(6)
+       ! calculate the rate at which medium zooplankton ingests each prey type
        ingest_matrix(m,1) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                      pa_matrix(m,1)*prey_vec(1)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
        ingest_matrix(m,2) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
@@ -3447,17 +3399,15 @@ contains
                      pa_matrix(m,4)*prey_vec(4)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
        ingest_matrix(m,6) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                      pa_matrix(m,6)*prey_vec(6)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,7) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
-                     pa_matrix(m,7)*prey_vec(7)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
+       ! calculate the total ingestion of each element by medium zooplankton
        zoo(m)%jingest_n(i,j,k) = ingest_matrix(m,1) + ingest_matrix(m,2) + &
                                  ingest_matrix(m,3) + ingest_matrix(m,4) + &
-                                 ingest_matrix(m,6) + ingest_matrix(m,7)
+                                 ingest_matrix(m,6)
        zoo(m)%jingest_p(i,j,k) = ingest_matrix(m,1)*prey_p2n_vec(1) + &
                                  ingest_matrix(m,2)*prey_p2n_vec(2) + &
                                  ingest_matrix(m,3)*prey_p2n_vec(3) + &
                                  ingest_matrix(m,4)*prey_p2n_vec(4) + &
-                                 ingest_matrix(m,6)*prey_p2n_vec(6) + &
-                                 ingest_matrix(m,7)*prey_p2n_vec(7)
+                                 ingest_matrix(m,6)*prey_p2n_vec(6)
        zoo(m)%jingest_fe(i,j,k) = ingest_matrix(m,1)*prey_fe2n_vec(1) + &
                                   ingest_matrix(m,2)*prey_fe2n_vec(2) + &
                                   ingest_matrix(m,3)*prey_fe2n_vec(3) + &
@@ -3465,31 +3415,15 @@ contains
        zoo(m)%jingest_sio2(i,j,k) = ingest_matrix(m,2)*prey_si2n_vec(2) + &
                                     ingest_matrix(m,3)*prey_si2n_vec(3)
 
+       ! Large zooplankton (m = 3) consuming diazotrophs (1), large phytoplankton (2), medium pytoplankton (3),
+       ! and medium zooplankton (7).  Switching occurs between herbibory (1-3) and carnivory (7).
        !
-       ! Large zooplankton (m = 3) consuming diazotrophs (1), large phytoplankton (2)
-       ! medium pytoplankton (3) and medium zooplankton  (7)
-       !
-
        m = 3
-       !sw_fac_denom = (ipa_matrix(m,1)*prey_vec(1))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,2)*prey_vec(2))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,7)*prey_vec(7))**zoo(m)%nswitch
-       !pa_matrix(m,1) = ipa_matrix(m,1)* &
-       !                 ( (ipa_matrix(m,1)*prey_vec(1))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,2) = ipa_matrix(m,2)* &
-       !                 ( (ipa_matrix(m,2)*prey_vec(2))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,3) = ipa_matrix(m,3)* &
-       !                 ( (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,7) = ipa_matrix(m,7)* &
-       !                 ( (ipa_matrix(m,7)*prey_vec(7))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
+       ! alternative prey items for the switching calculation (herbivory versus carnivory)
        food1 = ipa_matrix(m,1)*prey_vec(1)+ipa_matrix(m,2)*prey_vec(2)+ &
-                    ipa_matrix(m,3)*prey_vec(3)
-       food2 = ipa_matrix(m,7)*prey_vec(7)+ipa_matrix(m,8)*prey_vec(8)
+               ipa_matrix(m,3)*prey_vec(3)
+       food2 = ipa_matrix(m,7)*prey_vec(7)
+       ! calculate realized prey availability from innate availability and relative abundance of alternative prey
        sw_fac_denom = food1**zoo(m)%nswitch+food2**zoo(m)%nswitch
        pa_matrix(m,1) = ipa_matrix(m,1)*(food1**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
@@ -3499,43 +3433,39 @@ contains
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
        pa_matrix(m,7) = ipa_matrix(m,7)*(food2**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       pa_matrix(m,8) = ipa_matrix(m,8)*(food2**zoo(m)%nswitch / &
-               (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
+       ! calculate the total prey from the realized prey availability
        tot_prey(m) = pa_matrix(m,1)*prey_vec(1) + pa_matrix(m,2)*prey_vec(2) + &
-                     pa_matrix(m,3)*prey_vec(3) + pa_matrix(m,7)*prey_vec(7) + &
-                     pa_matrix(m,8)*prey_vec(8)
-       ingest_matrix(m,1) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*cobalt%dp_fac(i,j)* &
+                     pa_matrix(m,3)*prey_vec(3) + pa_matrix(m,7)*prey_vec(7)
+       ! calculate the rate at which large zooplankton ingests each prey type
+       ingest_matrix(m,1) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)* &
                      zoo(m)%imax*pa_matrix(m,1)*prey_vec(1)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,2) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*cobalt%dp_fac(i,j)* &
+       ingest_matrix(m,2) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)* &
                      zoo(m)%imax*pa_matrix(m,2)*prey_vec(2)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,3) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*cobalt%dp_fac(i,j)* &
+       ingest_matrix(m,3) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)* &
                      zoo(m)%imax*pa_matrix(m,3)*prey_vec(3)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,7) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*cobalt%dp_fac(i,j)* &
+       ingest_matrix(m,7) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)* &
                      zoo(m)%imax*pa_matrix(m,7)*prey_vec(7)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,8) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*cobalt%dp_fac(i,j)* &
-                     zoo(m)%imax*pa_matrix(m,8)*prey_vec(8)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
+       ! calculate the total ingestion of each element by large zooplankton
        zoo(m)%jingest_n(i,j,k) = ingest_matrix(m,1) + ingest_matrix(m,2) + &
-                                 ingest_matrix(m,3) + ingest_matrix(m,7) + &
-                                 ingest_matrix(m,8)
+                                 ingest_matrix(m,3) + ingest_matrix(m,7)
        zoo(m)%jingest_p(i,j,k) = ingest_matrix(m,1)*prey_p2n_vec(1) + &
                                  ingest_matrix(m,2)*prey_p2n_vec(2) + &
                                  ingest_matrix(m,3)*prey_p2n_vec(3) + &
-                                 ingest_matrix(m,7)*prey_p2n_vec(7) + &
-                                 ingest_matrix(m,8)*prey_p2n_vec(8)
+                                 ingest_matrix(m,7)*prey_p2n_vec(7)
        zoo(m)%jingest_fe(i,j,k) = ingest_matrix(m,1)*prey_fe2n_vec(1) + &
                                   ingest_matrix(m,2)*prey_fe2n_vec(2) + &
                                   ingest_matrix(m,3)*prey_fe2n_vec(3)
        zoo(m)%jingest_sio2(i,j,k) = ingest_matrix(m,2)*prey_si2n_vec(2) + &
                                     ingest_matrix(m,3)*prey_si2n_vec(3)
 
+       ! calculate the total filter feeding by medium and large zooplankton.  This rate is ultimately used to
+       ! scale the conversion of lithogenic dust into lithogenic detritus. 
        cobalt%total_filter_feeding(i,j,k) = ingest_matrix(2,1) + ingest_matrix(2,2) + &
           ingest_matrix(2,3) + ingest_matrix(2,4) +  ingest_matrix(3,1) + ingest_matrix(3,2) + &
           ingest_matrix(3,3) + ingest_matrix(3,4)
-
        !
-       ! Calculate losses to zooplankton
+       ! calculate losses of each prey type to zooplankton, starting with phytoplankton
        !
-
        do n = 1,NUM_PHYTO
           phyto(n)%jzloss_n(i,j,k) = 0.0
        enddo
@@ -3552,21 +3482,18 @@ contains
           phyto(n)%jzloss_fe(i,j,k) = phyto(n)%jzloss_n(i,j,k)*prey_fe2n_vec(n)
           phyto(n)%jzloss_sio2(i,j,k) = phyto(n)%jzloss_n(i,j,k)*prey_si2n_vec(n)
        enddo !} n
-
        !
-       ! losses of bacteria to zooplankton
+       ! calculate losses of bacteria to zooplankton
        !
-
        bact(1)%jzloss_n(i,j,k) = 0.0
        do m = 1,NUM_ZOO !{
           bact(1)%jzloss_n(i,j,k) = bact(1)%jzloss_n(i,j,k) + ingest_matrix(m,5)
        enddo !} m
        bact(1)%jzloss_p(i,j,k) = bact(1)%jzloss_n(i,j,k)*prey_p2n_vec(5)
-
        !
        ! losses of zooplankton to zooplankton
+       ! Note: n = loop through zooplankton as prey; m = loop through zooplankton as predators
        !
-
        do n = 1,NUM_ZOO !{
           zoo(n)%jzloss_n(i,j,k) = 0.0
           do m = 1,NUM_ZOO !{
@@ -3579,24 +3506,29 @@ contains
        ! 3.1.2 Calculate ingestion by higher predators
        !
 
-       ! The higher-predator ingestion calculations mirror those used for zooplankton
+       ! The higher-predator ingestion calculations mirror those used for zooplankton.  Switching occurs between
+       ! medium and large zooplankton assuming that forage fish have unique adaptations for these two size classes
        !
-       !sw_fac_denom = (hp_ipa_vec(7)*prey_vec(7))**cobalt%nswitch_hp + &
-       !               (hp_ipa_vec(8)*prey_vec(8))**cobalt%nswitch_hp
-       !hp_pa_vec(7) = hp_ipa_vec(7)* &
-       !               ( (hp_ipa_vec(7)*prey_vec(7))**cobalt%nswitch_hp / &
-       !                 (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
-       !hp_pa_vec(8) = hp_ipa_vec(8)* &
-       !               ( (hp_ipa_vec(8)*prey_vec(8))**cobalt%nswitch_hp / &
-       !                 (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
        food1 = hp_ipa_vec(7)*prey_vec(7)
        food2 = hp_ipa_vec(8)*prey_vec(8)
+       ! calculate realized prey availability from innate availability and relative abundance of alternative prey
        sw_fac_denom = food1**cobalt%nswitch_hp+food2**cobalt%nswitch_hp
        hp_pa_vec(7) = hp_ipa_vec(7)*(food1**cobalt%nswitch_hp / &
                (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
        hp_pa_vec(8) = hp_ipa_vec(8)*(food2**cobalt%nswitch_hp / &
                (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
+       ! calculate the total prey from the realized prey availability
        tot_prey_hp = hp_pa_vec(7)*prey_vec(7) + hp_pa_vec(8)*prey_vec(8)
+       ! calculate the rate at which large zooplankton ingests each prey type.  The default assumption for higher
+       ! predators is that the biomass of higher predators scales in proportion to the available prey.  That is,
+       ! it is implicitly assumed that fish biomass is proportional to tot_prey_hp.  For example, the ingestion of 
+       ! medium zooplankton (mz) by hp is:
+       !
+       ! hp_ingest_vec(7) = Imax(T,O2)*(available mz biomass)/(ki_hp + tot_prey_hp) * HP; where HP ~ tot_prey_hp
+       ! 
+       ! Note that this results in a density-dependent (i.e., quadratic) mortality consistent with fish aggregating
+       ! over regions of abundant prey.  This response can be modulated with coef_hp, but care would be needed
+       ! to ensure imax_hp has proper units if this coefficient were changed.
        hp_ingest_vec(7) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%imax_hp* &
                           hp_pa_vec(7)*prey_vec(7)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
                             (cobalt%ki_hp+tot_prey_hp)
@@ -3607,7 +3539,7 @@ contains
        cobalt%hp_jingest_p(i,j,k) = hp_ingest_vec(7)*prey_p2n_vec(7) + &
                                     hp_ingest_vec(8)*prey_p2n_vec(8)
        !
-       ! Calculate losses to higher predators
+       ! Calculate losses of zooplankton to higher predators
        !
 
        do n = 1,NUM_ZOO !{
@@ -3860,7 +3792,7 @@ contains
           if (m == 3) then
             zoo(m)%jprod_n(i,j,k) = zoo(m)%gge_max*zoo(m)%jingest_n(i,j,k) - &
                            zoo(m)%f_n(i,j,k)/(cobalt%refuge_conc + zoo(m)%f_n(i,j,k))* &
-                           zoo(m)%temp_lim(i,j,k)*cobalt%dp_fac(i,j)*zoo(m)%bresp*zoo(m)%f_n(i,j,k)
+                           zoo(m)%temp_lim(i,j,k)*zoo(m)%bresp*zoo(m)%f_n(i,j,k)
           else
             zoo(m)%jprod_n(i,j,k) = zoo(m)%gge_max*zoo(m)%jingest_n(i,j,k) - &
                            zoo(m)%f_n(i,j,k)/(cobalt%refuge_conc + zoo(m)%f_n(i,j,k))* &
@@ -4973,7 +4905,6 @@ contains
     call g_tracer_set_values(tracer_list,'irr_aclm' ,'field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm_z' ,'field',cobalt%f_irr_aclm_z ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm_sfc' ,'field',cobalt%f_irr_aclm_sfc ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'irr_mem_dp' ,'field',cobalt%f_irr_mem_dp ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_ndi' ,'field',phyto(DIAZO)%f_mu_mem ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LARGE)%f_mu_mem ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MEDIUM)%f_mu_mem ,isd,jsd)
@@ -6502,7 +6433,6 @@ contains
     allocate(cobalt%f_irr_aclm(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_irr_aclm=0.0
     allocate(cobalt%f_irr_aclm_z(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_irr_aclm_z=0.0
     allocate(cobalt%f_irr_aclm_sfc(isd:ied, jsd:jed, 1:nk)) ; cobalt%f_irr_aclm_sfc=0.0
-    allocate(cobalt%f_irr_mem_dp(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_irr_mem_dp=0.0
     allocate(cobalt%f_cased(isd:ied, jsd:jed, 1:nk))      ; cobalt%f_cased=0.0
     allocate(cobalt%f_cadet_arag_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_cadet_arag_btf=0.0
     allocate(cobalt%f_cadet_calc_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_cadet_calc_btf=0.0
@@ -6802,7 +6732,6 @@ contains
    allocate(cobalt%jprod_cadet_arag_100(isd:ied,jsd:jed))   ; cobalt%jprod_cadet_arag_100 = 0.0
    allocate(cobalt%jremin_ndet_100(isd:ied,jsd:jed))        ; cobalt%jremin_ndet_100 = 0.0
    allocate(cobalt%jprod_mesozoo_200(isd:ied,jsd:jed))      ; cobalt%jprod_mesozoo_200 = 0.0
-   allocate(cobalt%dp_fac(isd:ied,jsd:jed))                 ; cobalt%dp_fac = 0.0
    allocate(cobalt%daylength(isd:ied,jsd:jed))              ; cobalt%daylength = 0.0
 
    allocate(cobalt%f_ndet_100(isd:ied,jsd:jed))             ; cobalt%f_ndet_100 = 0.0
@@ -7061,7 +6990,6 @@ contains
     deallocate(cobalt%f_irr_aclm)
     deallocate(cobalt%f_irr_aclm_z)
     deallocate(cobalt%f_irr_aclm_sfc)
-    deallocate(cobalt%f_irr_mem_dp)
     deallocate(cobalt%f_cased)
     deallocate(cobalt%f_cadet_arag_btf)
     deallocate(cobalt%f_cadet_calc_btf)
@@ -7273,7 +7201,6 @@ contains
     deallocate(cobalt%jprod_cadet_arag_100)
     deallocate(cobalt%jprod_cadet_calc_100)
     deallocate(cobalt%jprod_mesozoo_200)
-    deallocate(cobalt%dp_fac)
     deallocate(cobalt%daylength)
     deallocate(cobalt%jremin_ndet_100)
     deallocate(cobalt%f_ndet_100)

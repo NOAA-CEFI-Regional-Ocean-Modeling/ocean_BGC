@@ -720,9 +720,6 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_sfc_irr_aclm,  cobalt%f_irr_aclm_sfc(:,:,1),       &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_sfc_irr_mem_dp,  cobalt%f_irr_mem_dp(:,:,1),       &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_mld_aclm,  cobalt%mld_aclm,       &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
@@ -1053,9 +1050,6 @@ module COBALT_send_diag
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
         used = g_send_data(cobalt%id_jprod_mesozoo_200, cobalt%jprod_mesozoo_200,         &
-        model_time, rmask = grid_tmask(:,:,1),&
-        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-        used = g_send_data(cobalt%id_dp_fac, cobalt%dp_fac,         &
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
         used = g_send_data(cobalt%id_daylength, cobalt%daylength,         &
