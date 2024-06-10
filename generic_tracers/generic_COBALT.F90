@@ -3180,7 +3180,7 @@ contains
     ! Zooplankton feeding is parameterized with observed allometric (i.e., size-dependent) feeding rates and predator-
     ! prey linkages (i.e., Hansen, B.W. et al., 1994; Hansen, P.J., et al. 1997).  Feeding relationships are based on
     ! simple saturating (Holling Type 2) relationships when there is a single prey type.  A density dependent switching
-    ! response, however, is included when multiple prey types are present (Stock et al., 2008).  A small "refuge
+    ! response, however, is included when multiple prey types are present (Stock et al., 2008).  A small "refuge"
     ! concentration has also been included as an extra safeguard against negative values and as a reflection of the 
     ! paradigm that Baas Becking's hypothesis that "Everything is everywhere, but the environment selects".  Predation
     ! by higher predators (e.g., planktivorous fish) is modeled in a manner analogous to zooplankton, but assuming that
