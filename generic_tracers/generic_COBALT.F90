@@ -6349,7 +6349,6 @@ contains
        allocate(zoo(n)%jprod_n(isd:ied,jsd:jed,nk))      ; zoo(n)%jprod_n         = 0.0
        allocate(zoo(n)%o2lim(isd:ied,jsd:jed,nk))        ; zoo(n)%o2lim           = 0.0
        allocate(zoo(n)%temp_lim(isd:ied,jsd:jed,nk))     ; zoo(n)%temp_lim        = 0.0
-       allocate(zoo(n)%vmove(isd:ied,jsd:jed,nk))        ; zoo(n)%vmove           = 0.0
     enddo
 
     ! higher predator ingestion
@@ -6911,7 +6910,6 @@ contains
        deallocate(zoo(n)%jprod_n)
        deallocate(zoo(n)%o2lim)
        deallocate(zoo(n)%temp_lim)
-       deallocate(zoo(n)%vmove)
     enddo
 
     deallocate(cobalt%f_alk)
