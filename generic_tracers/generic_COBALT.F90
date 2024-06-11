@@ -3624,11 +3624,6 @@ contains
     call g_tracer_set_values(tracer_list,'simd','vmove',phyto(MEDIUM)%vmove,isd,jsd)
     call g_tracer_set_values(tracer_list,'silg','vmove',phyto(LARGE)%vmove,isd,jsd)
 
-    ! Set vertical movement for zooplankton
-    call g_tracer_set_values(tracer_list,'nsmz','vmove',zoo(1)%vmove,isd,jsd)
-    call g_tracer_set_values(tracer_list,'nmdz','vmove',zoo(2)%vmove,isd,jsd)
-    call g_tracer_set_values(tracer_list,'nlgz','vmove',zoo(3)%vmove,isd,jsd)
-
     call mpp_clock_end(id_clock_other_losses)
 
     !
