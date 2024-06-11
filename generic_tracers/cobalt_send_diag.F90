@@ -260,9 +260,6 @@ module COBALT_send_diag
             used = g_send_data(zoo(n)%id_temp_lim, zoo(n)%temp_lim,           &
             model_time, rmask = grid_tmask,&
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-            used = g_send_data(zoo(n)%id_vmove,    zoo(n)%vmove,              &
-            model_time, rmask = grid_tmask,&
-            is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        enddo
 
     !
@@ -400,9 +397,6 @@ module COBALT_send_diag
        model_time, rmask = grid_tmask(:,:,:),&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        used = g_send_data(cobalt%id_irr_aclm_z,       cobalt%f_irr_aclm_z,               &
-       model_time, rmask = grid_tmask(:,:,:),&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(cobalt%id_chl2sfcchl,     cobalt%chl2sfcchl,    &
        model_time, rmask = grid_tmask(:,:,:),&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
         used = g_send_data(cobalt%id_jno3denit_wc,  cobalt%jno3denit_wc*rho_dzt,  &

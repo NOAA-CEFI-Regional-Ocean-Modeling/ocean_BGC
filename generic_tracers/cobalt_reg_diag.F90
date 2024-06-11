@@ -983,17 +983,6 @@ module COBALT_reg_diag
     zoo(3)%id_temp_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("vmove_Smz","Small zoo movement",'h','L','s','m s-1','f')
-    zoo(1)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("vmove_Mdz","Medium zoo movement",'h','L','s','m s-1','f')
-    zoo(2)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("vmove_Lgz","Large zoo movement",'h','L','s','m s-1','f')
-    zoo(3)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
     !
     ! Register bacterial diagnostics, starting with losses of bacteria to ingestion by zooplankton
     ! CAS: limit loss terms to N
@@ -1311,15 +1300,6 @@ module COBALT_reg_diag
 
     vardesc_temp = vardesc("irr_aclm_inst","Instantaneous light, avg over photoadapt layer",'h','L','s','W m-2','f')
     cobalt%id_irr_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-
-    !
-    ! Upward swimming diagnostic
-    !
-
-    vardesc_temp = vardesc("chl2sfcchl","ratio of chl to surface chl",'h','L','s','dimensionless','f')
-    cobalt%id_chl2sfcchl = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !

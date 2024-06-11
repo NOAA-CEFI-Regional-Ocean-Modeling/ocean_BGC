@@ -802,18 +802,6 @@ contains
     call get_param(param_file, "generic_COBALT", "ktemp_smz",        zoo(1)%ktemp,             "ktemp_smz",        units="C-1", default=0.063)                   ! C-1
     call get_param(param_file, "generic_COBALT", "ktemp_mdz",        zoo(2)%ktemp,             "ktemp_mdz",        units="C-1", default=0.063)                   ! C-1
     call get_param(param_file, "generic_COBALT", "ktemp_lgz",        zoo(3)%ktemp,             "ktemp_lgz",        units="C-1", default=0.063)                   ! C-1
-    call get_param(param_file, "generic_COBALT", "upswim_chl_thresh",zoo(1)%upswim_chl_thresh, "upswim_chl_thresh",units="", default=0.0) ! dimensionless
-    call get_param(param_file, "generic_COBALT", "upswim_chl_thresh",zoo(2)%upswim_chl_thresh, "upswim_chl_thresh",units="", default=0.0) ! dimensionless
-    call get_param(param_file, "generic_COBALT", "upswim_chl_thresh",zoo(3)%upswim_chl_thresh, "upswim_chl_thresh",units="", default=0.0) ! dimensionless
-    call get_param(param_file, "generic_COBALT", "upswim_I_thresh",  zoo(1)%upswim_I_thresh,   "upswim_I_thresh",  units="", default=0.0)     ! dimensionless
-    call get_param(param_file, "generic_COBALT", "upswim_I_thresh",  zoo(2)%upswim_I_thresh,   "upswim_I_thresh",  units="", default=0.0)     ! dimensionless
-    call get_param(param_file, "generic_COBALT", "upswim_I_thresh",  zoo(3)%upswim_I_thresh,   "upswim_I_thresh",  units="", default=0.0)     ! dimensionless
-    call get_param(param_file, "generic_COBALT", "swim_max", zoo(1)%swim_max, "swim_max", units="m day-1", &
-                   default= 100.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "swim_max", zoo(2)%swim_max, "swim_max", units="m day-1", &
-                   default= 500.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "swim_max", zoo(3)%swim_max, "swim_max", units="m day-1", &
-                   default=2000.0, scale = I_sperd ) ! s-1
     !
     !-----------------------------------------------------------------------
     ! Bacterial growth and uptake parameters
@@ -1577,8 +1565,7 @@ contains
          name       = 'nsmz',     &
          longname   = 'Small Zooplankton Nitrogen', &
          units      = 'mol/kg',   &
-         prog       = .true.,     &
-         move_vertical = .true.  )
+         prog       = .true.     )
 
     !
     !     Medium-sized zooplankton N
@@ -1587,8 +1574,7 @@ contains
          name       = 'nmdz',     &
          longname   = 'Medium-sized zooplankton Nitrogen', &
          units      = 'mol/kg',   &
-         prog       = .true.,     &
-         move_vertical = .true.  )
+         prog       = .true.      )
 
     !
     !     Large zooplankton N (Pred zoo + krill)
@@ -1597,8 +1583,7 @@ contains
          name       = 'nlgz',     &
          longname   = 'large Zooplankton Nitrogen', &
          units      = 'mol/kg',   &
-         prog       = .true.,     &
-         move_vertical = .true.  )
+         prog       = .true.      )
 
       if (do_14c) then                                        !<<RADIOCARBON
       !       D14IC (Dissolved inorganic radiocarbon)
@@ -2937,8 +2922,6 @@ contains
           ! Calculate the chlorophyll.  Coversions give mg Chl (1000 kg)-1 ~ mg Chl m-3 
           phyto(n)%chl(i,j,k) = cobalt%c_2_n*12.0e6*phyto(n)%theta(i,j,k)*phyto(n)%f_n(i,j,k)
           cobalt%f_chl(i,j,k) = cobalt%f_chl(i,j,k)+phyto(n)%chl(i,j,k)
-          ! Issue: remnant from a movement experiment, clean up
-          cobalt%chl2sfcchl(i,j,k) = cobalt%f_chl(i,j,k)/max(cobalt%f_chl(i,j,1),epsln)
 
           ! calculate net production by phytoplankton group
           phyto(n)%jprod_n(i,j,k) = phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k)
@@ -3611,28 +3594,9 @@ contains
           phyto(n)%jexuloss_fe(i,j,k) = phyto(n)%jexuloss_fe(i,j,k) + phyto(n)%exu*max(phyto(n)%juptake_fe(i,j,k),0.0)
        enddo
 
-       !
-       ! 3.2.4 Movement due to swimming
-       !
-
-       do n = 1,NUM_ZOO !{
-          if ( (cobalt%chl2sfcchl(i,j,k).lt.zoo(n)%upswim_chl_thresh).or. &
-               (cobalt%f_irr_aclm(i,j,k).lt.zoo(n)%upswim_I_thresh) ) then
-             zoo(n)%vmove(i,j,k) = -zoo(n)%swim_max
-          else
-             zoo(n)%vmove(i,j,k) = 0.0
-          endif
-       enddo
-
     enddo; enddo; enddo  !} i,j,k
 
-    ! Sign convention for upward swimming to avoid detrainment is positive for
-    ! movement out of cell.  Multiply by -1 to establish a source in k = 1
     do j = jsc, jec ; do i = isc, iec   !{
-       do n = 1,NUM_ZOO
-         zoo(n)%vmove(i,j,1) = 0.0
-       enddo
-
        !
        ! assume that individually sinking phytoplankton collect in nepholoid layer
        ! and are available for resuspension if they are exposed to mixing
@@ -3659,11 +3623,6 @@ contains
     call g_tracer_set_values(tracer_list,'felg','vmove',phyto(LARGE)%vmove,isd,jsd)
     call g_tracer_set_values(tracer_list,'simd','vmove',phyto(MEDIUM)%vmove,isd,jsd)
     call g_tracer_set_values(tracer_list,'silg','vmove',phyto(LARGE)%vmove,isd,jsd)
-
-    ! Set vertical movement for zooplankton
-    call g_tracer_set_values(tracer_list,'nsmz','vmove',zoo(1)%vmove,isd,jsd)
-    call g_tracer_set_values(tracer_list,'nmdz','vmove',zoo(2)%vmove,isd,jsd)
-    call g_tracer_set_values(tracer_list,'nlgz','vmove',zoo(3)%vmove,isd,jsd)
 
     call mpp_clock_end(id_clock_other_losses)
 
@@ -6390,7 +6349,6 @@ contains
        allocate(zoo(n)%jprod_n(isd:ied,jsd:jed,nk))      ; zoo(n)%jprod_n         = 0.0
        allocate(zoo(n)%o2lim(isd:ied,jsd:jed,nk))        ; zoo(n)%o2lim           = 0.0
        allocate(zoo(n)%temp_lim(isd:ied,jsd:jed,nk))     ; zoo(n)%temp_lim        = 0.0
-       allocate(zoo(n)%vmove(isd:ied,jsd:jed,nk))        ; zoo(n)%vmove           = 0.0
     enddo
 
     ! higher predator ingestion
@@ -6555,7 +6513,6 @@ contains
     allocate(cobalt%irr_inst(isd:ied, jsd:jed, 1:nk))     ; cobalt%irr_inst=0.0
     allocate(cobalt%irr_mix(isd:ied, jsd:jed, 1:nk))      ; cobalt%irr_mix=0.0
     allocate(cobalt%irr_aclm_inst(isd:ied, jsd:jed, 1:nk))   ; cobalt%irr_aclm_inst=0.0
-    allocate(cobalt%chl2sfcchl(isd:ied, jsd:jed, 1:nk))   ; cobalt%chl2sfcchl=0.0
     allocate(cobalt%jno3denit_wc(isd:ied, jsd:jed, 1:nk)) ; cobalt%jno3denit_wc=0.0
     allocate(cobalt%juptake_no3amx(isd:ied, jsd:jed, 1:nk))   ; cobalt%juptake_no3amx=0.0
     allocate(cobalt%juptake_nh4amx(isd:ied, jsd:jed, 1:nk))   ; cobalt%juptake_nh4amx=0.0
@@ -6953,7 +6910,6 @@ contains
        deallocate(zoo(n)%jprod_n)
        deallocate(zoo(n)%o2lim)
        deallocate(zoo(n)%temp_lim)
-       deallocate(zoo(n)%vmove)
     enddo
 
     deallocate(cobalt%f_alk)
@@ -7115,7 +7071,6 @@ contains
     deallocate(cobalt%irr_inst)
     deallocate(cobalt%irr_mix)
     deallocate(cobalt%irr_aclm_inst)
-    deallocate(cobalt%chl2sfcchl)
     deallocate(cobalt%jno3denit_wc)
     deallocate(cobalt%juptake_no3amx)
     deallocate(cobalt%juptake_nh4amx)
