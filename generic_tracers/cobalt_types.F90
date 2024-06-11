@@ -271,9 +271,6 @@ module cobalt_types
     real mswitch           !< switching parameter (dimensionless)
     real bresp             !< basal respiration rate (sec-1)
     real ktemp             !< temperature dependence of zooplankton rates (C-1)
-    real upswim_chl_thresh !< threshold for swimming the the mixed layer (chl/chl_surf < thresh)
-    real upswim_I_thresh   !< Irradiance threshold for upward swimming (watts m-2)
-    real swim_max          !< maximum upward swimming speed (m s-2)
     real phi_det           !< fraction of ingested N to detritus
     real phi_ldon          !< fraction of ingested N/P to labile don
     real phi_sldon         !< fraction of ingested N/P to semi-labile don
@@ -325,7 +322,6 @@ module cobalt_types
     real, ALLOCATABLE, dimension(:,:,:) ::  jprod_n      !< zooplankton production
     real, ALLOCATABLE, dimension(:,:,:) ::  o2lim        !< oxygen limitation of zooplankton activity
     real, ALLOCATABLE, dimension(:,:,:) ::  temp_lim     !< Temperature limitation
-    real, ALLOCATABLE, dimension(:,:,:) ::  vmove        !< Vertical movement
     integer ::  id_jzloss_n       = -1 !< ID associated with diagnostics for losses of n due to consumption by other zooplankton groups
     integer ::  id_jzloss_p       = -1 !< ID associated with diagnostics for losses of p due to consumption by other zooplankton groups
     integer ::  id_jhploss_n      = -1 !< ID associated with diagnostics for losses of n due to consumption by unresolved higher preds 
@@ -351,7 +347,6 @@ module cobalt_types
     integer ::  id_jprod_n        = -1 !< ID associated with diagnostics for zooplankton production
     integer ::  id_o2lim          = -1 !< ID associated with diagnostics for oxygen limitation of zooplankton activity
     integer ::  id_temp_lim       = -1 !< ID associated with diagnostics for temperature limitation
-    integer ::  id_vmove          = -1 !< ID associated with diagnostics for vertical movement
     integer ::  id_jprod_n_100    = -1 !< ID associated with diagnostics for zooplankton nitrogen prod. integral in upper 100m
     integer ::  id_jingest_n_100  = -1 !< ID associated with diagnostics for zooplankton nitrogen ingestion integral in upper 100m
     integer ::  id_jzloss_n_100   = -1 !< ID associated with diagnostics for zooplankton nitrogen loss to zooplankton integral in upper 100m
@@ -709,7 +704,6 @@ module cobalt_types
           irr_inst,&
           irr_mix,&
           irr_aclm_inst, &
-          chl2sfcchl, &
           jno3denit_wc,&
           juptake_no3amx,&
           juptake_nh4amx,&
@@ -1024,7 +1018,6 @@ module cobalt_types
           id_irr_inst      = -1,       &
           id_irr_mix       = -1,       &
           id_irr_aclm_inst = -1,       &
-          id_chl2sfcchl    = -1,       &
           id_jalk          = -1,       &
           id_jalkc          = -1,       &  !liao
           id_jalk_plus_btm = -1,       &
