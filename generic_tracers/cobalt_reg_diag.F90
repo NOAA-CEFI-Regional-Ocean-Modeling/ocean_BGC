@@ -1802,10 +1802,6 @@ module COBALT_reg_diag
     cobalt%id_sfc_irr_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("sfc_irr_mem_dp","Surface Irradiance memory, diapause",'h','1','s','W m-2','f')
-    cobalt%id_sfc_irr_mem_dp = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
     vardesc_temp = vardesc("sfc_temp","Surface Temperature",'h','1','s','deg C','f')
     cobalt%id_sfc_temp = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
@@ -2345,10 +2341,6 @@ module COBALT_reg_diag
 
     vardesc_temp = vardesc("jprod_mesozoo_200","Mesozooplankton Production, 200m integration",'h','1','s','mol m-2 s-1','f')
     cobalt%id_jprod_mesozoo_200 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("dp_fac","diapause factor",'h','1','s','none','f')
-    cobalt%id_dp_fac = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("daylength","daylength",'h','1','s','hours','f')

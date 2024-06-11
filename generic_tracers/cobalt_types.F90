@@ -456,11 +456,7 @@ module cobalt_types
           case2_salt,       & ! salt threshold for case 2 (coastal) waters
           case2_opac_add,   & ! added opacity for case 2 (coastal) waters
           min_daylength,    &
-          gamma_irr_mem_dp, &
           gamma_mu_mem,     &
-          irr_mem_dpthresh1, &
-          irr_mem_dpthresh2, &
-          dpause_max,       &
           gamma_ndet,       &
           gamma_nitrif,     &
           k_nh3_nitrif,     &
@@ -588,7 +584,6 @@ module cobalt_types
           f_irr_aclm,&
           f_irr_aclm_z,&
           f_irr_aclm_sfc, &
-          f_irr_mem_dp,&
           f_cased,&
           f_cadet_arag_btf,&
           f_cadet_calc_btf,&
@@ -846,7 +841,6 @@ module cobalt_types
           z_o2min, &
           z_sat_arag,&
           z_sat_calc,&
-          dp_fac,&
           daylength,&
 !==============================================================================================================
 ! JGJ 2016/08/08 CMIP6 Ocnbgc
@@ -1112,7 +1106,6 @@ module cobalt_types
           id_sfc_chl       = -1,       &
           id_sfc_irr       = -1,       &
           id_sfc_irr_aclm   = -1,       &
-          id_sfc_irr_mem_dp = -1,      &
           id_sfc_temp      = -1,       &
           id_btm_temp      = -1,       &
           id_btm_temp_old  = -1,       &
@@ -1204,7 +1197,6 @@ module cobalt_types
           id_jprod_cadet_calc_100 = -1, &
           id_jprod_cadet_arag_100 = -1, &
           id_jprod_mesozoo_200 = -1,   &
-          id_dp_fac            = -1,   &
           id_daylength         = -1,   &
           id_jremin_ndet_100 = -1,     &
           id_f_ndet_100 = -1,          &
