@@ -3534,40 +3534,78 @@ contains
     call mpp_clock_end(id_clock_zooplankton_calculations)
 
     !
-    ! 3.2: Plankton foodweb dynamics: Other mortality and loss terms
+    ! 3.2: Plankton foodweb dynamics: mortality and loss terms other than zooplankton and higher predator consumption
     !
 
     call mpp_clock_begin(id_clock_other_losses)
 
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec; !{
 
+       ! 3.2.1 Calculate losses of phytoplankton to aggregation and mortality and the rate direct sinking.
        !
-       ! 3.2.1 Calculate losses of phytoplankton to aggregation and mortality
+       ! These losses depend on whether phytoplankton are growing well or "stressed". Stress is quanitified as a
+       ! factor between 0-1, "phyto(n)%stress_fac", determined by the ratio of growth rate achieved over 24 hours
+       ! (i.e., mu_mem) relative to the maximum photosynthetic rate, i.e.:
        !
+       ! growth_ratio = min( max(mu_mem,0)/(frac_mu_stress*P_C_max(T)), 1.0)
+       !
+       ! Note that growth_ratio = 1 when mu_mem >= frac_mu_stress*P_C_max(T) and approaches 0 as mu_mem -> 0.  The
+       ! stress factor is then claculated as:
+       !
+       ! stress_fac = (1-growth_ratio)**2
+       !
+       ! stress_fac thus equals 0 when mu_mem >= frac_mu_stress*P_C_max(T) and ramps up non-linearly to 1 as mu_mem->0.
+       ! Since stress_fac multiplies the loss term, stress_fac=0 shuts the loss off when the cell is "happy", while
+       ! stress_fac=1 allows the loss to achieve its full value when the cell is severely stressed.  This 
+       ! parameterization is consistent with observed sinking, aggregation, and stress-driven mortality responses
+       ! (e.g., Waite et al., 1992; Smayda et al., 1971).
+       !
+       ! Aggregation is modeled as a density-dependent (quadratic) loss that effects large cells most, does not
+       ! depend on temperature, and results in sinking detritus (e.g., Jackson et al., 1992).  Phytoplankton sinking as 
+       ! non-aggregates is simulated directly using the "move_vertical" option in generic_tracers, with larger and more
+       ! stressed cells sinking more quickly.  Phytoplankton mortality (cell death) is not used in the default settings
+       ! but it is set as a linear loss rate that generates dissolved organic material.  Note that this differs from
+       ! phytoplankton basal respiration, which is also linear but results in inorganic nutrients and carbon via 
+       ! respiration.
+       !
+       ! REFERENCES
+       ! Waite, A., Bienfeng, P.K., Harrison, P.J., 1992. Spring bloom sedimentation in a subarctic ecosystem.
+       !    Marine Biology, 114 131-138.  https://doi.org/10.1007/BF00350862
+       ! Smayda, T.J., Normal and accelerated sinking of phytoplankton in the sea. Marine Geology, 11(2), 105-122.
+       !    https://doi.org/10.1016/0025-3227(71)90070-3
+       ! Jackson, G.A., 1990. A model of the formation of marine algal flocs by physical coagulation processes.
+       !    Deep Sea Res A, 37(8), 1197-1211. https://doi.org/10.1016/0198-0149(90)90038-W
 
        do n = 1,NUM_PHYTO !{
+            ! calculate the stress factor
             growth_ratio = min(max(phyto(n)%f_mu_mem(i,j,k),0.0)/ &
                            (phyto(n)%frac_mu_stress*phyto(n)%P_C_max(i,j,k)*cobalt%expkT(i,j,k)),1.0)
             phyto(n)%stress_fac(i,j,k) = (1.0-growth_ratio)**2
+            ! calculate aggregation losses
             phyto(n)%jaggloss_n(i,j,k) = phyto(n)%stress_fac(i,j,k)*phyto(n)%agg*phyto(n)%f_n(i,j,k)**2.0
             phyto(n)%jaggloss_p(i,j,k) = phyto(n)%jaggloss_n(i,j,k)*phyto(n)%q_p_2_n(i,j,k)
             phyto(n)%jaggloss_fe(i,j,k) = phyto(n)%jaggloss_n(i,j,k)*phyto(n)%q_fe_2_n(i,j,k)
             phyto(n)%jaggloss_sio2(i,j,k) = phyto(n)%jaggloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
-
+            ! calculate phytoplankton mortality (cell death) (not used in default settings)
             phyto(n)%jmortloss_n(i,j,k) = cobalt%expkT(i,j,k)*phyto(n)%stress_fac(i,j,k)* &
                    phyto(n)%mort*phyto(n)%f_n(i,j,k)* &
                    phyto(n)%f_n(i,j,k)/(cobalt%refuge_conc + phyto(n)%f_n(i,j,k))
             phyto(n)%jmortloss_p(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_p_2_n(i,j,k)
             phyto(n)%jmortloss_fe(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_fe_2_n(i,j,k)
             phyto(n)%jmortloss_sio2(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
-
+            ! calculate the vertical sinking
             phyto(n)%vmove(i,j,k) = phyto(n)%sink_max*phyto(n)%stress_fac(i,j,k)
        enddo !} n
 
-
-       !
        ! 3.2.2 Calculate phytoplankton and bacterial losses to viruses
        !
+       ! Viral losses are modeled as a density-dependent (quadratic) loss term that impacts bacteria and phytoplankton
+       ! regardless of their stress.  Viral losses are more effective loss mechanisms for small phytoplankton (Murray
+       ! and Jackson, 1992) and produce dissolved organic material.
+       !
+       ! Reference: Murray and Jackson (1992). Viral dynamics: a model of the effects of size, shape motion and
+       ! abundance of single-celled planktonic organisms and other particles, Mar. Ecol. Prog. Ser., 89, 103-116.
+       ! http://www.jstor.org/stable/24831780.
 
        do n = 1,NUM_PHYTO !{
           phyto(n)%jvirloss_n(i,j,k) = bact(1)%temp_lim(i,j,k)*phyto(n)%vir*phyto(n)%f_n(i,j,k)**2.0
@@ -3579,9 +3617,15 @@ contains
        bact(1)%jvirloss_n(i,j,k) = bact(1)%temp_lim(i,j,k)*bact(1)%vir*bact(1)%f_n(i,j,k)**2.0
        bact(1)%jvirloss_p(i,j,k) = bact(1)%jvirloss_n(i,j,k)*bact(1)%q_p_2_n
 
-       !
        ! 3.2.3 Calculate losses to exudation
        !
+       ! Phytoplankton are assumed to lose a constant fraction of carbon they fix to dissolved organic nutrients 
+       ! (phyto(n)%exu = 0.13 (Baines and Pace, 1991).  The model assumes losses of phosphate and iron occur in
+       ! proportion the the loss in N, but Si is assumed to be in the cell structure.
+       !
+       ! Reference: Baines, S.B., Pace, M.L., 1991.  The production of dissolved organic matter by phytoplankton and
+       ! its importance to bacteria: Patterns across marine and freshwater systems. Limnol. and Oceanogr., 36(6),
+       ! 1078-1090. https://doi.org/10.4319/lo.1991.36.6.1078 
 
        n = DIAZO
        phyto(n)%jexuloss_n(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+ &
@@ -3596,19 +3640,21 @@ contains
 
     enddo; enddo; enddo  !} i,j,k
 
+    ! Assume that individually sinking phytoplankton, which sink at slow rates relative to aggregates and fecal
+    ! pellets, collect in a nepholoid layer and are available for resuspension if they are exposed to mixing. This
+    ! is accomplished by setting the vertical sinking rate in the bottom layer to 0, and is assumed to occur when 
+    ! when the depth is less than twice the depth of active mixing.  Cells are otherwise assumed to sink into the
+    ! benthos and be remineralized along with sinking detritus.
+
     do j = jsc, jec ; do i = isc, iec   !{
-       !
-       ! assume that individually sinking phytoplankton collect in nepholoid layer
-       ! and are available for resuspension if they are exposed to mixing
        do n = 1,NUM_PHYTO
          if (cobalt%zt(i,j,nk).le.(2.0*hblt_depth(i,j))) then
            phyto(n)%vmove(i,j,nk) = 0.0
          endif
        enddo
-
     enddo; enddo !} i,j
 
-    ! set vertical movement for phytoplankton
+    ! set the direct sinking rates for phytoplankton
     call g_tracer_set_values(tracer_list,'ndi','vmove',phyto(DIAZO)%vmove,isd,jsd)
     call g_tracer_set_values(tracer_list,'nsm','vmove',phyto(SMALL)%vmove,isd,jsd)
     call g_tracer_set_values(tracer_list,'nmd','vmove',phyto(MEDIUM)%vmove,isd,jsd)
