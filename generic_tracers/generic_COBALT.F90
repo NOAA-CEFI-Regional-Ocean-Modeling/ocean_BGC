@@ -3543,14 +3543,14 @@ contains
 
        ! 3.2.1 Calculate losses of phytoplankton to aggregation and mortality and the rate of direct sinking.
        !
-       ! These losses depend on whether phytoplankton are growing well or "stressed". Stress is quanitified as a
+       ! These losses depend on whether phytoplankton are growing well or "stressed". Stress is quantified as a
        ! factor between 0-1, "phyto(n)%stress_fac", determined by the ratio of growth rate achieved over 24 hours
        ! (i.e., mu_mem) relative to the maximum photosynthetic rate, i.e.:
        !
        ! growth_ratio = min( max(mu_mem,0)/(frac_mu_stress*P_C_max(T)), 1.0)
        !
        ! Note that growth_ratio = 1 when mu_mem >= frac_mu_stress*P_C_max(T) and approaches 0 as mu_mem -> 0.  The
-       ! stress factor is then claculated as:
+       ! stress factor is then calculated as:
        !
        ! stress_fac = (1-growth_ratio)**2
        !
@@ -3643,7 +3643,7 @@ contains
     ! Assume that individually sinking phytoplankton, which sink at slow rates relative to aggregates and fecal
     ! pellets, collect in a nepholoid layer and are available for resuspension if they are exposed to mixing. This
     ! is accomplished by setting the vertical sinking rate in the bottom layer to 0, and is assumed to occur when 
-    ! when the depth is less than twice the depth of active mixing.  Cells are otherwise assumed to sink into the
+    ! the depth is less than twice the depth of active mixing.  Cells are otherwise assumed to sink into the
     ! benthos and be remineralized along with sinking detritus.
 
     do j = jsc, jec ; do i = isc, iec   !{
