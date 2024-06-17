@@ -3534,40 +3534,78 @@ contains
     call mpp_clock_end(id_clock_zooplankton_calculations)
 
     !
-    ! 3.2: Plankton foodweb dynamics: Other mortality and loss terms
+    ! 3.2: Plankton foodweb dynamics: mortality and loss terms other than zooplankton and higher predator consumption
     !
 
     call mpp_clock_begin(id_clock_other_losses)
 
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec; !{
 
+       ! 3.2.1 Calculate losses of phytoplankton to aggregation and mortality and the rate of direct sinking.
        !
-       ! 3.2.1 Calculate losses of phytoplankton to aggregation and mortality
+       ! These losses depend on whether phytoplankton are growing well or "stressed". Stress is quantified as a
+       ! factor between 0-1, "phyto(n)%stress_fac", determined by the ratio of growth rate achieved over 24 hours
+       ! (i.e., mu_mem) relative to the maximum photosynthetic rate, i.e.:
        !
+       ! growth_ratio = min( max(mu_mem,0)/(frac_mu_stress*P_C_max(T)), 1.0)
+       !
+       ! Note that growth_ratio = 1 when mu_mem >= frac_mu_stress*P_C_max(T) and approaches 0 as mu_mem -> 0.  The
+       ! stress factor is then calculated as:
+       !
+       ! stress_fac = (1-growth_ratio)**2
+       !
+       ! stress_fac thus equals 0 when mu_mem >= frac_mu_stress*P_C_max(T) and ramps up non-linearly to 1 as mu_mem->0.
+       ! Since stress_fac multiplies the loss term, stress_fac=0 shuts the loss off when the cell is "happy", while
+       ! stress_fac=1 allows the loss to achieve its full value when the cell is severely stressed.  This 
+       ! parameterization is consistent with observed sinking, aggregation, and stress-driven mortality responses
+       ! (e.g., Waite et al., 1992; Smayda et al., 1971).
+       !
+       ! Aggregation is modeled as a density-dependent (quadratic) loss that effects large cells most, does not
+       ! depend on temperature, and results in sinking detritus (e.g., Jackson et al., 1992).  Phytoplankton sinking as 
+       ! non-aggregates is simulated directly using the "move_vertical" option in generic_tracers, with larger and more
+       ! stressed cells sinking more quickly.  Phytoplankton mortality (cell death) is not used in the default settings
+       ! but it is set as a linear loss rate that generates dissolved organic material.  Note that this differs from
+       ! phytoplankton basal respiration, which is also linear but results in inorganic nutrients and carbon via 
+       ! respiration.
+       !
+       ! REFERENCES
+       ! Waite, A., Bienfeng, P.K., Harrison, P.J., 1992. Spring bloom sedimentation in a subarctic ecosystem.
+       !    Marine Biology, 114 131-138.  https://doi.org/10.1007/BF00350862
+       ! Smayda, T.J., Normal and accelerated sinking of phytoplankton in the sea. Marine Geology, 11(2), 105-122.
+       !    https://doi.org/10.1016/0025-3227(71)90070-3
+       ! Jackson, G.A., 1990. A model of the formation of marine algal flocs by physical coagulation processes.
+       !    Deep Sea Res A, 37(8), 1197-1211. https://doi.org/10.1016/0198-0149(90)90038-W
 
        do n = 1,NUM_PHYTO !{
+            ! calculate the stress factor
             growth_ratio = min(max(phyto(n)%f_mu_mem(i,j,k),0.0)/ &
                            (phyto(n)%frac_mu_stress*phyto(n)%P_C_max(i,j,k)*cobalt%expkT(i,j,k)),1.0)
             phyto(n)%stress_fac(i,j,k) = (1.0-growth_ratio)**2
+            ! calculate aggregation losses
             phyto(n)%jaggloss_n(i,j,k) = phyto(n)%stress_fac(i,j,k)*phyto(n)%agg*phyto(n)%f_n(i,j,k)**2.0
             phyto(n)%jaggloss_p(i,j,k) = phyto(n)%jaggloss_n(i,j,k)*phyto(n)%q_p_2_n(i,j,k)
             phyto(n)%jaggloss_fe(i,j,k) = phyto(n)%jaggloss_n(i,j,k)*phyto(n)%q_fe_2_n(i,j,k)
             phyto(n)%jaggloss_sio2(i,j,k) = phyto(n)%jaggloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
-
+            ! calculate phytoplankton mortality (cell death) (not used in default settings)
             phyto(n)%jmortloss_n(i,j,k) = cobalt%expkT(i,j,k)*phyto(n)%stress_fac(i,j,k)* &
                    phyto(n)%mort*phyto(n)%f_n(i,j,k)* &
                    phyto(n)%f_n(i,j,k)/(cobalt%refuge_conc + phyto(n)%f_n(i,j,k))
             phyto(n)%jmortloss_p(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_p_2_n(i,j,k)
             phyto(n)%jmortloss_fe(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_fe_2_n(i,j,k)
             phyto(n)%jmortloss_sio2(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
-
+            ! calculate the vertical sinking
             phyto(n)%vmove(i,j,k) = phyto(n)%sink_max*phyto(n)%stress_fac(i,j,k)
        enddo !} n
 
-
-       !
        ! 3.2.2 Calculate phytoplankton and bacterial losses to viruses
        !
+       ! Viral losses are modeled as a density-dependent (quadratic) loss term that impacts bacteria and phytoplankton
+       ! regardless of their stress.  Viral losses are more effective loss mechanisms for small phytoplankton (Murray
+       ! and Jackson, 1992) and produce dissolved organic material.
+       !
+       ! Reference: Murray and Jackson (1992). Viral dynamics: a model of the effects of size, shape motion and
+       ! abundance of single-celled planktonic organisms and other particles, Mar. Ecol. Prog. Ser., 89, 103-116.
+       ! http://www.jstor.org/stable/24831780.
 
        do n = 1,NUM_PHYTO !{
           phyto(n)%jvirloss_n(i,j,k) = bact(1)%temp_lim(i,j,k)*phyto(n)%vir*phyto(n)%f_n(i,j,k)**2.0
@@ -3579,9 +3617,15 @@ contains
        bact(1)%jvirloss_n(i,j,k) = bact(1)%temp_lim(i,j,k)*bact(1)%vir*bact(1)%f_n(i,j,k)**2.0
        bact(1)%jvirloss_p(i,j,k) = bact(1)%jvirloss_n(i,j,k)*bact(1)%q_p_2_n
 
-       !
        ! 3.2.3 Calculate losses to exudation
        !
+       ! Phytoplankton are assumed to lose a constant fraction of nitrogen they fix to dissolved organic nutrients 
+       ! (phyto(n)%exu = 0.13 (Baines and Pace, 1991).  The model assumes losses of phosphate and iron occur in
+       ! proportion the the loss in N, but Si is assumed to be in the cell structure.
+       !
+       ! Reference: Baines, S.B., Pace, M.L., 1991.  The production of dissolved organic matter by phytoplankton and
+       ! its importance to bacteria: Patterns across marine and freshwater systems. Limnol. and Oceanogr., 36(6),
+       ! 1078-1090. https://doi.org/10.4319/lo.1991.36.6.1078 
 
        n = DIAZO
        phyto(n)%jexuloss_n(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+ &
@@ -3596,19 +3640,21 @@ contains
 
     enddo; enddo; enddo  !} i,j,k
 
+    ! Assume that individually sinking phytoplankton, which sink at slow rates relative to aggregates and fecal
+    ! pellets, collect in a nepholoid layer and are available for resuspension if they are exposed to mixing. This
+    ! is accomplished by setting the vertical sinking rate in the bottom layer to 0, and is assumed to occur when 
+    ! the depth is less than twice the depth of active mixing.  Cells are otherwise assumed to sink into the
+    ! benthos and be remineralized along with sinking detritus.
+
     do j = jsc, jec ; do i = isc, iec   !{
-       !
-       ! assume that individually sinking phytoplankton collect in nepholoid layer
-       ! and are available for resuspension if they are exposed to mixing
        do n = 1,NUM_PHYTO
          if (cobalt%zt(i,j,nk).le.(2.0*hblt_depth(i,j))) then
            phyto(n)%vmove(i,j,nk) = 0.0
          endif
        enddo
-
     enddo; enddo !} i,j
 
-    ! set vertical movement for phytoplankton
+    ! set the direct sinking rates for phytoplankton
     call g_tracer_set_values(tracer_list,'ndi','vmove',phyto(DIAZO)%vmove,isd,jsd)
     call g_tracer_set_values(tracer_list,'nsm','vmove',phyto(SMALL)%vmove,isd,jsd)
     call g_tracer_set_values(tracer_list,'nmd','vmove',phyto(MEDIUM)%vmove,isd,jsd)
@@ -3627,20 +3673,25 @@ contains
     call mpp_clock_end(id_clock_other_losses)
 
     !
-    ! 3.3: Plankton foodweb dynamics: Production calculations
+    ! 3.3: Plankton foodweb dynamics: production of different ecosystem constituents resulting from ingestion and other
+    !      loss processes. Products include detritus, dissolved organic matter, new zooplankton and inorganic nutrients
     !
 
     call mpp_clock_begin(id_clock_production_loop)
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
 
+       ! 3.3.1: Production of detritus and dissolved organic matter
+       ! 
+       ! The production of detritus and dissolved organic material is controlled by phi_det, phi_ldon, phi_sldon and
+       ! phi_srdon (and corresponding values for P).  These are generally specified as fractions of the ingested   
+       ! material, or fractions of the loss term. 
        !
-       ! 3.3.1: Calculate the production of detritus and dissolved organic material
-       !
-       !
-       ! Production of detritus and dissolved organic material from zooplankton egestion
-       !
+       ! Note: For zooplankton ingestion, the "assimilation efficiency" is determined by 1.0 - the egested fraction.
+       ! This is assumed to be 0.7 by default. Thus, for zoo phi_det + phi_ldon + phi_sldon + phi_srdon = 0.3.  If 
+       ! this sum increases, you have effectively decreased the assimilation efficiency and vice-versa.
 
        do m = 1,NUM_ZOO
+           ! calculate detritus and dissolved organic production for each zooplankton group
            zoo(m)%jprod_ndet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_n(i,j,k)
            zoo(m)%jprod_pdet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_p(i,j,k)
            zoo(m)%jprod_sldon(i,j,k) = zoo(m)%phi_sldon*zoo(m)%jingest_n(i,j,k)
@@ -3652,8 +3703,7 @@ contains
            zoo(m)%jprod_fedet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_fe(i,j,k)
            zoo(m)%jprod_sidet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_sio2(i,j,k)
 
-
-           ! augment cumulative production with zooplankton terms
+           ! augment cumulative production variables for detritus and dissolved organics
            cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + zoo(m)%jprod_ndet(i,j,k)
            cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + zoo(m)%jprod_pdet(i,j,k)
            cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) + zoo(m)%jprod_sldon(i,j,k)
@@ -3666,20 +3716,14 @@ contains
            cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + zoo(m)%jprod_sidet(i,j,k)
        enddo !} m
 
-       !
        ! Production of detritus and dissolved organic material from higher predator egestion
-       ! (did not track individual terms, just add to cumulative total)
-       !
-
+       ! (just added to cumulative total. It is easy to calculate from phi_det and hp_jingest)
        cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
        cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
        cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_fe(i,j,k)
        cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_sio2(i,j,k)
 
-       !
-       ! Sources from phytoplankton aggregation
-       !
-
+       ! Detritus produced via phytoplankton aggregation
        do m = 1,NUM_PHYTO
            cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + phyto(m)%jaggloss_n(i,j,k)
            cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + phyto(m)%jaggloss_p(i,j,k)
@@ -3687,10 +3731,9 @@ contains
            cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + phyto(m)%jaggloss_sio2(i,j,k)
        enddo !} m
 
-       !
-       ! Sources from viral lysis of phytoplankton and exudation and mortality
-       !
-
+       ! Dissolved organic and inorganic production from viral lysis, exudation, and phytoplankton mortality
+       ! All of the exuded organic material is assumed to be labile. The partitioning of losses to viruses and
+       ! phytoplankton mortality is determined by lysis_phi_ldon, lysis_phi_sldon and lysis_phi_srdon.
        do m = 1,NUM_PHYTO
            cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) + cobalt%lysis_phi_ldon* &
                    (phyto(m)%jvirloss_n(i,j,k) + phyto(m)%jmortloss_n(i,j,k)) + phyto(m)%jexuloss_n(i,j,k)
@@ -3704,17 +3747,13 @@ contains
                    (phyto(m)%jvirloss_p(i,j,k) + phyto(m)%jmortloss_p(i,j,k))
            cobalt%jprod_srdop(i,j,k) = cobalt%jprod_srdop(i,j,k) + cobalt%lysis_phi_srdop* &
                    (phyto(m)%jvirloss_p(i,j,k) + phyto(m)%jmortloss_p(i,j,k))
-           cobalt%jprod_fed(i,j,k)   = cobalt%jprod_fed(i,j,k)   + phyto(m)%jvirloss_fe(i,j,k) + &
+           cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k)   + phyto(m)%jvirloss_fe(i,j,k) + &
                                        phyto(m)%jmortloss_fe(i,j,k) + phyto(m)%jexuloss_fe(i,j,k)
            cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + phyto(m)%jvirloss_sio2(i,j,k) + &
-                   phyto(m)%jmortloss_sio2(i,j,k)
+                                      phyto(m)%jmortloss_sio2(i,j,k)
        enddo !} m
 
-
-       !
        ! Sources of dissolved organic material from viral lysis due to bacteria
-       !
-
        cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) + cobalt%lysis_phi_ldon*bact(1)%jvirloss_n(i,j,k)
        cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) + cobalt%lysis_phi_sldon*bact(1)%jvirloss_n(i,j,k)
        cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) + cobalt%lysis_phi_srdon*bact(1)%jvirloss_n(i,j,k)
@@ -3722,17 +3761,11 @@ contains
        cobalt%jprod_sldop(i,j,k) = cobalt%jprod_sldop(i,j,k) + cobalt%lysis_phi_sldop*bact(1)%jvirloss_p(i,j,k)
        cobalt%jprod_srdop(i,j,k) = cobalt%jprod_srdop(i,j,k) + cobalt%lysis_phi_srdop*bact(1)%jvirloss_p(i,j,k)
 
-       !
-       ! Sources of dissolved organic material from bacterial mortality (metabolic costs higher than food uptake).
-       ! These conditions are assumed to lead to a lysis-like redistribution of bacteria organic matter.
-       !
-
-       cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) - cobalt%lysis_phi_ldon* &
-                                  min(bact(1)%jprod_n(i,j,k),0.0)
-       cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) - cobalt%lysis_phi_sldon* &
-                                  min(bact(1)%jprod_n(i,j,k),0.0)
-       cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) - cobalt%lysis_phi_srdon* &
-                                  min(bact(1)%jprod_n(i,j,k),0.0)
+       ! When bacterial production is negative, send it to dissolved organic material assuming the partitioning
+       ! between different labilities is analogous to viral lysis.
+       cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) - cobalt%lysis_phi_ldon*min(bact(1)%jprod_n(i,j,k),0.0)
+       cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) - cobalt%lysis_phi_sldon*min(bact(1)%jprod_n(i,j,k),0.0)
+       cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) - cobalt%lysis_phi_srdon*min(bact(1)%jprod_n(i,j,k),0.0)
        cobalt%jprod_ldop(i,j,k) = cobalt%jprod_ldop(i,j,k) - cobalt%lysis_phi_ldop* &
                                   min(bact(1)%jprod_n(i,j,k)*bact(1)%q_p_2_n,0.0)
        cobalt%jprod_sldop(i,j,k) = cobalt%jprod_sldop(i,j,k) - cobalt%lysis_phi_sldop* &
@@ -3741,31 +3774,47 @@ contains
                                   min(bact(1)%jprod_n(i,j,k)*bact(1)%q_p_2_n,0.0)
 
 
-       !
        ! 3.3.2: Zooplankton production and excretion calculations
        !
+       ! Zooplankton growth and respiration/excretion depends on two fundamental metabolic parameters:
+       !
+       ! 1. The assimilation efficiency is the fraction of ingested food that is assimilated for either anabolic
+       !    (i.e., growth) or catabolic (i.e., respiration) reactions.  It is equal to 1 - the egested fraction
+       !    and has a default value of 0.7.
+       ! 2. The gross growth efficiency is the fraction of ingested food that contributes to growth (anabolic)
+       !    metabolism.
+       !
+       ! Zooplankton production is determined by multiplying the ingestion rate by the maximum growth efficiency
+       ! (i.e., gge_max) and then subtracting off the basal respiration rate.  By default, gge_max = 0.4 (Straile
+       ! et al., 1997, Hansen et al., 1997).  Thus, when ingestion >> basal respiration, gge -> 0.4, the fraction of
+       ! ingestion respired -> 0.7-0.4 = 0.3, and the fraction egested as either detritus or dissolved organic matter
+       ! = 0.3.  When ingestion = basal respiration, gge -> 0, the fraction of ingestion respired -> 0.7 and the
+       ! fraction egested remains 0.3.  When production is negative, respire all assimilated material and route negative
+       ! production to detritus.  Nutrients are excreted in balance with respiration.
+       !
+       ! References:
+       ! Hansen, P.J., Bjornsen, P.K., Hansen, B.W., 1997. Zooplankton grazing and growth: scaling within the 
+       !   2–2000-micron body size range. Limnol. & Oceanogr. 42, 687–704.
+       !   https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1997.42.4.0687
+       ! Straile, D., 1997. Gross growth efficiencies of protozoan and metazoan zooplankton and their dependence on
+       !   food concentration, predator-prey weight ratio, and taxonomic group. Limnol. and Oceanogr. 42, 1375-1385.
+       !    https://doi.org/10.4319/lo.1997.42.6.137
 
        do m = 1,NUM_ZOO
+          ! calculate the assimilation efficiency
           assim_eff = 1.0-zoo(m)%phi_det-zoo(m)%phi_ldon-zoo(m)%phi_sldon-zoo(m)%phi_srdon
 
-          if (m == 3) then
-            zoo(m)%jprod_n(i,j,k) = zoo(m)%gge_max*zoo(m)%jingest_n(i,j,k) - &
-                           zoo(m)%f_n(i,j,k)/(cobalt%refuge_conc + zoo(m)%f_n(i,j,k))* &
-                           zoo(m)%temp_lim(i,j,k)*zoo(m)%bresp*zoo(m)%f_n(i,j,k)
-          else
-            zoo(m)%jprod_n(i,j,k) = zoo(m)%gge_max*zoo(m)%jingest_n(i,j,k) - &
-                           zoo(m)%f_n(i,j,k)/(cobalt%refuge_conc + zoo(m)%f_n(i,j,k))* &
-                           zoo(m)%temp_lim(i,j,k)*zoo(m)%bresp*zoo(m)%f_n(i,j,k)
-          endif
-
+          ! calculate production assuming N is limiting
+          zoo(m)%jprod_n(i,j,k) = zoo(m)%gge_max*zoo(m)%jingest_n(i,j,k) - &
+                         zoo(m)%f_n(i,j,k)/(cobalt%refuge_conc + zoo(m)%f_n(i,j,k))* &
+                         zoo(m)%temp_lim(i,j,k)*zoo(m)%bresp*zoo(m)%f_n(i,j,k)
+          ! Adjust downward if there is insufficient phosphorus to support N-based zooplankton growth.  This assumes
+          ! that the zooplankter can used its full allotment of assimilated P
           zoo(m)%jprod_n(i,j,k) = min(zoo(m)%jprod_n(i,j,k), &
                                       assim_eff*zoo(m)%jingest_p(i,j,k)/zoo(m)%q_p_2_n)
 
-          !
-          ! Ingested material that does not go to zooplankton production, detrital production
-          ! or production of dissolved organic material is excreted as nh4 or po4.  If production
-          ! is negative, zooplankton are lost to large detritus
-          !
+          ! Ingested material that does not go to zooplankton production or egestion (i.e., detrital production or
+          ! production of dissolved organic material) is excreted as nh4 or po4 as part of the respiration process.
           if (zoo(m)%jprod_n(i,j,k) .gt. 0.0) then
              zoo(m)%jprod_nh4(i,j,k) =  zoo(m)%jingest_n(i,j,k) - zoo(m)%jprod_ndet(i,j,k) -  &
                                         zoo(m)%jprod_n(i,j,k) - zoo(m)%jprod_ldon(i,j,k) - &
@@ -3773,47 +3822,36 @@ contains
              zoo(m)%jprod_po4(i,j,k) =  zoo(m)%jingest_p(i,j,k) - zoo(m)%jprod_pdet(i,j,k) - &
                                         zoo(m)%jprod_n(i,j,k)*zoo(m)%q_p_2_n - zoo(m)%jprod_ldop(i,j,k) -  &
                                         zoo(m)%jprod_sldop(i,j,k) - zoo(m)%jprod_srdop(i,j,k)
+          ! If production is negative, respire all assimilated material and route negative production to large detritus
           else
-             ! None of the ingestion material goes to zooplankton production
              zoo(m)%jprod_nh4(i,j,k) =  zoo(m)%jingest_n(i,j,k) - zoo(m)%jprod_ndet(i,j,k) - &
                                         zoo(m)%jprod_ldon(i,j,k) - zoo(m)%jprod_sldon(i,j,k) - &
                                         zoo(m)%jprod_srdon(i,j,k)
              zoo(m)%jprod_po4(i,j,k) =  zoo(m)%jingest_p(i,j,k) - zoo(m)%jprod_pdet(i,j,k) - &
                                         zoo(m)%jprod_ldop(i,j,k) - zoo(m)%jprod_sldop(i,j,k) - &
                                         zoo(m)%jprod_srdop(i,j,k)
-
-             ! The negative production (i.e., mortality) is lost to large detritus. Update values
-             ! for zooplankton and for total.
-
              zoo(m)%jprod_ndet(i,j,k) = zoo(m)%jprod_ndet(i,j,k) - zoo(m)%jprod_n(i,j,k)
              zoo(m)%jprod_pdet(i,j,k) = zoo(m)%jprod_pdet(i,j,k) - zoo(m)%jprod_n(i,j,k)*zoo(m)%q_p_2_n
              cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) - zoo(m)%jprod_n(i,j,k)
              cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) - zoo(m)%jprod_n(i,j,k)*zoo(m)%q_p_2_n
           endif
 
-          ! cumulative production of inorganic nutrients
+          ! Add respiration-associated excretion to the cumulative production of inorganic nutrients
           cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + zoo(m)%jprod_nh4(i,j,k)
           cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + zoo(m)%jprod_po4(i,j,k)
+          ! Zooplankton respiration uses oxygen 
           cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + zoo(m)%jprod_nh4(i,j,k)*cobalt%o2_2_nh4
 
-          !
-          ! Any ingested iron that is not allocated to detritus is routed back to the
-          ! dissolved pool.
-          !
+          ! Any ingested iron that is not allocated to detritus is routed back to the dissolved pool
           zoo(m)%jprod_fed(i,j,k) = (1.0 - zoo(m)%phi_det)*zoo(m)%jingest_fe(i,j,k)
           cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + zoo(m)%jprod_fed(i,j,k)
-          !
-          ! Any ingested opal that is not allocated to detritus is assumed to undergo
-          ! rapid dissolution to dissolved silica
-          !
+
+          ! Ingested opal not allocated to detritus undergoes rapid dissolution to dissolved silica
           zoo(m)%jprod_sio4(i,j,k) = (1.0 - zoo(m)%phi_det)*zoo(m)%jingest_sio2(i,j,k)
           cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + zoo(m)%jprod_sio4(i,j,k)
-
        enddo !} m
 
-       !
-       ! Excretion by higher predators
-       !
+       ! Food ingested by higher predators that is not egested to detritus is excreted
        cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_fe(i,j,k)
        cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_sio2(i,j,k)
        cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)
