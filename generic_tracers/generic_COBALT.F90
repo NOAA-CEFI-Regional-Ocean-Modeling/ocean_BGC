@@ -3686,7 +3686,7 @@ contains
        ! phi_srdon (and corresponding values for P).  These are generally specified as fractions of the ingested   
        ! material, or fractions of the loss term. 
        !
-       ! Note: For zooplankton ingestion, the "assimilation efficieny" is determined by 1.0 - the egested fraction.
+       ! Note: For zooplankton ingestion, the "assimilation efficiency" is determined by 1.0 - the egested fraction.
        ! This is assumed to be 0.7 by default. Thus, for zoo phi_det + phi_ldon + phi_sldon + phi_srdon = 0.3.  If 
        ! this sum increases, you have effectively decreased the assimilation efficiency and vice-versa.
 
@@ -3814,7 +3814,7 @@ contains
                                       assim_eff*zoo(m)%jingest_p(i,j,k)/zoo(m)%q_p_2_n)
 
           ! Ingested material that does not go to zooplankton production or egestion (i.e., detrital production or
-          ! production of dissolved organic material is excreted as nh4 or po4 as part of the respiration process.
+          ! production of dissolved organic material) is excreted as nh4 or po4 as part of the respiration process.
           if (zoo(m)%jprod_n(i,j,k) .gt. 0.0) then
              zoo(m)%jprod_nh4(i,j,k) =  zoo(m)%jingest_n(i,j,k) - zoo(m)%jprod_ndet(i,j,k) -  &
                                         zoo(m)%jprod_n(i,j,k) - zoo(m)%jprod_ldon(i,j,k) - &
