@@ -3619,7 +3619,7 @@ contains
 
        ! 3.2.3 Calculate losses to exudation
        !
-       ! Phytoplankton are assumed to lose a constant fraction of carbon they fix to dissolved organic nutrients 
+       ! Phytoplankton are assumed to lose a constant fraction of nitrogen they fix to dissolved organic nutrients 
        ! (phyto(n)%exu = 0.13 (Baines and Pace, 1991).  The model assumes losses of phosphate and iron occur in
        ! proportion the the loss in N, but Si is assumed to be in the cell structure.
        !
