@@ -98,12 +98,6 @@
 ! This is a mistake that will be fixed later.
 !  </DATA>
 !
-!  <DATA NAME="co2_calc" TYPE="character">
-!  Defines the carbon equilibration method.  Default is 'ocmip2' which uses
-! the FMS_ocmip2_co2calc routine.  The other option is 'mocsy', which uses
-! the set of routines authored by J. Orr. See reference at:
-! http://ocmip5.ipsl.jussieu.fr/mocsy/index.html
-!
 !</NAMELIST>
 !
 !</DESCRIPTION>
@@ -165,7 +159,7 @@ module generic_COBALT
 
   use MOM_file_parser,   only : read_param, get_param, log_version, param_file_type
 
-  use FMS_ocmip2_co2calc_mod, only : FMS_ocmip2_co2calc, CO2_dope_vector
+  use FMS_co2calc_mod, only : FMS_co2calc, CO2_dope_vector
 
   implicit none ; private
 
@@ -188,7 +182,7 @@ module generic_COBALT
                                              !! but can be replaced by setting as_param_cobalt
                                              !! in generic_COBALT_nml.
 
-  namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
+  namelist /generic_COBALT_nml/ co2_calc, do_14c, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
      o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,gamma_nitrif,do_vertfill_pre,imbalance_tolerance, &
      as_param_cobalt
   
@@ -271,13 +265,6 @@ contains
       write (stdoutunit,*) trim(note_header), 'Simulating radiocarbon'
     endif
 
-    if (trim(co2_calc) == 'ocmip2') then
-      write (stdoutunit,*) trim(note_header), 'Using FMS OCMIP2 CO2 routine'
-    else if (trim(co2_calc) == 'mocsy') then
-      write (stdoutunit,*) trim(note_header), 'Using Mocsy CO2 routine'
-    else
-      call mpp_error(FATAL,"Unknown co2_calc option specified in generic_COBALT_nml")
-    endif
     !Specify all prognostic and diagnostic tracers of this modules.
     call user_add_tracers(tracer_list)
 
@@ -2350,7 +2337,7 @@ contains
     enddo; enddo ; !} i, j
 
 
-    call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
+    call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
          Temp(:,:,k), Salt(:,:,k),                    &
          cobalt%f_dic(:,:,k),                          &
          cobalt%f_po4(:,:,k),                          &
@@ -2360,7 +2347,6 @@ contains
                                 !InOut
          cobalt%f_htotal(:,:,k),                       &
                                 !Optional In
-         co2_calc=trim(co2_calc),                      &
          zt=cobalt%zt(:,:,k),                          &
                                 !OUT
          co2star=cobalt%co2_csurf(:,:), alpha=cobalt%co2_alpha(:,:), &
@@ -2375,7 +2361,7 @@ contains
           cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * cobalt%f_htotal(i,j,k)
        enddo; enddo ; !} i, j
 
-       call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
+       call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
             Temp(:,:,k), Salt(:,:,k),                    &
             cobalt%f_dic(:,:,k),                          &
             cobalt%f_po4(:,:,k),                          &
@@ -2385,7 +2371,6 @@ contains
                                 !InOut
             cobalt%f_htotal(:,:,k),                       &
                                 !Optional In
-            co2_calc=trim(co2_calc),                      &
             zt=cobalt%zt(:,:,k),                          &
                                 !OUT
             co3_ion=cobalt%f_co3_ion(:,:,k), &
@@ -3873,31 +3858,10 @@ contains
     !
     ! 4.1: Calculate aragonite and calcite saturation states
     !
-       if (trim(co2_calc) == "ocmip2") then
-         TK = Temp(i,j,k) + 273.15
-         PRESS = 0.1016 * cobalt%zt(i,j,k) + 1.013
-         PKSPA = 171.945 + 0.077993 * TK - 2903.293 / TK - 71.595 * log10(TK) - (-0.068393 + 1.7276e-3 * &
-            TK + 88.135 / TK) * sqrt(max(epsln, Salt(i,j,k))) + 0.10018 * max(epsln, Salt(i,j,k)) -      &
-            5.9415e-3 * max(epsln, Salt(i,j,k))**(1.5) - 0.02 - (48.76 - 2.8 - 0.5304 * Temp(i,j,k)) *   &
-            (PRESS - 1.013) / (191.46 * TK) + (1e-3 * (11.76 - 0.3692 * Temp(i,j,k))) * (PRESS - 1.013) *&
-            (PRESS - 1.013) / (382.92 * TK)
-         cobalt%co3_sol_arag(i,j,k) = 10**(-PKSPA) / (2.937d-4 * max(5.0, Salt(i,j,k)))
-         cobalt%omega_arag(i,j,k) = cobalt%f_co3_ion(i,j,k) / cobalt%co3_sol_arag(i,j,k)
-         PKSPC = 171.9065 + 0.077993 * TK - 2839.319 / TK - 71.595 * log10(TK) - (-0.77712 + 2.8426e-3 * &
-            TK + 178.34 / TK) * sqrt(max(epsln, Salt(i,j,k))) + 0.07711 * max(epsln, Salt(i,j,k)) -      &
-            4.1249e-3 * max(epsln, Salt(i,j,k))**(1.5) - 0.02 - (48.76 - 0.5304 * Temp(i,j,k)) *         &
-            (PRESS - 1.013) / (191.46 * TK) + (1e-3 * (11.76 - 0.3692 * Temp(i,j,k))) * (PRESS - 1.013) *&
-            (PRESS - 1.013) / (382.92 * TK)
-         cobalt%co3_sol_calc(i,j,k) = 10**(-PKSPC) / (2.937d-4 * max(5.0, Salt(i,j,k)))
-         cobalt%omega_calc(i,j,k) = cobalt%f_co3_ion(i,j,k) / cobalt%co3_sol_calc(i,j,k)
-      else if (trim(co2_calc) == "mocsy") then
-         cobalt%omega_arag(i,j,k) = cobalt%omegaa(i,j,k)  ! from Mocsy
-         cobalt%omega_calc(i,j,k) = cobalt%omegac(i,j,k)  ! from Mocsy
-         cobalt%co3_sol_arag(i,j,k) = cobalt%f_co3_ion(i,j,k) / max(cobalt%omega_arag(i,j,k),epsln)
-         cobalt%co3_sol_calc(i,j,k) = cobalt%f_co3_ion(i,j,k) / max(cobalt%omega_calc(i,j,k),epsln)
-      else
-        call mpp_error(FATAL,"Unable to compute aragonite and calcite saturation states")
-      endif
+      cobalt%omega_arag(i,j,k) = cobalt%omegaa(i,j,k)  ! from Mocsy
+      cobalt%omega_calc(i,j,k) = cobalt%omegac(i,j,k)  ! from Mocsy
+      cobalt%co3_sol_arag(i,j,k) = cobalt%f_co3_ion(i,j,k) / max(cobalt%omega_arag(i,j,k),epsln)
+      cobalt%co3_sol_calc(i,j,k) = cobalt%f_co3_ion(i,j,k) / max(cobalt%omega_calc(i,j,k),epsln)
 
     enddo; enddo ; enddo !} i,j,k
 
@@ -5969,16 +5933,15 @@ contains
           cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * htotal_field(i,j,1)
        enddo; enddo ; !} i, j
 
-       if(present(dzt)) then
+       if(.not. present(dzt)) then
           ! 2017/08/11 jgj is cobalt type defined/passed here ?
           !        do j = jsc, jec ; do i = isc, iec  !{
           !         cobalt%zt(i,j,1) = dzt(i,j,1)
           !        enddo; enddo ; !} i, j
-       elseif (trim(co2_calc) == 'mocsy') then
-          call mpp_error(FATAL,"mocsy method of co2_calc needs dzt to be passed to the FMS_ocmip2_co2calc subroutine.")
+          call mpp_error(FATAL,"mocsy method of co2_calc needs dzt to be passed to the FMS_co2calc subroutine.")
        endif
 
-       call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,1), &
+       call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,1), &
             SST(:,:), SSS(:,:),                            &
             dic_field(:,:,1,tau),                          &
             po4_field(:,:,1,tau),                          &
@@ -5988,7 +5951,6 @@ contains
                                 !InOut
             htotal_field(:,:,1),                           &
                                 !Optional In
-            co2_calc=trim(co2_calc),                       &
             !! jgj 2017/08/11
             !!zt=cobalt%zt(:,:,1),                           &
             zt=dzt(:,:,1),                                 &
@@ -6262,7 +6224,7 @@ contains
 
     !Allocate all the private arrays.
 
-    !Used in ocmip2_co2calc
+    !Used in FMS_co2calc
     CO2_dope_vec%isc = isc ; CO2_dope_vec%iec = iec
     CO2_dope_vec%jsc = jsc ; CO2_dope_vec%jec = jec
     CO2_dope_vec%isd = isd ; CO2_dope_vec%ied = ied
