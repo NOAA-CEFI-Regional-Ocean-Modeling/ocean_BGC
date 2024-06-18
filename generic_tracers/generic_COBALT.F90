@@ -265,6 +265,12 @@ contains
       write (stdoutunit,*) trim(note_header), 'Simulating radiocarbon'
     endif
 
+    if (trim(co2_calc) == 'mocsy') then
+      write (stdoutunit,*) trim(note_header), 'Using Mocsy CO2 routine'
+    else
+      call mpp_error(FATAL,"Unknown co2_calc option specified in generic_COBALT_nml")
+    endif
+
     !Specify all prognostic and diagnostic tracers of this modules.
     call user_add_tracers(tracer_list)
 

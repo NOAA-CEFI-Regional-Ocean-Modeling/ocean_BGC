@@ -775,6 +775,12 @@ write (stdoutunit,'(/)')
 write (stdoutunit, generic_bling_nml)
 write (stdlogunit, generic_bling_nml)
 
+  if (trim(co2_calc) == 'mocsy') then
+    write (stdoutunit,*) trim(note_header), 'Using Mocsy CO2 routine'
+  else
+    call mpp_error(FATAL,"Unknown co2_calc option specified in generic_BLING_nml")
+  endif
+
   if ((do_14c) .and. (do_carbon)) then
     write (stdoutunit,*) trim(note_header), 'Simulating radiocarbon'
   else if ((do_14c) .and. .not. (do_carbon)) then
