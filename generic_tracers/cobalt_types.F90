@@ -485,6 +485,8 @@ module cobalt_types
           no3_2_nh4_amx,     &
           alk_2_nh4_amx,    &
           z_burial,         &
+          scale_burial,     &
+          z_denit,          &
           phi_surfresp_cased, &
           phi_deepresp_cased, &
           alpha_cased,      &

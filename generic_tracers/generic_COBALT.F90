@@ -979,10 +979,18 @@ contains
     call get_param(param_file, "generic_COBALT", "phi_lith" ,        cobalt%phi_lith,          "phi_lith" ,        units="dimensionless ", default= 0.002)                       ! dimensionless
     call get_param(param_file, "generic_COBALT", "k_lith",           cobalt%k_lith,            "k_lith",           units="year-1", &
                    default= 0.5, scale = I_spery ) 
-    call get_param(param_file, "generic_COBALT", "bottom_thickness", cobalt%bottom_thickness,  "bottom_thickness", units="m             ", default= 1.0 )                        ! m
-    call get_param(param_file, "generic_COBALT", "z_sed",            cobalt%z_sed,             "z_sed",            units="m             ", default= 0.1 )                        ! m
-    call get_param(param_file, "generic_COBALT", "k_no3_denit",      cobalt%k_no3_denit,       "k_no3_denit",      units="mol NO3 kg-1  ", default= 1.0e-6)                      ! mol NO3 kg-1
-    call get_param(param_file, "generic_COBALT", "z_burial",         cobalt%z_burial,          "z_burial",         units="m             ", default= 10.0)                        ! m
+    call get_param(param_file, "generic_COBALT", "bottom_thickness", cobalt%bottom_thickness, &
+           "effective bottom layer thickness for calculating rates of benthic processes", units="m", default= 1.0)
+    call get_param(param_file, "generic_COBALT", "z_sed", cobalt%z_sed, "effective sediment layer thickness", &
+           units="m", default= 0.1)
+    call get_param(param_file, "generic_COBALT", "k_no3_denit", cobalt%k_no3_denit, &
+           "nitrate half-saturation for denitrification", units="mol NO3 kg-1", default= 1.0e-6)
+    call get_param(param_file, "generic_COBALT", "z_burial", cobalt%z_burial, &
+           "depth scale for ramping up particulate organic burial", units="m", default= 10.0)
+    call get_param(param_file, "generic_COBALT", "z_denit", cobalt%z_denit, &
+           "depth scale for ramping up benthic denitrification", units="m", default= 10.0)
+    call get_param(param_file, "generic_COBALT", "scale_burial", cobalt%scale_burial, &
+           "scaling factor for particulate organic burial", units="none", default= 0.0)
     !
     !-----------------------------------------------------------------------
     ! Calcium carbonate in sediments (see Dunne et al., 2012, GBC, 26)
@@ -4144,45 +4152,70 @@ contains
           ! calculate the saturation state with respect to calcite for subsequent calculations
           cobalt%btm_omega_calc(i,j)=cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
 
-          !
-          ! Nitrogen flux from the sediments
-          !
-          ! Address organic matter that reaches the sediment
-          !
+          ! Calculate the processing of organic matter in the sediment.  The fate of organic matter is partitioned
+          ! between burial (i.e., removal from the system), aerobic remineralization, remineralization via 
+          ! denitrification, and remineralization via sulfate reduction.  Note that the latter pathway is effectively
+          ! a "catch all" for any other anaerobic pathway and the sulfate cycle is not explicitly modeled.
           k = grid_kmt(i,j)
+          ! Issue: do we need this check?
           if (cobalt%fntot_btm(i,j) .gt. 0.0) then !{
 
-             ! Burial
+             ! The Burial flux estimates are based on Dunne et al., 2007. A synthesis of global particle export from
+             ! the surface ocean and cycling through the ocean interior and on the seafloor.  Global Biogeochemical
+             ! Cycles. Vol. 21, GB4006, doi:10.1029/2006GB002907.  See Figure 2, eq. (3).  The default units of this
+             ! relationship are mmoles C m-2 day-1, and the local variable "fpoc_btm" is used to create a bottom flux
+             ! in these units.
              !
-             ! fpoc_bottom in mmoles C m-2 day-1 for burial relationship
+             ! As described in Dunne et al., (2007) this relationship was generally developed for deeper ocean areas
+             ! and its validity in shallow areas is unclear.  Past experiments suggest that it may overestimate burial
+             ! in shallow areas, resulting in large nutrient losses that are inconsistent with observations.  The 
+             ! parameter "z_burial" thus provides a depth scale (an effective "half-saturation") for ramping up burial
+             ! from 0 to its full value.
+             !
+             ! Since burial is highly uncertain and often used in global earth system simulations to balance inputs and
+             ! outputs, a dimensionless scaling factor (cobalt%scale_burial) has also been included.
              fpoc_btm = cobalt%fntot_btm(i,j)*cobalt%c_2_n*sperd*1000.0
-             !cobalt%frac_burial(i,j) = 0.013 + 0.53*fpoc_btm**2.0/((7.0+fpoc_btm)**2.0) * &
-             !     cobalt%zt(i,j,k) / (cobalt%z_burial + cobalt%zt(i,j,k))
-             cobalt%frac_burial(i,j) = 0.0
+             cobalt%frac_burial(i,j) = 0.013 + 0.53*fpoc_btm**2.0/((7.0+fpoc_btm)**2.0) * &
+                  cobalt%zt(i,j,k) / (cobalt%z_burial + cobalt%zt(i,j,k))
+             cobalt%frac_burial(i,j) = cobalt%scale_burial*cobalt%frac_burial(i,j)
              cobalt%fn_burial(i,j) = cobalt%frac_burial(i,j)*cobalt%fntot_btm(i,j)
              cobalt%fp_burial(i,j) = cobalt%frac_burial(i,j)*cobalt%fptot_btm(i,j)
 
-             ! Denitrification
+             ! Denitrification follows Middelberg et al., 1996. Denitrification in marine sediments: a modeling study
+             ! Global Biogeochemical Cycles 10(4).  pp. 661-673.  https://doi.org/10.1029/96GB02562. COBALT uses the  
+             ! carbon flux-based relationship based on Middelberg's first extraction of his metamodel (the first
+             ! equation in Section 3.4 of the paper).  This relationship requires a flux to the benthis in micromoles C
+             ! cm-2 day-1.  This means that fpoc_btm defined for the burial calculation above must be multiplied by:
+             ! 
+             ! 1e3 micromoles/millimole*1e-4 cm2/m2 = 0.1
+             ! 
+             ! to get the proper units.  The Middelberg relationship yields a rate at which arriving particulate organic
+             ! carbon is denitrified in micromoles C cm-2 day-1.  This is converted to a rate at which arriving
+             ! particulate organic nitrogen denitrified in moles N m-2 sec-1 by dividing by:
+             ! 
+             ! c_2_n*sperd*1e6 micromoles/mole*1e-4 cm2/m2 = c_2_n*sperd*100
              !
-             ! Middelberg, log10(fpoc_bottom) in micromoles C cm-2 day-1 for denitrification relationship
-             ! cap at 43.0 to prevent anomalous extrapolation of the relationship
+             ! The nitrate demand associated with this denitrification (fno3denit_sed) is obtained by multiplying the
+             ! resulting value by the moles of NO3 required to denitrify each mole of organic N (n_2_n_denit).
+             !
+             ! A number of limiters are applied to support global application.  First, the C flux used in the  
+             ! Middelberg relationship is capped at 43.0 micromoles C cm-2 day-1 to avoid anomalous extrapolation.
+             ! Second, denitrification is slowed when bottom nitrate is low by a) scaling rates with a nitrate
+             ! half-saturation constant with (k_no3_denit), b) preventing the exhaustion of bottom nitrate over
+             ! single time step, and c) limiting the total amount of organic carbon denitrified to that arriving at
+             ! the sediment minus that which was buried. Finally, to prevent excessive denitrification in very shallow
+             ! areas, a depth scale (z_denit) was included to ramp up rates to full Middelberg values only in deeper
+             ! waters.
              log10_fpoc_btm = log10(min(43.0,0.1*fpoc_btm))
              cobalt%fno3denit_sed(i,j) = min(cobalt%btm_no3(i,j)*cobalt%bottom_thickness*cobalt%Rho_0*r_dt,  &
                   min((cobalt%fntot_btm(i,j)-cobalt%fn_burial(i,j))*cobalt%n_2_n_denit, &
                   10.0**(-0.9543+0.7662*log10_fpoc_btm - 0.235*log10_fpoc_btm**2.0)/(cobalt%c_2_n*sperd*100.0)* &
                   cobalt%n_2_n_denit*cobalt%btm_no3(i,j)/(cobalt%k_no3_denit + cobalt%btm_no3(i,j)))) * &
-                  cobalt%zt(i,j,k) / (cobalt%z_burial + cobalt%zt(i,j,k))
-             ! Fennel Relationship
-             !cobalt%fno3denit_sed(i,j) = min(cobalt%btm_no3(i,j)*cobalt%Rho_0*r_dt,  &
-             !         max(0.099*(cobalt%fntot_btm(i,j)-cobalt%fn_burial(i,j))-0.031/sperd/1.0e3,0.0)* &
-             !         cobalt%n_2_n_denit*cobalt%f_no3(i,j,k)/(cobalt%k_no3_denit + cobalt%f_no3(i,j,k))* &
-             !         cobalt%zt(i,j,k) / (cobalt%z_burial + cobalt%zt(i,j,k)))
-             ! uncomment "no mass change" test
-             !cobalt%fno3denit_sed(i,j) = 0.0
+                  cobalt%zt(i,j,k) / (cobalt%z_denit + cobalt%zt(i,j,k))
 
-             ! Calculate the amount of organic matter (as nitrogen) that is remineralized
-             ! via aerobic processes (fnoxic_sed)
-             !
+             ! Calculate the organic matter remineralized via sediment aerobic processes (fnoxic_sed).  This generally
+             ! equals the total flux minus burial and denitrification.  However, if there is insufficient bottom
+             ! oxygen to support this, some is assumed to be remineralized via sulfate reduction.
              if (cobalt%btm_o2(i,j) .gt. cobalt%o2_min) then  !{
                 cobalt%fnoxic_sed(i,j) = max(0.0, min(cobalt%btm_o2(i,j)*cobalt%bottom_thickness* &
                                          cobalt%Rho_0*r_dt*(1.0/cobalt%o2_2_nh4), &
@@ -4191,9 +4224,7 @@ contains
              else
                 cobalt%fnoxic_sed(i,j) = 0.0
              endif !}
-
              ! Any remaining organic matter is remineralized via sulfate reduction
-             !
              cobalt%fnfeso4red_sed(i,j) = max(0.0, cobalt%fntot_btm(i,j)-cobalt%fnoxic_sed(i,j)- &
                                           cobalt%fn_burial(i,j)-cobalt%fno3denit_sed(i,j)/cobalt%n_2_n_denit)
           else
@@ -4201,6 +4232,10 @@ contains
              cobalt%fno3denit_sed(i,j) = 0.0
              cobalt%fnoxic_sed(i,j) = 0.0
           endif !}
+
+          !
+          ! Iron flux from the sediment
+          !
 
           ! iron from sediment (Elrod)
           !cobalt%ffe_sed(i,j) = cobalt%fe_2_n_sed * cobalt%f_ndet_btf(i,j,1)
