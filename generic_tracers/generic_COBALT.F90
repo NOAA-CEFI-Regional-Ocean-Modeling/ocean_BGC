@@ -4181,15 +4181,15 @@ contains
              cobalt%fn_burial(i,j) = cobalt%frac_burial(i,j)*cobalt%fntot_btm(i,j)
              cobalt%fp_burial(i,j) = cobalt%frac_burial(i,j)*cobalt%fptot_btm(i,j)
 
-             ! Denitrification follows Middelberg et al., 1996. Denitrification in marine sediments: a modeling study
+             ! Denitrification follows Middelburg et al., 1996. Denitrification in marine sediments: a modeling study
              ! Global Biogeochemical Cycles 10(4).  pp. 661-673.  https://doi.org/10.1029/96GB02562. COBALT uses the  
-             ! carbon flux-based relationship based on Middelberg's first extraction of his metamodel (the first
-             ! equation in Section 3.4 of the paper).  This relationship requires a flux to the benthis in micromoles C
+             ! carbon flux-based relationship based on Middelburg's first extraction of his metamodel (the first
+             ! equation in Section 3.4 of the paper).  This relationship requires a flux to the benthos in micromoles C
              ! cm-2 day-1.  This means that fpoc_btm defined for the burial calculation above must be multiplied by:
              ! 
              ! 1e3 micromoles/millimole*1e-4 cm2/m2 = 0.1
              ! 
-             ! to get the proper units.  The Middelberg relationship yields a rate at which arriving particulate organic
+             ! to get the proper units.  The Middelburg relationship yields a rate at which arriving particulate organic
              ! carbon is denitrified in micromoles C cm-2 day-1.  This is converted to a rate at which arriving
              ! particulate organic nitrogen denitrified in moles N m-2 sec-1 by dividing by:
              ! 
@@ -4199,12 +4199,12 @@ contains
              ! resulting value by the moles of NO3 required to denitrify each mole of organic N (n_2_n_denit).
              !
              ! A number of limiters are applied to support global application.  First, the C flux used in the  
-             ! Middelberg relationship is capped at 43.0 micromoles C cm-2 day-1 to avoid anomalous extrapolation.
+             ! Middelburg relationship is capped at 43.0 micromoles C cm-2 day-1 to avoid anomalous extrapolation.
              ! Second, denitrification is slowed when bottom nitrate is low by a) scaling rates with a nitrate
              ! half-saturation constant with (k_no3_denit), b) preventing the exhaustion of bottom nitrate over
              ! single time step, and c) limiting the total amount of organic carbon denitrified to that arriving at
              ! the sediment minus that which was buried. Finally, to prevent excessive denitrification in very shallow
-             ! areas, a depth scale (z_denit) was included to ramp up rates to full Middelberg values only in deeper
+             ! areas, a depth scale (z_denit) was included to ramp up rates to full Middelburg values only in deeper
              ! waters.
              log10_fpoc_btm = log10(min(43.0,0.1*fpoc_btm))
              cobalt%fno3denit_sed(i,j) = min(cobalt%btm_no3(i,j)*cobalt%bottom_thickness*cobalt%Rho_0*r_dt,  &
