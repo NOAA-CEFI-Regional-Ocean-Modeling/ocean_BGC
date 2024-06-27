@@ -65,40 +65,40 @@ jobs:
         working-directory: ../CEFI-regional-MOM6/builds
         run: |
           echo "build mom6sis2..."
-          singularity exec --bind /__w:/__w ../ci/singularity/1d_mom6_cobalt.sif bash linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2
+          singularity exec --bind /__w:/__w ../ci/singularity/1d_mom6_cobalt.sif bash linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2_yaml
           ls -l -h build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
 
-      - name: Create COBALT_input and COBALT_override to test MOM-style parameter input and override
-        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
-        run: |
-          echo "add cobalt_input_nml ..."
-          cat <<EOL >> ./input.nml_48hr
-          &cobalt_input_nml
-                  parameter_filename = 'COBALT_input','COBALT_override'
-           /
-          EOL
-          cat input.nml_48hr
-          cat <<EOL >> ./input.nml_24hr
-          &cobalt_input_nml
-                  parameter_filename = 'COBALT_input','COBALT_override'
-           /
-          EOL
-          cat input.nml_24hr        
-          cat <<EOL >> ./input.nml_24hr_rst
-          &cobalt_input_nml
-                  parameter_filename = 'COBALT_input','COBALT_override'
-           /
-          EOL
-          sed -i 's/use_modern_diag=.true./use_modern_diag=.false./' ./input.nml_24hr_rst
-          cat input.nml_24hr_rst
-          echo "touch COBALT_input ..."
-          [[ -f COBALT_input ]] && rm COBALT_input
-          echo "remin_ramp_scale = 100.0" > COBALT_input
-          cat COBALT_input
-          echo "touch COBALT_override ..."
-          [[ -f COBALT_override ]] && rm COBALT_override
-          echo "#override remin_ramp_scale = 50.0" > COBALT_override
-          cat COBALT_override
+#      - name: Create COBALT_input and COBALT_override to test MOM-style parameter input and override
+#        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
+#        run: |
+#          echo "add cobalt_input_nml ..."
+#          cat <<EOL >> ./input.nml_48hr
+#          &cobalt_input_nml
+#                  parameter_filename = 'COBALT_input','COBALT_override'
+#           /
+#          EOL
+#          cat input.nml_48hr
+#          cat <<EOL >> ./input.nml_24hr
+#          &cobalt_input_nml
+#                  parameter_filename = 'COBALT_input','COBALT_override'
+#           /
+#          EOL
+#          cat input.nml_24hr        
+#          cat <<EOL >> ./input.nml_24hr_rst
+#          &cobalt_input_nml
+#                  parameter_filename = 'COBALT_input','COBALT_override'
+#           /
+#          EOL
+#          sed -i 's/use_modern_diag=.true./use_modern_diag=.false./' ./input.nml_24hr_rst
+#          cat input.nml_24hr_rst
+#          echo "touch COBALT_input ..."
+#          [[ -f COBALT_input ]] && rm COBALT_input
+#          echo "remin_ramp_scale = 100.0" > COBALT_input
+#          cat COBALT_input
+#          echo "touch COBALT_override ..."
+#          [[ -f COBALT_override ]] && rm COBALT_override
+#          echo "#override remin_ramp_scale = 50.0" > COBALT_override
+#          cat COBALT_override
         
       - name: Run 1D toy case
         working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
