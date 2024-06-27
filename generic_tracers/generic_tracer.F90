@@ -39,7 +39,7 @@ module generic_tracer
   use time_manager_mod, only : time_type
   use coupler_types_mod, only : coupler_2d_bc_type
 
-  use FMS_ocmip2_co2calc_mod, only : read_mocsy_namelist
+  use FMS_co2calc_mod, only : read_mocsy_namelist
 
   use g_tracer_utils, only : g_tracer_type, g_tracer_init, g_diag_type
   use g_tracer_utils, only : g_tracer_get_common, g_tracer_set_common, g_tracer_is_prog

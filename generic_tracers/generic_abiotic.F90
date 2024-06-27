@@ -192,7 +192,7 @@ module generic_abiotic
   use g_tracer_utils,    only: register_diag_field=>g_register_diag_field
   use g_tracer_utils,    only: is_root_pe
 
-  use FMS_ocmip2_co2calc_mod, only : FMS_ocmip2_co2calc,CO2_dope_vector
+  use FMS_co2calc_mod, only : FMS_co2calc,CO2_dope_vector
 
   implicit none ; private
 
@@ -220,7 +220,7 @@ module generic_abiotic
   real, parameter :: missing_value_diag=-1.0e+10
 
   !Namelist Options
-  character(len=10) ::  co2_calc = 'ocmip2'  ! other option is 'mocsy'
+  character(len=10) ::  co2_calc = 'mocsy'  ! Default is 'mocsy'
 
 namelist /generic_abiotic_nml/ co2_calc
 
@@ -336,9 +336,7 @@ contains
     write (stdoutunit, generic_abiotic_nml)
     write (stdlogunit, generic_abiotic_nml)
 
-    if (trim(co2_calc) == 'ocmip2') then
-      write (stdoutunit,*) trim(note_header), 'Using FMS OCMIP2 CO2 routine'
-    else if (trim(co2_calc) == 'mocsy') then
+    if (trim(co2_calc) == 'mocsy') then
       write (stdoutunit,*) trim(note_header), 'Using Mocsy CO2 routine'
     else
       call mpp_error(FATAL,"Unknown co2_calc option specified in generic_abiotic_nml")
@@ -498,7 +496,7 @@ contains
 
     !Allocate all the private arrays.
 
-    !Used in ocmip2_co2calc
+    !Used in FMS_co2calc
     CO2_dope_vec%isc = isc ; CO2_dope_vec%iec = iec 
     CO2_dope_vec%jsc = jsc ; CO2_dope_vec%jec = jec
     CO2_dope_vec%isd = isd ; CO2_dope_vec%ied = ied
@@ -764,7 +762,7 @@ contains
     enddo; enddo ; enddo ; !} i, j, k
 
     k=1
-    call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
+    call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
          Temp(:,:,k), Salt(:,:,k),                      &
          abiotic%f_dissicabio(:,:,k),                   &
          abiotic%f_po4(:,:,k),                          &  
@@ -774,7 +772,6 @@ contains
                                 !InOut
          abiotic%f_htotal(:,:,k),                       & 
                                 !Optional In
-         co2_calc=trim(co2_calc),                       & 
          zt=abiotic%zt(:,:,k),                           & 
                                 !OUT
          co2star=abiotic%abco2_csurf(:,:), alpha=abiotic%abco2_alpha(:,:), &
@@ -978,8 +975,9 @@ contains
          do j = jsc, jec ; do i = isc, iec  !{
           abiotic%zt(i,j,1) = dzt(i,j,1)
          enddo; enddo ; !} i, j
-       elseif (trim(co2_calc) == 'mocsy') then
-         call mpp_error(FATAL,"mocsy method of co2_calc needs dzt to be passed to the FMS_ocmip2_co2calc subroutine.")
+       else  
+!       elseif (trim(co2_calc) == 'mocsy') then
+         call mpp_error(FATAL,"mocsy method of co2_calc needs dzt to be passed to the FMS_co2calc subroutine.")
        endif
 
        do j = jsc, jec ; do i = isc, iec  !{
@@ -988,7 +986,7 @@ contains
          abiotic%f_sio4(i,j,1) = abiotic%sio4_const
        enddo; enddo ; !} i, j
 
-       call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,1), &
+       call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,1), &
             SST(:,:), SSS(:,:),                                &
             dissicabio_field(:,:,1,tau),                       &
             abiotic%f_po4(:,:,1),                              &  
@@ -998,7 +996,6 @@ contains
                                 !InOut
             htotal_field(:,:,1),                               &
                                 !Optional In
-            co2_calc=trim(co2_calc),                           & 
             zt=abiotic%zt(:,:,1),                               & 
                                 !OUT
             co2star=abco2_csurf(:,:), alpha=abco2_alpha(:,:),  &

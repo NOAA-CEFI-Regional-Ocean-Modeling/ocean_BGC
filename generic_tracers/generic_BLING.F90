@@ -156,13 +156,6 @@
 ! experimental at this point. Requires that do_carbon=.true.
 !  </DATA> 
 !
-!  <DATA NAME="co2_calc" TYPE="character">
-!  Defines the carbon equiliabration method.  Default is 'ocmip2' which uses
-! the FMS_ocmip2_co2calc routine.  The other option is 'mocsy', which uses
-! the set of routines authored by J. Orr. See reference at: 
-! http://ocmip5.ipsl.jussieu.fr/mocsy/index.html
-!  </DATA> 
-!
 !</NAMELIST>
 !
 !----------------------------------------------------------------
@@ -189,7 +182,7 @@ module generic_BLING
   use g_tracer_utils, only : register_diag_field=>g_register_diag_field
   use g_tracer_utils, only : g_send_data, is_root_pe
 
-  use FMS_ocmip2_co2calc_mod, only : FMS_ocmip2_co2calc, CO2_dope_vector
+  use FMS_co2calc_mod, only : FMS_co2calc, CO2_dope_vector
 
   implicit none ; private
 
@@ -222,7 +215,7 @@ module generic_BLING
 
 ! Namelist Options
 
-  character(len=10) ::  co2_calc = 'ocmip2'  ! other option is 'mocsy'
+  character(len=10) ::  co2_calc = 'mocsy'! default is 'mocsy'
   logical :: do_14c             = .true.  ! Requires do_carbon = .true.
   logical :: do_carbon          = .true.  
   logical :: do_carbon_pre      = .true.  ! Requires do_carbon = .true.
@@ -781,10 +774,8 @@ ierr = check_nml_error(io_status,'generic_bling_nml')
 write (stdoutunit,'(/)')
 write (stdoutunit, generic_bling_nml)
 write (stdlogunit, generic_bling_nml)
- 
-  if (trim(co2_calc) == 'ocmip2') then
-    write (stdoutunit,*) trim(note_header), 'Using FMS OCMIP2 CO2 routine'
-  else if (trim(co2_calc) == 'mocsy') then
+
+  if (trim(co2_calc) == 'mocsy') then
     write (stdoutunit,*) trim(note_header), 'Using Mocsy CO2 routine'
   else
     call mpp_error(FATAL,"Unknown co2_calc option specified in generic_BLING_nml")
@@ -2692,7 +2683,7 @@ write (stdlogunit, generic_bling_nml)
   ! before being sent to the coupler.
   !
   ! For CO2 and 14CO2, the carbon solubility and speciation are calculated by the
-  ! subroutine co2calc, following the OCMIP2 protocol. These calculations are both made
+  ! subroutine co2calc. These calculations are both made
   ! using total CO2, following which the surface CO2 concentration (CO2*, also known as
   ! H2CO3*) is scaled by the DI14C/DIC ratio to give the surface 14CO2 concentration.
   ! The speciation calculation uses in situ temperature, salinity, ALK, PO4 and PO4*14.4 as a proxy for SiO4.
@@ -2734,7 +2725,7 @@ write (stdlogunit, generic_bling_nml)
     enddo; enddo ; !} i, j
 
 
-    call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
+    call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
          Temp(:,:,k), Salt(:,:,k),                    &
          bling%f_dic(:,:,k),                          &
          bling%f_po4(:,:,k),                          &  
@@ -2744,7 +2735,6 @@ write (stdlogunit, generic_bling_nml)
                                 !InOut
          bling%f_htotal(:,:,k),                       & 
                                 !Optional In
-         co2_calc=trim(co2_calc),                     & 
          zt=bling%zt(:,:,k),                          & 
                                 !OUT
          co2star=bling%co2_csurf(:,:), alpha=bling%co2_alpha(:,:), &
@@ -2759,7 +2749,7 @@ write (stdlogunit, generic_bling_nml)
           bling%htotalhi(i,j) = bling%htotal_scale_hi * bling%f_htotal(i,j,k)
        enddo; enddo ; !} i, j
   
-       call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
+       call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
             Temp(:,:,k), Salt(:,:,k),                    &
             bling%f_dic(:,:,k),                          &
             bling%f_po4(:,:,k),                          &  
@@ -2769,7 +2759,6 @@ write (stdlogunit, generic_bling_nml)
                                 !InOut
             bling%f_htotal(:,:,k),                       & 
                                 !Optional In
-            co2_calc=trim(co2_calc),                     & 
             zt=bling%zt(:,:,k),                          & 
                                 !OUT
             co3_ion=bling%f_co3_ion(:,:,k),              &
@@ -2806,7 +2795,7 @@ write (stdlogunit, generic_bling_nml)
     ! required in the surface layer (since the CO3= concentration related to 
     ! DIC_sat is not used).
  
-    call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
+    call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
          Temp(:,:,k), Salt(:,:,k),                       &
          bling%f_dic_sat(:,:,k),                         &
          bling%f_po4(:,:,k),                             &
@@ -2825,7 +2814,7 @@ write (stdlogunit, generic_bling_nml)
           bling%htotal_sathi(i,j) = bling%htotal_scale_hi * bling%f_htotal_sat(i,j,k)
        enddo; enddo ; !} i, j
   
-       call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
+       call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
             Temp(:,:,k), Salt(:,:,k),                    &
             bling%f_dic_sat(:,:,k),                      &
             bling%f_po4(:,:,k),                          &  
@@ -3233,17 +3222,7 @@ write (stdlogunit, generic_bling_nml)
 
       do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
      
-        if (trim(co2_calc) == "ocmip2") then
-     ! Using Sayles for solubility (will change to Mucci later)
-          bling%co3_solubility(i,j,k) = max(4.95e-7 * exp ( 0.05021 / &
-            (Temp(i,j,k) + 273.15) * bling%zt(i,j,k)) * 3.42031e-3 *       &
-            bling%Rho_0 * bling%Rho_0 / max(epsln, Salt(i,j,k)),epsln)
-          bling%omega_calc(i,j,k) = bling%f_co3_ion(i,j,k) / bling%co3_solubility(i,j,k)
-        else if (trim(co2_calc) == "mocsy") then
-          bling%co3_solubility(i,j,k) = bling%f_co3_ion(i,j,k) / (epsln + bling%omega_calc(i,j,k))
-        else
-          call mpp_error(FATAL,"Unable to compute aragonite and calcite saturation states")
-        endif
+        bling%co3_solubility(i,j,k) = bling%f_co3_ion(i,j,k) / (epsln + bling%omega_calc(i,j,k))
 
           ! Calcite CaCO3 production is assumed to be proportional to both calcite supersaturation and
           ! microzooplankton grazing after the calcite formulation of Dunne et al. (2012)
@@ -4966,15 +4945,14 @@ write (stdlogunit, generic_bling_nml)
           bling%htotalhi(i,j) = bling%htotal_scale_hi * htotal_field(i,j,1)
        enddo; enddo ; !} i, j
 
-       if(present(dzt)) then
+       if(.not. present(dzt)) then
 !         do j = jsc, jec ; do i = isc, iec  !{
 !          bling%zt(i,j,1) = dzt(i,j,1)
 !         enddo; enddo ; !} i, j
-       elseif (trim(co2_calc) == 'mocsy') then
-         call mpp_error(FATAL,"mocsy method of co2_calc needs dzt to be passed to the FMS_ocmip2_co2calc subroutine.")
+         call mpp_error(FATAL,"mocsy method of co2_calc needs dzt to be passed to the FMS_co2calc subroutine.")
        endif
 
-       call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,1), &
+       call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,1), &
             SST(:,:), SSS(:,:),                            &
             dic_field(:,:,1),                              &
             po4_field(:,:,1),                              &
@@ -4984,7 +4962,6 @@ write (stdlogunit, generic_bling_nml)
                                 !InOut
             htotal_field(:,:,1),                           &
                                  !Optional In
-            co2_calc=trim(co2_calc),                       & 
             !zt=bling%zt(:,:,1),                            & 
             zt=dzt(:,:,1),                                 & 
                               !OUT
@@ -5307,7 +5284,7 @@ write (stdlogunit, generic_bling_nml)
     endif                                                  !PO4_PRE>>
 
     if (do_carbon) then                                    !<<CARBON CYCLE
-    !Used in ocmip2_co2calc
+    !Used in FMS_co2calc
     CO2_dope_vec%isc = isc ; CO2_dope_vec%iec = iec 
     CO2_dope_vec%jsc = jsc ; CO2_dope_vec%jec = jec
     CO2_dope_vec%isd = isd ; CO2_dope_vec%ied = ied
