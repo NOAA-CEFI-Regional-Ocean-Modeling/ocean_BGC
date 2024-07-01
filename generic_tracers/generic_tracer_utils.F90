@@ -366,7 +366,7 @@ module g_tracer_utils
   public :: g_tracer_register_diag
   public :: g_tracer_is_prog
   public :: g_tracer_vertfill
-  public :: g_tracer_vertdiff_G
+  public :: g_tracer_vertdiff
   public :: g_tracer_start_param_list
   public :: g_tracer_end_param_list
   public :: g_diag_type
@@ -3207,7 +3207,8 @@ contains
        enddo;enddo
     endif
   end subroutine g_tracer_vertfill
-  ! <SUBROUTINE NAME="g_tracer_vertdiff_G">
+  
+  ! <SUBROUTINE NAME="g_tracer_vertdiff">
   !  <OVERVIEW>
   !   Vertical Diffusion of a tracer node
   !  </OVERVIEW>
@@ -3225,7 +3226,7 @@ contains
   !  </IN>
   ! </SUBROUTINE>
 
-  subroutine g_tracer_vertdiff_G(g_tracer, h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau, mom)
+  subroutine g_tracer_vertdiff(g_tracer, h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau, mom)
     type(g_tracer_type),    pointer  :: g_tracer
     real, dimension(g_tracer_com%isd:,g_tracer_com%jsd:,:), intent(in) :: h_old, ea, eb
     real,                   intent(in) :: dt, kg_m2_to_H, m_to_H
@@ -3402,7 +3403,7 @@ contains
       enddo
     endif
 
-  end subroutine g_tracer_vertdiff_G
+  end subroutine g_tracer_vertdiff
 
   subroutine g_diag_field_add(node_ptr, diag_id, package_name, name, axes, init_time, longname, units, &
                             missing_value, Z_diag, field_ptr, Zname, Zlongname, Zunits)
