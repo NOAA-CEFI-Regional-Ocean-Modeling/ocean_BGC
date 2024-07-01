@@ -1133,9 +1133,6 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_wc_vert_int_alk,    cobalt%wc_vert_int_alk,         &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_chemoautopp, cobalt%wc_vert_int_chemoautopp, &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_wc_vert_int_npp,    cobalt%wc_vert_int_npp,         &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
