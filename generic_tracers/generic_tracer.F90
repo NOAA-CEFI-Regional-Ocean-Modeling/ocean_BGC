@@ -44,7 +44,7 @@ module generic_tracer
   use g_tracer_utils, only : g_tracer_type, g_tracer_init, g_diag_type
   use g_tracer_utils, only : g_tracer_get_common, g_tracer_set_common, g_tracer_is_prog
   use g_tracer_utils, only : g_tracer_coupler_set,g_tracer_coupler_get, g_tracer_register_diag
-  use g_tracer_utils, only : g_tracer_vertdiff_M, g_tracer_vertdiff_G, g_tracer_get_next     
+  use g_tracer_utils, only : g_tracer_vertdiff_G, g_tracer_get_next     
   use g_tracer_utils, only : g_tracer_diag, g_tracer_print_info, g_tracer_vertfill
   use g_tracer_utils, only : g_tracer_coupler_accumulate
 
@@ -125,7 +125,6 @@ module generic_tracer
   public generic_tracer_get_list
   public do_generic_tracer
   public generic_tracer_vertdiff_G
-  public generic_tracer_vertdiff_M
   public generic_tracer_get_diag_list
   public generic_tracer_coupler_accumulate
 
@@ -662,46 +661,6 @@ contains
     endif
 
   end subroutine generic_tracer_vertdiff_G
-
-  ! <SUBROUTINE NAME="">
-  !  <OVERVIEW>
-  !   
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call 
-  !  </TEMPLATE>
-  !  <IN NAME="" TYPE="">
-  !   
-  !  </IN>
-  ! </SUBROUTINE>
-  subroutine generic_tracer_vertdiff_M(dh, dhw, diff_cbt, dt, Rho_0,tau)
-    real, dimension(:,:,:), intent(in) :: dh, dhw, diff_cbt
-    real,                   intent(in) :: dt,Rho_0
-    integer,                intent(in) :: tau
-    type(g_tracer_type), pointer    :: g_tracer,g_tracer_next
-
-    !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?    
-    !JGJ 2013/05/31  merged COBALT into siena_201303
-    if(do_generic_tracer) then
-
-       g_tracer => tracer_list        
-       !Go through the list of tracers 
-       do  
-          if(g_tracer_is_prog(g_tracer)) &
-               call g_tracer_vertdiff_M(g_tracer,dh, dhw, diff_cbt, dt, Rho_0,tau) 
-
-          !traverse the linked list till hit NULL
-          call g_tracer_get_next(g_tracer, g_tracer_next)
-          if(.NOT. associated(g_tracer_next)) exit
-          g_tracer=>g_tracer_next  
-
-       enddo
-    endif
-
-  end subroutine generic_tracer_vertdiff_M
 
   ! <SUBROUTINE NAME="generic_tracer_coupler_set">
   !  <OVERVIEW>
