@@ -861,7 +861,6 @@ module cobalt_types
           wc_vert_int_si,&
           wc_vert_int_o2,&
           wc_vert_int_alk,&
-          wc_vert_int_chemoautopp,&
           wc_vert_int_npp, &
           wc_vert_int_jdiss_sidet,&
           wc_vert_int_jdiss_cadet,&
@@ -1157,7 +1156,6 @@ module cobalt_types
           id_wc_vert_int_si = -1,      &
           id_wc_vert_int_o2 = -1,      &
           id_wc_vert_int_alk = -1,     &
-          id_wc_vert_int_chemoautopp = -1, &
           id_wc_vert_int_npp = -1, &
           id_wc_vert_int_jdiss_sidet = -1, &
           id_wc_vert_int_jdiss_cadet = -1, &
