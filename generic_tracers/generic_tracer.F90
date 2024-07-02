@@ -44,7 +44,7 @@ module generic_tracer
   use g_tracer_utils, only : g_tracer_type, g_tracer_init, g_diag_type
   use g_tracer_utils, only : g_tracer_get_common, g_tracer_set_common, g_tracer_is_prog
   use g_tracer_utils, only : g_tracer_coupler_set,g_tracer_coupler_get, g_tracer_register_diag
-  use g_tracer_utils, only : g_tracer_vertdiff, g_tracer_get_next     
+  use g_tracer_utils, only : g_tracer_vertdiff_G, g_tracer_get_next     
   use g_tracer_utils, only : g_tracer_diag, g_tracer_print_info, g_tracer_vertfill
   use g_tracer_utils, only : g_tracer_coupler_accumulate
 
@@ -124,7 +124,7 @@ module generic_tracer
   public generic_tracer_end
   public generic_tracer_get_list
   public do_generic_tracer
-  public generic_tracer_vertdiff
+  public generic_tracer_vertdiff_G
   public generic_tracer_get_diag_list
   public generic_tracer_coupler_accumulate
 
@@ -618,9 +618,9 @@ contains
   end subroutine generic_tracer_update_from_bottom
 
 
-  ! <SUBROUTINE NAME="generic_tracer_vertdiff">
+  ! <SUBROUTINE NAME="generic_tracer_vertdiff_G">
   !  <OVERVIEW>
-  !   Vertically diffuse all generic tracers.
+  !   Vertically diffuse all generic tracers for GOLD ocean
   !  </OVERVIEW>
   !  <DESCRIPTION>
   !   This subroutine use a tridiagonal solver to update the values
@@ -628,13 +628,13 @@ contains
   !   The implicit vertdiff for these tracers should be disabled in the Ocean model.
   !  </DESCRIPTION>
   !  <TEMPLATE>
-  !   call generic_tracer_vertdiff(h_old, ea, eb, dt, Rho_0,tau)
+  !   call generic_tracer_vertdiff_G(h_old, ea, eb, dt, Rho_0,tau)
   !  </TEMPLATE>
   !  <IN NAME="" TYPE="">
   !   
   !  </IN>
   ! </SUBROUTINE>
-  subroutine generic_tracer_vertdiff(h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau)
+  subroutine generic_tracer_vertdiff_G(h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau)
     real, dimension(:,:,:), intent(in) :: h_old, ea, eb
     real,                   intent(in) :: dt, kg_m2_to_H, m_to_H
     integer,                intent(in) :: tau
@@ -649,7 +649,7 @@ contains
        !Go through the list of tracers 
        do  
           if(g_tracer_is_prog(g_tracer)) then
-             call g_tracer_vertdiff(g_tracer,h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau)
+             call g_tracer_vertdiff_G(g_tracer,h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau)
              if(do_vertfill_post) call g_tracer_vertfill(g_tracer, h_old, KD_SMOOTH*dt, tau=1)
           endif
           !traverse the linked list till hit NULL
@@ -660,7 +660,7 @@ contains
        enddo
     endif
 
-  end subroutine generic_tracer_vertdiff
+  end subroutine generic_tracer_vertdiff_G
 
   ! <SUBROUTINE NAME="generic_tracer_coupler_set">
   !  <OVERVIEW>
