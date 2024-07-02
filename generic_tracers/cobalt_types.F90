@@ -485,6 +485,8 @@ module cobalt_types
           no3_2_nh4_amx,     &
           alk_2_nh4_amx,    &
           z_burial,         &
+          scale_burial,     &
+          z_denit,          &
           phi_surfresp_cased, &
           phi_deepresp_cased, &
           alpha_cased,      &
@@ -861,7 +863,6 @@ module cobalt_types
           wc_vert_int_si,&
           wc_vert_int_o2,&
           wc_vert_int_alk,&
-          wc_vert_int_chemoautopp,&
           wc_vert_int_npp, &
           wc_vert_int_jdiss_sidet,&
           wc_vert_int_jdiss_cadet,&
@@ -1157,7 +1158,6 @@ module cobalt_types
           id_wc_vert_int_si = -1,      &
           id_wc_vert_int_o2 = -1,      &
           id_wc_vert_int_alk = -1,     &
-          id_wc_vert_int_chemoautopp = -1, &
           id_wc_vert_int_npp = -1, &
           id_wc_vert_int_jdiss_sidet = -1, &
           id_wc_vert_int_jdiss_cadet = -1, &
