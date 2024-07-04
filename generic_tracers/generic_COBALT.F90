@@ -944,6 +944,8 @@ contains
                    default= 2.5e9, scale = I_spery ) 
     call get_param(param_file, "generic_COBALT", "remin_eff_fedet",    cobalt%remin_eff_fedet,     "remin_eff_fedet",   units="unitless", default= 0.25)                  ! unitless
     call get_param(param_file, "generic_COBALT", "io_fescav",          cobalt%io_fescav,           "io_fescav",         units="W m-2", default= 10.0 )                             ! watts m-2
+    call get_param(param_file, "generic_COBALT", "fast_fescav_fac", cobalt%fast_fescav_fac, "fast_fescav_fac", &
+                   units="none",default= 2.0)
     call get_param(param_file, "generic_COBALT", "kfe_eq_lig_ll",      cobalt%kfe_eq_lig_ll,       "kfe_eq_lig_ll",     units="mol lig-1 kg", default= 1.0e12)                    ! mol lig-1 kg
     call get_param(param_file, "generic_COBALT", "kfe_eq_lig_hl",      cobalt%kfe_eq_lig_hl,       "kfe_eq_lig_hl",     units="mol lig-1 kg", default= 1.0e9)                     ! mol lig-1 kg
 
@@ -3975,7 +3977,7 @@ contains
        ! Calculate remineralization under aerobic remineralization
        if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then  !{
           cobalt%jremin_ndet(i,j,k) = cobalt%gamma_ndet * cobalt%expkreminT(i,j,k) * &
-               z_bot(i,j,k)/(z_bot(i,j,k) + cobalt%remin_ramp_scale) * cobalt%f_o2(i,j,k) / &
+               zbot(i,j,k)/(zbot(i,j,k) + cobalt%remin_ramp_scale) * cobalt%f_o2(i,j,k) / &
                ( cobalt%k_o2 + cobalt%f_o2(i,j,k) )*max( 0.0, cobalt%f_ndet(i,j,k) - &
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
@@ -4080,7 +4082,7 @@ contains
          cobalt%jfe_ads(i,j,k) = cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
                                  cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet(i,j,k)
        else
-         cobalt%jfe_ads(i,j,k) = cobalt%fastscav_fac*(cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
+         cobalt%jfe_ads(i,j,k) = cobalt%fast_fescav_fac*(cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
                                  cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet(i,j,k))
        endif
        ! Add a limiter so you don't scavenge more than half the available iron in a single time step.

@@ -475,6 +475,7 @@ module cobalt_types
           beta_fescav,      &
           io_fescav,        &
           remin_eff_fedet,  &
+          fast_fescav_fac,  &
           half_life_14c,    &
           lambda_14c,       &
           k_lith,           &
