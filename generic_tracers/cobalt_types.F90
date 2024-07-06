@@ -430,7 +430,6 @@ module cobalt_types
           caco3_sat_max,    &
           doc_background,   &
           fe_2_n_upt_fac,   &
-          fe_2_n_sed,       &
           ffe_sed_max,      &
           ffe_geotherm_ratio,&
           jfe_iceberg_ratio,&

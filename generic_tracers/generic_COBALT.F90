@@ -703,11 +703,6 @@ contains
     call get_param(param_file, "generic_COBALT", "si_2_n_static_Md", phyto(MEDIUM)%si_2_n_static,  "si_2_n_static_Md",units="mol Si mol N-1", default= 2.0)           ! mol Si mol N-1
     call get_param(param_file, "generic_COBALT", "si_2_n_max_Lg",    phyto(LARGE)%si_2_n_max,      "si_2_n_max_Lg",   units="mol Si mol N-1", default= 3.0)                  ! mol Si mol N-1
     call get_param(param_file, "generic_COBALT", "si_2_n_max_Lg",    phyto(MEDIUM)%si_2_n_max,     "si_2_n_max_Lg",   units="mol Si mol N-1", default= 1.0)                 ! mol Si mol N-1
-    call get_param(param_file, "generic_COBALT", "ca_2_n_arag",      cobalt%ca_2_n_arag,           "ca_2_n_arag",     units="mol Ca mol N-1", &
-                   default= 0.055, scale = c2n )        ! mol Ca mol N-1
-    call get_param(param_file, "generic_COBALT", "ca_2_n_calc",      cobalt%ca_2_n_calc,           "ca_2_n_calc",     units="mol CA mol N-1", &
-                   default= 0.050, scale = c2n )        ! mol Ca mol N-1
-    call get_param(param_file, "generic_COBALT", "caco3_sat_max",    cobalt%caco3_sat_max,         "caco3_sat_max",   units="", default= 10.0)                     ! dimensionless
     !
     !-----------------------------------------------------------------------
     ! Zooplankton Stoichiometry - presently static
@@ -924,73 +919,133 @@ contains
     call get_param(param_file, "generic_COBALT", "hp_ipa_det",  cobalt%hp_ipa_det,  "hp_ipa_det",   units="unitless", default=0.0)         ! dimensionless
     call get_param(param_file, "generic_COBALT", "hp_phi_det",  cobalt%hp_phi_det,  "hp_phi_det",   units="unitless", default=0.35)        ! dimensionless
     !
-    !----------------------------------------------------------------------
-    ! Iron chemistry
-    !----------------------------------------------------------------------
-    !
-    call get_param(param_file, "generic_COBALT", "felig_bkg",          cobalt%felig_bkg,           "felig_bkg",         units="mol Fe kg-1", default= 0.5e-9)                          ! mol Fe kg-1
-    call get_param(param_file, "generic_COBALT", "felig_2_don",        cobalt%felig_2_don,         "felig_2_don",       units="mol lig kg-1", default= 0.5e-3)                          ! mol lig mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_sed",         cobalt%fe_2_n_sed,          "fe_2_n_sed",        units="mol Fe kg-1", default= 100.0e-5 * 106 / 16)            ! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "ffe_sed_max",        cobalt%ffe_sed_max,         "ffe_sed_max",       units="mol Fe m-2 day-1", & 
+    call get_param(param_file, "generic_COBALT", "ffe_sed_max", cobalt%ffe_sed_max, &
+                   "maximum iron release from the sediment", units="micromoles Fe m-2 day-1", &
                    default= 170.0, scale = I_sperd*(1/micromol2mol) )
     call get_param(param_file, "generic_COBALT", "ffe_geotherm_ratio", cobalt%ffe_geotherm_ratio,  "ffe_geotherm_ratio",units="mol Fe m-2 s-1 (W m-2)-1", default= 2.0e-12)         ! mol Fe m-2 s-1 (watt m-2)-1
     call get_param(param_file, "generic_COBALT", "jfe_iceberg_ratio",  cobalt%jfe_iceberg_ratio,   "jfe_iceberg_ratio", units="mol Fe kg-1 ice melt", default= 1.0e-7)            ! mol Fe kg-1 ice melt
     call get_param(param_file, "generic_COBALT", "jno3_iceberg_ratio", cobalt%jno3_iceberg_ratio,  "jno3_iceberg_ratio",units="mol N kg-1 ice melt", default= 2.0e-6)          ! mol N kg-1 ice melt
     call get_param(param_file, "generic_COBALT", "jpo4_iceberg_ratio", cobalt%jpo4_iceberg_ratio,  "jpo4_iceberg_ratio",units="mol P kg-1 ice melt", default= 1.1e-7)          ! mol P kg-1 ice melt
     call get_param(param_file, "generic_COBALT", "fe_coast",           cobalt%fe_coast,            "fe_coast",          units="mol Fe m kg-1 s-1", default= 0.0 )                                ! mol Fe m kg-1 s-1
-    call get_param(param_file, "generic_COBALT", "alpha_fescav", cobalt%alpha_fescav, "alpha_fescav", units="year-1", &
-                   default= 0.0, scale = I_spery ) 
-    call get_param(param_file, "generic_COBALT", "beta_fescav",  cobalt%beta_fescav,  "beta_fescav", units="year-1 (mol ndet kg-1)-1", &
-                   default= 2.5e9, scale = I_spery ) 
-    call get_param(param_file, "generic_COBALT", "remin_eff_fedet",    cobalt%remin_eff_fedet,     "remin_eff_fedet",   units="unitless", default= 0.25)                  ! unitless
-    call get_param(param_file, "generic_COBALT", "io_fescav",          cobalt%io_fescav,           "io_fescav",         units="W m-2", default= 10.0 )                             ! watts m-2
-    call get_param(param_file, "generic_COBALT", "fast_fescav_fac", cobalt%fast_fescav_fac, "fast_fescav_fac", &
-                   units="none",default= 2.0)
-    call get_param(param_file, "generic_COBALT", "kfe_eq_lig_ll",      cobalt%kfe_eq_lig_ll,       "kfe_eq_lig_ll",     units="mol lig-1 kg", default= 1.0e12)                    ! mol lig-1 kg
-    call get_param(param_file, "generic_COBALT", "kfe_eq_lig_hl",      cobalt%kfe_eq_lig_hl,       "kfe_eq_lig_hl",     units="mol lig-1 kg", default= 1.0e9)                     ! mol lig-1 kg
 
     ! Radiocarbon
     call get_param(param_file, "generic_COBALT", "half_life_14c", cobalt%half_life_14c, "half_life_14c", units="s", default= 5730.0 )                  ! s
     call get_param(param_file, "generic_COBALT", "lambda_14c",    cobalt%lambda_14c,    "lambda_14c",    units="-s", & 
                    default= log(2.0) / (cobalt%half_life_14c), scale = I_spery ) 
-    !-------------------------------------------------------------------------
-    ! Remineralization
-    !-------------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "k_o2",             cobalt%k_o2,              "k_o2",             units="mol O2 kg-1   ", default= 8.0e-6)                      ! mol O2 kg-1
-    call get_param(param_file, "generic_COBALT", "o2_min",           cobalt%o2_min,            "o2_min",           units="mol O2 kg-1   ", default= 0.8e-6 )                     ! mol O2 kg-1
-    call get_param(param_file, "generic_COBALT", "k_o2_nit",         cobalt%k_o2_nit,          "k_o2_nit",         units="mol O2 kg-1   ", default= k_o2_nit)                    ! mol O2 kg-1
-    call get_param(param_file, "generic_COBALT", "o2_min_nit",       cobalt%o2_min_nit,        "o2_min_nit",       units="mol O2 kg-1   ", default= o2_min_nit )                 ! mol O2 kg-1
-    call get_param(param_file, "generic_COBALT", "kappa_remin",       cobalt%kappa_remin,      "kappa_remin",      units="deg C-1       ", default= 0.063 )                      ! deg C-1
-    call get_param(param_file, "generic_COBALT", "remin_ramp_scale", cobalt%remin_ramp_scale,  "remin_ramp_scale", units="m             ", default= 50.0 )                       ! m
-    call get_param(param_file, "generic_COBALT", "rpcaco3",          cobalt%rpcaco3,           "rpcaco3",          units="mol N mol Ca-1", default= 0.070/12.0*16.0/106.0*100.0) ! mol N mol Ca-1
-    call get_param(param_file, "generic_COBALT", "rplith",           cobalt%rplith,            "rplith",           units="mol N g lith-1", default= 0.065/12.0*16.0/106.0)       ! mol N g lith-1
-    call get_param(param_file, "generic_COBALT", "rpsio2",           cobalt%rpsio2,            "rpsio2",           units="mol N mol Si-1", default= 0.026/12.0*16.0/106.0*60.0)  ! mol N mol Si-1
-    call get_param(param_file, "generic_COBALT", "gamma_ndet",       cobalt%gamma_ndet,        "gamma_ndet",       units="s-1           ", default= cobalt%wsink / 350.0 )       ! s-1
-    call get_param(param_file, "generic_COBALT", "gamma_cadet_arag", cobalt%gamma_cadet_arag,  "gamma_cadet_arag", units="s-1           ", default= cobalt%wsink/760.0)          ! s-1
-    call get_param(param_file, "generic_COBALT", "gamma_cadet_calc", cobalt%gamma_cadet_calc,  "gamma_cadet_calc", units="s-1           ", default= cobalt%wsink/1343.0)         ! s-1
-    call get_param(param_file, "generic_COBALT", "kappa_sidet",      cobalt%kappa_sidet,       "kappa_sidet",      units="deg C -1      ", default= 0.063 )                      ! deg C -1
-    call get_param(param_file, "generic_COBALT", "gamma_sidet",      cobalt%gamma_sidet,       "gamma_sidet",      units="s-1           ", default= cobalt%wsink / 1.0e4 )       ! s-1
-    call get_param(param_file, "generic_COBALT", "phi_lith" ,        cobalt%phi_lith,          "phi_lith" ,        units="dimensionless ", default= 0.002)                       ! dimensionless
-    call get_param(param_file, "generic_COBALT", "k_lith",           cobalt%k_lith,            "k_lith",           units="year-1", &
-                   default= 0.5, scale = I_spery ) 
+    !---------------------------------------------------------------------------
+    ! Ballast, remineralization and iron scavenging parameters (Section 4 of code)
+    !---------------------------------------------------------------------------
+    !
+    ! Parameters controlling the production of calcium carbonate and aragonite detritus are tuned to match global flux
+    ! estimates.  Values are entered as moles of calcium carbonate detritus created per mole of organic C detritus
+    ! produced within plankton foodweb pathways associated with shell forming organisms.  Values are then converted to
+    ! per mole of N detritus.  Note that the rates are scaled by the saturation state (see Section 4 of the code).
+    call get_param(param_file, "generic_COBALT", "ca_2_n_arag", cobalt%ca_2_n_arag, &
+                   "ratio of aragonite detritus prod. to org. C detritus prod. by aragonite shell formers", &
+                   units="mol cadet_arag mol org. C-1", default= 0.055, scale = c2n)
+    call get_param(param_file, "generic_COBALT", "ca_2_n_calc", cobalt%ca_2_n_calc, &
+                   "ratio of calcite detritus prod. to org. C detritus prod. by calcite shell formers", &
+                   units="mol cadet_calc mol org. C-1",default= 0.050, scale = c2n)
+    call get_param(param_file, "generic_COBALT", "caco3_sat_max", cobalt%caco3_sat_max, &
+                  "cap for positive scaling of caco3 detritus prod with saturation state", units="none", default= 10.0)
+
+    ! Organic matter remineralization: Oxygen and temperature dependence follows Laufkotter et al. (2017).
+    call get_param(param_file, "generic_COBALT", "k_o2", cobalt%k_o2, "O2 half-saturation for remineralization", &
+                   units="mol O2 kg-1", default= 8.0e-6)
+    call get_param(param_file, "generic_COBALT", "k_no3_denit", cobalt%k_no3_denit, &
+           "nitrate half-saturation for denitrification", units="mol NO3 kg-1", default= 1.0e-6)
+    call get_param(param_file, "generic_COBALT", "o2_min", cobalt%o2_min, "Minimum O2 for aerobic remineralization", &
+                   units="mol O2 kg-1", default= 0.8e-6)
+    call get_param(param_file, "generic_COBALT", "kappa_remin", cobalt%kappa_remin, &
+                   "Temperature dependence of remineralization", units="deg C-1", default=0.063)
+    call get_param(param_file, "generic_COBALT", "remin_ramp_scale", cobalt%remin_ramp_scale, &
+                   "depth scale from the surface over which remineralization ramps up", units="m", default= 50.0)
+    ! gamma_ndet is set to produce a Martin-curve like remineralization length scale at temperatures ~10 deg. C
+    call get_param(param_file, "generic_COBALT", "gamma_ndet", cobalt%gamma_ndet, &
+                   "Remineralization rate for unprotected organic matter", units="s-1", default=cobalt%wsink/350.0)
+
+    ! mineral ballasting after Klaas and Archer (2002) and Dunne et al. (2007) (see p. 3) 
+    ! conversion is 0.070 g C (g Ca)-1 to moles N (mole Ca)-1; Similar conversions below, but lith remains per gram
+    call get_param(param_file, "generic_COBALT", "rpcaco3", cobalt%rpcaco3, "Organic matter protection from CaCO3", &
+                   units="mol N mol Ca-1", default= 0.070/12.0*16.0/106.0*100.0)
+    call get_param(param_file, "generic_COBALT", "rplith", cobalt%rplith, &
+                   "Organic matter protection from lithogenic minerals",units="mol N g lith-1", &
+                   default= 0.065/12.0*16.0/106.0)
+    call get_param(param_file, "generic_COBALT", "rpsio2", cobalt%rpsio2, "Organic matter protection from silica", &
+                   units="mol N mol Si-1", default= 0.026/12.0*16.0/106.0*60.0)
+    ! From TOPAZ: Calibrated to Data from Betzer et al. (1984) yielding ~50% attenuation between 900-2200m 
+    call get_param(param_file, "generic_COBALT", "gamma_cadet_arag", cobalt%gamma_cadet_arag, &
+                   "Dissolution rate for aragonite detritus at 0 saturation", units="s-1", default=cobalt%wsink/760.0)
+    ! From TOPAZ: Calibrated to get an approximate 67% transfer efficiency between 1000-3800 at Ocean Station P with
+    ! (1-omega_cadet) scaling.
+    call get_param(param_file, "generic_COBALT", "gamma_cadet_calc", cobalt%gamma_cadet_calc, &
+                   "Dissolution rate for calcite detritus at 0 saturation", units="s-1", default=cobalt%wsink/1343.0)
+    ! Uses temperature-dependence of decomposing diatoms following Kamatani (1982)
+    call get_param(param_file, "generic_COBALT", "kappa_sidet", cobalt%kappa_sidet, &
+                   "Temperature dependence of silica dissolution", units="deg C -1", default= 0.063)
+    ! large remineralization length-scale at cold temperatures, but approaches Gnanadesikan et al. (1999) values of
+    ! ~2000m at warm temperatures.  This was partially tuned to match observed silica profiles.
+    call get_param(param_file, "generic_COBALT", "gamma_sidet", cobalt%gamma_sidet, &
+                   "Dissolution rate of silica detritus at 0 deg. C", units="s-1", default= cobalt%wsink/1.0e4)
+
+    ! phi_lith and k_lith parameters largely tuned to maintain hot-spots of lithogenic detritus near source regions
+    ! where this was needed to explain export patterns
+    call get_param(param_file, "generic_COBALT", "phi_lith" , cobalt%phi_lith, &
+                   "scaling factor for creating lithogenic detritus via filter feeding" , units="dimensionless", &
+                   default= 0.002)
+    call get_param(param_file, "generic_COBALT", "k_lith", cobalt%k_lith, &
+                   "background formation rate of lithogenic detritus", units="year-1", default= 0.5, scale = I_spery)
+
+    ! Iron scavenging parameters
+    ! Background and don-proportional ligand concentrations were coarsely calibrated to Volker and Tagliabue (2015)
+    call get_param(param_file, "generic_COBALT", "felig_bkg", cobalt%felig_bkg, &
+                   "background organic ligand concentration", units="mol Fe kg-1", default= 0.5e-9)
+    call get_param(param_file, "generic_COBALT", "felig_2_don", cobalt%felig_2_don, &
+                   "proportionality for enhancing ligands with non-refractory don", units="mol lig (mol N)-1", &
+                   default= 0.5e-3)
+    ! Scavenging coefficients -  alpha_fescav allows for a linear scavenging rate for free iron (feprime) used in
+    ! COBALTv1, beta_fescav scales the reaction between feprime and ndet and is the default for COBALTv2 and beyond
+    ! In either case, values are calibrated to create reasonable levels of iron, iron-limitation and HNLC regions
+    ! (e.g., see Tagliabue et al., 2016). 
+    call get_param(param_file, "generic_COBALT", "alpha_fescav", cobalt%alpha_fescav, & 
+                   "linear iron scavenging rate constant", units="year-1", default= 0.0, scale = I_spery)
+    call get_param(param_file, "generic_COBALT", "beta_fescav", cobalt%beta_fescav, &
+                   "iron scavenging rate constant for free iron - detritus interaction", &
+                   units="year-1 (mol ndet kg-1)-1", default= 2.5e9, scale = I_spery)
+    ! Value coarsely tuned to ferrocline
+    call get_param(param_file, "generic_COBALT", "remin_eff_fedet", cobalt%remin_eff_fedet, &
+                   "iron remineralization efficiency relative to organic matter", units="unitless", default= 0.25)
+    ! mimics the impact of oxygen free radicals on iron binding; tuned to observed hydrogen peroxide profiles
+    ! (Yuan and Shiller, 2001).
+    call get_param(param_file, "generic_COBALT", "io_fescav", cobalt%io_fescav, &
+                   "scaling for weakened iron-ligand binding in high light", units="W m-2", default= 10.0)
+    ! Multiplies beta_fescav when feprime is above solubility limit defined by Liu and Millero (2002).  Tuned to
+    ! control the offshore propagation of coastal iron signals.
+    call get_param(param_file, "generic_COBALT", "fast_fescav_fac", cobalt%fast_fescav_fac, &
+                   "multiplier for enhanced scavenging when free iron is above saturation",units="none",default= 2.0)
+    ! Ligand binding strength set to produce strong binding and reasonable subsurface iron at low light, and allow most
+    ! of the iron to be free at high light (following Fan and Dunne).
+    ! kfe_eq_lig = [FeL]/([L]*[Fe']), so large values imply that most is [FeL]
+    call get_param(param_file, "generic_COBALT", "kfe_eq_lig_ll", cobalt%kfe_eq_lig_ll, &
+                   "low light ligand binding strength", units="(mol lig-1 kg)-1", default= 1.0e12)
+    call get_param(param_file, "generic_COBALT", "kfe_eq_lig_hl", cobalt%kfe_eq_lig_hl, & 
+                   "high light ligand binding strength", units="(mol lig-1 kg)-1", default= 1.0e9)
+    !
+    !-----------------------------------------------------------------------
+    ! Sediments
+    !-----------------------------------------------------------------------
+    !
     call get_param(param_file, "generic_COBALT", "bottom_thickness", cobalt%bottom_thickness, &
            "effective bottom layer thickness for calculating rates of benthic processes", units="m", default= 1.0)
     call get_param(param_file, "generic_COBALT", "z_sed", cobalt%z_sed, "effective sediment layer thickness", &
            units="m", default= 0.1)
-    call get_param(param_file, "generic_COBALT", "k_no3_denit", cobalt%k_no3_denit, &
-           "nitrate half-saturation for denitrification", units="mol NO3 kg-1", default= 1.0e-6)
     call get_param(param_file, "generic_COBALT", "z_burial", cobalt%z_burial, &
            "depth scale for ramping up particulate organic burial", units="m", default= 10.0)
     call get_param(param_file, "generic_COBALT", "z_denit", cobalt%z_denit, &
            "depth scale for ramping up benthic denitrification", units="m", default= 10.0)
     call get_param(param_file, "generic_COBALT", "scale_burial", cobalt%scale_burial, &
            "scaling factor for particulate organic burial", units="none", default= 0.0)
-    !
-    !-----------------------------------------------------------------------
-    ! Calcium carbonate in sediments (see Dunne et al., 2012, GBC, 26)
-    !-----------------------------------------------------------------------
-    !
     call get_param(param_file, "generic_COBALT", "cased_steady",       cobalt%cased_steady,       "cased_steady",       default=.false. )
     call get_param(param_file, "generic_COBALT", "phi_surfresp_cased", cobalt%phi_surfresp_cased, "phi_surfresp_cased", units="unitless", default=0.14307)
     call get_param(param_file, "generic_COBALT", "phi_deepresp_cased", cobalt%phi_deepresp_cased, "phi_deepresp_cased", units="unitless", default=4.1228)
@@ -1035,6 +1090,8 @@ contains
     call get_param(param_file, "generic_COBALT", "gamma_nh4amx",  cobalt%gamma_nh4amx, "gamma_nh4amx", units="day-1", &
                    default= 0.0, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "o2_min_amx",    cobalt%o2_min_amx,   "o2_min_amx",   units="mol O2 kg-1", default=4.0e-6 )                                ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "k_o2_nit",         cobalt%k_o2_nit,          "k_o2_nit",         units="mol O2 kg-1   ", default= k_o2_nit)                    ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "o2_min_nit",       cobalt%o2_min_nit,        "o2_min_nit",       units="mol O2 kg-1   ", default= o2_min_nit )                 ! mol O2 kg-1
     !
     !-----------------------------------------------------------------------
     ! Miscellaneous
@@ -4097,7 +4154,7 @@ contains
 !
 
     !
-    ! Iceberg and "Coastal" iron and other nutrient input
+    ! Iceberg and "Coastal" iron and other nutrient input.  The 
     !
     do j = jsc, jec ; do i = isc, iec !{
        if (grid_kmt(i,j) .gt. 0) then !{
