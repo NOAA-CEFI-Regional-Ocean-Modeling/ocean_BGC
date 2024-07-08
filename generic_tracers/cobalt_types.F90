@@ -482,7 +482,8 @@ module cobalt_types
           alk_2_n_denit,    &
           n_2_n_denit,      &
           k_no3_denit,      &
-          no3_2_nh4_amx,     &
+          k_no3_amx,        &
+          no3_2_nh4_amx,    &
           alk_2_nh4_amx,    &
           z_burial,         &
           scale_burial,     &
@@ -715,8 +716,6 @@ module cobalt_types
           jo2resp_wc,&
           omega_arag,&
           omega_calc,&
-          omegaa,&
-          omegac,&
           fntot, &
           fptot, &
           ffetot, &

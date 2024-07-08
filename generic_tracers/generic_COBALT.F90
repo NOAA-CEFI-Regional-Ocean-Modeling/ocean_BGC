@@ -1090,6 +1090,8 @@ contains
     call get_param(param_file, "generic_COBALT", "gamma_nh4amx",  cobalt%gamma_nh4amx, "gamma_nh4amx", units="day-1", &
                    default= 0.0, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "o2_min_amx",    cobalt%o2_min_amx,   "o2_min_amx",   units="mol O2 kg-1", default=4.0e-6 )                                ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "k_no3_amx", cobalt%k_no3_amx, &
+           "nitrate half-saturation for anammox", units="mol NO3 kg-1", default= 1.0e-6)
     call get_param(param_file, "generic_COBALT", "k_o2_nit",         cobalt%k_o2_nit,          "k_o2_nit",         units="mol O2 kg-1   ", default= k_o2_nit)                    ! mol O2 kg-1
     call get_param(param_file, "generic_COBALT", "o2_min_nit",       cobalt%o2_min_nit,        "o2_min_nit",       units="mol O2 kg-1   ", default= o2_min_nit )                 ! mol O2 kg-1
     !
@@ -3113,7 +3115,7 @@ contains
        if (cobalt%f_o2(i,j,k) .lt. cobalt%o2_min_amx) then !{
          ! Uptake of NH4+ and NO3- through the anammox process
          cobalt%juptake_nh4amx(i,j,k) = cobalt%gamma_nh4amx * &
-            cobalt%f_no3(i,j,k) / (phyto(SMALL)%k_no3 + cobalt%f_no3(i,j,k)) * &
+            cobalt%f_no3(i,j,k) / (cobalt%k_no3_amx + cobalt%f_no3(i,j,k)) * &
             cobalt%f_nh4(i,j,k)
          cobalt%juptake_no3amx(i,j,k) = cobalt%juptake_nh4amx(i,j,k)*&
             cobalt%no3_2_nh4_amx
@@ -3946,7 +3948,7 @@ contains
         cobalt%jprod_cadet_arag(i,j,k) = (zoo(2)%jzloss_n(i,j,k)*zoo(3)%phi_det + &
                        (zoo(2)%jhploss_n(i,j,k) + zoo(3)%jhploss_n(i,j,k))*cobalt%hp_phi_det)* &
                        cobalt%ca_2_n_arag*min(cobalt%caco3_sat_max, max(0.0,cobalt%omega_arag(i,j,k) - 1.0)) + epsln
-        ! Forams and coccolithophores are assumed to the primary calcite shell formers.  Forams fall into the small
+        ! Forams and coccolithophores are assumed to be the primary calcite shell formers.  Forams fall into the small
         ! zooplankton group and coccolithophores fall into the small and medium phytoplankton groups. Production of
         ! calcite detritus is thus linked to a) the consumption of these groups by zooplankton and the proportion of the
         ! material consumed that ends up as detritus, and b) the aggregation of small and medium phytoplankton groups. 
@@ -4074,7 +4076,7 @@ contains
     ! 4.5: Iron scavenging onto detritus
     !  
     ! COBALT uses a single ligand complexation model for iron scavenging onto detritus (e.g., Archer and Johnson, 2000).
-    ! Ther binding strength of the ligand, however, is modulated between weak high-light (kfe_eq_hl) and strong low-
+    ! The binding strength of the ligand, however, is modulated between weak high-light (kfe_eq_hl) and strong low-
     ! light limits (kfelig_ll) to mimic the weakening effect that oxygen free radicals have on iron binding in well-lit
     ! waters (Fan, 2008).  The weakest binding is at light levels greater than io_fescav = 10 watts m-2.  Values decline 
     ! to the strongest low-light limit at 0.01 watts m-2.
@@ -4082,7 +4084,7 @@ contains
     ! The ligand concentration includes a background concentration (felig_bkg) and an additional amount proportional
     ! to dissolved organic matter (felig_2_don).  When the free iron (feprime) exceeds solubility limits defined as
     ! a function of temperature and salinity according to Liu and Millero (2002), scavenging is increased by the factor
-    ! fast_scav_fac to mimic rapd precipitation.  In coarse resolution global simulations, fast_scav_fac was generally 
+    ! fast_fescav_fac to mimic rapid precipitation. For coarse resolution global simulations, fast_fescav_fac was set
     ! set to 10.0.  This high value helped erode coastal iron signals that likely propagated too far into the open
     ! due to under-resolved shelves.  The current default is 2.0, which was able to better maintain iron limitation
     ! patterns in higher-resolution simulations. 
@@ -4154,7 +4156,7 @@ contains
 !
 
     !
-    ! Iceberg and "Coastal" iron and other nutrient input.  The 
+    ! Iceberg and "Coastal" iron and other nutrient input.
     !
     do j = jsc, jec ; do i = isc, iec !{
        if (grid_kmt(i,j) .gt. 0) then !{
@@ -4317,7 +4319,7 @@ contains
           !
 
           ! Iron from sediment (Dale, 2015).  The maximum release from the sediment is set by ffe_sed_max.  The
-          ! hyperbolic tanget requires the flux of carbon to the sediments (as mmoles m-2 day-1) in the numerator
+          ! hyperbolic tangent requires the flux of carbon to the sediments (as mmoles m-2 day-1) in the numerator
           ! and the bottom water oxygen concentration (in microMolar units) in the denominator:
           cobalt%ffe_sed(i,j) = cobalt%ffe_sed_max * tanh( (cobalt%fntot_btm(i,j)*cobalt%c_2_n*sperd*1.0e3)/ &
                                 max(cobalt%btm_o2(i,j)*1.0e6,epsln) )
