@@ -430,7 +430,6 @@ module cobalt_types
           caco3_sat_max,    &
           doc_background,   &
           fe_2_n_upt_fac,   &
-          fe_2_n_sed,       &
           ffe_sed_max,      &
           ffe_geotherm_ratio,&
           jfe_iceberg_ratio,&
@@ -475,6 +474,7 @@ module cobalt_types
           beta_fescav,      &
           io_fescav,        &
           remin_eff_fedet,  &
+          fast_fescav_fac,  &
           half_life_14c,    &
           lambda_14c,       &
           k_lith,           &
@@ -482,7 +482,8 @@ module cobalt_types
           alk_2_n_denit,    &
           n_2_n_denit,      &
           k_no3_denit,      &
-          no3_2_nh4_amx,     &
+          k_no3_amx,        &
+          no3_2_nh4_amx,    &
           alk_2_nh4_amx,    &
           z_burial,         &
           scale_burial,     &
@@ -715,8 +716,6 @@ module cobalt_types
           jo2resp_wc,&
           omega_arag,&
           omega_calc,&
-          omegaa,&
-          omegac,&
           fntot, &
           fptot, &
           ffetot, &
