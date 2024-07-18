@@ -2285,7 +2285,10 @@ contains
     real, dimension(:),             intent(in) :: max_wavelength_band
     real, dimension(:,ilb:,jlb:),   intent(in) :: sw_pen_band
     real, dimension(:,ilb:,jlb:,:), intent(in) :: opacity_band
-    real, dimension(ilb:,jlb:),     intent(in) :: internal_heat
+    ! internal_heat is optional because it will be a NULL pointer if
+    ! geothermal heating is disabled.
+    ! Later it will be tested if it is present (not NULL).
+    real, dimension(ilb:,jlb:),     intent(in), optional :: internal_heat
     real, dimension(ilb:,jlb:),     intent(in) :: frunoff
     real, dimension(ilb:,jlb:),     intent(in) :: geolat
     type(EOS_type),                 intent(in) :: eqn_of_state !< Equation of state structure
@@ -4323,7 +4326,13 @@ contains
           ! and the bottom water oxygen concentration (in microMolar units) in the denominator:
           cobalt%ffe_sed(i,j) = cobalt%ffe_sed_max * tanh( (cobalt%fntot_btm(i,j)*cobalt%c_2_n*sperd*1.0e3)/ &
                                 max(cobalt%btm_o2(i,j)*1.0e6,epsln) )
-          cobalt%ffe_geotherm(i,j) = cobalt%ffe_geotherm_ratio*internal_heat(i,j)*4184.0/dt
+          ! Have ffe_geotherm default to zero if the internal_heat variable
+          ! needed to calculate it is not available (if geothermal heating is disabled).
+          if(present(internal_heat)) then
+              cobalt%ffe_geotherm(i,j) = cobalt%ffe_geotherm_ratio*internal_heat(i,j)*4184.0/dt
+          else
+              cobalt%ffe_geotherm(i,j) = 0.0
+          endif
 
           !
           ! Calcium carbonate flux and burial, based on Dunne et al., 2012
