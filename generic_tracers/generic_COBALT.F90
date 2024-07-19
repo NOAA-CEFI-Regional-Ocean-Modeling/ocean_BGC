@@ -136,9 +136,6 @@ module generic_COBALT
   use data_override_mod, only: data_override
   use fms_mod,           only: write_version_number, FATAL, WARNING, stdout, stdlog,mpp_pe,mpp_root_pe
   use fms_mod,           only: check_nml_error
-#ifndef INTERNAL_FILE_NML
-  use fms_mod,           only: open_namelist_file, close_file
-#endif
   use MOM_EOS,           only: calculate_density, EOS_type
 
   use g_tracer_utils, only : g_tracer_type,g_tracer_start_param_list,g_tracer_end_param_list
@@ -247,15 +244,8 @@ contains
     !
     stdoutunit=stdout();stdlogunit=stdlog()
 
-#ifdef INTERNAL_FILE_NML
     read (input_nml_file, nml=generic_COBALT_nml, iostat=io_status)
     ierr = check_nml_error(io_status,'generic_COBALT_nml')
-#else
-    ioun = open_namelist_file()
-    read  (ioun, generic_COBALT_nml,iostat=io_status)
-    ierr = check_nml_error(io_status,'generic_COBALT_nml')
-    call close_file (ioun)
-#endif
 
     write (stdoutunit,'(/)')
     write (stdoutunit, generic_COBALT_nml)
