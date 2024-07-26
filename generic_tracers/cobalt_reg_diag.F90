@@ -983,17 +983,6 @@ module COBALT_reg_diag
     zoo(3)%id_temp_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("vmove_Smz","Small zoo movement",'h','L','s','m s-1','f')
-    zoo(1)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("vmove_Mdz","Medium zoo movement",'h','L','s','m s-1','f')
-    zoo(2)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("vmove_Lgz","Large zoo movement",'h','L','s','m s-1','f')
-    zoo(3)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
     !
     ! Register bacterial diagnostics, starting with losses of bacteria to ingestion by zooplankton
     ! CAS: limit loss terms to N
@@ -1024,10 +1013,6 @@ module COBALT_reg_diag
     bact(1)%id_juptake_ldop = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("juptake_po4_Bact","Bacterial uptake of po4",'h','L','s','mol P m-2 s-1','f')
-    bact(1)%id_juptake_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
     !
     ! Register dissolved inorganic production terms for bacteria
     !
@@ -1050,36 +1035,6 @@ module COBALT_reg_diag
     vardesc_temp = vardesc("jprod_nbact","Production of new biomass (nitrogen) by bacteria, layer integral",&
                            'h','L','s','mol N m-2 s-1','f')
     bact(1)%id_jprod_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("jprod_nbact_het","Production of bacterial biomass (nitrogen) via heterotrophy, layer integral",&
-                           'h','L','s','mol N m-2 s-1','f')
-    bact(1)%id_jprod_n_het = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("jprod_nbact_amx","Production of bacterial biomass (nitrogen) via anammox, layer integral",&
-                           'h','L','s','mol N m-2 s-1','f')
-    bact(1)%id_jprod_n_amx = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("jprod_nbact_nitrif","Production of bacterial biomass (nitrogen) via nitrification, layer integral",&
-                           'h','L','s','mol N m-2 s-1','f')
-    bact(1)%id_jprod_n_nitrif = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("mu_h","growth rate of heterotrophic bacteria",&
-                           'h','L','s','s-1','f')
-    bact(1)%id_mu_h = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-     vardesc_temp = vardesc("mu_cstar","biomass turnover due to chemosynthetic processes",&
-                           'h','L','s','s-1','f')
-     bact(1)%id_mu_cstar = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-     vardesc_temp = vardesc("bhet","heterotrophic bacterial biomass",&
-                           'h','L','s','moles N kg-1','f')
-     bact(1)%id_bhet = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("o2lim_Bact","Oxygen limitation of bacteria",'h','L','s','dimensionless','f')
@@ -1347,15 +1302,6 @@ module COBALT_reg_diag
     cobalt%id_irr_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-
-    !
-    ! Upward swimming diagnostic
-    !
-
-    vardesc_temp = vardesc("chl2sfcchl","ratio of chl to surface chl",'h','L','s','dimensionless','f')
-    cobalt%id_chl2sfcchl = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
     !
     ! Nitrification/Denitrification/Anammox diagnostics
     !
@@ -1372,8 +1318,8 @@ module COBALT_reg_diag
     cobalt%id_jno3denit_wc = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jprod_n2amx","Fixed N loss via Anammox layer integral",'h','L','s','mol m-2 s-1','f')
-    cobalt%id_jprod_n2amx = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    vardesc_temp = vardesc("jnamx","Fixed N loss via Anammox layer integral",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_jnamx = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_nh4amx","NH4 uptake via Anammox layer integral",'h','L','s','mol m-2 s-1','f')
@@ -1834,10 +1780,6 @@ module COBALT_reg_diag
 
     vardesc_temp = vardesc("sfc_irr_aclm","Surface day irrad. over photacclim. time scale",'h','1','s','W m-2','f')
     cobalt%id_sfc_irr_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("sfc_irr_mem_dp","Surface Irradiance memory, diapause",'h','1','s','W m-2','f')
-    cobalt%id_sfc_irr_mem_dp = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_temp","Surface Temperature",'h','1','s','deg C','f')
@@ -2381,10 +2323,6 @@ module COBALT_reg_diag
     cobalt%id_jprod_mesozoo_200 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("dp_fac","diapause factor",'h','1','s','none','f')
-    cobalt%id_dp_fac = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
     vardesc_temp = vardesc("daylength","daylength",'h','1','s','hours','f')
     cobalt%id_daylength = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
@@ -2392,10 +2330,6 @@ module COBALT_reg_diag
     !
     ! Water column integrated fluxes
     !
-
-    vardesc_temp = vardesc("wc_vert_int_chemoautopp","Water column chemoautrophy vertical integral",'h','1','s','mol N m-2 s-1','f')
-    cobalt%id_wc_vert_int_chemoautopp = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("wc_vert_int_npp","Water column net primary production vertical integral",'h','1','s','mol N m-2 s-1','f')
     cobalt%id_wc_vert_int_npp = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
@@ -2425,8 +2359,8 @@ module COBALT_reg_diag
     cobalt%id_wc_vert_int_jprod_no3nitrif = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("wc_vert_int_jprod_n2amx","Water column N2 from anammox vertical integral",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_wc_vert_int_jprod_n2amx = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    vardesc_temp = vardesc("wc_vert_int_jnamx","Water column N loss from anammox vertical integral",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_wc_vert_int_jnamx = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("wc_vert_int_juptake_nh4"," Water column ammonia based NPP vertical integral",'h','1','s','mol m-2 s-1','f')

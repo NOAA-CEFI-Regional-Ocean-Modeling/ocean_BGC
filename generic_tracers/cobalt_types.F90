@@ -55,10 +55,16 @@ module cobalt_types
   integer, parameter, public :: SMALL      = 4 !< ID for small phytoplankton 
 
   real, parameter, public :: sperd = 24.0 * 3600.0    !< number of seconds in a day (sec)
+  real, parameter, public :: I_sperd = 1.0/sperd      !< inverse of number of seconds in a day (sec)
   real, parameter, public :: spery = 365.25 * sperd   !< number of seconds in a year (sec)
+  real, parameter, public :: I_spery = 1.0/spery      !< inverse of number of seconds in a year (sec)
   real, parameter, public :: epsln=1.0e-30            !< small, but non-zero value for numerical stability
   real, parameter, public :: missing_value1=-1.0e+10  !< large negative value to represent missing value in diags
   real, parameter, public :: vb_nh3 = 25.             !< Liquid molar volume at boiling point for NH3 (cm3 mol−1)
+  real, parameter, public :: micromol2mol = 1.0e6     !< convert micromoles to moles (used in concentration parameters)
+  real, parameter, public :: c2n = 106.0/16.0         !< convert nutrient ratios relative to carbon to ratios relative to nitrogen
+  real, parameter, public :: micromolQpersec2W = 2.77e18/6.022e17 !< convert photosynthetically available radiation (micromole quanta
+                                                      !! per-second) to watts. 
 
   !> An auxiliary type for storing varible names
   type vardesc
@@ -265,9 +271,6 @@ module cobalt_types
     real mswitch           !< switching parameter (dimensionless)
     real bresp             !< basal respiration rate (sec-1)
     real ktemp             !< temperature dependence of zooplankton rates (C-1)
-    real upswim_chl_thresh !< threshold for swimming the the mixed layer (chl/chl_surf < thresh)
-    real upswim_I_thresh   !< Irradiance threshold for upward swimming (watts m-2)
-    real swim_max          !< maximum upward swimming speed (m s-2)
     real phi_det           !< fraction of ingested N to detritus
     real phi_ldon          !< fraction of ingested N/P to labile don
     real phi_sldon         !< fraction of ingested N/P to semi-labile don
@@ -319,7 +322,6 @@ module cobalt_types
     real, ALLOCATABLE, dimension(:,:,:) ::  jprod_n      !< zooplankton production
     real, ALLOCATABLE, dimension(:,:,:) ::  o2lim        !< oxygen limitation of zooplankton activity
     real, ALLOCATABLE, dimension(:,:,:) ::  temp_lim     !< Temperature limitation
-    real, ALLOCATABLE, dimension(:,:,:) ::  vmove        !< Vertical movement
     integer ::  id_jzloss_n       = -1 !< ID associated with diagnostics for losses of n due to consumption by other zooplankton groups
     integer ::  id_jzloss_p       = -1 !< ID associated with diagnostics for losses of p due to consumption by other zooplankton groups
     integer ::  id_jhploss_n      = -1 !< ID associated with diagnostics for losses of n due to consumption by unresolved higher preds 
@@ -345,7 +347,6 @@ module cobalt_types
     integer ::  id_jprod_n        = -1 !< ID associated with diagnostics for zooplankton production
     integer ::  id_o2lim          = -1 !< ID associated with diagnostics for oxygen limitation of zooplankton activity
     integer ::  id_temp_lim       = -1 !< ID associated with diagnostics for temperature limitation
-    integer ::  id_vmove          = -1 !< ID associated with diagnostics for vertical movement
     integer ::  id_jprod_n_100    = -1 !< ID associated with diagnostics for zooplankton nitrogen prod. integral in upper 100m
     integer ::  id_jingest_n_100  = -1 !< ID associated with diagnostics for zooplankton nitrogen ingestion integral in upper 100m
     integer ::  id_jzloss_n_100   = -1 !< ID associated with diagnostics for zooplankton nitrogen loss to zooplankton integral in upper 100m
@@ -361,8 +362,6 @@ module cobalt_types
     real ::  mu_max           !< maximum bacterial growth rate (sec-1)
     real ::  k_ldon           !< half-sat for nitrogen-limited growth (mmoles N m-3)
     real ::  gge_max          !< max gross growth efficiciency (dimensionless)
-    real ::  amx_ge           !< growth efficiency due to anammox reaction (dimensionless)
-    real ::  nitrif_ge        !< growth efficiency of nitrifying bacteria (dimensionless)
     real ::  bresp            !< basal respiration rate (sec-1)
     real ::  ktemp            !< temperature dependence of bacterial rates (C-1)
     real ::  vir              !< virus-driven loss rate for bacteria (sec-1 mmole N m-3)
@@ -382,16 +381,9 @@ module cobalt_types
     real, ALLOCATABLE, dimension(:,:,:) ::      jvirloss_p       !< phosphorous losses via viruses
     real, ALLOCATABLE, dimension(:,:,:) ::      juptake_ldon     !< Total uptake of ldon
     real, ALLOCATABLE, dimension(:,:,:) ::      juptake_ldop     !< Total uptake of sldon
-    real, ALLOCATABLE, dimension(:,:,:) ::      juptake_po4      !< phosphate uptake with anammox/nitrification
     real, ALLOCATABLE, dimension(:,:,:) ::      jprod_nh4        !< production of ammonia bacteria
     real, ALLOCATABLE, dimension(:,:,:) ::      jprod_po4        !< production of phosphate by bacteria
     real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n          !< total free-living bacterial production
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n_het      !< heterotrophic bacteria production
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n_amx      !< anammox bacteria production
-    real, ALLOCATABLE, dimension(:,:,:) ::      jprod_n_nitrif   !< nitrifying bacteria production
-    real, ALLOCATABLE, dimension(:,:,:) ::      mu_h             !< growth rate of heterotrophic bacteria
-    real, ALLOCATABLE, dimension(:,:,:) ::      mu_cstar         !< biomass turnover due to chemosynthesis
-    real, ALLOCATABLE, dimension(:,:,:) ::      bhet             !< heterotrophic bacteria biomass
     real, ALLOCATABLE, dimension(:,:,:) ::      ldonlim          !< limitation due to organic substrate
     real, ALLOCATABLE, dimension(:,:,:) ::      o2lim            !< limitation due to oxygen
     real, ALLOCATABLE, dimension(:,:,:) ::      temp_lim         !< Temperature limitation
@@ -403,16 +395,9 @@ module cobalt_types
     integer ::  id_jvirloss_p       = -1  !< ID associated with diagnostics for phosphorous losses via viruses
     integer ::  id_juptake_ldon     = -1  !< ID associated with diagnostics for total uptake of ldon
     integer ::  id_juptake_ldop     = -1  !< ID associated with diagnostics for total uptake of sldon
-    integer ::  id_juptake_po4      = -1  !< ID associated with diagnostics for phosphate uptake with anammox/nitrification
     integer ::  id_jprod_nh4        = -1  !< ID associated with diagnostics for production of ammonia bacteria
     integer ::  id_jprod_po4        = -1  !< ID associated with diagnostics for production of phosphate by bacteria
     integer ::  id_jprod_n          = -1  !< ID associated with diagnostics for total free-living bacterial production
-    integer ::  id_jprod_n_het      = -1  !< ID associated with diagnostics for heterotrophic bacteria production
-    integer ::  id_jprod_n_amx      = -1  !< ID associated with diagnostics for anammox bacteria production
-    integer ::  id_jprod_n_nitrif   = -1  !< ID associated with diagnostics for nitrifying bacteria production
-    integer ::  id_mu_h             = -1  !< ID associated with diagnostics for growth rate of heterotrophic bacteria
-    integer ::  id_mu_cstar         = -1  !< ID associated with diagnostics for biomass turnover due to chemosynthesis
-    integer ::  id_bhet             = -1  !< ID associated with diagnostics for heterotrophic bacteria biomass
     integer ::  id_temp_lim         = -1  !< ID associated with diagnostics for temperature limitation
     integer ::  id_o2lim            = -1  !< ID associated with diagnostics for limitation due to oxygen
     integer ::  id_ldonlim          = -1  !< ID associated with diagnostics for limitation due to organic substrate
@@ -445,7 +430,6 @@ module cobalt_types
           caco3_sat_max,    &
           doc_background,   &
           fe_2_n_upt_fac,   &
-          fe_2_n_sed,       &
           ffe_sed_max,      &
           ffe_geotherm_ratio,&
           jfe_iceberg_ratio,&
@@ -466,11 +450,7 @@ module cobalt_types
           case2_salt,       & ! salt threshold for case 2 (coastal) waters
           case2_opac_add,   & ! added opacity for case 2 (coastal) waters
           min_daylength,    &
-          gamma_irr_mem_dp, &
           gamma_mu_mem,     &
-          irr_mem_dpthresh1, &
-          irr_mem_dpthresh2, &
-          dpause_max,       &
           gamma_ndet,       &
           gamma_nitrif,     &
           k_nh3_nitrif,     &
@@ -494,6 +474,7 @@ module cobalt_types
           beta_fescav,      &
           io_fescav,        &
           remin_eff_fedet,  &
+          fast_fescav_fac,  &
           half_life_14c,    &
           lambda_14c,       &
           k_lith,           &
@@ -501,9 +482,12 @@ module cobalt_types
           alk_2_n_denit,    &
           n_2_n_denit,      &
           k_no3_denit,      &
-          no3_2_nh4_amx,     &
+          k_no3_amx,        &
+          no3_2_nh4_amx,    &
           alk_2_nh4_amx,    &
           z_burial,         &
+          scale_burial,     &
+          z_denit,          &
           phi_surfresp_cased, &
           phi_deepresp_cased, &
           alpha_cased,      &
@@ -598,7 +582,6 @@ module cobalt_types
           f_irr_aclm,&
           f_irr_aclm_z,&
           f_irr_aclm_sfc, &
-          f_irr_mem_dp,&
           f_cased,&
           f_cadet_arag_btf,&
           f_cadet_calc_btf,&
@@ -724,18 +707,15 @@ module cobalt_types
           irr_inst,&
           irr_mix,&
           irr_aclm_inst, &
-          chl2sfcchl, &
           jno3denit_wc,&
           juptake_no3amx,&
           juptake_nh4amx,&
-          jprod_n2amx,&
+          jnamx,&
           juptake_nh4nitrif,&
           jprod_no3nitrif,&
           jo2resp_wc,&
           omega_arag,&
           omega_calc,&
-          omegaa,&
-          omegac,&
           fntot, &
           fptot, &
           ffetot, &
@@ -856,7 +836,6 @@ module cobalt_types
           z_o2min, &
           z_sat_arag,&
           z_sat_calc,&
-          dp_fac,&
           daylength,&
 !==============================================================================================================
 ! JGJ 2016/08/08 CMIP6 Ocnbgc
@@ -883,7 +862,6 @@ module cobalt_types
           wc_vert_int_si,&
           wc_vert_int_o2,&
           wc_vert_int_alk,&
-          wc_vert_int_chemoautopp,&
           wc_vert_int_npp, &
           wc_vert_int_jdiss_sidet,&
           wc_vert_int_jdiss_cadet,&
@@ -895,7 +873,7 @@ module cobalt_types
           wc_vert_int_jprod_nh4,&
           wc_vert_int_juptake_no3,&
           wc_vert_int_nfix,&
-          wc_vert_int_jprod_n2amx,&
+          wc_vert_int_jnamx,&
           wc_vert_int_jfe_iceberg,&
           wc_vert_int_jno3_iceberg,&
           wc_vert_int_jpo4_iceberg
@@ -971,7 +949,6 @@ module cobalt_types
           deltap_dic,&
           deltap_o2
 
-     integer :: nkml
      integer :: numlightadapt
      character(len=fm_string_len)          :: file
      character(len=fm_string_len) :: ice_restart_file
@@ -1041,7 +1018,6 @@ module cobalt_types
           id_irr_inst      = -1,       &
           id_irr_mix       = -1,       &
           id_irr_aclm_inst = -1,       &
-          id_chl2sfcchl    = -1,       &
           id_jalk          = -1,       &
           id_jalkc          = -1,       &  !liao
           id_jalk_plus_btm = -1,       &
@@ -1057,7 +1033,7 @@ module cobalt_types
           id_jno3denit_wc  = -1,       &
           id_juptake_no3amx = -1,      &
           id_juptake_nh4amx = -1,      &
-          id_jprod_n2amx = -1,         &
+          id_jnamx = -1,               &
           id_juptake_nh4nitrif = -1,   &
           id_jprod_no3nitrif = -1,     &
           id_jo2resp_wc    = -1,       &
@@ -1123,7 +1099,6 @@ module cobalt_types
           id_sfc_chl       = -1,       &
           id_sfc_irr       = -1,       &
           id_sfc_irr_aclm   = -1,       &
-          id_sfc_irr_mem_dp = -1,      &
           id_sfc_temp      = -1,       &
           id_btm_temp      = -1,       &
           id_btm_temp_old  = -1,       &
@@ -1182,7 +1157,6 @@ module cobalt_types
           id_wc_vert_int_si = -1,      &
           id_wc_vert_int_o2 = -1,      &
           id_wc_vert_int_alk = -1,     &
-          id_wc_vert_int_chemoautopp = -1, &
           id_wc_vert_int_npp = -1, &
           id_wc_vert_int_jdiss_sidet = -1, &
           id_wc_vert_int_jdiss_cadet = -1, &
@@ -1197,7 +1171,7 @@ module cobalt_types
           id_wc_vert_int_jfe_iceberg = -1, &
           id_wc_vert_int_jno3_iceberg = -1, &
           id_wc_vert_int_jpo4_iceberg = -1, &
-          id_wc_vert_int_jprod_n2amx = -1, &
+          id_wc_vert_int_jnamx = -1, &
           id_total_filter_feeding = -1,&
           id_nlg_diatoms = -1,         &
           id_nmd_diatoms = -1,         &
@@ -1215,7 +1189,6 @@ module cobalt_types
           id_jprod_cadet_calc_100 = -1, &
           id_jprod_cadet_arag_100 = -1, &
           id_jprod_mesozoo_200 = -1,   &
-          id_dp_fac            = -1,   &
           id_daylength         = -1,   &
           id_jremin_ndet_100 = -1,     &
           id_f_ndet_100 = -1,          &

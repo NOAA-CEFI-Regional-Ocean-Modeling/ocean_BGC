@@ -98,12 +98,6 @@
 ! This is a mistake that will be fixed later.
 !  </DATA>
 !
-!  <DATA NAME="co2_calc" TYPE="character">
-!  Defines the carbon equilibration method.  Default is 'ocmip2' which uses
-! the FMS_ocmip2_co2calc routine.  The other option is 'mocsy', which uses
-! the set of routines authored by J. Orr. See reference at:
-! http://ocmip5.ipsl.jussieu.fr/mocsy/index.html
-!
 !</NAMELIST>
 !
 !</DESCRIPTION>
@@ -142,9 +136,6 @@ module generic_COBALT
   use data_override_mod, only: data_override
   use fms_mod,           only: write_version_number, FATAL, WARNING, stdout, stdlog,mpp_pe,mpp_root_pe
   use fms_mod,           only: check_nml_error
-#ifndef INTERNAL_FILE_NML
-  use fms_mod,           only: open_namelist_file, close_file
-#endif
   use MOM_EOS,           only: calculate_density, EOS_type
 
   use g_tracer_utils, only : g_tracer_type,g_tracer_start_param_list,g_tracer_end_param_list
@@ -161,8 +152,11 @@ module generic_COBALT
   use cobalt_types 
   use cobalt_send_diag, only : cobalt_send_diagnostics
   use cobalt_reg_diag, only : cobalt_reg_diagnostics
+  use cobalt_param_doc, only : get_COBALT_param_file
 
-  use FMS_ocmip2_co2calc_mod, only : FMS_ocmip2_co2calc, CO2_dope_vector
+  use MOM_file_parser,   only : read_param, get_param, log_version, param_file_type
+
+  use FMS_co2calc_mod, only : FMS_co2calc, CO2_dope_vector
 
   implicit none ; private
 
@@ -185,7 +179,7 @@ module generic_COBALT
                                              !! but can be replaced by setting as_param_cobalt
                                              !! in generic_COBALT_nml.
 
-  namelist /generic_COBALT_nml/ do_14c, co2_calc, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
+  namelist /generic_COBALT_nml/ co2_calc, do_14c, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
      o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,gamma_nitrif,do_vertfill_pre,imbalance_tolerance, &
      as_param_cobalt
   
@@ -250,15 +244,8 @@ contains
     !
     stdoutunit=stdout();stdlogunit=stdlog()
 
-#ifdef INTERNAL_FILE_NML
     read (input_nml_file, nml=generic_COBALT_nml, iostat=io_status)
     ierr = check_nml_error(io_status,'generic_COBALT_nml')
-#else
-    ioun = open_namelist_file()
-    read  (ioun, generic_COBALT_nml,iostat=io_status)
-    ierr = check_nml_error(io_status,'generic_COBALT_nml')
-    call close_file (ioun)
-#endif
 
     write (stdoutunit,'(/)')
     write (stdoutunit, generic_COBALT_nml)
@@ -268,13 +255,12 @@ contains
       write (stdoutunit,*) trim(note_header), 'Simulating radiocarbon'
     endif
 
-    if (trim(co2_calc) == 'ocmip2') then
-      write (stdoutunit,*) trim(note_header), 'Using FMS OCMIP2 CO2 routine'
-    else if (trim(co2_calc) == 'mocsy') then
+    if (trim(co2_calc) == 'mocsy') then
       write (stdoutunit,*) trim(note_header), 'Using Mocsy CO2 routine'
     else
       call mpp_error(FATAL,"Unknown co2_calc option specified in generic_COBALT_nml")
     endif
+
     !Specify all prognostic and diagnostic tracers of this modules.
     call user_add_tracers(tracer_list)
 
@@ -307,6 +293,11 @@ contains
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_init'
 
+    type(param_file_type) :: param_file  !< structure indicating parameter file to parse
+
+    ! This include declares and sets the variable "version". (use of include statement copied from MOM6)
+# include "version_variable.h"
+
     !There are situations where the column_physics (update_from_source) is not called every timestep
     ! such as when MOM6 THERMO_SPANS_COUPLING=True , yet we want the fluxes to be updated every timestep
     ! In that case we can force an update by setting the namelist generic_tracer_nml:force_update_fluxes=.true.
@@ -318,8 +309,11 @@ contains
        do_nh3_diag=.false.
     end if
 
+    ! add MOM6-style interfaces for a parameter file
+    call get_COBALT_param_file(param_file)
+    call log_version(param_file, "COBALT", version, "", log_to_all=.true., debugging=.true.)
     !Specify and initialize all parameters used by this package
-    call user_add_params
+    call user_add_params(param_file)
 
     !Allocate all the private work arrays used by this module.
     call user_allocate_arrays
@@ -359,7 +353,9 @@ contains
   !   This is an internal sub, not a public interface.
   !   Add all the parameters to be used in this module.
   !
-  subroutine user_add_params
+  subroutine user_add_params(param_file)
+
+    type(param_file_type), intent(in)   :: param_file  !< structure indicating parameter file to parse
 
     !Specify all parameters used in this modules.
     !===============================@===============================
@@ -384,77 +380,107 @@ contains
     if (is_root_pe()) write(stdoutunit,*) '!-----------------------START-------------------------------------------'
 
     call g_tracer_start_param_list(package_name)
-    call g_tracer_add_param('init', cobalt%init, .false. )
-    call g_tracer_add_param('do_case2_mod',cobalt%do_case2_mod, .true. )
+    call get_param(param_file, "generic_COBALT", "init", cobalt%init, "init", default=.false.)
 
-    call g_tracer_add_param('htotal_scale_lo', cobalt%htotal_scale_lo, 0.01)
-    call g_tracer_add_param('htotal_scale_hi', cobalt%htotal_scale_hi, 100.0)
+    call get_param(param_file, "generic_COBALT", "htotal_scale_lo", cobalt%htotal_scale_lo, &
+                   "scaling factor for initializing carbon chemistry solver", units=" ", default=0.01)
+    call get_param(param_file, "generic_COBALT", "htotal_scale_hi", cobalt%htotal_scale_hi, &
+                   "scaling factor for initializing carbon chemistry solver", units=" ", default=100.0)
 
-    !  Rho_0 is used in the Boussinesq
-    !  approximation to calculations of pressure and
-    !  pressure gradients, in units of kg m-3.
-    call g_tracer_add_param('RHO_0', cobalt%Rho_0, 1035.0)
-    call g_tracer_add_param('NKML' , cobalt%nkml, 1)
-    !-----------------------------------------------------------------------
-    !       coefficients for O2 saturation
-    !-----------------------------------------------------------------------
-    call g_tracer_add_param('a_0', cobalt%a_0, 2.00907)
-    call g_tracer_add_param('a_1', cobalt%a_1, 3.22014)
-    call g_tracer_add_param('a_2', cobalt%a_2, 4.05010)
-    call g_tracer_add_param('a_3', cobalt%a_3, 4.94457)
-    call g_tracer_add_param('a_4', cobalt%a_4, -2.56847e-01)
-    call g_tracer_add_param('a_5', cobalt%a_5, 3.88767)
-    call g_tracer_add_param('b_0', cobalt%b_0, -6.24523e-03)
-    call g_tracer_add_param('b_1', cobalt%b_1, -7.37614e-03)
-    call g_tracer_add_param('b_2', cobalt%b_2, -1.03410e-02 )
-    call g_tracer_add_param('b_3', cobalt%b_3, -8.17083e-03)
-    call g_tracer_add_param('c_0', cobalt%c_0, -4.88682e-07)
-    !-----------------------------------------------------------------------
-    !     Schmidt number coefficients
-    !-----------------------------------------------------------------------
-    if (trim(as_param_cobalt) == 'W92') then
-        !  Compute the Schmidt number of CO2 in seawater using the
-        !  formulation presented by Wanninkhof (1992, J. Geophys. Res., 97,
-        !  7373-7382).
-        call g_tracer_add_param('a1_co2', cobalt%a1_co2,  2068.9)
-        call g_tracer_add_param('a2_co2', cobalt%a2_co2, -118.63)
-        call g_tracer_add_param('a3_co2', cobalt%a3_co2,  2.9311)
-        call g_tracer_add_param('a4_co2', cobalt%a4_co2, -0.027)
-        call g_tracer_add_param('a5_co2', cobalt%a5_co2,  0.0)     ! Not used for W92
-        !  Compute the Schmidt number of O2 in seawater using the
-        !  formulation proposed by Keeling et al. (1998, Global Biogeochem.
-        !  Cycles, 12, 141-163).
-        call g_tracer_add_param('a1_o2', cobalt%a1_o2, 1929.7)
-        call g_tracer_add_param('a2_o2', cobalt%a2_o2, -117.46)
-        call g_tracer_add_param('a3_o2', cobalt%a3_o2, 3.116)
-        call g_tracer_add_param('a4_o2', cobalt%a4_o2, -0.0306)
-        call g_tracer_add_param('a5_o2', cobalt%a5_o2, 0.0)       ! Not used for W92
-        !if (is_root_pe()) call mpp_error(NOTE,'generic_cobalt: Using Schmidt number coefficients for W92')
-    else if ((trim(as_param_cobalt) == 'W14') .or. (trim(as_param_cobalt) == 'gfdl_cmip6')) then
-        !  Compute the Schmidt number of CO2 in seawater using the
-        !  formulation presented by Wanninkhof
-        !  (2014, Limnol. Oceanogr., 12, 351-362)
-        call g_tracer_add_param('a1_co2', cobalt%a1_co2,    2116.8)
-        call g_tracer_add_param('a2_co2', cobalt%a2_co2,   -136.25)
-        call g_tracer_add_param('a3_co2', cobalt%a3_co2,    4.7353)
-        call g_tracer_add_param('a4_co2', cobalt%a4_co2, -0.092307)
-        call g_tracer_add_param('a5_co2', cobalt%a5_co2, 0.0007555)
-        !  Compute the Schmidt number of O2 in seawater using the
-        !  formulation presented by Wanninkhof
-        !  (2014, Limnol. Oceanogr., 12, 351-362)
-        call g_tracer_add_param('a1_o2', cobalt%a1_o2, 1920.4)
-        call g_tracer_add_param('a2_o2', cobalt%a2_o2, -135.6)
-        call g_tracer_add_param('a3_o2', cobalt%a3_o2, 5.2122)
-        call g_tracer_add_param('a4_o2', cobalt%a4_o2, -0.10939)
-        call g_tracer_add_param('a5_o2', cobalt%a5_o2, 0.00093777)
-        !if (is_root_pe()) call mpp_error(NOTE,'generic_cobalt: Using Schmidt number coefficients for W14')
+    call get_param(param_file, "generic_COBALT", "RHO_0", cobalt%Rho_0, "reference density", &
+                   units="kg m-3", default=1035.0)
+    !------------------------------------------------------------------------------------------------------------------
+    ! Coefficients for O2 saturation based on Garcia and Gordon, 1992.  Oxygen solubility in seawater: Better fitting  
+    ! equations.  Limnol. Oceanogr., 37(6), pp. 1307-1312. 
+    ! https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lo.1992.37.6.1307
+    ! Coefficients fit the Benson and Krause data in Table 1 were used.
+    !------------------------------------------------------------------------------------------------------------------
+    call get_param(param_file, "generic_COBALT", "a_0", cobalt%a_0, "O2 sat. regression coefficient", &
+                   units="ml L-1", default=2.00907)
+    call get_param(param_file, "generic_COBALT", "a_1", cobalt%a_1, "O2 sat. regression coefficient", &
+                   units="ml L-1", default=3.22014)
+    call get_param(param_file, "generic_COBALT", "a_2", cobalt%a_2, "O2 sat. regression coefficient", &
+                   units="ml L-1", default=4.05010)
+    call get_param(param_file, "generic_COBALT", "a_3", cobalt%a_3, "O2 sat. regression coefficient", &
+                   units="ml L-1", default= 4.94457)
+    call get_param(param_file, "generic_COBALT", "a_4", cobalt%a_4, "O2 sat. regression coefficient", &
+                   units="ml L-1", default= -2.56847e-01)
+    call get_param(param_file, "generic_COBALT", "a_5", cobalt%a_5, "O2 sat. regression coefficient", &
+                   units="ml L-1", default= 3.88767)
+    call get_param(param_file, "generic_COBALT", "b_0", cobalt%b_0, "O2 sat. regression coefficient", &
+                   units="ml L-1 (ppt salt)-1)", default= -6.24523e-03)
+    call get_param(param_file, "generic_COBALT", "b_1", cobalt%b_1, "O2 sat. regression coefficient", &
+                   units="ml L-1 (ppt salt)-1", default= -7.37614e-03)
+    call get_param(param_file, "generic_COBALT", "b_2", cobalt%b_2, "O2 sat. regression coefficient", &
+                   units="ml L-1 (ppt salt)-1", default= -1.03410e-02)
+    call get_param(param_file, "generic_COBALT", "b_3", cobalt%b_3, "O2 sat. regression coefficient", &
+                   units="ml L-1 (ppt salt)-1", default= -8.17083e-03)
+    call get_param(param_file, "generic_COBALT", "c_0", cobalt%c_0, "O2 sat. regression coefficient", &
+                   units="ml L-1 (ppt salt)-2", default= -4.88682e-07)
+    !------------------------------------------------------------------------------------------------------------------
+    !     Schmidt number coefficients for calculating air-sea exchanges
+    !------------------------------------------------------------------------------------------------------------------
+    if (trim(as_param_cobalt) == "W92") then
+        !  Compute the Schmidt number of CO2 in seawater using a modified version of the coefficients presented by 
+        !  Wanninkhof, 1992a Relationship between wind speed and gas exchanges over the ocean. J. Geophys. Res. Oceans,
+        !  97, pp. 7373-7382. https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/92JC00188.  Modifications were
+        !  made to ensure the robustness of the Schmidt number relationship from -2-40 deg. C and were communicated to
+        !  by Wanninkhof to John Dunne via e-mail on April 20, 2007.  Note that these are technically for seawater at
+        ! 35 ppt.  ISSUE: Should we change this option to W92_extended?
+        call get_param(param_file, "generic_COBALT", "a1_co2", cobalt%a1_co2, "CO2 Schmidt # regression coefficient", &
+                       units="dimensionless", default= 2068.9)
+        call get_param(param_file, "generic_COBALT", "a2_co2", cobalt%a2_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-1", default= -118.63)
+        call get_param(param_file, "generic_COBALT", "a3_co2", cobalt%a3_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-2", default=  2.9311)
+        call get_param(param_file, "generic_COBALT", "a4_co2", cobalt%a4_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-3", default= -0.027)
+        call get_param(param_file, "generic_COBALT", "a5_co2", cobalt%a5_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-4", default=  0.0)     ! Not used for W92
+        !  Compute the Schmidt number of O2 in seawater using the W92_extended relationships as above
+        call get_param(param_file, "generic_COBALT", "a1_o2", cobalt%a1_o2, "O2 Schmidt # regression coefficient", &
+                       units="dimensionless", default= 1929.7)
+        call get_param(param_file, "generic_COBALT", "a2_o2", cobalt%a2_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C=1", default= -117.46)
+        call get_param(param_file, "generic_COBALT", "a3_o2", cobalt%a3_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-2", default= 3.116)
+        call get_param(param_file, "generic_COBALT", "a4_o2", cobalt%a4_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-3", default= -0.0306)
+        call get_param(param_file, "generic_COBALT", "a5_o2", cobalt%a5_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-4", default= 0.0)       ! Not used for W92
+    else if ((trim(as_param_cobalt) == "W14") .or. (trim(as_param_cobalt) == "gfdl_cmip6")) then
+        !  Compute the Schmidt number of CO2 in seawater using the formulation presented in Wanninkhof et al., 2014.
+        !  Relationship between wind speed and gas exchange over the ocean revisited.  Limnol. Oceanogr: Methods. 12,
+        !  pp. 361-362 https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lom.2014.12.351.  Note that these are
+        !  technically for seawater at 35 ppt.  Alternatives values for freshwater are available in W14 but would need
+        !  to be implemented 
+        call get_param(param_file, "generic_COBALT", "a1_co2", cobalt%a1_co2, "CO2 Schmidt # regression coefficient", &
+                       units="dimensionless", default= 2116.8)
+        call get_param(param_file, "generic_COBALT", "a2_co2", cobalt%a2_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-1", default= -136.25)
+        call get_param(param_file, "generic_COBALT", "a3_co2", cobalt%a3_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-2", default= 4.7353)
+        call get_param(param_file, "generic_COBALT", "a4_co2", cobalt%a4_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-3", default= -0.092307)
+        call get_param(param_file, "generic_COBALT", "a5_co2", cobalt%a5_co2, "CO2 Schmidt # regression coefficient", &
+                       units="deg. C-4", default= 0.0007555)
+        !  Compute the Schmidt number of O2 in seawater using the W14 relationships as above 
+        call get_param(param_file, "generic_COBALT", "a1_o2", cobalt%a1_o2, "O2 Schmidt # regression coefficient", &
+                       units="dimensionless", default= 1920.4)
+        call get_param(param_file, "generic_COBALT", "a2_o2", cobalt%a2_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-1", default= -135.6)
+        call get_param(param_file, "generic_COBALT", "a3_o2", cobalt%a3_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-2", default= 5.2122)
+        call get_param(param_file, "generic_COBALT", "a4_o2", cobalt%a4_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-3", default= -0.10939)
+        call get_param(param_file, "generic_COBALT", "a5_o2", cobalt%a5_o2, "O2 Schmidt # regression coefficient", &
+                       units="deg. C-4", default= 0.00093777)
     else
-        call mpp_error(FATAL,'generic_cobalt: unable to set Schmidt number coefficients for as_param '//trim(as_param_cobalt))
+        call mpp_error(FATAL,"generic_cobalt: unable to set Schmidt number coefficients for as_param "//trim(as_param_cobalt))
     endif
     !-----------------------------------------------------------------------
     ! Stoichiometry
     !-----------------------------------------------------------------------
-    !
     !
     ! Values taken from OCMIP-II Biotic protocols after Anderson (1995) for an
     ! organic material of C106H172O38N16(H3PO4) which gives an average oxidation state
@@ -468,276 +494,304 @@ contains
     !   16*NH4+ + 106*CO2 + 62*H2O <-> C106H172O38N16 + 118*O2 + 16*H+
     !   Effect is to decrease (increase for remineralization) alkalinity by 16 NH4 equivalents.
     !
-    ! N2 Production:
+    ! Primary production via nitrogen fixation:
     !   8*N2 + 106*CO2 + 86*H2O <-> C106H172O38N16 + 130*O2
     !   No effect on alkalinity.
     !
-    ! Nitrification [old]:
+    ! Nitrification:
     !   NH4+ + 2*O2 <-> NO3- + H2O + 2*H+
     !   Effect is to decrease alkalinity by 2 NH4 equivalents.
-    !
-    ! New Nitrification stoichiometry from JPD, for ESM4.2:
-    !   (16+106*35)*NH4+ + 106*CO2 + (106*35+449*8)*O2 + 62*H2O <->
-    !    C106H172O38N16 + (106*35)*NO3- + (106*35)*H2O + (16+106*35*2)*H+
-    !   Effect is to decrease alkalinity by 1.996 NH4 equivalents.
     !
     ! Denitrification:
     !   C106H172O38N16 + 472/5*NO3- + 552/5*H+ <-> 106*CO2 + 16*NH4+ + 236/5*N2 + 546/5*H2O
     !   Effect is to increase alkalinity by 552/472 = 1.169 NO3 equivalents.
     !
-    !-----------------------------------------------------------------------
+    ! Anammox:
+    !   5NH4+ + 3NO3- --> 4N2 + 9H2O + 2H+
+    !   Effect is to decrease alkalinity by 0.4 mole equivalents per mole of NH4 removed
     !
-    ! Anammox stoichiometry from JPD, for ESM4.2:
-    !
-    !   (16+106*3*5*5+64)*NH4+ + (106*3*3*5-118*4)*NO3- + 106*5*CO2 + 62*5*H2O <->
-    !   5*C106H172O38N16 + (106*3*4*5-118*2)*N2 +
-    !   (106*3*9*5-118*2)*H2O + (16+106*3*2*5+118*4+64)*H+
-    !
-    !   Effect is to decrease alkalinity by
-    !   (16+106*3*2*5+118*4+64)/ (16+106*3*5*5+64) = 0.46 mole equivalents per mole of NH4 removed.
-    !
-    call g_tracer_add_param('n_2_n_denit', cobalt%n_2_n_denit, 472.0/(5.0*16.0))             ! mol N NO3 mol N org-1
-    call g_tracer_add_param('no3_2_nh4_amx', cobalt%no3_2_nh4_amx, &
-            (106.0*3.0*3.0*5.0-118.0*4.0)/(16.0+106.0*3.0*5.0*5.0+64.0))                     ! mol N NO3 mol N-1
-    call g_tracer_add_param('o2_2_nfix', cobalt%o2_2_nfix, 130.0/16.0)                       ! mol O2 mol N-1
-!   call g_tracer_add_param('o2_2_nfix', cobalt%o2_2_nfix, (118.0+3.0/(5.0+3.0)*(150.0-118.0))/16.0) ! mol O2 mol N-1
-    call g_tracer_add_param('o2_2_nh4', cobalt%o2_2_nh4, 118.0 / 16.0)                       ! mol O2 mol N-1
-    !call g_tracer_add_param('o2_2_nitrif', cobalt%o2_2_nitrif, &
-    !       (106.0*35.0+449.0*8.0)/(16.0+106.0*35.0))                                   ! mol O2 mol N-1
-    call g_tracer_add_param('o2_2_nitrif', cobalt%o2_2_nitrif,2.0)
-    call g_tracer_add_param('o2_2_no3', cobalt%o2_2_no3, 150.0 / 16.0)                       ! mol O2 mol N-1
+    call get_param(param_file, "generic_COBALT", "n_2_n_denit", cobalt%n_2_n_denit, &
+                   "moles NO3 used per mole org. N remineralized via denitrification", &
+                   units="mol N mol N-1",default= 472.0/(5.0*16.0))
+    call get_param(param_file, "generic_COBALT", "no3_2_nh4_amx", cobalt%no3_2_nh4_amx, &
+                   "moles NO3 used per mole NH4+ oxidized to N2 via anammox",units="mol N mol N-1", &
+                   default = 3.0/5.0)
+    call get_param(param_file, "generic_COBALT", "o2_2_nfix", cobalt%o2_2_nfix, &
+                   "moles O2 created per mole of N fixed", units="mol O2 mol N-1", default= 130.0/16.0)
+    call get_param(param_file, "generic_COBALT", "o2_2_nh4", cobalt%o2_2_nh4, &
+                   "moles O2 created (consumed) per mole NH4-based prim. prod. (aerobic remineralization to NH4+)", &
+                   units="mol O2 mol N-1", default=  118.0 / 16.0)
+    call get_param(param_file, "generic_COBALT", "o2_2_nitrif", cobalt%o2_2_nitrif, &
+                   "moles O2 consumed per mole of NH4+ nitrified to NO3-" , units="mol O2 mol N-1", default=2.0)
+    call get_param(param_file, "generic_COBALT", "o2_2_no3", cobalt%o2_2_no3, &
+                   "moles O2 created per mole of NO3-based prim. prod. ", units="mol O2 mol N-1", default=  150.0/16.0)
+    call get_param(param_file, "generic_COBALT", "alk_2_n_denit", cobalt%alk_2_n_denit, &
+                   "moles alkalinity created per mole NO3- consumed during denitrification", & 
+                   units="mol alk mol N-1 ", default= 552.0/472.0)
+    call get_param(param_file, "generic_COBALT", "alk_2_nh4_amx", cobalt%alk_2_nh4_amx, &
+                   "moles alkalinity removed per mole NH4+ consumed via anammox", units="mol alk mol N-1", &
+                   default= 2.0/5.0)
     !
     !-----------------------------------------------------------------------
     ! Nutrient Limitation Parameters (phytoplankton)
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('k_fed_Di', phyto(DIAZO)%k_fed,  4.0e-9)                  ! mol Fed kg-1
-    call g_tracer_add_param('k_fed_Lg', phyto(LARGE)%k_fed,  2.0e-9)                  ! mol Fed kg-1
-    call g_tracer_add_param('k_fed_Md', phyto(MEDIUM)%k_fed, 8.0e-10)                 ! mol Fed kg-1
-    call g_tracer_add_param('k_fed_Sm', phyto(SMALL)%k_fed,  4.0e-10)                 ! mol Fed kg-1
-    call g_tracer_add_param('k_nh4_Lg', phyto(LARGE)%k_nh4,  5.0e-8)                  ! mol NH4 kg-1
-    call g_tracer_add_param('k_nh4_Md', phyto(MEDIUM)%k_nh4, 2.0e-8)                  ! mol NH4 kg-1
-    call g_tracer_add_param('k_nh4_Sm', phyto(SMALL)%k_nh4,  1.0e-8)                  ! mol NH4 kg-1
-    call g_tracer_add_param('k_nh4_Di', phyto(DIAZO)%k_nh4,  1.0e-7)                  ! mol NH4 kg-1
-    call g_tracer_add_param('k_no3_Lg', phyto(LARGE)%k_no3,  2.5e-6)                  ! mol NO3 kg-1
-    call g_tracer_add_param('k_no3_Md', phyto(MEDIUM)%k_no3, 1.0e-6)                 ! mol NO3 kg-1
-    call g_tracer_add_param('k_no3_Sm', phyto(SMALL)%k_no3,  5.0e-7)                  ! mol NO3 kg-1
-    call g_tracer_add_param('k_no3_Di', phyto(DIAZO)%k_no3,  5.0e-6)                  ! mol NO3 kg-1
-    call g_tracer_add_param('k_po4_Di', phyto(DIAZO)%k_po4,  1.0e-7)                  ! mol PO4 kg-1
-    call g_tracer_add_param('k_po4_Lg', phyto(LARGE)%k_po4,  5.0e-8)                  ! mol PO4 kg-1
-    call g_tracer_add_param('k_po4_Md', phyto(MEDIUM)%k_po4, 2.0e-8)                  ! mol PO4 kg-1
-    call g_tracer_add_param('k_po4_Sm', phyto(SMALL)%k_po4,  1.0e-8)                  ! mol PO4 kg-1
-    call g_tracer_add_param('k_sio4_Lg',phyto(LARGE)%k_sio4, 2.0e-6)                  ! mol SiO4 kg-1
-    call g_tracer_add_param('k_sio4_Md',phyto(MEDIUM)%k_sio4,1.0e-6)                  ! mol SiO4 kg-1
-    call g_tracer_add_param('k_fe_2_n_Di', phyto(DIAZO)%k_fe_2_n, 12.0e-6 * 106.0 / 16.0)   ! mol Fe mol N-1
-    call g_tracer_add_param('k_fe_2_n_Lg', phyto(LARGE)%k_fe_2_n, 10.0e-6 * 106.0 / 16.0)    ! mol Fe mol N-1
-    call g_tracer_add_param('k_fe_2_n_Md', phyto(MEDIUM)%k_fe_2_n,4.0e-6 * 106.0 / 16.0)    ! mol Fe mol N-1
-    call g_tracer_add_param('k_fe_2_n_Sm',phyto(SMALL)%k_fe_2_n,  2.0e-6*106.0/16.0)        ! mol Fe mol N-1
-    call g_tracer_add_param('fe_2_n_max_Sm',phyto(SMALL)%fe_2_n_max, 50.e-6*106.0/16.0)     ! mol Fe mol N-1
-    call g_tracer_add_param('fe_2_n_max_Md', phyto(MEDIUM)%fe_2_n_max, 250.0e-6*106.0/16.0) ! mol Fe mol N-1
-    call g_tracer_add_param('fe_2_n_max_Lg', phyto(LARGE)%fe_2_n_max, 500.0e-6*106.0/16.0)  ! mol Fe mol N-1
-    call g_tracer_add_param('fe_2_n_max_Di', phyto(DIAZO)%fe_2_n_max, 500.0e-6*106.0/16.0)  ! mol Fe mol N-1
-    call g_tracer_add_param('fe_2_n_upt_fac', cobalt%fe_2_n_upt_fac, 60.0e-6)               ! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "k_fed_Di", phyto(DIAZO)%k_fed,            "k_fed_Di",       units="mol Fed kg-1", default=4.0e-9)  ! mol Fed kg-1
+    call get_param(param_file, "generic_COBALT", "k_fed_Lg", phyto(LARGE)%k_fed,            "k_fed_Lg",       units="mol Fed kg-1", default=2.0e-9)  ! mol Fed kg-1
+    call get_param(param_file, "generic_COBALT", "k_fed_Md", phyto(MEDIUM)%k_fed,           "k_fed_Md",       units="mol Fed kg-1", default=8.0e-10) ! mol Fed kg-1
+    call get_param(param_file, "generic_COBALT", "k_fed_Sm", phyto(SMALL)%k_fed,            "k_fed_Sm",       units="mol Fed kg-1", default=4.0e-10) ! mol Fed kg-1
+    call get_param(param_file, "generic_COBALT", "k_nh4_Lg", phyto(LARGE)%k_nh4,            "k_nh4_Lg",       units="mol NH4 kg-1", default=5.0e-8)  ! mol NH4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_nh4_Md", phyto(MEDIUM)%k_nh4,           "k_nh4_Md",       units="mol NH4 kg-1", default=2.0e-8)  ! mol NH4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_nh4_Sm", phyto(SMALL)%k_nh4,            "k_nh4_Sm",       units="mol NH4 kg-1", default=1.0e-8)  ! mol NH4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_nh4_Di", phyto(DIAZO)%k_nh4,            "k_nh4_Di",       units="mol NH4 kg-1", default=1.0e-7)  ! mol NH4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_no3_Lg", phyto(LARGE)%k_no3,            "k_no3_Lg",       units="mol NO3 kg-1", default=2.5e-6)  ! mol NO3 kg-1
+    call get_param(param_file, "generic_COBALT", "k_no3_Md", phyto(MEDIUM)%k_no3,           "k_no3_Md",       units="mol NO3 kg-1", default=1.0e-6)  ! mol NO3 kg-1
+    call get_param(param_file, "generic_COBALT", "k_no3_Sm", phyto(SMALL)%k_no3,            "k_no3_Sm",       units="mol NO3 kg-1", default=5.0e-7)  ! mol NO3 kg-1
+    call get_param(param_file, "generic_COBALT", "k_no3_Di", phyto(DIAZO)%k_no3,            "k_no3_Di",       units="mol NO3 kg-1", default=5.0e-6)  ! mol NO3 kg-1
+    call get_param(param_file, "generic_COBALT", "k_po4_Di", phyto(DIAZO)%k_po4,            "k_po4_Di",       units="mol PO4 kg-1", default=1.0e-7)  ! mol PO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_po4_Lg", phyto(LARGE)%k_po4,            "k_po4_Lg",       units="mol PO4 kg-1", default=5.0e-8)  ! mol PO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_po4_Md", phyto(MEDIUM)%k_po4,           "k_po4_Md",       units="mol PO4 kg-1", default=2.0e-8)  ! mol PO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_po4_Sm", phyto(SMALL)%k_po4,            "k_po4_Sm",       units="mol PO4 kg-1", default=1.0e-8)  ! mol PO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_sio4_Lg",phyto(LARGE)%k_sio4,           "k_sio4_Lg",      units="mol SiO4 kg-1", default=2.0e-6) ! mol SiO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_sio4_Md",phyto(MEDIUM)%k_sio4,          "k_sio4_Md",      units="mol SiO4 kg-1", default=1.0e-6) ! mol SiO4 kg-1
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Di", phyto(DIAZO)%k_fe_2_n,      "k_fe_2_n_Di",    units="mol Fe kg-1", &
+                   default= 12.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Lg", phyto(LARGE)%k_fe_2_n,      "k_fe_2_n_Lg",    units="mol Fe kg-1", &
+                   default= 10.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Md", phyto(MEDIUM)%k_fe_2_n,     "k_fe_2_n_Md",    units="mol Fe kg-1", &
+                   default= 4.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Sm",phyto(SMALL)%k_fe_2_n,       "k_fe_2_n_Sm",    units="mol Fe kg-1", &
+                   default= 2.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Sm",phyto(SMALL)%fe_2_n_max,   "fe_2_n_max_Sm",  units="mol Fe kg-1", &
+                   default= 50.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Md", phyto(MEDIUM)%fe_2_n_max, "fe_2_n_max_Md",  units="mol Fe kg-1", &
+                   default= 250.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Lg", phyto(LARGE)%fe_2_n_max,  "fe_2_n_max_Lg",  units="mol Fe kg-1", &
+                   default= 500.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Di", phyto(DIAZO)%fe_2_n_max,  "fe_2_n_max_Di",  units="mol Fe kg-1", &
+                   default= 500.0e-6, scale=c2n)! mol Fe mol N-1
+    call get_param(param_file, "generic_COBALT", "fe_2_n_upt_fac", cobalt%fe_2_n_upt_fac,   "fe_2_n_upt_fac", units="mol Fe kg-1", default= 60.0e-6) ! mol Fe mol N-1
     !
     !-----------------------------------------------------------------------
     ! Phytoplankton light limitation/growth rate
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('alpha_Di_hl', phyto(DIAZO)%alpha_hl,  0.4e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Lg_hl', phyto(LARGE)%alpha_hl,  0.4e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Md_hl', phyto(MEDIUM)%alpha_hl, 0.8e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Sm_hl', phyto(SMALL)%alpha_hl,  1.6e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Di_ll', phyto(DIAZO)%alpha_ll,  0.8e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Lg_ll', phyto(LARGE)%alpha_ll,  0.8e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Md_ll', phyto(MEDIUM)%alpha_ll, 1.6e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('alpha_Sm_ll', phyto(SMALL)%alpha_ll,  3.2e-5  * 2.77e18 / 6.022e17)! g C g Chl-1 sec-1 (W m-2)-1
-    call g_tracer_add_param('kappa_eppley', cobalt%kappa_eppley, 0.063)                   ! deg C-1
-    call g_tracer_add_param('P_C_max_Di_hl', phyto(DIAZO)%P_C_max_hl, 0.6/sperd)          ! s-1
-    call g_tracer_add_param('P_C_max_Lg_hl', phyto(LARGE)%P_C_max_hl, 1.0/sperd)          ! s-1
-    call g_tracer_add_param('P_C_max_Md_hl', phyto(MEDIUM)%P_C_max_hl, 1.1/sperd)         ! s-1
-    call g_tracer_add_param('P_C_max_Sm_hl', phyto(SMALL)%P_C_max_hl, 1.0/sperd)          ! s-1
-    call g_tracer_add_param('P_C_max_Di_ll', phyto(DIAZO)%P_C_max_ll, 0.3/sperd)     ! s-1
-    call g_tracer_add_param('P_C_max_Lg_ll', phyto(LARGE)%P_C_max_ll, 0.5/sperd)     ! s-1
-    call g_tracer_add_param('P_C_max_Md_ll', phyto(MEDIUM)%P_C_max_ll, 0.55/sperd)    ! s-1
-    call g_tracer_add_param('P_C_max_Sm_ll', phyto(SMALL)%P_C_max_ll, 0.5/sperd)     ! s-1
-    call g_tracer_add_param('numlightadapt', cobalt%numlightadapt, 10)               ! dimensionless
-    call g_tracer_add_param('thetamax_Di', phyto(DIAZO)%thetamax, 0.035)                  ! g Chl g C-1
-    call g_tracer_add_param('thetamax_Lg', phyto(LARGE)%thetamax, 0.07)                  ! g Chl g C-1
-    call g_tracer_add_param('thetamax_Md', phyto(MEDIUM)%thetamax, 0.045)                 ! g Chl g C-1
-    call g_tracer_add_param('thetamax_Sm', phyto(SMALL)%thetamax, 0.035)                  ! g Chl g C-1
-    call g_tracer_add_param('bresp_frac_mixed_Di', phyto(DIAZO)%bresp_frac_mixed,0.02)   ! none
-    call g_tracer_add_param('bresp_frac_mixed_Lg', phyto(LARGE)%bresp_frac_mixed,0.02)   ! none
-    call g_tracer_add_param('bresp_frac_mixed_Md', phyto(MEDIUM)%bresp_frac_mixed,0.02)  ! none
-    call g_tracer_add_param('bresp_frac_mixed_Sm', phyto(SMALL)%bresp_frac_mixed,0.02)   ! none
-    call g_tracer_add_param('bresp_frac_strat_Di', phyto(DIAZO)%bresp_frac_strat,0.01)   ! none
-    call g_tracer_add_param('bresp_frac_strat_Lg', phyto(LARGE)%bresp_frac_strat,0.01)   ! none
-    call g_tracer_add_param('bresp_frac_strat_Md', phyto(MEDIUM)%bresp_frac_strat,0.01)  ! none
-    call g_tracer_add_param('bresp_frac_strat_Sm', phyto(SMALL)%bresp_frac_strat,0.01)   ! none
-    call g_tracer_add_param('sink_max_Di', phyto(DIAZO)%sink_max,1.0/sperd)              ! m sec-1
-    call g_tracer_add_param('sink_max_Lg', phyto(LARGE)%sink_max,5.0/sperd)              ! m sec-1
-    call g_tracer_add_param('sink_max_Md', phyto(MEDIUM)%sink_max,1.0/sperd)             ! m sec-1
-    call g_tracer_add_param('sink_max_Sm', phyto(SMALL)%sink_max,0.0/sperd)              ! m sec-1
-    call g_tracer_add_param('thetamin', cobalt%thetamin, 0.002)                          ! g Chl g C-1
-    call g_tracer_add_param('zeta', cobalt%zeta, 0.05)                                   ! dimensionless
-    call g_tracer_add_param('par_adj',cobalt%par_adj, 0.83)                              ! dimensionless
-    call g_tracer_add_param('gamma_irr_aclm', cobalt%gamma_irr_aclm, 1.0 / sperd)        ! s-1
-    call g_tracer_add_param('gamma_irr_mem_dp',cobalt%gamma_irr_mem_dp,0.1/sperd)        ! s-1
-    call g_tracer_add_param('gamma_mu_mem', cobalt%gamma_mu_mem, 1.0 / sperd)            ! s-1
-    call g_tracer_add_param('ml_aclm_efold', cobalt%ml_aclm_efold, 2.5)                  ! dimensionless
-    call g_tracer_add_param('zmld_ref', cobalt%zmld_ref, 10.0)                           ! m
-    call g_tracer_add_param('densdiff_mld', cobalt%densdiff_mld, 0.03)                   ! kg m-3
-    call g_tracer_add_param('irrad_day_thresh', cobalt%irrad_day_thresh, 1.0 )           ! watts m-2
+    call get_param(param_file, "generic_COBALT", "alpha_Di_hl", phyto(DIAZO)%alpha_hl,  "alpha_Di_hl", units="g C g chl-1 s-1", &
+                   default= 0.4e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Lg_hl", phyto(LARGE)%alpha_hl,  "alpha_Lg_hl", units="g C g chl-1 s-1", &
+                   default= 0.4e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Md_hl", phyto(MEDIUM)%alpha_hl, "alpha_Md_hl", units="g C g chl-1 s-1", &
+                   default= 0.8e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Sm_hl", phyto(SMALL)%alpha_hl,  "alpha_Sm_hl", units="g C g chl-1 s-1", &
+                   default= 1.6e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Di_ll", phyto(DIAZO)%alpha_ll,  "alpha_Di_ll", units="g C g chl-1 s-1", &
+                   default= 0.8e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Lg_ll", phyto(LARGE)%alpha_ll,  "alpha_Lg_ll", units="g C g chl-1 s-1", &
+                   default= 0.8e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Md_ll", phyto(MEDIUM)%alpha_ll, "alpha_Md_ll", units="g C g chl-1 s-1", & 
+                   default= 1.6e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+    call get_param(param_file, "generic_COBALT", "alpha_Sm_ll", phyto(SMALL)%alpha_ll,  "alpha_Sm_ll", units="g C g chl-1 s-1", &
+                   default= 3.2e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
+
+    call get_param(param_file, "generic_COBALT", "kappa_eppley",        cobalt%kappa_eppley,            "kappa_eppley",        units="deg C-1",         default= 0.063)                   ! deg C-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Di_hl", phyto(DIAZO)%P_C_max_hl, "P_C_max_Di_hl", units="day-1", &
+                   default= 0.6, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Lg_hl", phyto(LARGE)%P_C_max_hl, "P_C_max_Lg_hl", units="day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Md_hl", phyto(MEDIUM)%P_C_max_hl,"P_C_max_Md_hl", units="day-1", &
+                   default= 1.1, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Sm_hl", phyto(SMALL)%P_C_max_hl, "P_C_max_Sm_hl", units="day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Di_ll", phyto(DIAZO)%P_C_max_ll, "P_C_max_Di_ll", units="day-1", &
+                   default= 0.3, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Lg_ll", phyto(LARGE)%P_C_max_ll, "P_C_max_Lg_ll", units="day-1", &
+                   default= 0.5, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Md_ll", phyto(MEDIUM)%P_C_max_ll,"P_C_max_Md_ll", units="day-1", &
+                   default= 0.55, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "P_C_max_Sm_ll", phyto(SMALL)%P_C_max_ll, "P_C_max_Sm_ll", units="day-1", &
+                   default= 0.5, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "numlightadapt",       cobalt%numlightadapt,           "numlightadapt",       units="",                default= 10)               ! dimensionless
+    call get_param(param_file, "generic_COBALT", "thetamax_Di",         phyto(DIAZO)%thetamax,          "thetamax_Di",         units="g chl g C-1",     default= 0.035)                  ! g Chl g C-1
+    call get_param(param_file, "generic_COBALT", "thetamax_Lg",         phyto(LARGE)%thetamax,          "thetamax_Lg",         units="g chl g C-1",     default= 0.07)                  ! g Chl g C-1
+    call get_param(param_file, "generic_COBALT", "thetamax_Md",         phyto(MEDIUM)%thetamax,         "thetamax_Md",         units="g chl g C-1",     default= 0.045)                 ! g Chl g C-1
+    call get_param(param_file, "generic_COBALT", "thetamax_Sm",         phyto(SMALL)%thetamax,          "thetamax_Sm",         units="g chl g C-1",     default= 0.035)                  ! g Chl g C-1
+    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Di", phyto(DIAZO)%bresp_frac_mixed,  "bresp_frac_mixed_Di", units="",                default= 0.02)   ! none
+    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Lg", phyto(LARGE)%bresp_frac_mixed,  "bresp_frac_mixed_Lg", units="",                default= 0.02)   ! none
+    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Md", phyto(MEDIUM)%bresp_frac_mixed, "bresp_frac_mixed_Md", units="",                default= 0.02)  ! none
+    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Sm", phyto(SMALL)%bresp_frac_mixed,  "bresp_frac_mixed_Sm", units="",                default= 0.02)   ! none
+    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Di", phyto(DIAZO)%bresp_frac_strat,  "bresp_frac_strat_Di", units="",                default= 0.01)   ! none
+    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Lg", phyto(LARGE)%bresp_frac_strat,  "bresp_frac_strat_Lg", units="",                default= 0.01)   ! none
+    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Md", phyto(MEDIUM)%bresp_frac_strat, "bresp_frac_strat_Md", units="",                default= 0.01)  ! none
+    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Sm", phyto(SMALL)%bresp_frac_strat,  "bresp_frac_strat_Sm", units="",                default= 0.01)   ! none
+    call get_param(param_file, "generic_COBALT", "sink_max_Di",         phyto(DIAZO)%sink_max,          "sink_max_Di",         units="m day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "sink_max_Lg",         phyto(LARGE)%sink_max,          "sink_max_Lg",         units="m day-1", &
+                   default= 5.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "sink_max_Md",         phyto(MEDIUM)%sink_max,         "sink_max_Md",         units="m day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "sink_max_Sm",         phyto(SMALL)%sink_max,          "sink_max_Sm",         units="m day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "thetamin",            cobalt%thetamin,                "thetamin",            units="g chl g C-1", default= 0.002) ! g Chl g C-1
+    call get_param(param_file, "generic_COBALT", "zeta",                cobalt%zeta,                    "zeta",                units="",            default= 0.05)  ! dimensionless
+    call get_param(param_file, "generic_COBALT", "par_adj",             cobalt%par_adj,                 "par_adj",             units="",            default= 0.83)  ! dimensionless
+    call get_param(param_file, "generic_COBALT", "gamma_irr_aclm",      cobalt%gamma_irr_aclm,          "gamma_irr_aclm",      units="day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_mu_mem",        cobalt%gamma_mu_mem,            "gamma_mu_mem",        units="day-1", &
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "ml_aclm_efold",       cobalt%ml_aclm_efold,           "ml_aclm_efold",       units="",            default= 2.5)   ! dimensionless
+    call get_param(param_file, "generic_COBALT", "zmld_ref",            cobalt%zmld_ref,                "zmld_ref",            units="m",           default= 10.0)  ! m
+    call get_param(param_file, "generic_COBALT", "densdiff_mld",        cobalt%densdiff_mld,            "densdiff_mld",        units="kg m-3",      default= 0.03)  ! kg m-3
+    call get_param(param_file, "generic_COBALT", "irrad_day_thresh",    cobalt%irrad_day_thresh,        "irrad_day_thresh",    units="watts m-2",   default= 1.0 )  ! watts m-2
+    call get_param(param_file, "generic_COBALT", "do_case2_mod",        cobalt%do_case2_mod, &
+                   "When ture, modify the opacity of case 2 (coastal) waters"//&
+                   "which are identified based on a temperature and depth threshold", default=.false. )
     if (cobalt%do_case2_mod) then
-      call g_tracer_add_param('case2_depth', cobalt%case2_depth, 30.0 )                  ! m
-      call g_tracer_add_param('case2_salt', cobalt%case2_salt, 30.0 )                    ! PSU
-      call g_tracer_add_param('case2_opac_add', cobalt%case2_opac_add, 0.05 )            ! m-1
+      call get_param(param_file, "generic_COBALT", "case2_depth",    cobalt%case2_depth, &
+                     "Depth threshold to identify Case 2 water when using a modified opacity.", units="m",  default=30.0 )                  ! m
+      call get_param(param_file, "generic_COBALT", "case2_salt",     cobalt%case2_salt,  &
+                     "Salinity threshold to identify Case 2 water when using a modified opacity.", units="PSU", default=30.0 )                    ! PSU
+      call get_param(param_file, "generic_COBALT", "case2_opac_add", cobalt%case2_opac_add, &     ! m-1
+                     "Additional opactity added in Case 2 waters when using a modified opacity.", units="m-1", default=0.05 )
     else
       cobalt%case2_depth = 0.0                                                           ! m
       cobalt%case2_salt = 0.0                                                            ! PSU
       cobalt%case2_opac_add = 0.0                                                        ! m-1
     endif
-    call g_tracer_add_param('min_daylength', cobalt%min_daylength, 6.0 )                 ! hours
-    call g_tracer_add_param('refuge_conc', cobalt%refuge_conc, 1.0e-10)                  ! moles N kg-1
+    call get_param(param_file, "generic_COBALT", "min_daylength",       cobalt%min_daylength,           "min_daylength",       units="hours",       default= 6.0 )                 ! hours
+    call get_param(param_file, "generic_COBALT", "refuge_conc",         cobalt%refuge_conc,             "refuge_conc",         units="mol kg-1",    default= 1.0e-10)                  ! moles N kg-1
     !
     !-----------------------------------------------------------------------
     ! Nitrogen fixation inhibition parameters
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('o2_inhib_Di_pow', cobalt%o2_inhib_Di_pow, 4.0)                 ! mol O2-1 m3
-    call g_tracer_add_param('o2_inhib_Di_sat', cobalt%o2_inhib_Di_sat, 3.0e-4)              ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "o2_inhib_Di_pow", cobalt%o2_inhib_Di_pow, "o2_inhib_Di_pow", units="mol O2-1 m3",   default=4.0)                 ! mol O2-1 m3
+    call get_param(param_file, "generic_COBALT", "o2_inhib_Di_sat", cobalt%o2_inhib_Di_sat, "o2_inhib_Di_sat", units="mol kg-1",      default=3.0e-4)              ! mol O2 kg-1
     !
     !-----------------------------------------------------------------------
     ! Other stoichiometry
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('p_2_n_static', cobalt%p_2_n_static, .false. )
-    call g_tracer_add_param('c_2_n', cobalt%c_2_n, 106.0 / 16.0)
-    call g_tracer_add_param('alk_2_n_denit', cobalt%alk_2_n_denit, 552.0/472.0)             ! eq. alk mol NO3-1
-    call g_tracer_add_param('alk_2_nh4_amx', cobalt%alk_2_nh4_amx, 3732.0/8030.0)           ! eq. alk mol NH4-1
-    call g_tracer_add_param('p_2_n_static_Di', phyto(DIAZO)%p_2_n_static,1.0/40.0 )         ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_static_Lg', phyto(LARGE)%p_2_n_static,1.0/14.0 )         ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_static_Md', phyto(MEDIUM)%p_2_n_static,1.0/20.0 )        ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_static_Sm', phyto(SMALL)%p_2_n_static,1.0/24.0 )         ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_min_Di', phyto(DIAZO)%p_2_n_min,1.0/40.0 )               ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_slope_Di', phyto(DIAZO)%p_2_n_slope, 0.0*1.0e6)          ! mol P mol N-1 mol P-1 kg
-    call g_tracer_add_param('p_2_n_max_Di', phyto(DIAZO)%p_2_n_max,1.0/40.0 )               ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_min_Sm', phyto(SMALL)%p_2_n_min,1.0/31.0 )               ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_slope_Sm', phyto(SMALL)%p_2_n_slope, 0.048*1.0e6)        ! mol P mol N-1 mol P-1 kg
-    call g_tracer_add_param('p_2_n_max_Sm', phyto(SMALL)%p_2_n_max,1.0/20.0 )               ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_min_Md', phyto(MEDIUM)%p_2_n_min,1.0/31.0 )              ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_slope_Md', phyto(MEDIUM)%p_2_n_slope, 0.048*1.0e6)       ! mol P mol N-1 mol P-1 kg
-    call g_tracer_add_param('p_2_n_max_Md', phyto(MEDIUM)%p_2_n_max,1.0/16.0 )              ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_min_Lg', phyto(LARGE)%p_2_n_min,1.0/31.0 )               ! mol P mol N-1
-    call g_tracer_add_param('p_2_n_slope_Lg', phyto(LARGE)%p_2_n_slope, 0.048*1.0e6)        ! mol P mol N-1 mol P-1 kg
-    call g_tracer_add_param('p_2_n_max_Lg', phyto(LARGE)%p_2_n_max,1.0/14.0 )               ! mol P mol N-1
-    call g_tracer_add_param('si_2_n_static_Lg', phyto(LARGE)%si_2_n_static, 2.0)            ! mol Si mol N-1
-    call g_tracer_add_param('si_2_n_static_Md', phyto(MEDIUM)%si_2_n_static, 2.0)           ! mol Si mol N-1
-    call g_tracer_add_param('si_2_n_max_Lg', phyto(LARGE)%si_2_n_max, 3.0)                  ! mol Si mol N-1
-    call g_tracer_add_param('si_2_n_max_Lg', phyto(MEDIUM)%si_2_n_max, 1.0)                 ! mol Si mol N-1
-    call g_tracer_add_param('ca_2_n_arag', cobalt%ca_2_n_arag, 0.055 * 106.0 / 16.0)        ! mol Ca mol N-1
-    call g_tracer_add_param('ca_2_n_calc', cobalt%ca_2_n_calc, 0.050 * 106.0 / 16.0)        ! mol Ca mol N-1
-    call g_tracer_add_param('caco3_sat_max', cobalt%caco3_sat_max,10.0)                     ! dimensionless
+    call get_param(param_file, "generic_COBALT", "p_2_n_static",     cobalt%p_2_n_static,          "p_2_n_static",    default=.false. )
+    call get_param(param_file, "generic_COBALT", "c_2_n",            cobalt%c_2_n,                 "c_2_n",           units="", default= 106.0 / 16.0)
+    call get_param(param_file, "generic_COBALT", "p_2_n_static_Di",  phyto(DIAZO)%p_2_n_static,    "p_2_n_static_Di", units="mol P mol N-1", default= 1.0/40.0 )         ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_static_Lg",  phyto(LARGE)%p_2_n_static,    "p_2_n_static_Lg", units="mol P mol N-1", default= 1.0/14.0 )         ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_static_Md",  phyto(MEDIUM)%p_2_n_static,   "p_2_n_static_Md", units="mol P mol N-1", default= 1.0/20.0 )        ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_static_Sm",  phyto(SMALL)%p_2_n_static,    "p_2_n_static_Sm", units="mol P mol N-1", default= 1.0/24.0 )         ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_min_Di",     phyto(DIAZO)%p_2_n_min,       "p_2_n_min_Di",    units="mol P mol N-1", default= 1.0/40.0 )               ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Di",   phyto(DIAZO)%p_2_n_slope,     "p_2_n_slope_Di",  units="mol P mol N-1 mol P-1 kg", default= 0.0*1.0e6)          ! mol P mol N-1 mol P-1 kg
+    call get_param(param_file, "generic_COBALT", "p_2_n_max_Di",     phyto(DIAZO)%p_2_n_max,       "p_2_n_max_Di",    units="mol P mol N-1", default= 1.0/40.0 )               ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_min_Sm",     phyto(SMALL)%p_2_n_min,       "p_2_n_min_Sm",    units="mol P mol N-1", default= 1.0/31.0 )               ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Sm",   phyto(SMALL)%p_2_n_slope,     "p_2_n_slope_Sm",  units="mol P mol N-1 mol P-1 kg", default= 0.048*1.0e6)        ! mol P mol N-1 mol P-1 kg
+    call get_param(param_file, "generic_COBALT", "p_2_n_max_Sm",     phyto(SMALL)%p_2_n_max,       "p_2_n_max_Sm",    units="mol P mol N-1", default= 1.0/20.0 )               ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_min_Md",     phyto(MEDIUM)%p_2_n_min,      "p_2_n_min_Md",    units="mol P mol N-1", default= 1.0/31.0 )              ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Md",   phyto(MEDIUM)%p_2_n_slope,    "p_2_n_slope_Md",  units="mol P mol N-1 mol P-1 kg", default= 0.048*1.0e6)       ! mol P mol N-1 mol P-1 kg
+    call get_param(param_file, "generic_COBALT", "p_2_n_max_Md",     phyto(MEDIUM)%p_2_n_max,      "p_2_n_max_Md",    units="mol P mol N-1", default= 1.0/16.0 )              ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_min_Lg",     phyto(LARGE)%p_2_n_min,       "p_2_n_min_Lg",    units="mol P mol N-1", default= 1.0/31.0 )               ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Lg",   phyto(LARGE)%p_2_n_slope,     "p_2_n_slope_Lg",  units="mol P mol N-1 mol P-1 kg", default= 0.048*1.0e6)        ! mol P mol N-1 mol P-1 kg
+    call get_param(param_file, "generic_COBALT", "p_2_n_max_Lg",     phyto(LARGE)%p_2_n_max,       "p_2_n_max_Lg",    units="mol P mol N-1", default= 1.0/14.0 )               ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "si_2_n_static_Lg", phyto(LARGE)%si_2_n_static,   "si_2_n_static_Lg",units="mol Si mol N-1", default= 2.0)            ! mol Si mol N-1
+    call get_param(param_file, "generic_COBALT", "si_2_n_static_Md", phyto(MEDIUM)%si_2_n_static,  "si_2_n_static_Md",units="mol Si mol N-1", default= 2.0)           ! mol Si mol N-1
+    call get_param(param_file, "generic_COBALT", "si_2_n_max_Lg",    phyto(LARGE)%si_2_n_max,      "si_2_n_max_Lg",   units="mol Si mol N-1", default= 3.0)                  ! mol Si mol N-1
+    call get_param(param_file, "generic_COBALT", "si_2_n_max_Lg",    phyto(MEDIUM)%si_2_n_max,     "si_2_n_max_Lg",   units="mol Si mol N-1", default= 1.0)                 ! mol Si mol N-1
     !
     !-----------------------------------------------------------------------
     ! Zooplankton Stoichiometry - presently static
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('q_p_2_n_smz',zoo(1)%q_p_2_n, 1.0/20.0)          ! mol P mol N-1
-    call g_tracer_add_param('q_p_2_n_mdz',zoo(2)%q_p_2_n, 1.0/18.0)          ! mol P mol N-1
-    call g_tracer_add_param('q_p_2_n_lgz',zoo(3)%q_p_2_n, 1.0/16.0)          ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_smz",zoo(1)%q_p_2_n,"q_p_2_n_smz", units="mol P mol N-1", default= 1.0/20.0)          ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_mdz",zoo(2)%q_p_2_n,"q_p_2_n_mdz", units="mol P mol N-1", default= 1.0/18.0)          ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_lgz",zoo(3)%q_p_2_n,"q_p_2_n_lgz", units="mol P mol N-1", default= 1.0/16.0)          ! mol P mol N-1
     !
     !-----------------------------------------------------------------------
     ! Bacteria Stoichiometry - presently static
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('q_p_2_n_bact',bact(1)%q_p_2_n, 1.0/16.0)        ! mol P mol N-1
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_bact",bact(1)%q_p_2_n, "q_p_2_n_bact", units="mol P mol N-1", default=1.0/16.0)        ! mol P mol N-1
     !
     !
     !-----------------------------------------------------------------------
     ! Phytoplankton aggregation
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('agg_Sm',phyto(SMALL)%agg,0.05*1e6 / sperd)            ! s-1 (mole N kg)-1
-    call g_tracer_add_param('agg_Di',phyto(DIAZO)%agg,  0.0    / sperd)           ! s-1 (mole N kg)-1
-    call g_tracer_add_param('agg_Lg',phyto(LARGE)%agg,0.25*1e6 / sperd)            ! s-1 (mole N kg)-1
-    call g_tracer_add_param('agg_Md',phyto(MEDIUM)%agg,0.10*1e6 / sperd)           ! s-1 (mole N kg)-1
-    call g_tracer_add_param('frac_mu_stress_Sm',phyto(SMALL)%frac_mu_stress,0.25)  ! none
-    call g_tracer_add_param('frac_mu_stress_Di',phyto(DIAZO)%frac_mu_stress,0.25)  ! none
-    call g_tracer_add_param('frac_mu_stress_Lg',phyto(LARGE)%frac_mu_stress,0.25)  ! none
-    call g_tracer_add_param('frac_mu_stress_Md',phyto(MEDIUM)%frac_mu_stress,0.25) ! none
+    call get_param(param_file, "generic_COBALT", "agg_Sm",           phyto(SMALL)%agg,  "agg_Sm", units="day-1(mol N kg)-1", &
+                   default=0.05, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "agg_Di",           phyto(DIAZO)%agg,  "agg_Di", units="day-1(mol N kg)-1", & 
+                   default=0.0 , scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "agg_Lg",           phyto(LARGE)%agg,  "agg_Lg", units="day-1(mol N kg)-1", &
+                   default=0.25, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "agg_Md",           phyto(MEDIUM)%agg, "agg_Md", units="day-1(mol N kg)-1", &
+                   default=0.10, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Sm",phyto(SMALL)%frac_mu_stress,  "frac_mu_stress_Sm",units="", default=0.25)  ! none
+    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Di",phyto(DIAZO)%frac_mu_stress,  "frac_mu_stress_Di",units="", default=0.25)  ! none
+    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Lg",phyto(LARGE)%frac_mu_stress,  "frac_mu_stress_Lg",units="", default=0.25)  ! none
+    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Md",phyto(MEDIUM)%frac_mu_stress, "frac_mu_stress_Md",units="", default=0.25)  ! none
     !
     !-----------------------------------------------------------------------
     ! Phytoplankton and bacterial losses to viruses
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('vir_Sm',phyto(SMALL)%vir, 0.25*1e6/sperd )    ! s-1 (mole N kg)-1
-    call g_tracer_add_param('vir_Di',phyto(DIAZO)%vir, 0.05*1e6/sperd )    ! s-1 (mole N kg)-1
-    call g_tracer_add_param('vir_Lg',phyto(LARGE)%vir, 0.05*1e6/sperd )    ! s-1 (mole N kg)-1
-    call g_tracer_add_param('vir_Md',phyto(MEDIUM)%vir, 0.125*1e6/sperd )   ! s-1 (mole N kg)-1
-    call g_tracer_add_param('vir_Bact',bact(1)%vir,   0.25*1e6/sperd)      ! s-1 (mole N kg)-1
-    call g_tracer_add_param('ktemp_vir',cobalt%vir_ktemp, 0.063)           ! C-1
+    call get_param(param_file, "generic_COBALT", "vir_Sm",    phyto(SMALL)%vir,  "vir_Sm",   units="day-1 (mole N kg)-1", &
+                   default=0.25, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "vir_Di",    phyto(DIAZO)%vir,  "vir_Di",   units="day-1 (mole N kg)-1", &
+                   default=0.05, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "vir_Lg",    phyto(LARGE)%vir,  "vir_Lg",   units="day-1 (mole N kg)-1", &
+                   default=0.05, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "vir_Md",    phyto(MEDIUM)%vir, "vir_Md",   units="day-1 (mole N kg)-1", &
+                   default=0.125, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "vir_Bact",  bact(1)%vir,       "vir_Bact", units="day-1 (mole N kg)-1", &
+                   default=0.25, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
+    call get_param(param_file, "generic_COBALT", "ktemp_vir", cobalt%vir_ktemp,  "ktemp_vir", units="C-1", default= 0.063)           ! C-1
     !
     !-----------------------------------------------------------------------
     ! Phytoplankton losses to mortality
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('mort_Sm',phyto(SMALL)%mort, 0.0/sperd )      ! s-1
-    call g_tracer_add_param('mort_Di',phyto(DIAZO)%mort, 0.0/sperd )      ! s-1
-    call g_tracer_add_param('mort_Lg',phyto(LARGE)%mort, 0.0/sperd )      ! s-1
-    call g_tracer_add_param('mort_Md',phyto(MEDIUM)%mort, 0.0/sperd )     ! s-1
+    call get_param(param_file, "generic_COBALT", "mort_Sm",phyto(SMALL)%mort,  "mort_Sm",units="day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "mort_Di",phyto(DIAZO)%mort,  "mort_Di",units="day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "mort_Lg",phyto(LARGE)%mort,  "mort_Lg",units="day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "mort_Md",phyto(MEDIUM)%mort, "mort_Md",units="day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
     !
     !-----------------------------------------------------------------------
     ! Phytoplankton losses to exudation
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('exu_Sm',phyto(SMALL)%exu, 0.13)       ! dimensionless (fraction of NPP)
-    call g_tracer_add_param('exu_Di',phyto(DIAZO)%exu, 0.13)       ! dimensionless (fraction of NPP)
-    call g_tracer_add_param('exu_Lg',phyto(LARGE)%exu, 0.13)       ! dimensionless (fraction of NPP)
-    call g_tracer_add_param('exu_Md',phyto(MEDIUM)%exu,0.13)       ! dimensionless (fraction of NPP)
+    call get_param(param_file, "generic_COBALT", "exu_Sm",phyto(SMALL)%exu, "exu_Sm",units="", default=0.13)       ! dimensionless (fraction of NPP)
+    call get_param(param_file, "generic_COBALT", "exu_Di",phyto(DIAZO)%exu, "exu_Di",units="", default=0.13)       ! dimensionless (fraction of NPP)
+    call get_param(param_file, "generic_COBALT", "exu_Lg",phyto(LARGE)%exu, "exu_Lg",units="", default=0.13)       ! dimensionless (fraction of NPP)
+    call get_param(param_file, "generic_COBALT", "exu_Md",phyto(MEDIUM)%exu,"exu_Md",units="", default=0.13)       ! dimensionless (fraction of NPP)
     !
     !-----------------------------------------------------------------------
     ! Zooplankton ingestion parameterization and temperature dependence
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('imax_smz',zoo(1)%imax, 0.8*1.42 / sperd)          ! s-1
-    call g_tracer_add_param('imax_mdz',zoo(2)%imax, 0.57 / sperd)              ! s-1
-    call g_tracer_add_param('imax_lgz',zoo(3)%imax, 0.23 / sperd)              ! s-1
-    call g_tracer_add_param('ki_smz',zoo(1)%ki, 1.25e-6)                        ! moles N kg-1
-    call g_tracer_add_param('ki_mdz',zoo(2)%ki, 1.25e-6)                        ! moles N kg-1
-    call g_tracer_add_param('ki_lgz',zoo(3)%ki, 1.25e-6)                        ! moles N kg-1
-    call g_tracer_add_param('ktemp_smz',zoo(1)%ktemp, 0.063)                   ! C-1
-    call g_tracer_add_param('ktemp_mdz',zoo(2)%ktemp, 0.063)                   ! C-1
-    call g_tracer_add_param('ktemp_lgz',zoo(3)%ktemp, 0.063)                   ! C-1
-    call g_tracer_add_param('irr_mem_dpthresh1',cobalt%irr_mem_dpthresh1,30.0) ! watts m-2
-    call g_tracer_add_param('irr_mem_dpthresh2',cobalt%irr_mem_dpthresh2,10.0) ! watts m-2
-    call g_tracer_add_param('dpause_max',cobalt%dpause_max,0.0)           ! dimensionless
-    call g_tracer_add_param('upswim_chl_thresh',zoo(1)%upswim_chl_thresh,0.0) ! dimensionless
-    call g_tracer_add_param('upswim_chl_thresh',zoo(2)%upswim_chl_thresh,0.0) ! dimensionless
-    call g_tracer_add_param('upswim_chl_thresh',zoo(3)%upswim_chl_thresh,0.0) ! dimensionless
-    call g_tracer_add_param('upswim_I_thresh',zoo(1)%upswim_I_thresh,0.0)     ! dimensionless
-    call g_tracer_add_param('upswim_I_thresh',zoo(2)%upswim_I_thresh,0.0)     ! dimensionless
-    call g_tracer_add_param('upswim_I_thresh',zoo(3)%upswim_I_thresh,0.0)     ! dimensionless
-    call g_tracer_add_param('swim_max',zoo(1)%swim_max,100.0/sperd)      ! max swimming (m sec-1)
-    call g_tracer_add_param('swim_max',zoo(2)%swim_max,500.0/sperd)   ! max swimming (m sec-1)
-    call g_tracer_add_param('swim_max',zoo(3)%swim_max,2000.0/sperd)   ! max swimming (m sec-1)
+    call get_param(param_file, "generic_COBALT", "imax_smz", zoo(1)%imax, "imax_smz", units="day-1", & 
+                   default= 0.8*1.42, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "imax_mdz", zoo(2)%imax, "imax_mdz", units="day-1", & 
+                   default= 0.57, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "imax_lgz", zoo(3)%imax, "imax_lgz", units="day-1", & 
+                   default= 0.23, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "ki_smz",           zoo(1)%ki,                "ki_smz",           units="mol N kg-1", default=1.25e-6)                        ! moles N kg-1
+    call get_param(param_file, "generic_COBALT", "ki_mdz",           zoo(2)%ki,                "ki_mdz",           units="mol N kg-1", default=1.25e-6)                        ! moles N kg-1
+    call get_param(param_file, "generic_COBALT", "ki_lgz",           zoo(3)%ki,                "ki_lgz",           units="mol N kg-1", default=1.25e-6)                        ! moles N kg-1
+    call get_param(param_file, "generic_COBALT", "ktemp_smz",        zoo(1)%ktemp,             "ktemp_smz",        units="C-1", default=0.063)                   ! C-1
+    call get_param(param_file, "generic_COBALT", "ktemp_mdz",        zoo(2)%ktemp,             "ktemp_mdz",        units="C-1", default=0.063)                   ! C-1
+    call get_param(param_file, "generic_COBALT", "ktemp_lgz",        zoo(3)%ktemp,             "ktemp_lgz",        units="C-1", default=0.063)                   ! C-1
     !
     !-----------------------------------------------------------------------
     ! Bacterial growth and uptake parameters
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('mu_max_bact',bact(1)%mu_max, 1.0/sperd )          ! s-1
-    call g_tracer_add_param('k_ldon_bact', bact(1)%k_ldon,  5.0e-7)            ! mol ldon kg-1
-    call g_tracer_add_param('ktemp_bact', bact(1)%ktemp, 0.063)                ! C-1
-    !call g_tracer_add_param('gge_max_bact',bact(1)%gge_max,0.3)                ! dimensionless
-    !call g_tracer_add_param('bresp_bact',bact(1)%bresp, 0.0/sperd)             ! s-1
-    call g_tracer_add_param('gge_max_bact',bact(1)%gge_max,0.4)                ! dimensionless
-    call g_tracer_add_param('bresp_bact',bact(1)%bresp, 0.0075/sperd)             ! s-1
-    !call g_tracer_add_param('amx_ge_bact',bact(1)%amx_ge,(5.0*16.0)/(16.0+106.0*3.0*5.0*5.0+64.0)) ! dimensionless
-    !call g_tracer_add_param('amx_ge_bact',bact(1)%amx_ge,0.01) ! dimensionless
-    call g_tracer_add_param('amx_ge_bact',bact(1)%amx_ge,0.0) ! dimensionless
-    !call g_tracer_add_param('nitrif_ge_bact',bact(1)%nitrif_ge,16.0/(16.0+106.0*35.0)) ! dimensionless
-    !call g_tracer_add_param('nitrif_ge_bact',bact(1)%nitrif_ge,0.0043) ! dimensionless
-    call g_tracer_add_param('nitrif_ge_bact',bact(1)%nitrif_ge,0.0) ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mu_max_bact",   bact(1)%mu_max,     "mu_max_bact",   units="day-1", & 
+                   default= 1.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "k_ldon_bact",   bact(1)%k_ldon,     "k_ldon_bact",   units="mol ldon kg-1", default= 5.0e-7)            ! mol ldon kg-1
+    call get_param(param_file, "generic_COBALT", "ktemp_bact",    bact(1)%ktemp,      "ktemp_bact",    units="C-1", default= 0.063)                ! C-1
+    call get_param(param_file, "generic_COBALT", "gge_max_bact",  bact(1)%gge_max,    "gge_max_bact",  units="", default= 0.4)                ! dimensionless
+    call get_param(param_file, "generic_COBALT", "bresp_bact",    bact(1)%bresp,      "bresp_bact",    units="day-1", & 
+                   default= 0.0075, scale = I_sperd ) ! s-1
     !
     !-----------------------------------------------------------------------
     ! Zooplankton switching and prey preference parameters
@@ -745,180 +799,264 @@ contains
     !
     ! parameters controlling the extent of biomass-based switching between
     ! multiple prey options
-    call g_tracer_add_param('nswitch_smz',zoo(1)%nswitch, 2.0)          ! dimensionless
-    call g_tracer_add_param('nswitch_mdz',zoo(2)%nswitch, 2.0)          ! dimensionless
-    call g_tracer_add_param('nswitch_lgz',zoo(3)%nswitch, 2.0)          ! dimensionless
-    call g_tracer_add_param('mswitch_smz',zoo(1)%mswitch, 2.0)          ! dimensionless
-    call g_tracer_add_param('mswitch_mdz',zoo(2)%mswitch, 2.0)          ! dimensionless
-    call g_tracer_add_param('mswitch_lgz',zoo(3)%mswitch, 2.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "nswitch_smz",zoo(1)%nswitch, "nswitch_smz", units="unitless", default= 2.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "nswitch_mdz",zoo(2)%nswitch, "nswitch_mdz", units="unitless", default= 2.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "nswitch_lgz",zoo(3)%nswitch, "nswitch_lgz", units="unitless", default= 2.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mswitch_smz",zoo(1)%mswitch, "mswitch_smz", units="unitless", default= 2.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mswitch_mdz",zoo(2)%mswitch, "mswitch_mdz", units="unitless", default= 2.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mswitch_lgz",zoo(3)%mswitch, "mswitch_lgz", units="unitless", default= 2.0)          ! dimensionless
     ! innate prey availability for small zooplankton
-    call g_tracer_add_param('smz_ipa_smp',zoo(1)%ipa_smp, 1.0)          ! dimensionless
-    call g_tracer_add_param('smz_ipa_mdp',zoo(1)%ipa_mdp, 0.4)          ! dimensionless
-    call g_tracer_add_param('smz_ipa_lgp',zoo(1)%ipa_lgp, 0.0)          ! dimensionless
-    call g_tracer_add_param('smz_ipa_diaz',zoo(1)%ipa_diaz,0.0)         ! dimensionless
-    call g_tracer_add_param('smz_ipa_smz',zoo(1)%ipa_smz, 0.0)          ! dimensionless
-    call g_tracer_add_param('smz_ipa_mdz',zoo(1)%ipa_mdz, 0.0)          ! dimensionless
-    call g_tracer_add_param('smz_ipa_lgz',zoo(1)%ipa_lgz, 0.0)          ! dimensionless
-    call g_tracer_add_param('smz_ipa_bact',zoo(1)%ipa_bact,0.5)         ! dimensionless
-    call g_tracer_add_param('smz_ipa_det',zoo(1)%ipa_det, 0.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "smz_ipa_smp", zoo(1)%ipa_smp,  "smz_ipa_smp",  units="unitless", default=1.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "smz_ipa_mdp", zoo(1)%ipa_mdp,  "smz_ipa_mdp",  units="unitless", default=0.4)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "smz_ipa_lgp", zoo(1)%ipa_lgp,  "smz_ipa_lgp",  units="unitless", default=0.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "smz_ipa_diaz",zoo(1)%ipa_diaz, "smz_ipa_diaz", units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "smz_ipa_smz", zoo(1)%ipa_smz,  "smz_ipa_smz",  units="unitless", default=0.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "smz_ipa_mdz", zoo(1)%ipa_mdz,  "smz_ipa_mdz",  units="unitless", default=0.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "smz_ipa_lgz", zoo(1)%ipa_lgz,  "smz_ipa_lgz",  units="unitless", default=0.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "smz_ipa_bact",zoo(1)%ipa_bact, "smz_ipa_bact", units="unitless", default=0.5)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "smz_ipa_det", zoo(1)%ipa_det,  "smz_ipa_det",  units="unitless", default=0.0)          ! dimensionless
     ! innate prey availability for medium zooplankton
-    call g_tracer_add_param('mdz_ipa_smp',zoo(2)%ipa_smp, 0.4)          ! dimensionless
-    call g_tracer_add_param('mdz_ipa_mdp',zoo(2)%ipa_mdp, 1.0)          ! dimensionless
-    call g_tracer_add_param('mdz_ipa_lgp',zoo(2)%ipa_lgp, 0.0)         ! dimensionless
-    call g_tracer_add_param('mdz_ipa_diaz',zoo(2)%ipa_diaz,0.75)        ! dimensionless
-    call g_tracer_add_param('mdz_ipa_smz',zoo(2)%ipa_smz, 1.0)          ! dimensionless
-    call g_tracer_add_param('mdz_ipa_mdz',zoo(2)%ipa_mdz, 0.0)          ! dimensionless
-    call g_tracer_add_param('mdz_ipa_lgz',zoo(2)%ipa_lgz, 0.0)          ! dimensionless
-    call g_tracer_add_param('mdz_ipa_bact',zoo(2)%ipa_bact, 0.0)        ! dimensionless
-    call g_tracer_add_param('mdz_ipa_det',zoo(2)%ipa_det, 0.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_smp", zoo(2)%ipa_smp,  "mdz_ipa_smp",  units="unitless", default=0.4)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_mdp", zoo(2)%ipa_mdp,  "mdz_ipa_mdp",  units="unitless", default=1.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_lgp", zoo(2)%ipa_lgp,  "mdz_ipa_lgp",  units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_diaz",zoo(2)%ipa_diaz, "mdz_ipa_diaz", units="unitless", default=0.75)        ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_smz", zoo(2)%ipa_smz,  "mdz_ipa_smz",  units="unitless", default=1.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_mdz", zoo(2)%ipa_mdz,  "mdz_ipa_mdz",  units="unitless", default=0.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_lgz", zoo(2)%ipa_lgz,  "mdz_ipa_lgz",  units="unitless", default=0.0)          ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_bact",zoo(2)%ipa_bact, "mdz_ipa_bact", units="unitless", default=0.0)        ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_det", zoo(2)%ipa_det,  "mdz_ipa_det",  units="unitless", default=0.0)          ! dimensionless
     ! innate prey availability large predatory zooplankton/krill
-    call g_tracer_add_param('lgz_ipa_smp',zoo(3)%ipa_smp, 0.0)         ! dimensionless
-    call g_tracer_add_param('lgz_ipa_mdp',zoo(3)%ipa_mdp, 0.4)         ! dimensionless
-    call g_tracer_add_param('lgz_ipa_lgp',zoo(3)%ipa_lgp, 1.0)         ! dimensionless
-    call g_tracer_add_param('lgz_ipa_diaz',zoo(3)%ipa_diaz, 0.4)       ! dimensionless
-    call g_tracer_add_param('lgz_ipa_smz',zoo(3)%ipa_smz, 0.0)         ! dimensionless
-    call g_tracer_add_param('lgz_ipa_mdz',zoo(3)%ipa_mdz, 1.0)         ! dimensionless
-    call g_tracer_add_param('lgz_ipa_lgz',zoo(3)%ipa_lgz, 0.0)         ! dimensionless
-    call g_tracer_add_param('lgz_ipa_bact',zoo(3)%ipa_bact, 0.0)       ! dimensionless
-    call g_tracer_add_param('lgz_ipa_det',zoo(3)%ipa_det, 0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_smp", zoo(3)%ipa_smp,  "lgz_ipa_smp",  units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_mdp", zoo(3)%ipa_mdp,  "lgz_ipa_mdp",  units="unitless", default=0.4)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_lgp", zoo(3)%ipa_lgp,  "lgz_ipa_lgp",  units="unitless", default=1.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_diaz",zoo(3)%ipa_diaz, "lgz_ipa_diaz", units="unitless", default=0.4)       ! dimensionless
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_smz", zoo(3)%ipa_smz,  "lgz_ipa_smz",  units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_mdz", zoo(3)%ipa_mdz,  "lgz_ipa_mdz",  units="unitless", default=1.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_lgz", zoo(3)%ipa_lgz,  "lgz_ipa_lgz",  units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_bact",zoo(3)%ipa_bact, "lgz_ipa_bact", units="unitless", default=0.0)       ! dimensionless
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_det", zoo(3)%ipa_det,  "lgz_ipa_det",  units="unitless", default=0.0)         ! dimensionless
     !
     !----------------------------------------------------------------------
     ! Zooplankton bioenergetics
     !----------------------------------------------------------------------
     !
-    call g_tracer_add_param('gge_max_smz',zoo(1)%gge_max, 0.4)              ! dimensionless
-    call g_tracer_add_param('gge_max_mdz',zoo(2)%gge_max, 0.4)              ! dimensionless
-    call g_tracer_add_param('gge_max_lgz',zoo(3)%gge_max, 0.4)              ! dimensionless
-    call g_tracer_add_param('bresp_smz',zoo(1)%bresp, 0.8*0.020 / sperd)        ! s-1
-    call g_tracer_add_param('bresp_mdz',zoo(2)%bresp, 0.008 / sperd)   ! s-1
-    call g_tracer_add_param('bresp_lgz',zoo(3)%bresp, 0.0032 / sperd)       ! s-1
+    call get_param(param_file, "generic_COBALT", "gge_max_smz",zoo(1)%gge_max, "gge_max_smz",  units="unitless", default=0.4)              ! dimensionless
+    call get_param(param_file, "generic_COBALT", "gge_max_mdz",zoo(2)%gge_max, "gge_max_mdz",  units="unitless", default=0.4)              ! dimensionless
+    call get_param(param_file, "generic_COBALT", "gge_max_lgz",zoo(3)%gge_max, "gge_max_lgz",  units="unitless", default=0.4)              ! dimensionless
+    call get_param(param_file, "generic_COBALT", "bresp_smz",  zoo(1)%bresp,   "bresp_smz",    units="day-1", & 
+                   default= 0.8*0.020, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "bresp_mdz",  zoo(2)%bresp,   "bresp_mdz",    units="day-1", & 
+                   default= 0.008, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "bresp_lgz",  zoo(3)%bresp,   "bresp_lgz",    units="day-1", & 
+                   default= 0.0032, scale = I_sperd ) ! s-1
     !
     !----------------------------------------------------------------------
     ! Partitioning of zooplankton ingestion to other compartments
     !----------------------------------------------------------------------
     !
-    call g_tracer_add_param('phi_det_smz',zoo(1)%phi_det, 0.00)            ! dimensionless
-    call g_tracer_add_param('phi_det_mdz',zoo(2)%phi_det, 0.15)            ! dimensionless
-    call g_tracer_add_param('phi_det_lgz',zoo(3)%phi_det, 0.30)            ! dimensionless
-    call g_tracer_add_param('phi_ldon_smz',zoo(1)%phi_ldon, 0.625*0.30)      ! dimensionless
-    call g_tracer_add_param('phi_ldon_mdz',zoo(2)%phi_ldon, 0.625*0.15)      ! dimensionless
-    call g_tracer_add_param('phi_ldon_lgz',zoo(3)%phi_ldon, 0.625*0.0)       ! dimensionless
-    call g_tracer_add_param('phi_ldop_smz',zoo(1)%phi_ldop, 0.575*0.30)     ! dimensionless
-    call g_tracer_add_param('phi_ldop_mdz',zoo(2)%phi_ldop, 0.575*0.15)     ! dimensionless
-    call g_tracer_add_param('phi_ldop_lgz',zoo(3)%phi_ldop, 0.575*0.0)      ! dimensionless
-    call g_tracer_add_param('phi_srdon_smz',zoo(1)%phi_srdon, 0.075*0.30)    ! dimensionless
-    call g_tracer_add_param('phi_srdon_mdz',zoo(2)%phi_srdon, 0.075*0.15)    ! dimensionless
-    call g_tracer_add_param('phi_srdon_lgz',zoo(3)%phi_srdon, 0.075*0.0)     ! dimensionless
-    call g_tracer_add_param('phi_srdop_smz',zoo(1)%phi_srdop, 0.125*0.30)   ! dimensionless
-    call g_tracer_add_param('phi_srdop_mdz',zoo(2)%phi_srdop, 0.125*0.15)   ! dimensionless
-    call g_tracer_add_param('phi_srdop_lgz',zoo(3)%phi_srdop, 0.125*0.0)    ! dimensionless
-    call g_tracer_add_param('phi_sldon_smz',zoo(1)%phi_sldon, 0.3*0.30)    ! dimensionless
-    call g_tracer_add_param('phi_sldon_mdz',zoo(2)%phi_sldon, 0.3*0.15)    ! dimensionless
-    call g_tracer_add_param('phi_sldon_lgz',zoo(3)%phi_sldon, 0.3*0.0)     ! dimensionless
-    call g_tracer_add_param('phi_sldop_smz',zoo(1)%phi_sldop, 0.3*0.30)    ! dimensionless
-    call g_tracer_add_param('phi_sldop_mdz',zoo(2)%phi_sldop, 0.3*0.15)    ! dimensionless
-    call g_tracer_add_param('phi_sldop_lgz',zoo(3)%phi_sldop, 0.3*0.0)     ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_det_smz",   zoo(1)%phi_det,    "phi_det_smz",   units="unitless", default= 0.00)            ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_det_mdz",   zoo(2)%phi_det,    "phi_det_mdz",   units="unitless", default= 0.15)            ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_det_lgz",   zoo(3)%phi_det,    "phi_det_lgz",   units="unitless", default= 0.30)            ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_ldon_smz",  zoo(1)%phi_ldon,   "phi_ldon_smz",  units="unitless", default= 0.625*0.30)      ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_ldon_mdz",  zoo(2)%phi_ldon,   "phi_ldon_mdz",  units="unitless", default= 0.625*0.15)      ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_ldon_lgz",  zoo(3)%phi_ldon,   "phi_ldon_lgz",  units="unitless", default= 0.625*0.0)       ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_ldop_smz",  zoo(1)%phi_ldop,   "phi_ldop_smz",  units="unitless", default= 0.575*0.30)     ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_ldop_mdz",  zoo(2)%phi_ldop,   "phi_ldop_mdz",  units="unitless", default= 0.575*0.15)     ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_ldop_lgz",  zoo(3)%phi_ldop,   "phi_ldop_lgz",  units="unitless", default= 0.575*0.0)      ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_srdon_smz", zoo(1)%phi_srdon,  "phi_srdon_smz", units="unitless", default= 0.075*0.30)    ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_srdon_mdz", zoo(2)%phi_srdon,  "phi_srdon_mdz", units="unitless", default= 0.075*0.15)    ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_srdon_lgz", zoo(3)%phi_srdon,  "phi_srdon_lgz", units="unitless", default= 0.075*0.0)     ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_srdop_smz", zoo(1)%phi_srdop,  "phi_srdop_smz", units="unitless", default= 0.125*0.30)   ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_srdop_mdz", zoo(2)%phi_srdop,  "phi_srdop_mdz", units="unitless", default= 0.125*0.15)   ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_srdop_lgz", zoo(3)%phi_srdop,  "phi_srdop_lgz", units="unitless", default= 0.125*0.0)    ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_sldon_smz", zoo(1)%phi_sldon,  "phi_sldon_smz", units="unitless", default= 0.3*0.30)    ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_sldon_mdz", zoo(2)%phi_sldon,  "phi_sldon_mdz", units="unitless", default= 0.3*0.15)    ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_sldon_lgz", zoo(3)%phi_sldon,  "phi_sldon_lgz", units="unitless", default= 0.3*0.0)     ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_sldop_smz", zoo(1)%phi_sldop,  "phi_sldop_smz", units="unitless", default= 0.3*0.30)    ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_sldop_mdz", zoo(2)%phi_sldop,  "phi_sldop_mdz", units="unitless", default= 0.3*0.15)    ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_sldop_lgz", zoo(3)%phi_sldop,  "phi_sldop_lgz", units="unitless", default= 0.3*0.0)     ! dimensionless
     !
     !----------------------------------------------------------------------
     ! Partitioning of viral losses to various dissolved pools
     !----------------------------------------------------------------------
     !
-    call g_tracer_add_param('phi_ldon_vir',cobalt%lysis_phi_ldon, 0.625)    ! dimensionless
-    call g_tracer_add_param('phi_srdon_vir',cobalt%lysis_phi_srdon, 0.075)  ! dimensionless
-    call g_tracer_add_param('phi_sldon_vir',cobalt%lysis_phi_sldon, 0.3)  ! dimensionless
-    call g_tracer_add_param('phi_ldop_vir',cobalt%lysis_phi_ldop, 0.575)   ! dimensionless
-    call g_tracer_add_param('phi_srdop_vir',cobalt%lysis_phi_srdop, 0.125) ! dimensionless
-    call g_tracer_add_param('phi_sldop_vir',cobalt%lysis_phi_sldop, 0.3) ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_ldon_vir",  cobalt%lysis_phi_ldon,  "phi_ldon_vir",  units="unitless", default=0.625)    ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_srdon_vir", cobalt%lysis_phi_srdon, "phi_srdon_vir", units="unitless", default=0.075)  ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_sldon_vir", cobalt%lysis_phi_sldon, "phi_sldon_vir", units="unitless", default=0.3)  ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_ldop_vir",  cobalt%lysis_phi_ldop,  "phi_ldop_vir",  units="unitless", default=0.575)   ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_srdop_vir", cobalt%lysis_phi_srdop, "phi_srdop_vir", units="unitless", default=0.125) ! dimensionless
+    call get_param(param_file, "generic_COBALT", "phi_sldop_vir", cobalt%lysis_phi_sldop, "phi_sldop_vir", units="unitless", default=0.3) ! dimensionless
     !
     !----------------------------------------------------------------------
     ! Parameters for unresolved higher predators
     !----------------------------------------------------------------------
     !
-    call g_tracer_add_param('imax_hp',     cobalt%imax_hp, 0.09/sperd)     ! s-1
-    call g_tracer_add_param('ki_hp',       cobalt%ki_hp, 1.25e-6)           ! mol N kg-1
-    call g_tracer_add_param('coef_hp',     cobalt%coef_hp, 2.0)            ! dimensionless
-    call g_tracer_add_param('ktemp_hp',    cobalt%ktemp_hp, 0.063)         ! C-1
-    call g_tracer_add_param('nswitch_hp',  cobalt%nswitch_hp, 2.0)         ! dimensionless
-    call g_tracer_add_param('mswitch_hp',  cobalt%mswitch_hp, 2.0)         ! dimensionless
-    call g_tracer_add_param('hp_ipa_smp',  cobalt%hp_ipa_smp, 0.0)         ! dimensionless
-    call g_tracer_add_param('hp_ipa_mdp',  cobalt%hp_ipa_mdp, 0.0)         ! dimensionless
-    call g_tracer_add_param('hp_ipa_lgp',  cobalt%hp_ipa_lgp, 0.0)         ! dimensionless
-    call g_tracer_add_param('hp_ipa_diaz', cobalt%hp_ipa_diaz, 0.0)        ! dimensionless
-    call g_tracer_add_param('hp_ipa_smz',  cobalt%hp_ipa_smz, 0.0)         ! dimensionless
-    call g_tracer_add_param('hp_ipa_mdz',  cobalt%hp_ipa_mdz, 1.0)         ! dimensionless
-    call g_tracer_add_param('hp_ipa_lgz',  cobalt%hp_ipa_lgz, 1.0)         ! dimensionless
-    call g_tracer_add_param('hp_ipa_bact', cobalt%hp_ipa_bact,0.0)         ! dimensionless
-    call g_tracer_add_param('hp_ipa_det',  cobalt%hp_ipa_det, 0.0)         ! dimensionless
-    call g_tracer_add_param('hp_phi_det',  cobalt%hp_phi_det, 0.35)        ! dimensionless
+    call get_param(param_file, "generic_COBALT", "imax_hp",     cobalt%imax_hp,     "imax_hp",      units="day-1", &
+                   default= 0.09, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "ki_hp",       cobalt%ki_hp,       "ki_hp",        units="mol N kg-1", default=1.25e-6)           ! mol N kg-1
+    call get_param(param_file, "generic_COBALT", "coef_hp",     cobalt%coef_hp,     "coef_hp",      units="unitless", default=2.0)            ! dimensionless
+    call get_param(param_file, "generic_COBALT", "ktemp_hp",    cobalt%ktemp_hp,    "ktemp_hp",     units="C-1", default=0.063)         ! C-1
+    call get_param(param_file, "generic_COBALT", "nswitch_hp",  cobalt%nswitch_hp,  "nswitch_hp",   units="unitless", default=2.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mswitch_hp",  cobalt%mswitch_hp,  "mswitch_hp",   units="unitless", default=2.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "hp_ipa_smp",  cobalt%hp_ipa_smp,  "hp_ipa_smp",   units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "hp_ipa_mdp",  cobalt%hp_ipa_mdp,  "hp_ipa_mdp",   units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "hp_ipa_lgp",  cobalt%hp_ipa_lgp,  "hp_ipa_lgp",   units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "hp_ipa_diaz", cobalt%hp_ipa_diaz, "hp_ipa_diaz",  units="unitless", default=0.0)        ! dimensionless
+    call get_param(param_file, "generic_COBALT", "hp_ipa_smz",  cobalt%hp_ipa_smz,  "hp_ipa_smz",   units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "hp_ipa_mdz",  cobalt%hp_ipa_mdz,  "hp_ipa_mdz",   units="unitless", default=1.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "hp_ipa_lgz",  cobalt%hp_ipa_lgz,  "hp_ipa_lgz",   units="unitless", default=1.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "hp_ipa_bact", cobalt%hp_ipa_bact, "hp_ipa_bact",  units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "hp_ipa_det",  cobalt%hp_ipa_det,  "hp_ipa_det",   units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "hp_phi_det",  cobalt%hp_phi_det,  "hp_phi_det",   units="unitless", default=0.35)        ! dimensionless
     !
-    !----------------------------------------------------------------------
-    ! Iron chemistry
-    !----------------------------------------------------------------------
-    !
-    call g_tracer_add_param('felig_bkg', cobalt%felig_bkg, 0.5e-9)                          ! mol Fe kg-1
-    call g_tracer_add_param('felig_2_don', cobalt%felig_2_don, 0.5e-3)                          ! mol lig mol N-1
-    call g_tracer_add_param('fe_2_n_sed', cobalt%fe_2_n_sed, 100.0e-5 * 106 / 16)            ! mol Fe mol N-1
-    call g_tracer_add_param('ffe_sed_max', cobalt%ffe_sed_max, 170.0/1.0e6/sperd)            ! mol Fe m-2 s-1
-    call g_tracer_add_param('ffe_geotherm_ratio', cobalt%ffe_geotherm_ratio,2.0e-12)         ! mol Fe m-2 s-1 (watt m-2)-1
-    call g_tracer_add_param('jfe_iceberg_ratio', cobalt%jfe_iceberg_ratio,1.0e-7)            ! mol Fe kg-1 ice melt
-    call g_tracer_add_param('jno3_iceberg_ratio', cobalt%jno3_iceberg_ratio,2.0e-6)          ! mol N kg-1 ice melt
-    call g_tracer_add_param('jpo4_iceberg_ratio', cobalt%jpo4_iceberg_ratio,1.1e-7)          ! mol P kg-1 ice melt
-    call g_tracer_add_param('fe_coast', cobalt%fe_coast,0.0 )                                ! mol Fe m kg-1 s-1
-    call g_tracer_add_param('alpha_fescav',cobalt%alpha_fescav, 0.0/spery)                   ! sec-1
-    call g_tracer_add_param('beta_fescav',cobalt%beta_fescav, 2.5e9/spery )                  ! sec-1 (mole ndet kg-1)-1
-    call g_tracer_add_param('remin_eff_fedet',cobalt%remin_eff_fedet, 0.25)                  ! unitless
-    call g_tracer_add_param('io_fescav',cobalt%io_fescav, 10.0 )                             ! watts m-2
-    call g_tracer_add_param('kfe_eq_lig_ll',cobalt%kfe_eq_lig_ll, 1.0e12)                    ! mol lig-1 kg
-    call g_tracer_add_param('kfe_eq_lig_hl',cobalt%kfe_eq_lig_hl, 1.0e9)                     ! mol lig-1 kg
+    call get_param(param_file, "generic_COBALT", "ffe_sed_max", cobalt%ffe_sed_max, &
+                   "maximum iron release from the sediment", units="micromoles Fe m-2 day-1", &
+                   default= 170.0, scale = I_sperd*(1/micromol2mol) )
+    call get_param(param_file, "generic_COBALT", "ffe_geotherm_ratio", cobalt%ffe_geotherm_ratio,  "ffe_geotherm_ratio",units="mol Fe m-2 s-1 (W m-2)-1", default= 2.0e-12)         ! mol Fe m-2 s-1 (watt m-2)-1
+    call get_param(param_file, "generic_COBALT", "jfe_iceberg_ratio",  cobalt%jfe_iceberg_ratio,   "jfe_iceberg_ratio", units="mol Fe kg-1 ice melt", default= 1.0e-7)            ! mol Fe kg-1 ice melt
+    call get_param(param_file, "generic_COBALT", "jno3_iceberg_ratio", cobalt%jno3_iceberg_ratio,  "jno3_iceberg_ratio",units="mol N kg-1 ice melt", default= 2.0e-6)          ! mol N kg-1 ice melt
+    call get_param(param_file, "generic_COBALT", "jpo4_iceberg_ratio", cobalt%jpo4_iceberg_ratio,  "jpo4_iceberg_ratio",units="mol P kg-1 ice melt", default= 1.1e-7)          ! mol P kg-1 ice melt
+    call get_param(param_file, "generic_COBALT", "fe_coast",           cobalt%fe_coast,            "fe_coast",          units="mol Fe m kg-1 s-1", default= 0.0 )                                ! mol Fe m kg-1 s-1
 
     ! Radiocarbon
-    call g_tracer_add_param('half_life_14c', cobalt%half_life_14c, 5730.0 )                  ! s
-    call g_tracer_add_param('lambda_14c', cobalt%lambda_14c, log(2.0) / (cobalt%half_life_14c * spery)) ! s-1
-    !-------------------------------------------------------------------------
-    ! Remineralization
-    !-------------------------------------------------------------------------
+    call get_param(param_file, "generic_COBALT", "half_life_14c", cobalt%half_life_14c, "half_life_14c", units="s", default= 5730.0 )                  ! s
+    call get_param(param_file, "generic_COBALT", "lambda_14c",    cobalt%lambda_14c,    "lambda_14c",    units="-s", & 
+                   default= log(2.0) / (cobalt%half_life_14c), scale = I_spery ) 
     !
-    call g_tracer_add_param('k_o2', cobalt%k_o2, 8.0e-6)                                     ! mol O2 kg-1
-    call g_tracer_add_param('o2_min', cobalt%o2_min, 0.8e-6 )                                ! mol O2 kg-1
-    call g_tracer_add_param('k_o2_nit', cobalt%k_o2_nit, k_o2_nit)                           ! mol O2 kg-1
-    call g_tracer_add_param('o2_min_nit', cobalt%o2_min_nit, o2_min_nit )                    ! mol O2 kg-1
-    call g_tracer_add_param('kappa_remin', cobalt%kappa_remin, 0.063 )                       ! deg C-1
-    call g_tracer_add_param('remin_ramp_scale', cobalt%remin_ramp_scale, 50.0 )              ! m
-    call g_tracer_add_param('rpcaco3', cobalt%rpcaco3, 0.070/12.0*16.0/106.0*100.0)          ! mol N mol Ca-1
-    call g_tracer_add_param('rplith',  cobalt%rplith,  0.065/12.0*16.0/106.0)                ! mol N g lith-1
-    call g_tracer_add_param('rpsio2',  cobalt%rpsio2,  0.026/12.0*16.0/106.0*60.0)           ! mol N mol Si-1
-    call g_tracer_add_param('gamma_ndet',  cobalt%gamma_ndet, cobalt%wsink / 350.0 )         ! s-1
-    call g_tracer_add_param('gamma_cadet_arag',cobalt%gamma_cadet_arag,cobalt%wsink/760.0)   ! s-1
-    call g_tracer_add_param('gamma_cadet_calc',cobalt%gamma_cadet_calc,cobalt%wsink/1343.0)  ! s-1
-    call g_tracer_add_param('kappa_sidet',  cobalt%kappa_sidet, 0.063 )                      ! deg C -1
-    call g_tracer_add_param('gamma_sidet',  cobalt%gamma_sidet, cobalt%wsink / 1.0e4 )       ! s-1
-    call g_tracer_add_param('phi_lith' ,  cobalt%phi_lith, 0.002)                            ! dimensionless
-    call g_tracer_add_param('k_lith',  cobalt%k_lith, 0.5/spery )                            ! s-1
-    call g_tracer_add_param('bottom_thickness',cobalt%bottom_thickness, 1.0 )                ! m
-    call g_tracer_add_param('z_sed',  cobalt%z_sed, 0.1 )                                    ! m
-    call g_tracer_add_param('k_no3_denit',cobalt%k_no3_denit,1.0e-6)                         ! mol NO3 kg-1
-    call g_tracer_add_param('z_burial',cobalt%z_burial,10.0)                                 ! m
+    !---------------------------------------------------------------------------
+    ! Ballast, remineralization and iron scavenging parameters (Section 4 of code)
+    !---------------------------------------------------------------------------
+    !
+    ! Parameters controlling the production of calcium carbonate and aragonite detritus are tuned to match global flux
+    ! estimates.  Values are entered as moles of calcium carbonate detritus created per mole of organic C detritus
+    ! produced within plankton foodweb pathways associated with shell forming organisms.  Values are then converted to
+    ! per mole of N detritus.  Note that the rates are scaled by the saturation state (see Section 4 of the code).
+    call get_param(param_file, "generic_COBALT", "ca_2_n_arag", cobalt%ca_2_n_arag, &
+                   "ratio of aragonite detritus prod. to org. C detritus prod. by aragonite shell formers", &
+                   units="mol cadet_arag mol org. C-1", default= 0.055, scale = c2n)
+    call get_param(param_file, "generic_COBALT", "ca_2_n_calc", cobalt%ca_2_n_calc, &
+                   "ratio of calcite detritus prod. to org. C detritus prod. by calcite shell formers", &
+                   units="mol cadet_calc mol org. C-1",default= 0.050, scale = c2n)
+    call get_param(param_file, "generic_COBALT", "caco3_sat_max", cobalt%caco3_sat_max, &
+                  "cap for positive scaling of caco3 detritus prod with saturation state", units="none", default= 10.0)
+
+    ! Organic matter remineralization: Oxygen and temperature dependence follows Laufkotter et al. (2017).
+    call get_param(param_file, "generic_COBALT", "k_o2", cobalt%k_o2, "O2 half-saturation for remineralization", &
+                   units="mol O2 kg-1", default= 8.0e-6)
+    call get_param(param_file, "generic_COBALT", "k_no3_denit", cobalt%k_no3_denit, &
+           "nitrate half-saturation for denitrification", units="mol NO3 kg-1", default= 1.0e-6)
+    call get_param(param_file, "generic_COBALT", "o2_min", cobalt%o2_min, "Minimum O2 for aerobic remineralization", &
+                   units="mol O2 kg-1", default= 0.8e-6)
+    call get_param(param_file, "generic_COBALT", "kappa_remin", cobalt%kappa_remin, &
+                   "Temperature dependence of remineralization", units="deg C-1", default=0.063)
+    call get_param(param_file, "generic_COBALT", "remin_ramp_scale", cobalt%remin_ramp_scale, &
+                   "depth scale from the surface over which remineralization ramps up", units="m", default= 50.0)
+    ! gamma_ndet is set to produce a Martin-curve like remineralization length scale at temperatures ~10 deg. C
+    call get_param(param_file, "generic_COBALT", "gamma_ndet", cobalt%gamma_ndet, &
+                   "Remineralization rate for unprotected organic matter", units="s-1", default=cobalt%wsink/350.0)
+
+    ! mineral ballasting after Klaas and Archer (2002) and Dunne et al. (2007) (see p. 3) 
+    ! conversion is 0.070 g C (g Ca)-1 to moles N (mole Ca)-1; Similar conversions below, but lith remains per gram
+    call get_param(param_file, "generic_COBALT", "rpcaco3", cobalt%rpcaco3, "Organic matter protection from CaCO3", &
+                   units="mol N mol Ca-1", default= 0.070/12.0*16.0/106.0*100.0)
+    call get_param(param_file, "generic_COBALT", "rplith", cobalt%rplith, &
+                   "Organic matter protection from lithogenic minerals",units="mol N g lith-1", &
+                   default= 0.065/12.0*16.0/106.0)
+    call get_param(param_file, "generic_COBALT", "rpsio2", cobalt%rpsio2, "Organic matter protection from silica", &
+                   units="mol N mol Si-1", default= 0.026/12.0*16.0/106.0*60.0)
+    ! From TOPAZ: Calibrated to Data from Betzer et al. (1984) yielding ~50% attenuation between 900-2200m 
+    call get_param(param_file, "generic_COBALT", "gamma_cadet_arag", cobalt%gamma_cadet_arag, &
+                   "Dissolution rate for aragonite detritus at 0 saturation", units="s-1", default=cobalt%wsink/760.0)
+    ! From TOPAZ: Calibrated to get an approximate 67% transfer efficiency between 1000-3800 at Ocean Station P with
+    ! (1-omega_cadet) scaling.
+    call get_param(param_file, "generic_COBALT", "gamma_cadet_calc", cobalt%gamma_cadet_calc, &
+                   "Dissolution rate for calcite detritus at 0 saturation", units="s-1", default=cobalt%wsink/1343.0)
+    ! Uses temperature-dependence of decomposing diatoms following Kamatani (1982)
+    call get_param(param_file, "generic_COBALT", "kappa_sidet", cobalt%kappa_sidet, &
+                   "Temperature dependence of silica dissolution", units="deg C -1", default= 0.063)
+    ! large remineralization length-scale at cold temperatures, but approaches Gnanadesikan et al. (1999) values of
+    ! ~2000m at warm temperatures.  This was partially tuned to match observed silica profiles.
+    call get_param(param_file, "generic_COBALT", "gamma_sidet", cobalt%gamma_sidet, &
+                   "Dissolution rate of silica detritus at 0 deg. C", units="s-1", default= cobalt%wsink/1.0e4)
+
+    ! phi_lith and k_lith parameters largely tuned to maintain hot-spots of lithogenic detritus near source regions
+    ! where this was needed to explain export patterns
+    call get_param(param_file, "generic_COBALT", "phi_lith" , cobalt%phi_lith, &
+                   "scaling factor for creating lithogenic detritus via filter feeding" , units="dimensionless", &
+                   default= 0.002)
+    call get_param(param_file, "generic_COBALT", "k_lith", cobalt%k_lith, &
+                   "background formation rate of lithogenic detritus", units="year-1", default= 0.5, scale = I_spery)
+
+    ! Iron scavenging parameters
+    ! Background and don-proportional ligand concentrations were coarsely calibrated to Volker and Tagliabue (2015)
+    call get_param(param_file, "generic_COBALT", "felig_bkg", cobalt%felig_bkg, &
+                   "background organic ligand concentration", units="mol Fe kg-1", default= 0.5e-9)
+    call get_param(param_file, "generic_COBALT", "felig_2_don", cobalt%felig_2_don, &
+                   "proportionality for enhancing ligands with non-refractory don", units="mol lig (mol N)-1", &
+                   default= 0.5e-3)
+    ! Scavenging coefficients -  alpha_fescav allows for a linear scavenging rate for free iron (feprime) used in
+    ! COBALTv1, beta_fescav scales the reaction between feprime and ndet and is the default for COBALTv2 and beyond
+    ! In either case, values are calibrated to create reasonable levels of iron, iron-limitation and HNLC regions
+    ! (e.g., see Tagliabue et al., 2016). 
+    call get_param(param_file, "generic_COBALT", "alpha_fescav", cobalt%alpha_fescav, & 
+                   "linear iron scavenging rate constant", units="year-1", default= 0.0, scale = I_spery)
+    call get_param(param_file, "generic_COBALT", "beta_fescav", cobalt%beta_fescav, &
+                   "iron scavenging rate constant for free iron - detritus interaction", &
+                   units="year-1 (mol ndet kg-1)-1", default= 2.5e9, scale = I_spery)
+    ! Value coarsely tuned to ferrocline
+    call get_param(param_file, "generic_COBALT", "remin_eff_fedet", cobalt%remin_eff_fedet, &
+                   "iron remineralization efficiency relative to organic matter", units="unitless", default= 0.25)
+    ! mimics the impact of oxygen free radicals on iron binding; tuned to observed hydrogen peroxide profiles
+    ! (Yuan and Shiller, 2001).
+    call get_param(param_file, "generic_COBALT", "io_fescav", cobalt%io_fescav, &
+                   "scaling for weakened iron-ligand binding in high light", units="W m-2", default= 10.0)
+    ! Multiplies beta_fescav when feprime is above solubility limit defined by Liu and Millero (2002).  Tuned to
+    ! control the offshore propagation of coastal iron signals.
+    call get_param(param_file, "generic_COBALT", "fast_fescav_fac", cobalt%fast_fescav_fac, &
+                   "multiplier for enhanced scavenging when free iron is above saturation",units="none",default= 2.0)
+    ! Ligand binding strength set to produce strong binding and reasonable subsurface iron at low light, and allow most
+    ! of the iron to be free at high light (following Fan and Dunne).
+    ! kfe_eq_lig = [FeL]/([L]*[Fe']), so large values imply that most is [FeL]
+    call get_param(param_file, "generic_COBALT", "kfe_eq_lig_ll", cobalt%kfe_eq_lig_ll, &
+                   "low light ligand binding strength", units="(mol lig-1 kg)-1", default= 1.0e12)
+    call get_param(param_file, "generic_COBALT", "kfe_eq_lig_hl", cobalt%kfe_eq_lig_hl, & 
+                   "high light ligand binding strength", units="(mol lig-1 kg)-1", default= 1.0e9)
     !
     !-----------------------------------------------------------------------
-    ! Calcium carbonate in sediments (see Dunne et al., 2012, GBC, 26)
+    ! Sediments
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('cased_steady', cobalt%cased_steady, .false. )
-    call g_tracer_add_param('phi_surfresp_cased',cobalt%phi_surfresp_cased,0.14307)      ! none
-    call g_tracer_add_param('phi_deepresp_cased',cobalt%phi_deepresp_cased,4.1228)       ! none
-    call g_tracer_add_param('alpha_cased',cobalt%alpha_cased,2.7488)                     ! none
-    call g_tracer_add_param('beta_cased',cobalt%beta_cased,-2.2185)                      ! none
-    call g_tracer_add_param('gamma_cased',cobalt%gamma_cased,0.03607/spery)              ! sec-1
-    call g_tracer_add_param('Co_cased',cobalt%Co_cased,8.1e3)                            ! moles m-3
+    call get_param(param_file, "generic_COBALT", "bottom_thickness", cobalt%bottom_thickness, &
+           "effective bottom layer thickness for calculating rates of benthic processes", units="m", default= 1.0)
+    call get_param(param_file, "generic_COBALT", "z_sed", cobalt%z_sed, "effective sediment layer thickness", &
+           units="m", default= 0.1)
+    call get_param(param_file, "generic_COBALT", "z_burial", cobalt%z_burial, &
+           "depth scale for ramping up particulate organic burial", units="m", default= 10.0)
+    call get_param(param_file, "generic_COBALT", "z_denit", cobalt%z_denit, &
+           "depth scale for ramping up benthic denitrification", units="m", default= 10.0)
+    call get_param(param_file, "generic_COBALT", "scale_burial", cobalt%scale_burial, &
+           "scaling factor for particulate organic burial", units="none", default= 0.0)
+    call get_param(param_file, "generic_COBALT", "cased_steady",       cobalt%cased_steady,       "cased_steady",       default=.false. )
+    call get_param(param_file, "generic_COBALT", "phi_surfresp_cased", cobalt%phi_surfresp_cased, "phi_surfresp_cased", units="unitless", default=0.14307)
+    call get_param(param_file, "generic_COBALT", "phi_deepresp_cased", cobalt%phi_deepresp_cased, "phi_deepresp_cased", units="unitless", default=4.1228)
+    call get_param(param_file, "generic_COBALT", "alpha_cased",        cobalt%alpha_cased,        "alpha_cased",        units="unitless", default=2.7488)
+    call get_param(param_file, "generic_COBALT", "beta_cased",         cobalt%beta_cased,         "beta_cased",         units="unitless", default=-2.2185)
+    call get_param(param_file, "generic_COBALT", "gamma_cased",        cobalt%gamma_cased,        "gamma_cased", units="year-1", &
+                   default=0.03607, scale = I_spery ) 
+    call get_param(param_file, "generic_COBALT", "Co_cased",           cobalt%Co_cased,           "Co_cased",           units="mol m-3", default=8.1e3) ! moles m-3
     !
     !-----------------------------------------------------------------------
     ! Dissolved Organic Material
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('gamma_srdon',  cobalt%gamma_srdon, 1.0 / (10.0 * spery))          ! s-1
-    call g_tracer_add_param('gamma_srdop',  cobalt%gamma_srdop, 1.0 / (4.0 * spery))           ! s-1
-    call g_tracer_add_param('gamma_sldon',  cobalt%gamma_sldon, 1.0 / (90 * sperd))           ! s-1
-    call g_tracer_add_param('gamma_sldop',  cobalt%gamma_sldop, 1.0 / (90 * sperd))           ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_srdon",  cobalt%gamma_srdon, "gamma_srdon", units="1/(default*spery)", default= 10.0)
+      cobalt%gamma_srdon = 1.0 / (cobalt%gamma_srdon  * spery)          ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_srdop",  cobalt%gamma_srdop, "gamma_srdop", units="1/(default*spery)", default= 4.0 )
+      cobalt%gamma_srdop = 1.0 / (cobalt%gamma_srdop  * spery)           ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_sldon",  cobalt%gamma_sldon, "gamma_sldon", units="1/(default*sperd)", default= 90.0)
+      cobalt%gamma_sldon = 1.0 /(cobalt%gamma_sldon  * sperd)           ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_sldop",  cobalt%gamma_sldop, "gamma_sldop", units="1/(default*sperd)", default= 90.0)
+      cobalt%gamma_sldop = 1.0/ (cobalt%gamma_sldop * sperd)           ! s-1
     ! 2016/08/24 jgj add parameter for background dissolved organic material
     ! For the oceanic carbon budget, a constant 42 uM of dissolved organic
     ! carbon is added to represent the refractory component.
@@ -926,7 +1064,7 @@ contains
     ! nitrogen is added to represent the refractory component.
     ! 2016/09/22 jgj changed background DOC to 4.0e-5 per agreement with CAS, JPD
     !
-    call g_tracer_add_param('doc_background',  cobalt%doc_background, 4.0e-5)    ! uM
+    call get_param(param_file, "generic_COBALT", "doc_background",  cobalt%doc_background, "doc_background", units="uM", default=4.0e-5)    ! uM
 
     !---------------------------------------------------------------------
     !
@@ -934,18 +1072,24 @@ contains
     ! Nitrification / Anammox
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('gamma_nitrif',  cobalt%gamma_nitrif, gamma_nitrif / (30.0 * sperd))     ! s-1
-    call g_tracer_add_param('knh4_nitrif',  cobalt%k_nh3_nitrif, k_nh3_nitrif )                     ! moles kg-1
-    call g_tracer_add_param('irr_inhibit',  cobalt%irr_inhibit, irr_inhibit)                         ! W m-2
-    !call g_tracer_add_param('gamma_nh4amx',  cobalt%gamma_nh4amx, 0.07 / sperd)                      ! s-1
-    call g_tracer_add_param('gamma_nh4amx',  cobalt%gamma_nh4amx, 0.0 / sperd)                       ! s-1
-    call g_tracer_add_param('o2_min_amx', cobalt%o2_min_amx, 4.0e-6 )                                ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "gamma_nitrif",  cobalt%gamma_nitrif, "gamma_nitrif", units="gamma_nitrif /(default*sperd)", default= 30.0)     ! s-1
+      cobalt%gamma_nitrif = gamma_nitrif / (cobalt%gamma_nitrif * sperd)           ! s-1
+    call get_param(param_file, "generic_COBALT", "knh4_nitrif",   cobalt%k_nh3_nitrif, "knh4_nitrif",  units="mol kg-1", default=k_nh3_nitrif )                     ! moles kg-1
+    call get_param(param_file, "generic_COBALT", "irr_inhibit",   cobalt%irr_inhibit,  "irr_inhibit",  units="W m-2", default=irr_inhibit)                         ! W m-2
+    !call get_param(param_file, "generic_COBALT", "gamma_nh4amx",  cobalt%gamma_nh4amx, "gamma_nh4amx", units="s-1", default=0.07 / sperd)                      ! s-1
+    call get_param(param_file, "generic_COBALT", "gamma_nh4amx",  cobalt%gamma_nh4amx, "gamma_nh4amx", units="day-1", &
+                   default= 0.0, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "o2_min_amx",    cobalt%o2_min_amx,   "o2_min_amx",   units="mol O2 kg-1", default=4.0e-6 )                                ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "k_no3_amx", cobalt%k_no3_amx, &
+           "nitrate half-saturation for anammox", units="mol NO3 kg-1", default= 1.0e-6)
+    call get_param(param_file, "generic_COBALT", "k_o2_nit",         cobalt%k_o2_nit,          "k_o2_nit",         units="mol O2 kg-1   ", default= k_o2_nit)                    ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "o2_min_nit",       cobalt%o2_min_nit,        "o2_min_nit",       units="mol O2 kg-1   ", default= o2_min_nit )                 ! mol O2 kg-1
     !
     !-----------------------------------------------------------------------
     ! Miscellaneous
     !-----------------------------------------------------------------------
     !
-    call g_tracer_add_param('tracer_debug',  cobalt%tracer_debug, .false.)
+    call get_param(param_file, "generic_COBALT", "tracer_debug",  cobalt%tracer_debug, "tracer_debug", default=.false.)
 
     call g_tracer_end_param_list(package_name)
     !===========
@@ -960,6 +1104,10 @@ contains
     type(g_tracer_type), pointer :: tracer_list
     character(len=fm_string_len), parameter :: sub_name = 'user_add_tracers'
     real :: as_coeff_cobalt
+    type(param_file_type) :: param_file  !< structure indicating parameter file to parse
+    !
+    ! This include declares and sets the variable "version". (use of include statement copied from MOM6)
+# include "version_variable.h"
 
     if ((trim(as_param_cobalt) == 'W92') .or. (trim(as_param_cobalt) == 'gfdl_cmip6')) then
       ! Air-sea gas exchange coefficient presented in OCMIP2 protocol.
@@ -975,8 +1123,14 @@ contains
     !(to make flux exchanging Ocean tracers known for all PE's)
     !
     call g_tracer_start_param_list(package_name)
-    !
-    call g_tracer_add_param('htotal_in', cobalt%htotal_in, 1.0e-08)
+    
+    ! add MOM6-style interfaces for a parameter file
+    call get_COBALT_param_file(param_file)
+    call log_version(param_file, "COBALT", version, "", log_to_all=.true., debugging=.true.)
+    !Specify and initialize all parameters used by this package
+    call user_add_params(param_file)
+    
+    call get_param(param_file, "generic_COBALT", "htotal_in", cobalt%htotal_in, "htotal_in", units="", default=1.0e-08)
     !
     ! Sinking velocity of detritus: a value of 20 m d-1 is consistent with a characteristic sinking
     ! velocity of 100 m d-1 of marine aggregates and a disaggregation rate constant
@@ -984,11 +1138,12 @@ contains
     ! is more in line with the deep water synthesis of Berelson (2002; Particel settling rates increase
     ! with depth in the ocean, DSR-II, 49, 237-252).
     !
-    call g_tracer_add_param('wsink',  cobalt%wsink, 100.0 / sperd)                             ! m s-1
+    call get_param(param_file, "generic_COBALT", "wsink",  cobalt%wsink, "wsink", units="m day-1", &
+                   default= 100.0, scale = I_sperd ) ! s-1
 
-    call g_tracer_add_param('ice_restart_file'   , cobalt%ice_restart_file   , 'ice_cobalt.res.nc')
-    call g_tracer_add_param('ocean_restart_file' , cobalt%ocean_restart_file , 'ocean_cobalt.res.nc' )
-    call g_tracer_add_param('IC_file'       , cobalt%IC_file       , '')
+    call get_param(param_file, "generic_COBALT", "ice_restart_file"   , cobalt%ice_restart_file   ,  "ice_restart_file", default="ice_cobalt.res.nc")
+    call get_param(param_file, "generic_COBALT", "ocean_restart_file" , cobalt%ocean_restart_file ,  "ocean_restart_file", default="ocean_cobalt.res.nc")
+    call get_param(param_file, "generic_COBALT", "IC_file"            , cobalt%IC_file            ,  "IC_file"           , default="")
     !
     call g_tracer_end_param_list(package_name)
 
@@ -1462,8 +1617,7 @@ contains
          name       = 'nsmz',     &
          longname   = 'Small Zooplankton Nitrogen', &
          units      = 'mol/kg',   &
-         prog       = .true.,     &
-         move_vertical = .true.  )
+         prog       = .true.     )
 
     !
     !     Medium-sized zooplankton N
@@ -1472,8 +1626,7 @@ contains
          name       = 'nmdz',     &
          longname   = 'Medium-sized zooplankton Nitrogen', &
          units      = 'mol/kg',   &
-         prog       = .true.,     &
-         move_vertical = .true.  )
+         prog       = .true.      )
 
     !
     !     Large zooplankton N (Pred zoo + krill)
@@ -1482,8 +1635,7 @@ contains
          name       = 'nlgz',     &
          longname   = 'large Zooplankton Nitrogen', &
          units      = 'mol/kg',   &
-         prog       = .true.,     &
-         move_vertical = .true.  )
+         prog       = .true.      )
 
       if (do_14c) then                                        !<<RADIOCARBON
       !       D14IC (Dissolved inorganic radiocarbon)
@@ -1736,12 +1888,6 @@ contains
       call g_tracer_add(tracer_list,package_name,&
          name       = 'irr_aclm_z',       &
          longname   = 'depth-resolved photoacclim irrad', &
-         units      = 'Watts/m^2',         &
-         prog       = .false.              )
-
-     call g_tracer_add(tracer_list,package_name,&
-         name       = 'irr_mem_dp',        &
-         longname   = 'Irradiance memory, diapause', &
          units      = 'Watts/m^2',         &
          prog       = .false.              )
 
@@ -2129,7 +2275,10 @@ contains
     real, dimension(:),             intent(in) :: max_wavelength_band
     real, dimension(:,ilb:,jlb:),   intent(in) :: sw_pen_band
     real, dimension(:,ilb:,jlb:,:), intent(in) :: opacity_band
-    real, dimension(ilb:,jlb:),     intent(in) :: internal_heat
+    ! internal_heat is optional because it will be a NULL pointer if
+    ! geothermal heating is disabled.
+    ! Later it will be tested if it is present (not NULL).
+    real, dimension(ilb:,jlb:),     intent(in), optional :: internal_heat
     real, dimension(ilb:,jlb:),     intent(in) :: frunoff
     real, dimension(ilb:,jlb:),     intent(in) :: geolat
     type(EOS_type),                 intent(in) :: eqn_of_state !< Equation of state structure
@@ -2156,7 +2305,6 @@ contains
     integer, dimension(:,:), Allocatable :: k_bot, kblt
     real, dimension(:), Allocatable   :: tmp_irr_band
     real, dimension(:,:), Allocatable :: rho_dzt_100,rho_dzt_200,rho_dzt_bot,sfc_irrad
-    real, dimension(:,:,:), Allocatable :: z_remin_ramp
     real,dimension(1:NUM_ZOO,1:NUM_PREY) :: ipa_matrix,pa_matrix,ingest_matrix
     real,dimension(1:NUM_PREY) :: hp_ipa_vec,hp_pa_vec,hp_ingest_vec
     real,dimension(1:NUM_PREY) :: prey_vec,prey_p2n_vec,prey_fe2n_vec,prey_si2n_vec
@@ -2256,7 +2404,7 @@ contains
     enddo; enddo ; !} i, j
 
 
-    call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
+    call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
          Temp(:,:,k), Salt(:,:,k),                    &
          cobalt%f_dic(:,:,k),                          &
          cobalt%f_po4(:,:,k),                          &
@@ -2266,14 +2414,13 @@ contains
                                 !InOut
          cobalt%f_htotal(:,:,k),                       &
                                 !Optional In
-         co2_calc=trim(co2_calc),                      &
          zt=cobalt%zt(:,:,k),                          &
                                 !OUT
          co2star=cobalt%co2_csurf(:,:), alpha=cobalt%co2_alpha(:,:), &
          pCO2surf=cobalt%pco2_csurf(:,:), &
          co3_ion=cobalt%f_co3_ion(:,:,k), &
-         omega_arag=cobalt%omegaa(:,:,k), &
-         omega_calc=cobalt%omegac(:,:,k))
+         omega_arag=cobalt%omega_arag(:,:,k), &
+         omega_calc=cobalt%omega_calc(:,:,k))
 
     do k = 2, nk
        do j = jsc, jec ; do i = isc, iec  !{
@@ -2281,7 +2428,7 @@ contains
           cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * cobalt%f_htotal(i,j,k)
        enddo; enddo ; !} i, j
 
-       call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
+       call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
             Temp(:,:,k), Salt(:,:,k),                    &
             cobalt%f_dic(:,:,k),                          &
             cobalt%f_po4(:,:,k),                          &
@@ -2291,12 +2438,11 @@ contains
                                 !InOut
             cobalt%f_htotal(:,:,k),                       &
                                 !Optional In
-            co2_calc=trim(co2_calc),                      &
             zt=cobalt%zt(:,:,k),                          &
                                 !OUT
             co3_ion=cobalt%f_co3_ion(:,:,k), &
-            omega_arag=cobalt%omegaa(:,:,k), &
-            omega_calc=cobalt%omegac(:,:,k))
+            omega_arag=cobalt%omega_arag(:,:,k), &
+            omega_calc=cobalt%omega_calc(:,:,k))
     enddo
 
     call g_tracer_set_values(tracer_list,'htotal','field',cobalt%f_htotal  ,isd,jsd)
@@ -2444,7 +2590,6 @@ contains
     call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_sfc','field',cobalt%f_irr_aclm_sfc ,isd,jsd)
-    call g_tracer_get_values(tracer_list,'irr_mem_dp','field',cobalt%f_irr_mem_dp ,isd,jsd)
 
     ! zero out cumulative COBALT-wide production diagnostics
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec
@@ -2829,8 +2974,6 @@ contains
           ! Calculate the chlorophyll.  Coversions give mg Chl (1000 kg)-1 ~ mg Chl m-3 
           phyto(n)%chl(i,j,k) = cobalt%c_2_n*12.0e6*phyto(n)%theta(i,j,k)*phyto(n)%f_n(i,j,k)
           cobalt%f_chl(i,j,k) = cobalt%f_chl(i,j,k)+phyto(n)%chl(i,j,k)
-          ! Issue: remnant from a movement experiment, clean up
-          cobalt%chl2sfcchl(i,j,k) = cobalt%f_chl(i,j,k)/max(cobalt%f_chl(i,j,1),epsln)
 
           ! calculate net production by phytoplankton group
           phyto(n)%jprod_n(i,j,k) = phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k)
@@ -2951,46 +3094,41 @@ contains
 
     call mpp_clock_end(id_clock_phyto_growth)
 !
-!-----------------------------------------------------------------------
-! 2: Bacterial Growth and Uptake Calculations
-!-----------------------------------------------------------------------
+!---------------------------------------------------------------------------
+! 2: Free-living bacterial transformatioins and growth/uptake calculations
+!---------------------------------------------------------------------------
 !
-    !
-    ! Move chemoautotrophic processes here since we now account for
-    ! their production
-    !
+    call mpp_clock_begin(id_clock_bacteria_growth)
+
+    ! Anammox converts NH4+ to N2 using NO3- in low O2 environments.
+    ! This was not included in ESM4.1 and gamma_nh4amx is currently 0.0
+    ! by default. 
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
 
        if (cobalt%f_o2(i,j,k) .lt. cobalt%o2_min_amx) then !{
-         !
-         ! Anammox Reaction: here we convert ammonia and nitrate to dinitrogen
-         ! Here, Anammox is NO3 dependent
-         !
+         ! Uptake of NH4+ and NO3- through the anammox process
          cobalt%juptake_nh4amx(i,j,k) = cobalt%gamma_nh4amx * &
-            cobalt%f_no3(i,j,k) / ((phyto(SMALL)%k_no3 * 3.0) + cobalt%f_no3(i,j,k)) * &
+            cobalt%f_no3(i,j,k) / (cobalt%k_no3_amx + cobalt%f_no3(i,j,k)) * &
             cobalt%f_nh4(i,j,k)
-
          cobalt%juptake_no3amx(i,j,k) = cobalt%juptake_nh4amx(i,j,k)*&
             cobalt%no3_2_nh4_amx
-
-         ! bacteria production from anammox:
-         bact(1)%jprod_n_amx(i,j,k) = min(cobalt%juptake_nh4amx(i,j,k)*bact(1)%amx_ge, &
-                                        0.5*cobalt%f_po4(i,j,k)/(dt*bact(1)%q_p_2_n))
-         bact(1)%juptake_po4(i,j,k) = bact(1)%jprod_n_amx(i,j,k)*bact(1)%q_p_2_n
-         cobalt%jprod_n2amx(i,j,k) = cobalt%juptake_nh4amx(i,j,k) + cobalt%juptake_no3amx(i,j,k) - &
-                                       bact(1)%jprod_n_amx(i,j,k)
+         ! N lost to N2 via anammox
+         cobalt%jnamx(i,j,k) = cobalt%juptake_nh4amx(i,j,k) + cobalt%juptake_no3amx(i,j,k)
        else
          cobalt%juptake_nh4amx(i,j,k) = 0.0
          cobalt%juptake_no3amx(i,j,k) = 0.0
-         bact(1)%jprod_n_amx(i,j,k) = 0.0
-         bact(1)%juptake_po4(i,j,k) = 0.0
-         cobalt%jprod_n2amx(i,j,k) = 0.0
+         cobalt%jnamx(i,j,k) = 0.0
        endif !}
 
     enddo; enddo; enddo  !} i,j,k
 
     !
-    !  Nitrification
+    !  Calculate nitrification rates.  There are three possible schemes to use.  Schemes 2 and 3 are
+    !  described in Paulot et al., 2020.  Ocean Ammonia Outgassing: Modulation by CO2 and Anthropogenic
+    !  Nitrogen Deposition.  JAMES. https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2019MS002026
+    !  They rely on the calculated partitioning of reduced nitrogen species between ammonium (NH4) and
+    !  ammonia (NH3).  Scheme 1 is from COBALTv1.  Note that the acclimation irradiance, which reflects
+    !  the irradiance during daylight hours, has been used to impose nitrification photoinhibition.
     !
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%juptake_nh4nitrif(i,j,k) = 0.0
@@ -3013,52 +3151,42 @@ contains
                   ( cobalt%k_o2 + cobalt%f_o2(i,j,k) )
           end if
        end if
+       ! Add the oxygen used for nitrification to the total water column respiration
        cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k)+cobalt%juptake_nh4nitrif(i,j,k)*cobalt%o2_2_nitrif
-
-       ! bacterial production from nitrifying bacteria
-       bact(1)%jprod_n_nitrif(i,j,k) = min(cobalt%juptake_nh4nitrif(i,j,k)*bact(1)%nitrif_ge, &
-                                        0.5*cobalt%f_po4(i,j,k)/(dt*bact(1)%q_p_2_n))
-       bact(1)%juptake_po4(i,j,k)=bact(1)%juptake_po4(i,j,k) + &
-               bact(1)%jprod_n_nitrif(i,j,k)*bact(1)%q_p_2_n
-       cobalt%jprod_no3nitrif(i,j,k) = cobalt%juptake_nh4nitrif(i,j,k) - bact(1)%jprod_n_nitrif(i,j,k)
-
+       ! Calculate the production of NO3 from nitrification
+       cobalt%jprod_no3nitrif(i,j,k) = cobalt%juptake_nh4nitrif(i,j,k)
     enddo; enddo; enddo  !} i,j,k
 
     !
-    ! calculate an effective maximum ldon uptake rate (at 0 deg. C) for bacteria
-    ! from specified values of bact(1)%gge_max, bact(1)%mu_max and bact(1)%bresp
+    ! Calculate production by free-living heterotrophic bacteria, which consume labile dissolved organic material
     !
 
-    call mpp_clock_begin(id_clock_bacteria_growth)
+    ! back calculate an effective maximum ldon uptake rate (at 0 deg. C) for bacteria, i.e.:
+    ! mu_max = gge_max*vmax - bresp; so (vmax = mu_max+bresp)/gge_max
     vmax_bact = (1.0/bact(1)%gge_max)*(bact(1)%mu_max + bact(1)%bresp)
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec   !{
+       !
+       ! Calculate the growth rate of heterotrophic bacteria (bact%mu)
+       !
        bact(1)%temp_lim(i,j,k) = exp(bact(1)%ktemp*Temp(i,j,k))
        bact(1)%ldonlim(i,j,k) = cobalt%f_ldon(i,j,k)/(bact(1)%k_ldon + cobalt%f_ldon(i,j,k))
+       ! Note that the minimum value of o2lim, o2_min/(k_o2+o2_min), sets the rate for
+       ! anaerobic remineralization.
        bact(1)%o2lim(i,j,k) = max(cobalt%f_o2(i,j,k),cobalt%o2_min)/  &
                               (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))
-       !
-       ! CAS: Adjust heterotrophic biomass to account for chemoautotrophs
-       !
-       bact(1)%mu_h(i,j,k) = bact(1)%mu_max*bact(1)%temp_lim(i,j,k)*bact(1)%ldonlim(i,j,k)* &
-            bact(1)%o2lim(i,j,k) - bact(1)%temp_lim(i,j,k)*bact(1)%bresp
-       bact(1)%mu_cstar(i,j,k) = (bact(1)%jprod_n_nitrif(i,j,k) + bact(1)%jprod_n_amx(i,j,k))/ &
-            max(bact(1)%f_n(i,j,k),epsln)
-       bact(1)%bhet(i,j,k) = max(bact(1)%mu_h(i,j,k),0.0)*bact(1)%f_n(i,j,k)/ &
-               (2.0*bact(1)%mu_cstar(i,j,k) + max(bact(1)%mu_h(i,j,k),epsln))
-       !bact(1)%bhet(i,j,k) = bact(1)%f_n(i,j,k)
-
        bact(1)%juptake_ldon(i,j,k) = vmax_bact*bact(1)%temp_lim(i,j,k)*bact(1)%ldonlim(i,j,k)* &
-               bact(1)%o2lim(i,j,k)*bact(1)%bhet(i,j,k)
+               bact(1)%o2lim(i,j,k)*bact(1)%f_n(i,j,k)
        bact_uptake_ratio = ( cobalt%f_ldop(i,j,k)/max(cobalt%f_ldon(i,j,k),epsln) )
        bact(1)%juptake_ldop(i,j,k) = bact(1)%juptake_ldon(i,j,k)*bact_uptake_ratio
        ! calculate bacteria production if N-limited, adjust down if P-limited
-       bact(1)%jprod_n_het(i,j,k) = bact(1)%gge_max*bact(1)%juptake_ldon(i,j,k) - &
-          bact(1)%bhet(i,j,k)/(cobalt%refuge_conc + bact(1)%bhet(i,j,k)) * &
-          bact(1)%temp_lim(i,j,k)*bact(1)%bresp*bact(1)%bhet(i,j,k)
-       bact(1)%jprod_n_het(i,j,k) = min(bact(1)%jprod_n_het(i,j,k), &
+       bact(1)%jprod_n(i,j,k) = bact(1)%gge_max*bact(1)%juptake_ldon(i,j,k) - &
+          bact(1)%f_n(i,j,k)/(cobalt%refuge_conc + bact(1)%f_n(i,j,k)) * &
+          bact(1)%temp_lim(i,j,k)*bact(1)%bresp*bact(1)%f_n(i,j,k)
+       bact(1)%jprod_n(i,j,k) = min(bact(1)%jprod_n(i,j,k), &
                                     bact(1)%juptake_ldop(i,j,k)/bact(1)%q_p_2_n)
        ! remineralization of organic N to nh4 = difference between uptake and production
-       bact(1)%jprod_nh4(i,j,k) = bact(1)%juptake_ldon(i,j,k) - max(bact(1)%jprod_n_het(i,j,k),0.0)
+       ! bact(1)%jprod_n < 0 results in dissolved organic matter production addressed later
+       bact(1)%jprod_nh4(i,j,k) = bact(1)%juptake_ldon(i,j,k) - max(bact(1)%jprod_n(i,j,k),0.0)
        cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + bact(1)%jprod_nh4(i,j,k)
 
        if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then  !{
@@ -3070,14 +3198,9 @@ contains
                                        bact(1)%jprod_nh4(i,j,k)*cobalt%n_2_n_denit
        endif  !}
 
-       ! produce phosphate at the same rate regardless of whether aerobic/anaerobic
-       bact(1)%jprod_po4(i,j,k) = bact(1)%juptake_ldop(i,j,k) - max(bact(1)%jprod_n_het(i,j,k)*bact(1)%q_p_2_n,0.0)
+       ! produce phosphate
+       bact(1)%jprod_po4(i,j,k) = bact(1)%juptake_ldop(i,j,k) - max(bact(1)%jprod_n(i,j,k)*bact(1)%q_p_2_n,0.0)
        cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + bact(1)%jprod_po4(i,j,k)
-
-       ! Calculate the total bacterial production
-       bact(1)%jprod_n(i,j,k) = bact(1)%jprod_n_het(i,j,k) + bact(1)%jprod_n_nitrif(i,j,k) + &
-               bact(1)%jprod_n_amx(i,j,k)
-
     enddo; enddo ; enddo !} i,j,k
 !
     call mpp_clock_end(id_clock_bacteria_growth)
@@ -3089,31 +3212,49 @@ contains
     !
     ! 3.1 Plankton foodweb dynamics: consumption by zooplankton and higher predators
     !
+    ! Zooplankton feeding is parameterized with observed allometric (i.e., size-dependent) feeding rates and predator-
+    ! prey linkages (i.e., Hansen, B.W. et al., 1994; Hansen, P.J., et al. 1997).  Feeding relationships are based on
+    ! simple saturating (Holling Type 2) relationships when there is a single prey type.  A density dependent switching
+    ! response, however, is included when multiple prey types are present (Stock et al., 2008).  A small "refuge"
+    ! concentration has also been included as an extra safeguard against negative values and as a reflection of the 
+    ! paradigm that Baas Becking's hypothesis that "Everything is everywhere, but the environment selects".  Predation
+    ! by higher predators (e.g., planktivorous fish) is modeled in a manner analogous to zooplankton, but assuming that
+    ! the biomass of these unresolved predators scales in proportion to the available prey.
+    !
+    ! References: 
+    ! Hansen, B.W., Bjornsen, P.K., Hansen, P.J., 1994. The size ratio between planktonic predators and their prey.
+    !    Limnol. & Oceanogr. 39, 395–402. https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1994.39.2.0395
+    ! Hansen, P.J., Bjornsen, P.K., Hansen, B.W., 1997. Zooplankton grazing and growth: scaling within the 
+    !    2–2000-micron body size range. Limnol. & Oceanogr. 42, 687–704.
+    !    https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1997.42.4.0687 
+    ! Stock, C.A., Powell, T.M., and Levin, S.A., 2008. Bottom-up and top-down forcing in a simple size-structured
+    !    plankton dynamics model.  Journal of Marine Systems. 74 (1-2), 134-152. 
+    !    https://doi.org/10.1016/j.jmarsys.2007.12.004 
 
     call mpp_clock_begin(id_clock_zooplankton_calculations)
 
     !
-    ! Set-up local matrices for calculating zooplankton ingestion of
-    ! multiple prey types.  The rows are consumers (i.e., NUM_ZOO zooplankton
-    ! groups), the columns are food sources (i.e., NUM_PREY potential food sources)
+    ! Set-up local matrices for calculating zooplankton ingestion of multiple prey types.  The rows are consumers
+    ! (i.e., NUM_ZOO zooplankton) and the columns are food sources (i.e., NUM_PREY potential food sources)
     !
-    ! ipa_matrix = the innate prey availability matrix
-    ! pa_matrix = prey availability matrix after accounting for switching
-    ! ingest_matrix = ingestion matrix
-    ! tot_prey = total prey available to predator m
+    ! ipa_matrix = the innate prey availability matrix (dimensionless, between 0-1)
+    ! pa_matrix = prey availability matrix after accounting for switching (dimensionless, between 0-1)
+    ! tot_prey = total prey available to predator m (moles kg-1)
+    ! ingest_matrix = NUM_ZOO x NUM_PREY matrix of ingestion (moles kg-1 sec-1)
     !
-    ! The definition of predator-prey matrices is intended to allow for
-    ! efficient experimentation with predator-prey interconnections.
-    ! However, we are still working to reduce the runtime required to
-    ! include this feature.  The matrix structures are thus included,
-    ! but the standard COBALT interactions have been hard-coded.  This
-    ! makes the code faster, but adding consumer-resource linkages
-    ! requires new code rather than just changing parameters
+    ! Note: The definition of predator-prey matrices is intended to allow for efficient experimentation with
+    ! predator-prey interconnections.  Initial attempts to include a sweep over all elements of the predator-prey
+    ! matrix, however, proved to be computationally costly.  Thus, while matrix structures are included, the
+    ! standard COBALTv3 interactions are hard-coded.  This makes the code faster, but adding new consumer-
+    ! resource linkages requires new code rather than just changing innate prey availability parameters.
+    ! A computationally efficient and flexible scheme will be pursued in future work.
     !
-    ! Note that the primary ingestion calculations allow for variable
-    ! stoichiometry.
+    ! Note: The ipa_matrix must be ordered phytoplankton, bacteria, zooplankton, then detritus.  The order
+    ! of the phytoplankton and zooplankton is dictated by the phytoplankton and zooplankton type definitions in
+    ! cobalt_types.F90.  In the case of phytoplankton, the code expects diazotrophs to be first.  For legacy
+    ! reasons this has also led the phytoplankton to be ordered from large to small and the zooplankton from
+    ! small to large.
     !
-
     do m = 1,NUM_ZOO !{
        ipa_matrix(m,1) = zoo(m)%ipa_diaz
        ipa_matrix(m,2) = zoo(m)%ipa_lgp
@@ -3131,8 +3272,8 @@ contains
     enddo !} m
 
     !
-    ! Set-up local matrices for calculating higher predator ingestion
-    ! of multiple prey types
+    ! Set-up local matrices for calculating higher predator ingestion of multiple prey types.
+    ! Note: Order must be the same as zooplankton
     !
 
     hp_ipa_vec(1) = cobalt%hp_ipa_diaz
@@ -3153,10 +3294,6 @@ contains
     ! Set all static stoichiometric ratios outside k,j,i loop
     !
 
-    !prey_p2n_vec(1) = phyto(DIAZO)%p_2_n_static
-    !prey_p2n_vec(2) = phyto(LARGE)%p_2_n_static
-    !prey_p2n_vec(3) = phyto(MEDIUM)%p_2_n_static
-    !prey_p2n_vec(4) = phyto(SMALL)%p_2_n_static
     prey_p2n_vec(5) = bact(1)%q_p_2_n
     prey_p2n_vec(6) = zoo(1)%q_p_2_n
     prey_p2n_vec(7) = zoo(2)%q_p_2_n
@@ -3174,21 +3311,9 @@ contains
     prey_si2n_vec(7) = 0.0
     prey_si2n_vec(8) = 0.0
 
-    ! Do diapause calculation.  Right now this is only linked to the top grid cell
-    do j = jsc, jec ; do i = isc, iec   !{
-       k = 1
-       cobalt%f_irr_mem_dp(i,j,k) = (cobalt%f_irr_mem_dp(i,j,k) + (cobalt%irr_mix(i,j,k) - &
-          cobalt%f_irr_mem_dp(i,j,k)) * min(1.0,cobalt%gamma_irr_mem_dp * dt)) * grid_tmask(i,j,k)
-       if (cobalt%f_irr_mem_dp(i,j,k).gt.cobalt%irr_mem_dpthresh1) then
-          cobalt%dp_fac(i,j) = 1.0
-       elseif (cobalt%f_irr_mem_dp(i,j,k).lt.cobalt%irr_mem_dpthresh2) then
-          cobalt%dp_fac(i,j) = 1.0 - cobalt%dpause_max
-       else
-          cobalt%dp_fac(i,j) = 1.0 - cobalt%dpause_max * &
-                 (cobalt%irr_mem_dpthresh1 - cobalt%f_irr_mem_dp(i,j,k)) / &
-                 (cobalt%irr_mem_dpthresh1 - cobalt%irr_mem_dpthresh2)
-       endif
-    enddo ; enddo !} i,j
+    !
+    ! Main loop for calculating predation by zooplankton and higher predators
+    !
 
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec; !{
 
@@ -3196,8 +3321,8 @@ contains
        ! 3.1.1: Calculate zooplankton ingestion fluxes
        !
 
-       ! Calculate the temperature and oxygen limitations, no ingestion
-       ! in low o2 environments
+       ! Calculate the temperature and oxygen limitations for zooplankton feeding and growth
+       ! Since zooplankton ingestion uses oxygen, there is no zooplankton feeding when f_o2 is less than o2_min.
        do m = 1,3  !{
           zoo(m)%temp_lim(i,j,k) = exp(zoo(m)%ktemp*Temp(i,j,k))
           zoo(m)%o2lim(i,j,k) = max((cobalt%f_o2(i,j,k) - cobalt%o2_min),0.0)/ &
@@ -3208,9 +3333,7 @@ contains
                                 (cobalt%k_o2 + max(cobalt%f_o2(i,j,k)-cobalt%o2_min,0.0))
 
        ! Prey vectors for ingestion and loss calculations
-       ! (note: ordering of phytoplankton must be consistent with
-       !  DIAZO, LARGE, SMALL ordering inherited from TOPAZ)
-       !
+       ! Note: ordering must match that used for the prey availability matrices above 
        prey_vec(1) = max(phyto(DIAZO)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(2) = max(phyto(LARGE)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(3) = max(phyto(MEDIUM)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
@@ -3218,10 +3341,10 @@ contains
        prey_vec(5) = max(bact(1)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(6) = max(zoo(1)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(7) = max(zoo(2)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
-       prey_vec(8) = max(zoo(3)%f_n(i,j,k) - cobalt%refuge_conc,0.0)*cobalt%dp_fac(i,j)
+       prey_vec(8) = max(zoo(3)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(9) = max(cobalt%f_ndet(i,j,k) - cobalt%refuge_conc,0.0)
-       !
-       ! Set dynamic stoichiometric rations inside k,j,i loop
+
+       ! Set dynamic prey stoichiometric ratios inside k,j,i loop
        prey_p2n_vec(1) = phyto(DIAZO)%q_p_2_n(i,j,k)
        prey_p2n_vec(2) = phyto(LARGE)%q_p_2_n(i,j,k)
        prey_p2n_vec(3) = phyto(MEDIUM)%q_p_2_n(i,j,k)
@@ -3239,88 +3362,52 @@ contains
        !
        ! Calculate zooplankton ingestion
        !
-       ! Small zooplankton (m = 1) consuming medium phytoplankton (3),
-       ! small phytoplankton (4) and bacteria (5).
-       ! sw_fac_denom is the denominator of the abundance-
-       ! based switching factor, tot_prey is the total available prey
-       ! after accounting for switching.
+       ! Small zooplankton (m = 1) consuming medium phytoplankton (3), small phytoplankton (4) and bacteria (5).
+       ! Density-dependent switching occurs between phytoplankton and bacterial prey.
        !
-       ! CAS: speed up code by using integer "switch" terms and sqrt?
-
        m = 1
-       !sw_fac_denom = (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,4)*prey_vec(4))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,5)*prey_vec(5))**zoo(m)%nswitch
-       !pa_matrix(m,3) = ipa_matrix(m,3)* &
-       !                 ( (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,4) = ipa_matrix(m,4)* &
-       !                 ( (ipa_matrix(m,4)*prey_vec(4))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,5) = ipa_matrix(m,5)* &
-       !                 ( (ipa_matrix(m,5)*prey_vec(5))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       food1 = ipa_matrix(m,3)*prey_vec(3)+ipa_matrix(m,4)*prey_vec(4)+ &
-               ipa_matrix(m,6)*prey_vec(6)
+       ! alternative prey items for the switching calculation
+       food1 = ipa_matrix(m,3)*prey_vec(3)+ipa_matrix(m,4)*prey_vec(4)
        food2 = ipa_matrix(m,5)*prey_vec(5)
+       ! calculate realized prey availability from innate availability and relative abundance of alternative prey
        sw_fac_denom = food1**zoo(m)%nswitch+food2**zoo(m)%nswitch
        pa_matrix(m,3) = ipa_matrix(m,3)*(food1**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
        pa_matrix(m,4) = ipa_matrix(m,4)*(food1**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       pa_matrix(m,6) = ipa_matrix(m,6)*(food1**zoo(m)%nswitch / &
-               (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
        pa_matrix(m,5) = ipa_matrix(m,5)*(food2**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
+       ! calculate the total prey from the realized prey availability
        tot_prey(m) = pa_matrix(m,3)*prey_vec(3) + pa_matrix(m,4)*prey_vec(4) + &
-                     pa_matrix(m,5)*prey_vec(5) + pa_matrix(m,6)*prey_vec(6)
+                     pa_matrix(m,5)*prey_vec(5)
+       ! calculate the rate at which small zooplankton ingests each prey type
        ingest_matrix(m,3) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                  pa_matrix(m,3)*prey_vec(3)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
        ingest_matrix(m,4) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                  pa_matrix(m,4)*prey_vec(4)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
        ingest_matrix(m,5) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                  pa_matrix(m,5)*prey_vec(5)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,6) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
-                 pa_matrix(m,6)*prey_vec(6)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       zoo(m)%jingest_n(i,j,k) = ingest_matrix(m,3) + ingest_matrix(m,4) + ingest_matrix(m,5) + &
-                                 ingest_matrix(m,6)
+       ! calculate the total ingestion of each element by small zooplankton 
+       zoo(m)%jingest_n(i,j,k) = ingest_matrix(m,3) + ingest_matrix(m,4) + ingest_matrix(m,5)
        zoo(m)%jingest_p(i,j,k) = ingest_matrix(m,3)*prey_p2n_vec(3) + &
                                  ingest_matrix(m,4)*prey_p2n_vec(4) + &
-                                 ingest_matrix(m,5)*prey_p2n_vec(5) + &
-                                 ingest_matrix(m,6)*prey_p2n_vec(6)
+                                 ingest_matrix(m,5)*prey_p2n_vec(5)
        zoo(m)%jingest_fe(i,j,k) = ingest_matrix(m,3)*prey_fe2n_vec(3) + &
                                   ingest_matrix(m,4)*prey_fe2n_vec(4)
        zoo(m)%jingest_sio2(i,j,k) = ingest_matrix(m,3)*prey_si2n_vec(3)
 
+       ! Medium zooplankton (m = 2) consuming diazotrophs (1), large phytoplankton (2), medium phytoplankton (3),
+       ! small phytoplankton (4), and small zooplankton (6).  Switching occurs between herbivory (1-4) and carnivory.
        !
-       ! Medium zooplankton (m = 2) consuming diazotrophs (1), large phytoplankton (2)
-       ! medium phytoplankton (3), small phytoplankton (4), and small zooplankton (6)
+       ! Note: The default availability of large phytoplankton to medium zooplankton is 0.  The optimal setting for
+       ! this parameter, however, is still being actively investigated.
        !
-
        m = 2
-       !sw_fac_denom = (ipa_matrix(m,1)*prey_vec(1))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,2)*prey_vec(2))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,4)*prey_vec(4))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,6)*prey_vec(6))**zoo(m)%nswitch
-       !pa_matrix(m,1) = ipa_matrix(m,1)* &
-       !                 ( (ipa_matrix(m,1)*prey_vec(1))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,2) = ipa_matrix(m,2)* &
-       !                 ( (ipa_matrix(m,2)*prey_vec(2))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,3) = ipa_matrix(m,3)* &
-       !                 ( (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,4) = ipa_matrix(m,4)* &
-       !                 ( (ipa_matrix(m,4)*prey_vec(4))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,6) = ipa_matrix(m,6)* &
-       !                 ( (ipa_matrix(m,6)*prey_vec(6))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
+       ! alternative prey items for the switching calculation (herbivory versus carnivory)
        food1 = ipa_matrix(m,1)*prey_vec(1)+ipa_matrix(m,2)*prey_vec(2)+ &
                ipa_matrix(m,3)*prey_vec(3)+ipa_matrix(m,4)*prey_vec(4)
-       food2 = ipa_matrix(m,6)*prey_vec(6)+ipa_matrix(m,7)*prey_vec(7)
+       food2 = ipa_matrix(m,6)*prey_vec(6)
+       ! calculate realized prey availability from innate availability and relative abundance of alternative prey
        sw_fac_denom = food1**zoo(m)%nswitch+food2**zoo(m)%nswitch
        pa_matrix(m,1) = ipa_matrix(m,1)*(food1**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
@@ -3332,11 +3419,11 @@ contains
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
        pa_matrix(m,6) = ipa_matrix(m,6)*(food2**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       pa_matrix(m,7) = ipa_matrix(m,7)*(food2**zoo(m)%nswitch / &
-               (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
+       ! calculate the total prey from the realized prey availability
        tot_prey(m) = pa_matrix(m,1)*prey_vec(1) + pa_matrix(m,2)*prey_vec(2) + &
                      pa_matrix(m,3)*prey_vec(3) + pa_matrix(m,4)*prey_vec(4) + &
-                     pa_matrix(m,6)*prey_vec(6) + pa_matrix(m,7)*prey_vec(7)
+                     pa_matrix(m,6)*prey_vec(6)
+       ! calculate the rate at which medium zooplankton ingests each prey type
        ingest_matrix(m,1) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                      pa_matrix(m,1)*prey_vec(1)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
        ingest_matrix(m,2) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
@@ -3347,17 +3434,15 @@ contains
                      pa_matrix(m,4)*prey_vec(4)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
        ingest_matrix(m,6) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                      pa_matrix(m,6)*prey_vec(6)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,7) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
-                     pa_matrix(m,7)*prey_vec(7)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
+       ! calculate the total ingestion of each element by medium zooplankton
        zoo(m)%jingest_n(i,j,k) = ingest_matrix(m,1) + ingest_matrix(m,2) + &
                                  ingest_matrix(m,3) + ingest_matrix(m,4) + &
-                                 ingest_matrix(m,6) + ingest_matrix(m,7)
+                                 ingest_matrix(m,6)
        zoo(m)%jingest_p(i,j,k) = ingest_matrix(m,1)*prey_p2n_vec(1) + &
                                  ingest_matrix(m,2)*prey_p2n_vec(2) + &
                                  ingest_matrix(m,3)*prey_p2n_vec(3) + &
                                  ingest_matrix(m,4)*prey_p2n_vec(4) + &
-                                 ingest_matrix(m,6)*prey_p2n_vec(6) + &
-                                 ingest_matrix(m,7)*prey_p2n_vec(7)
+                                 ingest_matrix(m,6)*prey_p2n_vec(6)
        zoo(m)%jingest_fe(i,j,k) = ingest_matrix(m,1)*prey_fe2n_vec(1) + &
                                   ingest_matrix(m,2)*prey_fe2n_vec(2) + &
                                   ingest_matrix(m,3)*prey_fe2n_vec(3) + &
@@ -3365,31 +3450,15 @@ contains
        zoo(m)%jingest_sio2(i,j,k) = ingest_matrix(m,2)*prey_si2n_vec(2) + &
                                     ingest_matrix(m,3)*prey_si2n_vec(3)
 
+       ! Large zooplankton (m = 3) consuming diazotrophs (1), large phytoplankton (2), medium pytoplankton (3),
+       ! and medium zooplankton (7).  Switching occurs between herbibory (1-3) and carnivory (7).
        !
-       ! Large zooplankton (m = 3) consuming diazotrophs (1), large phytoplankton (2)
-       ! medium pytoplankton (3) and medium zooplankton  (7)
-       !
-
        m = 3
-       !sw_fac_denom = (ipa_matrix(m,1)*prey_vec(1))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,2)*prey_vec(2))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch + &
-       !               (ipa_matrix(m,7)*prey_vec(7))**zoo(m)%nswitch
-       !pa_matrix(m,1) = ipa_matrix(m,1)* &
-       !                 ( (ipa_matrix(m,1)*prey_vec(1))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,2) = ipa_matrix(m,2)* &
-       !                 ( (ipa_matrix(m,2)*prey_vec(2))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,3) = ipa_matrix(m,3)* &
-       !                 ( (ipa_matrix(m,3)*prey_vec(3))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       !pa_matrix(m,7) = ipa_matrix(m,7)* &
-       !                 ( (ipa_matrix(m,7)*prey_vec(7))**zoo(m)%nswitch / &
-       !                   (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
+       ! alternative prey items for the switching calculation (herbivory versus carnivory)
        food1 = ipa_matrix(m,1)*prey_vec(1)+ipa_matrix(m,2)*prey_vec(2)+ &
-                    ipa_matrix(m,3)*prey_vec(3)
-       food2 = ipa_matrix(m,7)*prey_vec(7)+ipa_matrix(m,8)*prey_vec(8)
+               ipa_matrix(m,3)*prey_vec(3)
+       food2 = ipa_matrix(m,7)*prey_vec(7)
+       ! calculate realized prey availability from innate availability and relative abundance of alternative prey
        sw_fac_denom = food1**zoo(m)%nswitch+food2**zoo(m)%nswitch
        pa_matrix(m,1) = ipa_matrix(m,1)*(food1**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
@@ -3399,43 +3468,39 @@ contains
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
        pa_matrix(m,7) = ipa_matrix(m,7)*(food2**zoo(m)%nswitch / &
                (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
-       pa_matrix(m,8) = ipa_matrix(m,8)*(food2**zoo(m)%nswitch / &
-               (sw_fac_denom+epsln) )**(1.0/zoo(m)%mswitch)
+       ! calculate the total prey from the realized prey availability
        tot_prey(m) = pa_matrix(m,1)*prey_vec(1) + pa_matrix(m,2)*prey_vec(2) + &
-                     pa_matrix(m,3)*prey_vec(3) + pa_matrix(m,7)*prey_vec(7) + &
-                     pa_matrix(m,8)*prey_vec(8)
-       ingest_matrix(m,1) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*cobalt%dp_fac(i,j)* &
+                     pa_matrix(m,3)*prey_vec(3) + pa_matrix(m,7)*prey_vec(7)
+       ! calculate the rate at which large zooplankton ingests each prey type
+       ingest_matrix(m,1) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)* &
                      zoo(m)%imax*pa_matrix(m,1)*prey_vec(1)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,2) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*cobalt%dp_fac(i,j)* &
+       ingest_matrix(m,2) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)* &
                      zoo(m)%imax*pa_matrix(m,2)*prey_vec(2)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,3) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*cobalt%dp_fac(i,j)* &
+       ingest_matrix(m,3) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)* &
                      zoo(m)%imax*pa_matrix(m,3)*prey_vec(3)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,7) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*cobalt%dp_fac(i,j)* &
+       ingest_matrix(m,7) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)* &
                      zoo(m)%imax*pa_matrix(m,7)*prey_vec(7)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ingest_matrix(m,8) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*cobalt%dp_fac(i,j)* &
-                     zoo(m)%imax*pa_matrix(m,8)*prey_vec(8)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
+       ! calculate the total ingestion of each element by large zooplankton
        zoo(m)%jingest_n(i,j,k) = ingest_matrix(m,1) + ingest_matrix(m,2) + &
-                                 ingest_matrix(m,3) + ingest_matrix(m,7) + &
-                                 ingest_matrix(m,8)
+                                 ingest_matrix(m,3) + ingest_matrix(m,7)
        zoo(m)%jingest_p(i,j,k) = ingest_matrix(m,1)*prey_p2n_vec(1) + &
                                  ingest_matrix(m,2)*prey_p2n_vec(2) + &
                                  ingest_matrix(m,3)*prey_p2n_vec(3) + &
-                                 ingest_matrix(m,7)*prey_p2n_vec(7) + &
-                                 ingest_matrix(m,8)*prey_p2n_vec(8)
+                                 ingest_matrix(m,7)*prey_p2n_vec(7)
        zoo(m)%jingest_fe(i,j,k) = ingest_matrix(m,1)*prey_fe2n_vec(1) + &
                                   ingest_matrix(m,2)*prey_fe2n_vec(2) + &
                                   ingest_matrix(m,3)*prey_fe2n_vec(3)
        zoo(m)%jingest_sio2(i,j,k) = ingest_matrix(m,2)*prey_si2n_vec(2) + &
                                     ingest_matrix(m,3)*prey_si2n_vec(3)
 
+       ! calculate the total filter feeding by medium and large zooplankton.  This rate is ultimately used to
+       ! scale the conversion of lithogenic dust into lithogenic detritus. 
        cobalt%total_filter_feeding(i,j,k) = ingest_matrix(2,1) + ingest_matrix(2,2) + &
           ingest_matrix(2,3) + ingest_matrix(2,4) +  ingest_matrix(3,1) + ingest_matrix(3,2) + &
           ingest_matrix(3,3) + ingest_matrix(3,4)
-
        !
-       ! Calculate losses to zooplankton
+       ! calculate losses of each prey type to zooplankton, starting with phytoplankton
        !
-
        do n = 1,NUM_PHYTO
           phyto(n)%jzloss_n(i,j,k) = 0.0
        enddo
@@ -3452,21 +3517,18 @@ contains
           phyto(n)%jzloss_fe(i,j,k) = phyto(n)%jzloss_n(i,j,k)*prey_fe2n_vec(n)
           phyto(n)%jzloss_sio2(i,j,k) = phyto(n)%jzloss_n(i,j,k)*prey_si2n_vec(n)
        enddo !} n
-
        !
-       ! losses of bacteria to zooplankton
+       ! calculate losses of bacteria to zooplankton
        !
-
        bact(1)%jzloss_n(i,j,k) = 0.0
        do m = 1,NUM_ZOO !{
           bact(1)%jzloss_n(i,j,k) = bact(1)%jzloss_n(i,j,k) + ingest_matrix(m,5)
        enddo !} m
        bact(1)%jzloss_p(i,j,k) = bact(1)%jzloss_n(i,j,k)*prey_p2n_vec(5)
-
        !
        ! losses of zooplankton to zooplankton
+       ! Note: n = loop through zooplankton as prey; m = loop through zooplankton as predators
        !
-
        do n = 1,NUM_ZOO !{
           zoo(n)%jzloss_n(i,j,k) = 0.0
           do m = 1,NUM_ZOO !{
@@ -3479,24 +3541,29 @@ contains
        ! 3.1.2 Calculate ingestion by higher predators
        !
 
-       ! The higher-predator ingestion calculations mirror those used for zooplankton
+       ! The higher-predator ingestion calculations mirror those used for zooplankton.  Switching occurs between
+       ! medium and large zooplankton assuming that forage fish have unique adaptations for these two size classes
        !
-       !sw_fac_denom = (hp_ipa_vec(7)*prey_vec(7))**cobalt%nswitch_hp + &
-       !               (hp_ipa_vec(8)*prey_vec(8))**cobalt%nswitch_hp
-       !hp_pa_vec(7) = hp_ipa_vec(7)* &
-       !               ( (hp_ipa_vec(7)*prey_vec(7))**cobalt%nswitch_hp / &
-       !                 (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
-       !hp_pa_vec(8) = hp_ipa_vec(8)* &
-       !               ( (hp_ipa_vec(8)*prey_vec(8))**cobalt%nswitch_hp / &
-       !                 (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
        food1 = hp_ipa_vec(7)*prey_vec(7)
        food2 = hp_ipa_vec(8)*prey_vec(8)
+       ! calculate realized prey availability from innate availability and relative abundance of alternative prey
        sw_fac_denom = food1**cobalt%nswitch_hp+food2**cobalt%nswitch_hp
        hp_pa_vec(7) = hp_ipa_vec(7)*(food1**cobalt%nswitch_hp / &
                (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
        hp_pa_vec(8) = hp_ipa_vec(8)*(food2**cobalt%nswitch_hp / &
                (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
+       ! calculate the total prey from the realized prey availability
        tot_prey_hp = hp_pa_vec(7)*prey_vec(7) + hp_pa_vec(8)*prey_vec(8)
+       ! calculate the rate at which large zooplankton ingests each prey type.  The default assumption for higher
+       ! predators is that the biomass of higher predators scales in proportion to the available prey.  That is,
+       ! it is implicitly assumed that fish biomass is proportional to tot_prey_hp.  For example, the ingestion of 
+       ! medium zooplankton (mz) by hp is:
+       !
+       ! hp_ingest_vec(7) = Imax(T,O2)*(available mz biomass)/(ki_hp + tot_prey_hp) * HP; where HP ~ tot_prey_hp
+       ! 
+       ! Note that this results in a density-dependent (i.e., quadratic) mortality consistent with fish aggregating
+       ! over regions of abundant prey.  This response can be modulated with coef_hp, but care would be needed
+       ! to ensure imax_hp has proper units if this coefficient were changed.
        hp_ingest_vec(7) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%imax_hp* &
                           hp_pa_vec(7)*prey_vec(7)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
                             (cobalt%ki_hp+tot_prey_hp)
@@ -3507,7 +3574,7 @@ contains
        cobalt%hp_jingest_p(i,j,k) = hp_ingest_vec(7)*prey_p2n_vec(7) + &
                                     hp_ingest_vec(8)*prey_p2n_vec(8)
        !
-       ! Calculate losses to higher predators
+       ! Calculate losses of zooplankton to higher predators
        !
 
        do n = 1,NUM_ZOO !{
@@ -3519,40 +3586,78 @@ contains
     call mpp_clock_end(id_clock_zooplankton_calculations)
 
     !
-    ! 3.2: Plankton foodweb dynamics: Other mortality and loss terms
+    ! 3.2: Plankton foodweb dynamics: mortality and loss terms other than zooplankton and higher predator consumption
     !
 
     call mpp_clock_begin(id_clock_other_losses)
 
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec; !{
 
+       ! 3.2.1 Calculate losses of phytoplankton to aggregation and mortality and the rate of direct sinking.
        !
-       ! 3.2.1 Calculate losses of phytoplankton to aggregation and mortality
+       ! These losses depend on whether phytoplankton are growing well or "stressed". Stress is quantified as a
+       ! factor between 0-1, "phyto(n)%stress_fac", determined by the ratio of growth rate achieved over 24 hours
+       ! (i.e., mu_mem) relative to the maximum photosynthetic rate, i.e.:
        !
+       ! growth_ratio = min( max(mu_mem,0)/(frac_mu_stress*P_C_max(T)), 1.0)
+       !
+       ! Note that growth_ratio = 1 when mu_mem >= frac_mu_stress*P_C_max(T) and approaches 0 as mu_mem -> 0.  The
+       ! stress factor is then calculated as:
+       !
+       ! stress_fac = (1-growth_ratio)**2
+       !
+       ! stress_fac thus equals 0 when mu_mem >= frac_mu_stress*P_C_max(T) and ramps up non-linearly to 1 as mu_mem->0.
+       ! Since stress_fac multiplies the loss term, stress_fac=0 shuts the loss off when the cell is "happy", while
+       ! stress_fac=1 allows the loss to achieve its full value when the cell is severely stressed.  This 
+       ! parameterization is consistent with observed sinking, aggregation, and stress-driven mortality responses
+       ! (e.g., Waite et al., 1992; Smayda et al., 1971).
+       !
+       ! Aggregation is modeled as a density-dependent (quadratic) loss that effects large cells most, does not
+       ! depend on temperature, and results in sinking detritus (e.g., Jackson et al., 1992).  Phytoplankton sinking as 
+       ! non-aggregates is simulated directly using the "move_vertical" option in generic_tracers, with larger and more
+       ! stressed cells sinking more quickly.  Phytoplankton mortality (cell death) is not used in the default settings
+       ! but it is set as a linear loss rate that generates dissolved organic material.  Note that this differs from
+       ! phytoplankton basal respiration, which is also linear but results in inorganic nutrients and carbon via 
+       ! respiration.
+       !
+       ! REFERENCES
+       ! Waite, A., Bienfeng, P.K., Harrison, P.J., 1992. Spring bloom sedimentation in a subarctic ecosystem.
+       !    Marine Biology, 114 131-138.  https://doi.org/10.1007/BF00350862
+       ! Smayda, T.J., Normal and accelerated sinking of phytoplankton in the sea. Marine Geology, 11(2), 105-122.
+       !    https://doi.org/10.1016/0025-3227(71)90070-3
+       ! Jackson, G.A., 1990. A model of the formation of marine algal flocs by physical coagulation processes.
+       !    Deep Sea Res A, 37(8), 1197-1211. https://doi.org/10.1016/0198-0149(90)90038-W
 
        do n = 1,NUM_PHYTO !{
+            ! calculate the stress factor
             growth_ratio = min(max(phyto(n)%f_mu_mem(i,j,k),0.0)/ &
                            (phyto(n)%frac_mu_stress*phyto(n)%P_C_max(i,j,k)*cobalt%expkT(i,j,k)),1.0)
             phyto(n)%stress_fac(i,j,k) = (1.0-growth_ratio)**2
+            ! calculate aggregation losses
             phyto(n)%jaggloss_n(i,j,k) = phyto(n)%stress_fac(i,j,k)*phyto(n)%agg*phyto(n)%f_n(i,j,k)**2.0
             phyto(n)%jaggloss_p(i,j,k) = phyto(n)%jaggloss_n(i,j,k)*phyto(n)%q_p_2_n(i,j,k)
             phyto(n)%jaggloss_fe(i,j,k) = phyto(n)%jaggloss_n(i,j,k)*phyto(n)%q_fe_2_n(i,j,k)
             phyto(n)%jaggloss_sio2(i,j,k) = phyto(n)%jaggloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
-
+            ! calculate phytoplankton mortality (cell death) (not used in default settings)
             phyto(n)%jmortloss_n(i,j,k) = cobalt%expkT(i,j,k)*phyto(n)%stress_fac(i,j,k)* &
                    phyto(n)%mort*phyto(n)%f_n(i,j,k)* &
                    phyto(n)%f_n(i,j,k)/(cobalt%refuge_conc + phyto(n)%f_n(i,j,k))
             phyto(n)%jmortloss_p(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_p_2_n(i,j,k)
             phyto(n)%jmortloss_fe(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_fe_2_n(i,j,k)
             phyto(n)%jmortloss_sio2(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
-
+            ! calculate the vertical sinking
             phyto(n)%vmove(i,j,k) = phyto(n)%sink_max*phyto(n)%stress_fac(i,j,k)
        enddo !} n
 
-
-       !
        ! 3.2.2 Calculate phytoplankton and bacterial losses to viruses
        !
+       ! Viral losses are modeled as a density-dependent (quadratic) loss term that impacts bacteria and phytoplankton
+       ! regardless of their stress.  Viral losses are more effective loss mechanisms for small phytoplankton (Murray
+       ! and Jackson, 1992) and produce dissolved organic material.
+       !
+       ! Reference: Murray and Jackson (1992). Viral dynamics: a model of the effects of size, shape motion and
+       ! abundance of single-celled planktonic organisms and other particles, Mar. Ecol. Prog. Ser., 89, 103-116.
+       ! http://www.jstor.org/stable/24831780.
 
        do n = 1,NUM_PHYTO !{
           phyto(n)%jvirloss_n(i,j,k) = bact(1)%temp_lim(i,j,k)*phyto(n)%vir*phyto(n)%f_n(i,j,k)**2.0
@@ -3564,9 +3669,15 @@ contains
        bact(1)%jvirloss_n(i,j,k) = bact(1)%temp_lim(i,j,k)*bact(1)%vir*bact(1)%f_n(i,j,k)**2.0
        bact(1)%jvirloss_p(i,j,k) = bact(1)%jvirloss_n(i,j,k)*bact(1)%q_p_2_n
 
-       !
        ! 3.2.3 Calculate losses to exudation
        !
+       ! Phytoplankton are assumed to lose a constant fraction of nitrogen they fix to dissolved organic nutrients 
+       ! (phyto(n)%exu = 0.13 (Baines and Pace, 1991).  The model assumes losses of phosphate and iron occur in
+       ! proportion the the loss in N, but Si is assumed to be in the cell structure.
+       !
+       ! Reference: Baines, S.B., Pace, M.L., 1991.  The production of dissolved organic matter by phytoplankton and
+       ! its importance to bacteria: Patterns across marine and freshwater systems. Limnol. and Oceanogr., 36(6),
+       ! 1078-1090. https://doi.org/10.4319/lo.1991.36.6.1078 
 
        n = DIAZO
        phyto(n)%jexuloss_n(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+ &
@@ -3579,40 +3690,23 @@ contains
           phyto(n)%jexuloss_fe(i,j,k) = phyto(n)%jexuloss_fe(i,j,k) + phyto(n)%exu*max(phyto(n)%juptake_fe(i,j,k),0.0)
        enddo
 
-       !
-       ! 3.2.4 Movement due to swimming
-       !
-
-       do n = 1,NUM_ZOO !{
-          if ( (cobalt%chl2sfcchl(i,j,k).lt.zoo(n)%upswim_chl_thresh).or. &
-               (cobalt%f_irr_aclm(i,j,k).lt.zoo(n)%upswim_I_thresh) ) then
-             zoo(n)%vmove(i,j,k) = -zoo(n)%swim_max
-          else
-             zoo(n)%vmove(i,j,k) = 0.0
-          endif
-       enddo
-
     enddo; enddo; enddo  !} i,j,k
 
-    ! Sign convention for upward swimming to avoid detrainment is positive for
-    ! movement out of cell.  Multiply by -1 to establish a source in k = 1
-    do j = jsc, jec ; do i = isc, iec   !{
-       do n = 1,NUM_ZOO
-         zoo(n)%vmove(i,j,1) = 0.0
-       enddo
+    ! Assume that individually sinking phytoplankton, which sink at slow rates relative to aggregates and fecal
+    ! pellets, collect in a nepholoid layer and are available for resuspension if they are exposed to mixing. This
+    ! is accomplished by setting the vertical sinking rate in the bottom layer to 0, and is assumed to occur when 
+    ! the depth is less than twice the depth of active mixing.  Cells are otherwise assumed to sink into the
+    ! benthos and be remineralized along with sinking detritus.
 
-       !
-       ! assume that individually sinking phytoplankton collect in nepholoid layer
-       ! and are available for resuspension if they are exposed to mixing
+    do j = jsc, jec ; do i = isc, iec   !{
        do n = 1,NUM_PHYTO
          if (cobalt%zt(i,j,nk).le.(2.0*hblt_depth(i,j))) then
            phyto(n)%vmove(i,j,nk) = 0.0
          endif
        enddo
-
     enddo; enddo !} i,j
 
-    ! set vertical movement for phytoplankton
+    ! set the direct sinking rates for phytoplankton
     call g_tracer_set_values(tracer_list,'ndi','vmove',phyto(DIAZO)%vmove,isd,jsd)
     call g_tracer_set_values(tracer_list,'nsm','vmove',phyto(SMALL)%vmove,isd,jsd)
     call g_tracer_set_values(tracer_list,'nmd','vmove',phyto(MEDIUM)%vmove,isd,jsd)
@@ -3628,28 +3722,28 @@ contains
     call g_tracer_set_values(tracer_list,'simd','vmove',phyto(MEDIUM)%vmove,isd,jsd)
     call g_tracer_set_values(tracer_list,'silg','vmove',phyto(LARGE)%vmove,isd,jsd)
 
-    ! Set vertical movement for zooplankton
-    call g_tracer_set_values(tracer_list,'nsmz','vmove',zoo(1)%vmove,isd,jsd)
-    call g_tracer_set_values(tracer_list,'nmdz','vmove',zoo(2)%vmove,isd,jsd)
-    call g_tracer_set_values(tracer_list,'nlgz','vmove',zoo(3)%vmove,isd,jsd)
-
     call mpp_clock_end(id_clock_other_losses)
 
     !
-    ! 3.3: Plankton foodweb dynamics: Production calculations
+    ! 3.3: Plankton foodweb dynamics: production of different ecosystem constituents resulting from ingestion and other
+    !      loss processes. Products include detritus, dissolved organic matter, new zooplankton and inorganic nutrients
     !
 
     call mpp_clock_begin(id_clock_production_loop)
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
 
+       ! 3.3.1: Production of detritus and dissolved organic matter
+       ! 
+       ! The production of detritus and dissolved organic material is controlled by phi_det, phi_ldon, phi_sldon and
+       ! phi_srdon (and corresponding values for P).  These are generally specified as fractions of the ingested   
+       ! material, or fractions of the loss term. 
        !
-       ! 3.3.1: Calculate the production of detritus and dissolved organic material
-       !
-       !
-       ! Production of detritus and dissolved organic material from zooplankton egestion
-       !
+       ! Note: For zooplankton ingestion, the "assimilation efficiency" is determined by 1.0 - the egested fraction.
+       ! This is assumed to be 0.7 by default. Thus, for zoo phi_det + phi_ldon + phi_sldon + phi_srdon = 0.3.  If 
+       ! this sum increases, you have effectively decreased the assimilation efficiency and vice-versa.
 
        do m = 1,NUM_ZOO
+           ! calculate detritus and dissolved organic production for each zooplankton group
            zoo(m)%jprod_ndet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_n(i,j,k)
            zoo(m)%jprod_pdet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_p(i,j,k)
            zoo(m)%jprod_sldon(i,j,k) = zoo(m)%phi_sldon*zoo(m)%jingest_n(i,j,k)
@@ -3661,8 +3755,7 @@ contains
            zoo(m)%jprod_fedet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_fe(i,j,k)
            zoo(m)%jprod_sidet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_sio2(i,j,k)
 
-
-           ! augment cumulative production with zooplankton terms
+           ! augment cumulative production variables for detritus and dissolved organics
            cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + zoo(m)%jprod_ndet(i,j,k)
            cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + zoo(m)%jprod_pdet(i,j,k)
            cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) + zoo(m)%jprod_sldon(i,j,k)
@@ -3675,20 +3768,14 @@ contains
            cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + zoo(m)%jprod_sidet(i,j,k)
        enddo !} m
 
-       !
        ! Production of detritus and dissolved organic material from higher predator egestion
-       ! (did not track individual terms, just add to cumulative total)
-       !
-
+       ! (just added to cumulative total. It is easy to calculate from phi_det and hp_jingest)
        cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
        cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
        cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_fe(i,j,k)
        cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_sio2(i,j,k)
 
-       !
-       ! Sources from phytoplankton aggregation
-       !
-
+       ! Detritus produced via phytoplankton aggregation
        do m = 1,NUM_PHYTO
            cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + phyto(m)%jaggloss_n(i,j,k)
            cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + phyto(m)%jaggloss_p(i,j,k)
@@ -3696,10 +3783,9 @@ contains
            cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + phyto(m)%jaggloss_sio2(i,j,k)
        enddo !} m
 
-       !
-       ! Sources from viral lysis of phytoplankton and exudation and mortality
-       !
-
+       ! Dissolved organic and inorganic production from viral lysis, exudation, and phytoplankton mortality
+       ! All of the exuded organic material is assumed to be labile. The partitioning of losses to viruses and
+       ! phytoplankton mortality is determined by lysis_phi_ldon, lysis_phi_sldon and lysis_phi_srdon.
        do m = 1,NUM_PHYTO
            cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) + cobalt%lysis_phi_ldon* &
                    (phyto(m)%jvirloss_n(i,j,k) + phyto(m)%jmortloss_n(i,j,k)) + phyto(m)%jexuloss_n(i,j,k)
@@ -3713,17 +3799,13 @@ contains
                    (phyto(m)%jvirloss_p(i,j,k) + phyto(m)%jmortloss_p(i,j,k))
            cobalt%jprod_srdop(i,j,k) = cobalt%jprod_srdop(i,j,k) + cobalt%lysis_phi_srdop* &
                    (phyto(m)%jvirloss_p(i,j,k) + phyto(m)%jmortloss_p(i,j,k))
-           cobalt%jprod_fed(i,j,k)   = cobalt%jprod_fed(i,j,k)   + phyto(m)%jvirloss_fe(i,j,k) + &
+           cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k)   + phyto(m)%jvirloss_fe(i,j,k) + &
                                        phyto(m)%jmortloss_fe(i,j,k) + phyto(m)%jexuloss_fe(i,j,k)
            cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + phyto(m)%jvirloss_sio2(i,j,k) + &
-                   phyto(m)%jmortloss_sio2(i,j,k)
+                                      phyto(m)%jmortloss_sio2(i,j,k)
        enddo !} m
 
-
-       !
        ! Sources of dissolved organic material from viral lysis due to bacteria
-       !
-
        cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) + cobalt%lysis_phi_ldon*bact(1)%jvirloss_n(i,j,k)
        cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) + cobalt%lysis_phi_sldon*bact(1)%jvirloss_n(i,j,k)
        cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) + cobalt%lysis_phi_srdon*bact(1)%jvirloss_n(i,j,k)
@@ -3731,50 +3813,60 @@ contains
        cobalt%jprod_sldop(i,j,k) = cobalt%jprod_sldop(i,j,k) + cobalt%lysis_phi_sldop*bact(1)%jvirloss_p(i,j,k)
        cobalt%jprod_srdop(i,j,k) = cobalt%jprod_srdop(i,j,k) + cobalt%lysis_phi_srdop*bact(1)%jvirloss_p(i,j,k)
 
-       !
-       ! Sources of dissolved organic material from bacterial mortality (metabolic costs higher than food uptake).
-       ! These conditions are assumed to lead to a lysis-like redistribution of bacteria organic matter.
-       !
-
-       cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) - cobalt%lysis_phi_ldon* &
-                                  min(bact(1)%jprod_n_het(i,j,k),0.0)
-       cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) - cobalt%lysis_phi_sldon* &
-                                  min(bact(1)%jprod_n_het(i,j,k),0.0)
-       cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) - cobalt%lysis_phi_srdon* &
-                                  min(bact(1)%jprod_n_het(i,j,k),0.0)
+       ! When bacterial production is negative, send it to dissolved organic material assuming the partitioning
+       ! between different labilities is analogous to viral lysis.
+       cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) - cobalt%lysis_phi_ldon*min(bact(1)%jprod_n(i,j,k),0.0)
+       cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) - cobalt%lysis_phi_sldon*min(bact(1)%jprod_n(i,j,k),0.0)
+       cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) - cobalt%lysis_phi_srdon*min(bact(1)%jprod_n(i,j,k),0.0)
        cobalt%jprod_ldop(i,j,k) = cobalt%jprod_ldop(i,j,k) - cobalt%lysis_phi_ldop* &
-                                  min(bact(1)%jprod_n_het(i,j,k)*bact(1)%q_p_2_n,0.0)
+                                  min(bact(1)%jprod_n(i,j,k)*bact(1)%q_p_2_n,0.0)
        cobalt%jprod_sldop(i,j,k) = cobalt%jprod_sldop(i,j,k) - cobalt%lysis_phi_sldop* &
-                                  min(bact(1)%jprod_n_het(i,j,k)*bact(1)%q_p_2_n,0.0)
+                                  min(bact(1)%jprod_n(i,j,k)*bact(1)%q_p_2_n,0.0)
        cobalt%jprod_srdop(i,j,k) = cobalt%jprod_srdop(i,j,k) - cobalt%lysis_phi_srdop* &
-                                  min(bact(1)%jprod_n_het(i,j,k)*bact(1)%q_p_2_n,0.0)
+                                  min(bact(1)%jprod_n(i,j,k)*bact(1)%q_p_2_n,0.0)
 
 
-       !
        ! 3.3.2: Zooplankton production and excretion calculations
        !
+       ! Zooplankton growth and respiration/excretion depends on two fundamental metabolic parameters:
+       !
+       ! 1. The assimilation efficiency is the fraction of ingested food that is assimilated for either anabolic
+       !    (i.e., growth) or catabolic (i.e., respiration) reactions.  It is equal to 1 - the egested fraction
+       !    and has a default value of 0.7.
+       ! 2. The gross growth efficiency is the fraction of ingested food that contributes to growth (anabolic)
+       !    metabolism.
+       !
+       ! Zooplankton production is determined by multiplying the ingestion rate by the maximum growth efficiency
+       ! (i.e., gge_max) and then subtracting off the basal respiration rate.  By default, gge_max = 0.4 (Straile
+       ! et al., 1997, Hansen et al., 1997).  Thus, when ingestion >> basal respiration, gge -> 0.4, the fraction of
+       ! ingestion respired -> 0.7-0.4 = 0.3, and the fraction egested as either detritus or dissolved organic matter
+       ! = 0.3.  When ingestion = basal respiration, gge -> 0, the fraction of ingestion respired -> 0.7 and the
+       ! fraction egested remains 0.3.  When production is negative, respire all assimilated material and route negative
+       ! production to detritus.  Nutrients are excreted in balance with respiration.
+       !
+       ! References:
+       ! Hansen, P.J., Bjornsen, P.K., Hansen, B.W., 1997. Zooplankton grazing and growth: scaling within the 
+       !   2–2000-micron body size range. Limnol. & Oceanogr. 42, 687–704.
+       !   https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1997.42.4.0687
+       ! Straile, D., 1997. Gross growth efficiencies of protozoan and metazoan zooplankton and their dependence on
+       !   food concentration, predator-prey weight ratio, and taxonomic group. Limnol. and Oceanogr. 42, 1375-1385.
+       !    https://doi.org/10.4319/lo.1997.42.6.137
 
        do m = 1,NUM_ZOO
+          ! calculate the assimilation efficiency
           assim_eff = 1.0-zoo(m)%phi_det-zoo(m)%phi_ldon-zoo(m)%phi_sldon-zoo(m)%phi_srdon
 
-          if (m == 3) then
-            zoo(m)%jprod_n(i,j,k) = zoo(m)%gge_max*zoo(m)%jingest_n(i,j,k) - &
-                           zoo(m)%f_n(i,j,k)/(cobalt%refuge_conc + zoo(m)%f_n(i,j,k))* &
-                           zoo(m)%temp_lim(i,j,k)*cobalt%dp_fac(i,j)*zoo(m)%bresp*zoo(m)%f_n(i,j,k)
-          else
-            zoo(m)%jprod_n(i,j,k) = zoo(m)%gge_max*zoo(m)%jingest_n(i,j,k) - &
-                           zoo(m)%f_n(i,j,k)/(cobalt%refuge_conc + zoo(m)%f_n(i,j,k))* &
-                           zoo(m)%temp_lim(i,j,k)*zoo(m)%bresp*zoo(m)%f_n(i,j,k)
-          endif
-
+          ! calculate production assuming N is limiting
+          zoo(m)%jprod_n(i,j,k) = zoo(m)%gge_max*zoo(m)%jingest_n(i,j,k) - &
+                         zoo(m)%f_n(i,j,k)/(cobalt%refuge_conc + zoo(m)%f_n(i,j,k))* &
+                         zoo(m)%temp_lim(i,j,k)*zoo(m)%bresp*zoo(m)%f_n(i,j,k)
+          ! Adjust downward if there is insufficient phosphorus to support N-based zooplankton growth.  This assumes
+          ! that the zooplankter can used its full allotment of assimilated P
           zoo(m)%jprod_n(i,j,k) = min(zoo(m)%jprod_n(i,j,k), &
                                       assim_eff*zoo(m)%jingest_p(i,j,k)/zoo(m)%q_p_2_n)
 
-          !
-          ! Ingested material that does not go to zooplankton production, detrital production
-          ! or production of dissolved organic material is excreted as nh4 or po4.  If production
-          ! is negative, zooplankton are lost to large detritus
-          !
+          ! Ingested material that does not go to zooplankton production or egestion (i.e., detrital production or
+          ! production of dissolved organic material) is excreted as nh4 or po4 as part of the respiration process.
           if (zoo(m)%jprod_n(i,j,k) .gt. 0.0) then
              zoo(m)%jprod_nh4(i,j,k) =  zoo(m)%jingest_n(i,j,k) - zoo(m)%jprod_ndet(i,j,k) -  &
                                         zoo(m)%jprod_n(i,j,k) - zoo(m)%jprod_ldon(i,j,k) - &
@@ -3782,104 +3874,78 @@ contains
              zoo(m)%jprod_po4(i,j,k) =  zoo(m)%jingest_p(i,j,k) - zoo(m)%jprod_pdet(i,j,k) - &
                                         zoo(m)%jprod_n(i,j,k)*zoo(m)%q_p_2_n - zoo(m)%jprod_ldop(i,j,k) -  &
                                         zoo(m)%jprod_sldop(i,j,k) - zoo(m)%jprod_srdop(i,j,k)
+          ! If production is negative, respire all assimilated material and route negative production to large detritus
           else
-             ! None of the ingestion material goes to zooplankton production
              zoo(m)%jprod_nh4(i,j,k) =  zoo(m)%jingest_n(i,j,k) - zoo(m)%jprod_ndet(i,j,k) - &
                                         zoo(m)%jprod_ldon(i,j,k) - zoo(m)%jprod_sldon(i,j,k) - &
                                         zoo(m)%jprod_srdon(i,j,k)
              zoo(m)%jprod_po4(i,j,k) =  zoo(m)%jingest_p(i,j,k) - zoo(m)%jprod_pdet(i,j,k) - &
                                         zoo(m)%jprod_ldop(i,j,k) - zoo(m)%jprod_sldop(i,j,k) - &
                                         zoo(m)%jprod_srdop(i,j,k)
-
-             ! The negative production (i.e., mortality) is lost to large detritus. Update values
-             ! for zooplankton and for total.
-
              zoo(m)%jprod_ndet(i,j,k) = zoo(m)%jprod_ndet(i,j,k) - zoo(m)%jprod_n(i,j,k)
              zoo(m)%jprod_pdet(i,j,k) = zoo(m)%jprod_pdet(i,j,k) - zoo(m)%jprod_n(i,j,k)*zoo(m)%q_p_2_n
              cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) - zoo(m)%jprod_n(i,j,k)
              cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) - zoo(m)%jprod_n(i,j,k)*zoo(m)%q_p_2_n
           endif
 
-          ! cumulative production of inorganic nutrients
+          ! Add respiration-associated excretion to the cumulative production of inorganic nutrients
           cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + zoo(m)%jprod_nh4(i,j,k)
           cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + zoo(m)%jprod_po4(i,j,k)
+          ! Zooplankton respiration uses oxygen 
           cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + zoo(m)%jprod_nh4(i,j,k)*cobalt%o2_2_nh4
 
-          !
-          ! Any ingested iron that is not allocated to detritus is routed back to the
-          ! dissolved pool.
-          !
+          ! Any ingested iron that is not allocated to detritus is routed back to the dissolved pool
           zoo(m)%jprod_fed(i,j,k) = (1.0 - zoo(m)%phi_det)*zoo(m)%jingest_fe(i,j,k)
           cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + zoo(m)%jprod_fed(i,j,k)
-          !
-          ! Any ingested opal that is not allocated to detritus is assumed to undergo
-          ! rapid dissolution to dissolved silica
-          !
+
+          ! Ingested opal not allocated to detritus undergoes rapid dissolution to dissolved silica
           zoo(m)%jprod_sio4(i,j,k) = (1.0 - zoo(m)%phi_det)*zoo(m)%jingest_sio2(i,j,k)
           cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + zoo(m)%jprod_sio4(i,j,k)
-
        enddo !} m
 
-       !
-       ! Excretion by higher predators
-       !
+       ! Food ingested by higher predators that is not egested to detritus is excreted
        cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_fe(i,j,k)
        cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_sio2(i,j,k)
        cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)
        cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_p(i,j,k)
-       cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)*cobalt%o2_2_nh4
+       cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)* &
+                                  cobalt%o2_2_nh4
 
     enddo; enddo ; enddo !} i,j,k
     call mpp_clock_end(id_clock_production_loop)
 
     call mpp_clock_begin(id_clock_ballast_loops)
 !
-!
 !------------------------------------------------------------------------------------
-! 4: Production of calcium carbonate (Calcite and Aragonite) and lithogenic material
+! 4: Mineral ballasting/dissolution and detrital remineralization  
 !------------------------------------------------------------------------------------
-!
+    !
+    ! 4.1: Determine the aragonite and calcite saturation states and the production of calcite and aragonite detritus
+    !
+    ! Calculate the aragonite and calcite saturation states
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
-
-    !
-    ! 4.1: Calculate aragonite and calcite saturation states
-    !
-       if (trim(co2_calc) == "ocmip2") then
-         TK = Temp(i,j,k) + 273.15
-         PRESS = 0.1016 * cobalt%zt(i,j,k) + 1.013
-         PKSPA = 171.945 + 0.077993 * TK - 2903.293 / TK - 71.595 * log10(TK) - (-0.068393 + 1.7276e-3 * &
-            TK + 88.135 / TK) * sqrt(max(epsln, Salt(i,j,k))) + 0.10018 * max(epsln, Salt(i,j,k)) -      &
-            5.9415e-3 * max(epsln, Salt(i,j,k))**(1.5) - 0.02 - (48.76 - 2.8 - 0.5304 * Temp(i,j,k)) *   &
-            (PRESS - 1.013) / (191.46 * TK) + (1e-3 * (11.76 - 0.3692 * Temp(i,j,k))) * (PRESS - 1.013) *&
-            (PRESS - 1.013) / (382.92 * TK)
-         cobalt%co3_sol_arag(i,j,k) = 10**(-PKSPA) / (2.937d-4 * max(5.0, Salt(i,j,k)))
-         cobalt%omega_arag(i,j,k) = cobalt%f_co3_ion(i,j,k) / cobalt%co3_sol_arag(i,j,k)
-         PKSPC = 171.9065 + 0.077993 * TK - 2839.319 / TK - 71.595 * log10(TK) - (-0.77712 + 2.8426e-3 * &
-            TK + 178.34 / TK) * sqrt(max(epsln, Salt(i,j,k))) + 0.07711 * max(epsln, Salt(i,j,k)) -      &
-            4.1249e-3 * max(epsln, Salt(i,j,k))**(1.5) - 0.02 - (48.76 - 0.5304 * Temp(i,j,k)) *         &
-            (PRESS - 1.013) / (191.46 * TK) + (1e-3 * (11.76 - 0.3692 * Temp(i,j,k))) * (PRESS - 1.013) *&
-            (PRESS - 1.013) / (382.92 * TK)
-         cobalt%co3_sol_calc(i,j,k) = 10**(-PKSPC) / (2.937d-4 * max(5.0, Salt(i,j,k)))
-         cobalt%omega_calc(i,j,k) = cobalt%f_co3_ion(i,j,k) / cobalt%co3_sol_calc(i,j,k)
-      else if (trim(co2_calc) == "mocsy") then
-         cobalt%omega_arag(i,j,k) = cobalt%omegaa(i,j,k)  ! from Mocsy
-         cobalt%omega_calc(i,j,k) = cobalt%omegac(i,j,k)  ! from Mocsy
-         cobalt%co3_sol_arag(i,j,k) = cobalt%f_co3_ion(i,j,k) / max(cobalt%omega_arag(i,j,k),epsln)
-         cobalt%co3_sol_calc(i,j,k) = cobalt%f_co3_ion(i,j,k) / max(cobalt%omega_calc(i,j,k),epsln)
-      else
-        call mpp_error(FATAL,"Unable to compute aragonite and calcite saturation states")
-      endif
-
+      cobalt%co3_sol_arag(i,j,k) = cobalt%f_co3_ion(i,j,k) / max(cobalt%omega_arag(i,j,k),epsln)
+      cobalt%co3_sol_calc(i,j,k) = cobalt%f_co3_ion(i,j,k) / max(cobalt%omega_calc(i,j,k),epsln)
     enddo; enddo ; enddo !} i,j,k
 
-    !
-    ! 4.2: Calculate the production rate of aragonite and calcite detritus
-    !
-
+    ! Calculate the rate of aragonite and calcite detritus production
+    ! The production of calcite and aragonite detritus is assumed to be proportional to the saturation state with
+    ! respect to calcite and aragonite and rates associated with the production of detritus from organisms that form
+    ! calcite or aragonite shells.  The overall scalings are controlled by the parameters ca_2_n_arag and ca_2_n_calc.
+    ! The saturation state dependence is capped with the parameter caco3_sat_max.   
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
+        ! Pteropods are assumed to be the primary aragonite shell formers.  Pteropods fall into the medium and large
+        ! zooplankton groups within COBALT.  Production of aragonite detritus is thus linked to the consumption of
+        ! medium and large zooplankton by zooplankton and higher predators, and the proportion of the material consumed
+        ! that ends up as detritus (i.e., phi_det).
         cobalt%jprod_cadet_arag(i,j,k) = (zoo(2)%jzloss_n(i,j,k)*zoo(3)%phi_det + &
                        (zoo(2)%jhploss_n(i,j,k) + zoo(3)%jhploss_n(i,j,k))*cobalt%hp_phi_det)* &
                        cobalt%ca_2_n_arag*min(cobalt%caco3_sat_max, max(0.0,cobalt%omega_arag(i,j,k) - 1.0)) + epsln
+        ! Forams and coccolithophores are assumed to be the primary calcite shell formers.  Forams fall into the small
+        ! zooplankton group and coccolithophores fall into the small and medium phytoplankton groups. Production of
+        ! calcite detritus is thus linked to a) the consumption of these groups by zooplankton and the proportion of the
+        ! material consumed that ends up as detritus, and b) the aggregation of small and medium phytoplankton groups. 
+        ! The fractional detritus production by the primary zooplankton predator for each group was used for a).
         cobalt%jprod_cadet_calc(i,j,k) = (zoo(1)%jzloss_n(i,j,k)*zoo(2)%phi_det + &
                        phyto(SMALL)%jzloss_n(i,j,k)*zoo(1)%phi_det + phyto(MEDIUM)%jzloss_n(i,j,k)*zoo(2)%phi_det + &
                        phyto(SMALL)%jaggloss_n(i,j,k) + phyto(MEDIUM)%jaggloss_n(i,j,k))*cobalt%ca_2_n_calc* &
@@ -3887,26 +3953,31 @@ contains
     enddo; enddo ; enddo !} i,j,k
 
     !
-    ! 4.3: Lithogenic detritus production (repackaged from f_lith during filter feeding)
+    ! 4.2: Lithogenic detritus production
     !
-
+    ! Lithogenic minerals (f_lith) are assumed to be incorporated into detritus by filter feeding copepods.  The 
+    ! creation rate is assumed to be proportional to the total filter feeding (moles N kg-1 sec-1) divided by the total
+    ! phytoplankton biomass being fed upon (moles N kg-1), plus a background rate (k_lith).  The proportionality
+    ! constant is phi_lith.  Large phytoplankton and diazotrophs are assumed to be solely consumed by filter feeding
+    ! copepods.  The proportion of medium and small phytoplankton subject to filter feeding is assumed proportional to
+    ! the relative prey availability of small and medium phytoplankton to copepods versus small zooplankton.
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
-       cobalt%jprod_lithdet(i,j,k)=( cobalt%total_filter_feeding(i,j,k)/ &
+       cobalt%jprod_lithdet(i,j,k)=( cobalt%total_filter_feeding(i,j,k)/ & 
                                    ( phyto(LARGE)%f_n(i,j,k) + phyto(DIAZO)%f_n(i,j,k) + &
                                      0.8*phyto(MEDIUM)%f_n(i,j,k) + 0.3*phyto(SMALL)%f_n(i,j,k) + epsln) * &
                                     cobalt%phi_lith + cobalt%k_lith ) * cobalt%f_lith(i,j,k)
     enddo; enddo ; enddo !} i,j,k
 
-!
-!---------------------------------------------------------------------------------------------------------
-! 5: Detrital dissolution and remineralization calculation
-!---------------------------------------------------------------------------------------------------------
-!
-
     !
-    ! 5.1: Dissolution of aragonite, calcite and opal detrital particles
+    ! 4.3: Dissolution of aragonite, calcite and silica detritus
     !
-
+    ! Calcite and aragonite detritus are assumed to dissolve with at a rate proportional to subsaturation, with
+    ! the maximum dissolution rates set gamma_cadet_arag and gamma_cadet_calc, respectively.  The dissolution of
+    ! silica detritus is assumed to be temperature dependent.  Relevant references for all parameters can be found in
+    ! the COBALTv2 documentation paper: https://doi.org/10.1029/2019MS002043.
+    !
+    ! Note: Dissolution of aragonite and calcite detritus has been observed under supersaturating conditions. This
+    ! process will be added in a future COBALT update. 
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec  !{
        cobalt%jdiss_cadet_arag(i,j,k) = cobalt%gamma_cadet_arag * &
          max(0.0, 1.0 - cobalt%omega_arag(i,j,k)) * cobalt%f_cadet_arag(i,j,k)
@@ -3916,8 +3987,9 @@ contains
           Temp(i,j,k)) * cobalt%f_sidet(i,j,k)
        cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + cobalt%jdiss_sidet(i,j,k)
 
-       ! allow for dissolution of the silica skeletons of stressed diatoms
-       ! this is currently handled by adjusting the uptake
+       ! Allow for the dissolution of silica associated with free sinking phytoplankton.  The rate of dissolution is
+       ! assumed to approach the detrital value as the phytoplankton stress approaches 1.  This is handled by reducing
+       ! silica uptake, raising the possibility of negative silica uptake (i.e., net silica loss) when stressed.
        phyto(MEDIUM)%juptake_sio4(i,j,k) = phyto(MEDIUM)%juptake_sio4(i,j,k) - &
           phyto(MEDIUM)%stress_fac(i,j,k)*cobalt%gamma_sidet*exp(cobalt%kappa_sidet*Temp(i,j,k))* &
           cobalt%f_simd(i,j,k)
@@ -3927,116 +3999,157 @@ contains
     enddo; enddo ; enddo !} i,j,k
 
     !
-    ! 5.2: Remineralization of nitrogen, phosphorous and iron detritus accounting for oxygen
-    !      and mineral protection
+    ! 4.4: Remineralization of nitrogen, phosphorous and iron detritus
     !
-
-    ! Calculate the depth for scaling of remineralization near the surface
-    allocate(z_remin_ramp(isd:ied,jsd:jed,1:nk)); z_remin_ramp = 0.0
-    z_remin_ramp(:,:,1) = dzt(:,:,1)
-    do k = 2,nk !{
-      z_remin_ramp(:,:,k) = z_remin_ramp(:,:,k-1) + dzt(:,:,k)
-    enddo !}k
-!
-!---------------------------------------------------------------------------------------------------------
-
+    ! Remineralization is handled following Laufkotter et al. (2017), which combines a "mineral protection/ballasting" 
+    ! scheme (Armstrong et al., 2001; and Klaas and Archer 2002) with temperature and oxygen dependence calibrated to
+    ! a global database of sediment trap profiles.  As described in Laufkotter, remineralization under aerobic
+    ! conditions was ramped up over a depth scale of 50m. This prevents excessive recycling in warm surface waters and 
+    ! is attributed to the colonization of the particles as they traverse the euphotic zone  
+    ! 
+    ! In the mineral protection scheme, only the portion of organic material left unprotected by biogenic or lithogenic
+    ! minerals is available to be remineralized.  The "unprotected" organic fraction is calculated as:
+    !
+    ! max( 0.0,f_ndet - rpcaco3*(cadet_arag+cadet_calc) - rplith*lithdet - rpsio2*sidet)
+    !
+    ! Where rpcaco3, rplith and rpsio2 are protection factors associated with each mineral (Dunne et al., 2005).
+    !
+    ! As was the case for free-living bacteria, the remineralization rate for sinking detritus under anaerobic
+    ! conditions is scaled by o2_min/(k_o2+o2_min).  All anaerobic remineralization is assumed to occur via
+    ! denitrification, so a scaling
+    !
+    ! References:
+    ! Laufkotter et al., 2017: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2017GB005643
+    ! Armstrong, 2002: https://doi.org/10.1016/S0967-0645(01)00101-1
+    ! Klaas and Archer, 2002: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2001GB001765
+    ! Dunne et al., 2005: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2004GB002390    
+    !
     do k=1,nk ; do j=jsc,jec ; do i=isc,iec  !{
        cobalt%expkreminT(i,j,k) = exp(cobalt%kappa_remin * Temp(i,j,k))
-       !cobalt%jno3denit_wc(i,j,k) = 0.0
-       !
-       !   Under oxic conditions
-       !
+       ! Calculate remineralization under aerobic remineralization
        if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then  !{
           cobalt%jremin_ndet(i,j,k) = cobalt%gamma_ndet * cobalt%expkreminT(i,j,k) * &
-               z_remin_ramp(i,j,k)/(z_remin_ramp(i,j,k) + cobalt%remin_ramp_scale) * cobalt%f_o2(i,j,k) / &
+               zbot(i,j,k)/(zbot(i,j,k) + cobalt%remin_ramp_scale) * cobalt%f_o2(i,j,k) / &
                ( cobalt%k_o2 + cobalt%f_o2(i,j,k) )*max( 0.0, cobalt%f_ndet(i,j,k) - &
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
+          ! Augment total nh4 production and o2 consumption
           cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + cobalt%jremin_ndet(i,j,k)
           cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + cobalt%jremin_ndet(i,j,k)*cobalt%o2_2_nh4
-       !
-       ! Under sub-oxic conditions
-       !
+
+       ! Calculate remineralization under anaerobic conditions
        else !}{
           cobalt%jremin_ndet(i,j,k) = cobalt%gamma_ndet * cobalt%o2_min / &
                (cobalt%k_o2 + cobalt%o2_min)* &
-               cobalt%f_no3(i,j,k) / (phyto(SMALL)%k_no3 + cobalt%f_no3(i,j,k))* &
+               cobalt%f_no3(i,j,k) / (cobalt%k_no3_denit + cobalt%f_no3(i,j,k))* &
                max(0.0, cobalt%f_ndet(i,j,k) - &
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
+          ! Augment total nh4 production and no3 consumption
           cobalt%jno3denit_wc(i,j,k) = cobalt%jno3denit_wc(i,j,k) + cobalt%jremin_ndet(i,j,k) * cobalt%n_2_n_denit
-          ! uncomment for "no mass change" test
-          ! cobalt%jno3denit_wc(i,j,k) = 0.0
-          ! using TOPAZ stoichiometry, denitrification produces ammonia.
           cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + cobalt%jremin_ndet(i,j,k)
-
        endif !}
 
-       !
-       ! P and Fe assumed to be protected similarly to N
-       !
-       cobalt%jremin_pdet(i,j,k) = cobalt%jremin_ndet(i,j,k)/(cobalt%f_ndet(i,j,k) + epsln)* &
-         cobalt%f_pdet(i,j,k)
+       ! P is assumed to be remineralized in direct proportion to N, resulting in PO4 release
+       cobalt%jremin_pdet(i,j,k) = cobalt%jremin_ndet(i,j,k)/(cobalt%f_ndet(i,j,k) + epsln)*cobalt%f_pdet(i,j,k)
        cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + cobalt%jremin_pdet(i,j,k)
-       ! since low O2 is conducive to solubilizing iron, remove O2 effect from iron remin
-       ! in the future, make the remineralization efficiency dynamic.
+
+       ! Fe is assumed to be remineralized in proportion to N, but the proportionality is dictated by a
+       ! remineralization efficiency (remin_eff_fedet) which has been coarsely tuned to the ferrocline depth.
+       ! In addition, it was noted in COBALTv2 (see Stock et al., 2020) that the proportionality between organic matter
+       ! and iron remineralization can lead to iron minima in low oxygen zones where organic remineralization is low.
+       ! Since low O2 is actually conducive to solubilizing iron, O2 inhibition of iron remineralization was removed.
        cobalt%jremin_fedet(i,j,k) = cobalt%jremin_ndet(i,j,k)* &
          (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))/max(cobalt%f_o2(i,j,k),cobalt%o2_min) / &
          (cobalt%f_ndet(i,j,k) + epsln) * cobalt%remin_eff_fedet*cobalt%f_fedet(i,j,k)
-       !cobalt%jremin_fedet(i,j,k) = cobalt%jremin_ndet(i,j,k) / (cobalt%f_ndet(i,j,k) + epsln) * &
-       !  cobalt%remin_eff_fedet*cobalt%f_fedet(i,j,k)
        cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jremin_fedet(i,j,k)
     enddo; enddo; enddo  !} i,j,k
 
-    deallocate(z_remin_ramp)
-!
-!
-!--------------------------------------------------------------------------------------------
-! 6: Iron
-!--------------------------------------------------------------------------------------------
-!
-
+    ! 
+    ! 4.5: Iron scavenging onto detritus
+    !  
+    ! COBALT uses a single ligand complexation model for iron scavenging onto detritus (e.g., Archer and Johnson, 2000).
+    ! The binding strength of the ligand, however, is modulated between weak high-light (kfe_eq_hl) and strong low-
+    ! light limits (kfelig_ll) to mimic the weakening effect that oxygen free radicals have on iron binding in well-lit
+    ! waters (Fan, 2008).  The weakest binding is at light levels greater than io_fescav = 10 watts m-2.  Values decline 
+    ! to the strongest low-light limit at 0.01 watts m-2.
     !
-    ! Iron scavenging and coastal sources
+    ! The ligand concentration includes a background concentration (felig_bkg) and an additional amount proportional
+    ! to dissolved organic matter (felig_2_don).  When the free iron (feprime) exceeds solubility limits defined as
+    ! a function of temperature and salinity according to Liu and Millero (2002), scavenging is increased by the factor
+    ! fast_fescav_fac to mimic rapid precipitation. For coarse resolution global simulations, fast_fescav_fac was set
+    ! set to 10.0.  This high value helped erode coastal iron signals that likely propagated too far into the open
+    ! due to under-resolved shelves.  The current default is 2.0, which was able to better maintain iron limitation
+    ! patterns in higher-resolution simulations. 
+    ! 
+    ! The scavenging formulation includes both a linear option (~alpha_fescav*feprime) and an option that depends on
+    ! the interaction between free iron and detritus (~beta_fescav*feprime*f_ndet).  The latter was used in COBALTv1,
+    ! while the former was used in COBALTv2 and remains the default in COBALTv3.
+    !
+    ! References:
+    ! Archer and Johnson (2000): https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2004GB002390 
+    ! Fan et al. (2008): https://www.sciencedirect.com/science/article/pii/S030442030800008X
+    ! Liu and Millero (2002): https://www.sciencedirect.com/science/article/pii/S030442030800008X
     !
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
+       ! Calculate the equilibrium ligand binding strength and a function of light
        cobalt%kfe_eq_lig(i,j,k) = min(cobalt%kfe_eq_lig_ll, 10.0**( log10(cobalt%kfe_eq_lig_hl) + &
           max(0.0,log10(cobalt%io_fescav/max(epsln,cobalt%irr_inst(i,j,k)))) ) )
 
+       ! Calculate the ligand concentration
        cobalt%ligand(i,j,k) = cobalt%felig_bkg + cobalt%felig_2_don*(cobalt%f_sldon(i,j,k) + &
             cobalt%f_srdon(i,j,k) + cobalt%f_ldon(i,j,k))
+
+       ! Solve for the free iron from the following system of three equations:
+       !         (1) kfe_eq_lig = [FeL] / ([feprime] * [L])
+       !         (2) [Fed] = [Feprime] + [FeL]
+       !         (3) [Ltotal] = [L] + [FeL]
+       !
+       ! The free iron [feprime], the ligand bound iron [FeL], and the ligand without iron [L] are unknown.  The
+       ! equilibrium ligand binding strength (kfe_eq_lig), the total iron [Fed] and the total ligand [Ltotal] are
+       ! known.  If one i) uses eq. (2) to solve for [FeL] in terms of [Fed] and [Feprime]; ii) substitutes this
+       ! relationship into eq. (3) to find an expression for [L] in terms of [Ltotal], [Fed] and [feprime]; iii)
+       ! substitutes both the expressions for [FeL] and [L] into eq. (1); then iv) group the terms, it will yield
+       ! a quadratic function for [feprime] that can be solved with the quadratic formula:
+       ! (-b +- sqrt(b^2 - 4ac))/(2a) where:
+       !
+       ! a = kfe_eq_lig
+       ! b = 1.0 + kfe_eq_lig * ([Ltotal] - [fed])
+       ! c = -[Fed]
+       !
+       ! This solution is simplified by the fact that sqrt(b^2 - 4ac) must be larger than b, so the only positive
+       ! root is (-b + sqrt(b^2 - 4ac))/(2a).
        feprime_temp = 1.0 + cobalt%kfe_eq_lig(i,j,k) * (cobalt%ligand(i,j,k) - cobalt%f_fed(i,j,k))
        cobalt%feprime(i,j,k) = (-feprime_temp + (feprime_temp * feprime_temp + 4.0 * cobalt%kfe_eq_lig(i,j,k) * &
             cobalt%f_fed(i,j,k))**(0.5)) / (2.0 * max(epsln,cobalt%kfe_eq_lig(i,j,k)))
 
+       ! Calculate the iron solubility following Liu and Millero (2002).  The quantity "fe_salt" is the ionic strength
+       ! These values were derived for Fe(III) at a pH of 8 over a range of salinities and temperatures. 
        fe_salt = 19.922*Salt(i,j,k)/(1000.0 - 1.005*Salt(i,j,k))
        cobalt%fe_sol(i,j,k) = 10**(-10.53 + 322.5/(Temp(i,j,k)+273.15) - 2.524*sqrt(fe_salt) + &
                               2.921*fe_salt)
 
-       !
-       ! Iron adsorption to detrital particles
-       !
+       ! Calculate the iron adsorption to detrital particles
        if (cobalt%feprime(i,j,k).lt.cobalt%fe_sol(i,j,k)) then
          cobalt%jfe_ads(i,j,k) = cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
                                  cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet(i,j,k)
        else
-         cobalt%jfe_ads(i,j,k) = 2.0*(cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
+         cobalt%jfe_ads(i,j,k) = cobalt%fast_fescav_fac*(cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
                                  cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet(i,j,k))
        endif
+       ! Add a limiter so you don't scavenge more than half the available iron in a single time step.
        cobalt%jfe_ads(i,j,k) = min(cobalt%jfe_ads(i,j,k),cobalt%f_fed(i,j,k)/(2.0*dt))
-       ! uncomment if running "no mass change" test
-       !cobalt%jfe_ads(i,j,k) = 0.0
 
     enddo; enddo; enddo  !} i,j,k
 
 !
 !-------------------------------------------------------------------------------------------------
-! 7: Sedimentary/coastal fluxes/transformations
+! 5: Sedimentary/coastal fluxes/transformations
 !-------------------------------------------------------------------------------------------------
 !
 
     !
-    ! Iceberg and "Coastal" iron and other nutrient input
+    ! Iceberg and "Coastal" iron and other nutrient input.
     !
     do j = jsc, jec ; do i = isc, iec !{
        if (grid_kmt(i,j) .gt. 0) then !{
@@ -4050,8 +4163,6 @@ contains
     do k = 2, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%jfe_coast(i,j,k) = cobalt%fe_coast * mask_coast(i,j) * grid_tmask(i,j,k) / &
             sqrt(grid_dat(i,j))
-       ! uncomment if running "no mass change" test
-       !cobalt%jfe_coast(i,j,k) = 0.0
        cobalt%jfe_iceberg(i,j,k) = 0.0
        cobalt%jno3_iceberg(i,j,k) = 0.0
        cobalt%jpo4_iceberg(i,j,k) = 0.0
@@ -4115,45 +4226,70 @@ contains
           ! calculate the saturation state with respect to calcite for subsequent calculations
           cobalt%btm_omega_calc(i,j)=cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
 
-          !
-          ! Nitrogen flux from the sediments
-          !
-          ! Address organic matter that reaches the sediment
-          !
+          ! Calculate the processing of organic matter in the sediment.  The fate of organic matter is partitioned
+          ! between burial (i.e., removal from the system), aerobic remineralization, remineralization via 
+          ! denitrification, and remineralization via sulfate reduction.  Note that the latter pathway is effectively
+          ! a "catch all" for any other anaerobic pathway and the sulfate cycle is not explicitly modeled.
           k = grid_kmt(i,j)
+          ! Issue: do we need this check?
           if (cobalt%fntot_btm(i,j) .gt. 0.0) then !{
 
-             ! Burial
+             ! The Burial flux estimates are based on Dunne et al., 2007. A synthesis of global particle export from
+             ! the surface ocean and cycling through the ocean interior and on the seafloor.  Global Biogeochemical
+             ! Cycles. Vol. 21, GB4006, doi:10.1029/2006GB002907.  See Figure 2, eq. (3).  The default units of this
+             ! relationship are mmoles C m-2 day-1, and the local variable "fpoc_btm" is used to create a bottom flux
+             ! in these units.
              !
-             ! fpoc_bottom in mmoles C m-2 day-1 for burial relationship
+             ! As described in Dunne et al., (2007) this relationship was generally developed for deeper ocean areas
+             ! and its validity in shallow areas is unclear.  Past experiments suggest that it may overestimate burial
+             ! in shallow areas, resulting in large nutrient losses that are inconsistent with observations.  The 
+             ! parameter "z_burial" thus provides a depth scale (an effective "half-saturation") for ramping up burial
+             ! from 0 to its full value.
+             !
+             ! Since burial is highly uncertain and often used in global earth system simulations to balance inputs and
+             ! outputs, a dimensionless scaling factor (cobalt%scale_burial) has also been included.
              fpoc_btm = cobalt%fntot_btm(i,j)*cobalt%c_2_n*sperd*1000.0
-             !cobalt%frac_burial(i,j) = 0.013 + 0.53*fpoc_btm**2.0/((7.0+fpoc_btm)**2.0) * &
-             !     cobalt%zt(i,j,k) / (cobalt%z_burial + cobalt%zt(i,j,k))
-             cobalt%frac_burial(i,j) = 0.0
+             cobalt%frac_burial(i,j) = 0.013 + 0.53*fpoc_btm**2.0/((7.0+fpoc_btm)**2.0) * &
+                  cobalt%zt(i,j,k) / (cobalt%z_burial + cobalt%zt(i,j,k))
+             cobalt%frac_burial(i,j) = cobalt%scale_burial*cobalt%frac_burial(i,j)
              cobalt%fn_burial(i,j) = cobalt%frac_burial(i,j)*cobalt%fntot_btm(i,j)
              cobalt%fp_burial(i,j) = cobalt%frac_burial(i,j)*cobalt%fptot_btm(i,j)
 
-             ! Denitrification
+             ! Denitrification follows Middelburg et al., 1996. Denitrification in marine sediments: a modeling study
+             ! Global Biogeochemical Cycles 10(4).  pp. 661-673.  https://doi.org/10.1029/96GB02562. COBALT uses the  
+             ! carbon flux-based relationship based on Middelburg's first extraction of his metamodel (the first
+             ! equation in Section 3.4 of the paper).  This relationship requires a flux to the benthos in micromoles C
+             ! cm-2 day-1.  This means that fpoc_btm defined for the burial calculation above must be multiplied by:
+             ! 
+             ! 1e3 micromoles/millimole*1e-4 cm2/m2 = 0.1
+             ! 
+             ! to get the proper units.  The Middelburg relationship yields a rate at which arriving particulate organic
+             ! carbon is denitrified in micromoles C cm-2 day-1.  This is converted to a rate at which arriving
+             ! particulate organic nitrogen denitrified in moles N m-2 sec-1 by dividing by:
+             ! 
+             ! c_2_n*sperd*1e6 micromoles/mole*1e-4 cm2/m2 = c_2_n*sperd*100
              !
-             ! Middelberg, log10(fpoc_bottom) in micromoles C cm-2 day-1 for denitrification relationship
-             ! cap at 43.0 to prevent anomalous extrapolation of the relationship
+             ! The nitrate demand associated with this denitrification (fno3denit_sed) is obtained by multiplying the
+             ! resulting value by the moles of NO3 required to denitrify each mole of organic N (n_2_n_denit).
+             !
+             ! A number of limiters are applied to support global application.  First, the C flux used in the  
+             ! Middelburg relationship is capped at 43.0 micromoles C cm-2 day-1 to avoid anomalous extrapolation.
+             ! Second, denitrification is slowed when bottom nitrate is low by a) scaling rates with a nitrate
+             ! half-saturation constant with (k_no3_denit), b) preventing the exhaustion of bottom nitrate over
+             ! single time step, and c) limiting the total amount of organic carbon denitrified to that arriving at
+             ! the sediment minus that which was buried. Finally, to prevent excessive denitrification in very shallow
+             ! areas, a depth scale (z_denit) was included to ramp up rates to full Middelburg values only in deeper
+             ! waters.
              log10_fpoc_btm = log10(min(43.0,0.1*fpoc_btm))
              cobalt%fno3denit_sed(i,j) = min(cobalt%btm_no3(i,j)*cobalt%bottom_thickness*cobalt%Rho_0*r_dt,  &
                   min((cobalt%fntot_btm(i,j)-cobalt%fn_burial(i,j))*cobalt%n_2_n_denit, &
                   10.0**(-0.9543+0.7662*log10_fpoc_btm - 0.235*log10_fpoc_btm**2.0)/(cobalt%c_2_n*sperd*100.0)* &
                   cobalt%n_2_n_denit*cobalt%btm_no3(i,j)/(cobalt%k_no3_denit + cobalt%btm_no3(i,j)))) * &
-                  cobalt%zt(i,j,k) / (cobalt%z_burial + cobalt%zt(i,j,k))
-             ! Fennel Relationship
-             !cobalt%fno3denit_sed(i,j) = min(cobalt%btm_no3(i,j)*cobalt%Rho_0*r_dt,  &
-             !         max(0.099*(cobalt%fntot_btm(i,j)-cobalt%fn_burial(i,j))-0.031/sperd/1.0e3,0.0)* &
-             !         cobalt%n_2_n_denit*cobalt%f_no3(i,j,k)/(cobalt%k_no3_denit + cobalt%f_no3(i,j,k))* &
-             !         cobalt%zt(i,j,k) / (cobalt%z_burial + cobalt%zt(i,j,k)))
-             ! uncomment "no mass change" test
-             !cobalt%fno3denit_sed(i,j) = 0.0
+                  cobalt%zt(i,j,k) / (cobalt%z_denit + cobalt%zt(i,j,k))
 
-             ! Calculate the amount of organic matter (as nitrogen) that is remineralized
-             ! via aerobic processes (fnoxic_sed)
-             !
+             ! Calculate the organic matter remineralized via sediment aerobic processes (fnoxic_sed).  This generally
+             ! equals the total flux minus burial and denitrification.  However, if there is insufficient bottom
+             ! oxygen to support this, some is assumed to be remineralized via sulfate reduction.
              if (cobalt%btm_o2(i,j) .gt. cobalt%o2_min) then  !{
                 cobalt%fnoxic_sed(i,j) = max(0.0, min(cobalt%btm_o2(i,j)*cobalt%bottom_thickness* &
                                          cobalt%Rho_0*r_dt*(1.0/cobalt%o2_2_nh4), &
@@ -4162,9 +4298,7 @@ contains
              else
                 cobalt%fnoxic_sed(i,j) = 0.0
              endif !}
-
              ! Any remaining organic matter is remineralized via sulfate reduction
-             !
              cobalt%fnfeso4red_sed(i,j) = max(0.0, cobalt%fntot_btm(i,j)-cobalt%fnoxic_sed(i,j)- &
                                           cobalt%fn_burial(i,j)-cobalt%fno3denit_sed(i,j)/cobalt%n_2_n_denit)
           else
@@ -4173,12 +4307,22 @@ contains
              cobalt%fnoxic_sed(i,j) = 0.0
           endif !}
 
-          ! iron from sediment (Elrod)
-          !cobalt%ffe_sed(i,j) = cobalt%fe_2_n_sed * cobalt%f_ndet_btf(i,j,1)
-          ! iron from sediment (Dale, 2015)
+          !
+          ! Iron flux from the sediment
+          !
+
+          ! Iron from sediment (Dale, 2015).  The maximum release from the sediment is set by ffe_sed_max.  The
+          ! hyperbolic tangent requires the flux of carbon to the sediments (as mmoles m-2 day-1) in the numerator
+          ! and the bottom water oxygen concentration (in microMolar units) in the denominator:
           cobalt%ffe_sed(i,j) = cobalt%ffe_sed_max * tanh( (cobalt%fntot_btm(i,j)*cobalt%c_2_n*sperd*1.0e3)/ &
                                 max(cobalt%btm_o2(i,j)*1.0e6,epsln) )
-          cobalt%ffe_geotherm(i,j) = cobalt%ffe_geotherm_ratio*internal_heat(i,j)*4184.0/dt
+          ! Have ffe_geotherm default to zero if the internal_heat variable
+          ! needed to calculate it is not available (if geothermal heating is disabled).
+          if(present(internal_heat)) then
+              cobalt%ffe_geotherm(i,j) = cobalt%ffe_geotherm_ratio*internal_heat(i,j)*4184.0/dt
+          else
+              cobalt%ffe_geotherm(i,j) = 0.0
+          endif
 
           !
           ! Calcium carbonate flux and burial, based on Dunne et al., 2012
@@ -4362,7 +4506,7 @@ contains
                     cobalt%p_nsmz(i,j,k,tau) + cobalt%p_nmdz(i,j,k,tau) + &
                     cobalt%p_nlgz(i,j,k,tau))*grid_tmask(i,j,k)
          net_srcn(i,j,k) = (phyto(DIAZO)%juptake_n2(i,j,k) - cobalt%jno3denit_wc(i,j,k) - &
-                    cobalt%jprod_n2amx(i,j,k) + cobalt%jno3_iceberg(i,j,k))*dt*grid_tmask(i,j,k)
+                    cobalt%jnamx(i,j,k) + cobalt%jno3_iceberg(i,j,k))*dt*grid_tmask(i,j,k)
          net_srcc(i,j,k) = 0.0
          pre_totc(i,j,k) = (cobalt%p_dic(i,j,k,tau) + &
                     cobalt%p_cadet_arag(i,j,k,tau) + cobalt%p_cadet_calc(i,j,k,tau) + &
@@ -4599,7 +4743,7 @@ contains
        !
        cobalt%jpo4(i,j,k) = cobalt%jprod_po4(i,j,k) - phyto(DIAZO)%juptake_po4(i,j,k) - &
                             phyto(LARGE)%juptake_po4(i,j,k) - phyto(MEDIUM)%juptake_po4(i,j,k) - &
-                            phyto(SMALL)%juptake_po4(i,j,k) - bact(1)%juptake_po4(i,j,k)
+                            phyto(SMALL)%juptake_po4(i,j,k)
        cobalt%p_po4(i,j,k,tau) = cobalt%p_po4(i,j,k,tau) + &
               (cobalt%jpo4(i,j,k)+cobalt%jpo4_iceberg(i,j,k)) * dt * grid_tmask(i,j,k)
        !
@@ -4764,20 +4908,13 @@ contains
        !
        ! Dissolved Inorganic Carbon
        !
-       !cobalt%jdic(i,j,k) =(cobalt%c_2_n * (cobalt%jno3(i,j,k) + &
-       !   cobalt%jnh4(i,j,k) + cobalt%jno3denit_wc(i,j,k) + &
-       !   cobalt%jprod_n2amx(i,j,k) - &
-       !   phyto(DIAZO)%juptake_n2(i,j,k)) + &
-       !   cobalt%jdiss_cadet_arag(i,j,k) + cobalt%jdiss_cadet_calc(i,j,k) - &
-       !   cobalt%jprod_cadet_arag(i,j,k) - cobalt%jprod_cadet_calc(i,j,k))
 
        cobalt%jdic(i,j,k) =(cobalt%c_2_n * (cobalt%jprod_nh4(i,j,k) - &
           phyto(DIAZO)%juptake_no3(i,j,k) - phyto(LARGE)%juptake_no3(i,j,k) - &
           phyto(MEDIUM)%juptake_no3(i,j,k) - phyto(SMALL)%juptake_no3(i,j,k) - &
           phyto(DIAZO)%juptake_nh4(i,j,k) - phyto(LARGE)%juptake_nh4(i,j,k) - &
           phyto(MEDIUM)%juptake_nh4(i,j,k) - phyto(SMALL)%juptake_nh4(i,j,k) - &
-          phyto(DIAZO)%juptake_n2(i,j,k) -  bact(1)%jprod_n_amx(i,j,k) - &
-          bact(1)%jprod_n_nitrif(i,j,k)) + &
+          phyto(DIAZO)%juptake_n2(i,j,k)) + &
           cobalt%jdiss_cadet_arag(i,j,k) + cobalt%jdiss_cadet_calc(i,j,k) - &
           cobalt%jprod_cadet_arag(i,j,k) - cobalt%jprod_cadet_calc(i,j,k))
 
@@ -4880,7 +5017,6 @@ contains
     call g_tracer_set_values(tracer_list,'irr_aclm' ,'field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm_z' ,'field',cobalt%f_irr_aclm_z ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm_sfc' ,'field',cobalt%f_irr_aclm_sfc ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'irr_mem_dp' ,'field',cobalt%f_irr_mem_dp ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_ndi' ,'field',phyto(DIAZO)%f_mu_mem ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LARGE)%f_mu_mem ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MEDIUM)%f_mu_mem ,isd,jsd)
@@ -5001,7 +5137,9 @@ contains
       endif !}
     enddo; enddo ; enddo  !} i,j,k
 
-    ! O2 saturation
+    ! Calculate the oxygen saturation using the relationships of Garcia and Gordon, 1992. Oxygen solubility in
+    ! seawater: Better fitting equations.  Limnol. Oceanogr., 37(6), pp. 1307-1312.
+    ! https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lo.1992.37.6.1307
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec
        sal = min(42.0,max(0.0,Salt(i,j,k)))
        tt = 298.15 - min(40.0,max(0.0,Temp(i,j,k)))
@@ -5091,7 +5229,6 @@ contains
        cobalt%wc_vert_int_si(i,j) = 0.0
        cobalt%wc_vert_int_o2(i,j) = 0.0
        cobalt%wc_vert_int_alk(i,j) = 0.0
-       cobalt%wc_vert_int_chemoautopp(i,j) = 0.0
        cobalt%wc_vert_int_npp(i,j) = 0.0
        cobalt%wc_vert_int_jdiss_sidet(i,j) = 0.0
        cobalt%wc_vert_int_jdiss_cadet(i,j) = 0.0
@@ -5106,7 +5243,7 @@ contains
        cobalt%wc_vert_int_jfe_iceberg(i,j) = 0.0
        cobalt%wc_vert_int_jno3_iceberg(i,j) = 0.0
        cobalt%wc_vert_int_jpo4_iceberg(i,j) = 0.0
-       cobalt%wc_vert_int_jprod_n2amx(i,j) = 0.0
+       cobalt%wc_vert_int_jnamx(i,j) = 0.0
     enddo; enddo !} i,j
     do j = jsc, jec ; do i = isc, iec ; do k = 1, nk  !{
           cobalt%wc_vert_int_c(i,j) = cobalt%wc_vert_int_c(i,j) + cobalt%tot_layer_int_c(i,j,k)*grid_tmask(i,j,k)
@@ -5119,8 +5256,6 @@ contains
           cobalt%wc_vert_int_si(i,j) = cobalt%wc_vert_int_si(i,j) + cobalt%tot_layer_int_si(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_o2(i,j) = cobalt%wc_vert_int_o2(i,j) + cobalt%tot_layer_int_o2(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_alk(i,j) = cobalt%wc_vert_int_alk(i,j) + cobalt%tot_layer_int_alk(i,j,k)*grid_tmask(i,j,k)
-          cobalt%wc_vert_int_chemoautopp(i,j) = cobalt%wc_vert_int_chemoautopp(i,j) +                 &
-             (bact(1)%jprod_n_nitrif(i,j,k) + bact(1)%jprod_n_amx(i,j,k)) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_npp(i,j) = cobalt%wc_vert_int_npp(i,j) + (phyto(SMALL)%jprod_n(i,j,k) +  &
               phyto(MEDIUM)%jprod_n(i,j,k) + phyto(LARGE)%jprod_n(i,j,k) + phyto(DIAZO)%jprod_n(i,j,k))* &
               rho_dzt(i,j,k)*grid_tmask(i,j,k)
@@ -5150,7 +5285,7 @@ contains
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_nfix(i,j) = cobalt%wc_vert_int_nfix(i,j) + phyto(DIAZO)%juptake_n2(i,j,k) *&
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
-          cobalt%wc_vert_int_jprod_n2amx(i,j)=cobalt%wc_vert_int_jprod_n2amx(i,j)+cobalt%jprod_n2amx(i,j,k)* &
+          cobalt%wc_vert_int_jnamx(i,j)=cobalt%wc_vert_int_jnamx(i,j)+cobalt%jnamx(i,j,k)* &
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
 
           cobalt%wc_vert_int_jfe_iceberg(i,j) = cobalt%wc_vert_int_jfe_iceberg(i,j) + cobalt%jfe_iceberg(i,j,k) *&
@@ -5949,16 +6084,15 @@ contains
           cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * htotal_field(i,j,1)
        enddo; enddo ; !} i, j
 
-       if(present(dzt)) then
+       if(.not. present(dzt)) then
           ! 2017/08/11 jgj is cobalt type defined/passed here ?
           !        do j = jsc, jec ; do i = isc, iec  !{
           !         cobalt%zt(i,j,1) = dzt(i,j,1)
           !        enddo; enddo ; !} i, j
-       elseif (trim(co2_calc) == 'mocsy') then
-          call mpp_error(FATAL,"mocsy method of co2_calc needs dzt to be passed to the FMS_ocmip2_co2calc subroutine.")
+          call mpp_error(FATAL,"mocsy method of co2_calc needs dzt to be passed to the FMS_co2calc subroutine.")
        endif
 
-       call FMS_ocmip2_co2calc(CO2_dope_vec,grid_tmask(:,:,1), &
+       call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,1), &
             SST(:,:), SSS(:,:),                            &
             dic_field(:,:,1,tau),                          &
             po4_field(:,:,1,tau),                          &
@@ -5968,7 +6102,6 @@ contains
                                 !InOut
             htotal_field(:,:,1),                           &
                                 !Optional In
-            co2_calc=trim(co2_calc),                       &
             !! jgj 2017/08/11
             !!zt=cobalt%zt(:,:,1),                           &
             zt=dzt(:,:,1),                                 &
@@ -5976,8 +6109,8 @@ contains
             co2star=co2_csurf(:,:), alpha=co2_alpha(:,:),  &
             pCO2surf=cobalt%pco2_csurf(:,:), &
             co3_ion=co3_ion_field(:,:,1), &
-            omega_arag=cobalt%omegaa(:,:,1), &
-            omega_calc=cobalt%omegac(:,:,1))
+            omega_arag=cobalt%omega_arag(:,:,1), &
+            omega_calc=cobalt%omega_calc(:,:,1))
 
        !Set fields !nnz: if These are pointers do I need to do this?
        call g_tracer_set_values(tracer_list,'htotal' ,'field',htotal_field ,isd,jsd)
@@ -6242,7 +6375,7 @@ contains
 
     !Allocate all the private arrays.
 
-    !Used in ocmip2_co2calc
+    !Used in FMS_co2calc
     CO2_dope_vec%isc = isc ; CO2_dope_vec%iec = iec
     CO2_dope_vec%jsc = jsc ; CO2_dope_vec%jec = jec
     CO2_dope_vec%isd = isd ; CO2_dope_vec%ied = ied
@@ -6331,16 +6464,9 @@ contains
     allocate(bact(1)%jhploss_p(isd:ied,jsd:jed,nk))        ; bact(1)%jhploss_p       = 0.0
     allocate(bact(1)%juptake_ldon(isd:ied,jsd:jed,nk))     ; bact(1)%juptake_ldon    = 0.0
     allocate(bact(1)%juptake_ldop(isd:ied,jsd:jed,nk))     ; bact(1)%juptake_ldop    = 0.0
-    allocate(bact(1)%juptake_po4(isd:ied,jsd:jed,nk))      ; bact(1)%juptake_po4     = 0.0
     allocate(bact(1)%jprod_nh4(isd:ied,jsd:jed,nk))        ; bact(1)%jprod_nh4       = 0.0
     allocate(bact(1)%jprod_po4(isd:ied,jsd:jed,nk))        ; bact(1)%jprod_po4       = 0.0
     allocate(bact(1)%jprod_n(isd:ied,jsd:jed,nk))          ; bact(1)%jprod_n         = 0.0
-    allocate(bact(1)%jprod_n_het(isd:ied,jsd:jed,nk))      ; bact(1)%jprod_n_het     = 0.0
-    allocate(bact(1)%jprod_n_amx(isd:ied,jsd:jed,nk))      ; bact(1)%jprod_n_amx     = 0.0
-    allocate(bact(1)%jprod_n_nitrif(isd:ied,jsd:jed,nk))   ; bact(1)%jprod_n_nitrif  = 0.0
-    allocate(bact(1)%mu_h(isd:ied,jsd:jed,nk))             ; bact(1)%mu_h            = 0.0
-    allocate(bact(1)%mu_cstar(isd:ied,jsd:jed,nk))         ; bact(1)%mu_cstar        = 0.0
-    allocate(bact(1)%bhet(isd:ied,jsd:jed,nk))             ; bact(1)%bhet            = 0.0
     allocate(bact(1)%o2lim(isd:ied,jsd:jed,nk))            ; bact(1)%o2lim           = 0.0
     allocate(bact(1)%ldonlim(isd:ied,jsd:jed,nk))          ; bact(1)%ldonlim         = 0.0
     allocate(bact(1)%temp_lim(isd:ied,jsd:jed,nk))         ; bact(1)%temp_lim        = 0.0
@@ -6374,7 +6500,6 @@ contains
        allocate(zoo(n)%jprod_n(isd:ied,jsd:jed,nk))      ; zoo(n)%jprod_n         = 0.0
        allocate(zoo(n)%o2lim(isd:ied,jsd:jed,nk))        ; zoo(n)%o2lim           = 0.0
        allocate(zoo(n)%temp_lim(isd:ied,jsd:jed,nk))     ; zoo(n)%temp_lim        = 0.0
-       allocate(zoo(n)%vmove(isd:ied,jsd:jed,nk))        ; zoo(n)%vmove           = 0.0
     enddo
 
     ! higher predator ingestion
@@ -6417,7 +6542,6 @@ contains
     allocate(cobalt%f_irr_aclm(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_irr_aclm=0.0
     allocate(cobalt%f_irr_aclm_z(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_irr_aclm_z=0.0
     allocate(cobalt%f_irr_aclm_sfc(isd:ied, jsd:jed, 1:nk)) ; cobalt%f_irr_aclm_sfc=0.0
-    allocate(cobalt%f_irr_mem_dp(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_irr_mem_dp=0.0
     allocate(cobalt%f_cased(isd:ied, jsd:jed, 1:nk))      ; cobalt%f_cased=0.0
     allocate(cobalt%f_cadet_arag_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_cadet_arag_btf=0.0
     allocate(cobalt%f_cadet_calc_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_cadet_calc_btf=0.0
@@ -6540,18 +6664,15 @@ contains
     allocate(cobalt%irr_inst(isd:ied, jsd:jed, 1:nk))     ; cobalt%irr_inst=0.0
     allocate(cobalt%irr_mix(isd:ied, jsd:jed, 1:nk))      ; cobalt%irr_mix=0.0
     allocate(cobalt%irr_aclm_inst(isd:ied, jsd:jed, 1:nk))   ; cobalt%irr_aclm_inst=0.0
-    allocate(cobalt%chl2sfcchl(isd:ied, jsd:jed, 1:nk))   ; cobalt%chl2sfcchl=0.0
     allocate(cobalt%jno3denit_wc(isd:ied, jsd:jed, 1:nk)) ; cobalt%jno3denit_wc=0.0
     allocate(cobalt%juptake_no3amx(isd:ied, jsd:jed, 1:nk))   ; cobalt%juptake_no3amx=0.0
     allocate(cobalt%juptake_nh4amx(isd:ied, jsd:jed, 1:nk))   ; cobalt%juptake_nh4amx=0.0
     allocate(cobalt%jo2resp_wc(isd:ied, jsd:jed, 1:nk))   ; cobalt%jo2resp_wc=0.0
     allocate(cobalt%jprod_no3nitrif(isd:ied, jsd:jed, 1:nk)) ; cobalt%jprod_no3nitrif=0.0
     allocate(cobalt%juptake_nh4nitrif(isd:ied, jsd:jed, 1:nk)) ; cobalt%juptake_nh4nitrif=0.0
-    allocate(cobalt%jprod_n2amx(isd:ied, jsd:jed, 1:nk)) ; cobalt%jprod_n2amx=0.0
+    allocate(cobalt%jnamx(isd:ied, jsd:jed, 1:nk)) ; cobalt%jnamx=0.0
     allocate(cobalt%omega_arag(isd:ied, jsd:jed, 1:nk))   ; cobalt%omega_arag=0.0
     allocate(cobalt%omega_calc(isd:ied, jsd:jed, 1:nk))   ; cobalt%omega_calc=0.0
-    allocate(cobalt%omegaa(isd:ied, jsd:jed, 1:nk))       ; cobalt%omegaa=0.0
-    allocate(cobalt%omegac(isd:ied, jsd:jed, 1:nk))       ; cobalt%omegac=0.0
     allocate(cobalt%tot_layer_int_c(isd:ied, jsd:jed,1:nk))  ; cobalt%tot_layer_int_c=0.0
     allocate(cobalt%tot_layer_int_fe(isd:ied, jsd:jed,1:nk)) ; cobalt%tot_layer_int_fe=0.0
     allocate(cobalt%tot_layer_int_n(isd:ied, jsd:jed, 1:nk)) ; cobalt%tot_layer_int_n=0.0
@@ -6635,7 +6756,6 @@ contains
     allocate(cobalt%wc_vert_int_si(isd:ied, jsd:jed))         ; cobalt%wc_vert_int_si=0.0
     allocate(cobalt%wc_vert_int_o2(isd:ied, jsd:jed))         ; cobalt%wc_vert_int_o2=0.0
     allocate(cobalt%wc_vert_int_alk(isd:ied, jsd:jed))        ; cobalt%wc_vert_int_alk=0.0
-    allocate(cobalt%wc_vert_int_chemoautopp(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_chemoautopp=0.0
     allocate(cobalt%wc_vert_int_npp(isd:ied, jsd:jed))     ; cobalt%wc_vert_int_npp=0.0
     allocate(cobalt%wc_vert_int_jdiss_sidet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jdiss_sidet=0.0
     allocate(cobalt%wc_vert_int_jdiss_cadet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jdiss_cadet=0.0
@@ -6643,7 +6763,7 @@ contains
     allocate(cobalt%wc_vert_int_jprod_cadet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jprod_cadet=0.0
     allocate(cobalt%wc_vert_int_jno3denit(isd:ied, jsd:jed))    ; cobalt%wc_vert_int_jno3denit=0.0
     allocate(cobalt%wc_vert_int_jprod_no3nitrif(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_jprod_no3nitrif=0.0
-    allocate(cobalt%wc_vert_int_jprod_n2amx(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_jprod_n2amx=0.0
+    allocate(cobalt%wc_vert_int_jnamx(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_jnamx=0.0
     allocate(cobalt%wc_vert_int_juptake_nh4(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_juptake_nh4=0.0
     allocate(cobalt%wc_vert_int_jprod_nh4(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jprod_nh4=0.0
     allocate(cobalt%wc_vert_int_juptake_no3(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_juptake_no3=0.0
@@ -6718,7 +6838,6 @@ contains
    allocate(cobalt%jprod_cadet_arag_100(isd:ied,jsd:jed))   ; cobalt%jprod_cadet_arag_100 = 0.0
    allocate(cobalt%jremin_ndet_100(isd:ied,jsd:jed))        ; cobalt%jremin_ndet_100 = 0.0
    allocate(cobalt%jprod_mesozoo_200(isd:ied,jsd:jed))      ; cobalt%jprod_mesozoo_200 = 0.0
-   allocate(cobalt%dp_fac(isd:ied,jsd:jed))                 ; cobalt%dp_fac = 0.0
    allocate(cobalt%daylength(isd:ied,jsd:jed))              ; cobalt%daylength = 0.0
 
    allocate(cobalt%f_ndet_100(isd:ied,jsd:jed))             ; cobalt%f_ndet_100 = 0.0
@@ -6905,16 +7024,9 @@ contains
     deallocate(bact(1)%jhploss_p)
     deallocate(bact(1)%juptake_ldon)
     deallocate(bact(1)%juptake_ldop)
-    deallocate(bact(1)%juptake_po4)
     deallocate(bact(1)%jprod_nh4)
     deallocate(bact(1)%jprod_po4)
     deallocate(bact(1)%jprod_n)
-    deallocate(bact(1)%jprod_n_het)
-    deallocate(bact(1)%jprod_n_amx)
-    deallocate(bact(1)%jprod_n_nitrif)
-    deallocate(bact(1)%mu_h)
-    deallocate(bact(1)%mu_cstar)
-    deallocate(bact(1)%bhet)
     deallocate(bact(1)%o2lim)
     deallocate(bact(1)%ldonlim)
     deallocate(bact(1)%temp_lim)
@@ -6947,7 +7059,6 @@ contains
        deallocate(zoo(n)%jprod_n)
        deallocate(zoo(n)%o2lim)
        deallocate(zoo(n)%temp_lim)
-       deallocate(zoo(n)%vmove)
     enddo
 
     deallocate(cobalt%f_alk)
@@ -6984,7 +7095,6 @@ contains
     deallocate(cobalt%f_irr_aclm)
     deallocate(cobalt%f_irr_aclm_z)
     deallocate(cobalt%f_irr_aclm_sfc)
-    deallocate(cobalt%f_irr_mem_dp)
     deallocate(cobalt%f_cased)
     deallocate(cobalt%f_cadet_arag_btf)
     deallocate(cobalt%f_cadet_calc_btf)
@@ -7110,18 +7220,15 @@ contains
     deallocate(cobalt%irr_inst)
     deallocate(cobalt%irr_mix)
     deallocate(cobalt%irr_aclm_inst)
-    deallocate(cobalt%chl2sfcchl)
     deallocate(cobalt%jno3denit_wc)
     deallocate(cobalt%juptake_no3amx)
     deallocate(cobalt%juptake_nh4amx)
     deallocate(cobalt%jo2resp_wc)
     deallocate(cobalt%jprod_no3nitrif)
     deallocate(cobalt%juptake_nh4nitrif)
-    deallocate(cobalt%jprod_n2amx)
+    deallocate(cobalt%jnamx)
     deallocate(cobalt%omega_arag)
     deallocate(cobalt%omega_calc)
-    deallocate(cobalt%omegaa)
-    deallocate(cobalt%omegac)
     deallocate(cobalt%tot_layer_int_c)
     deallocate(cobalt%tot_layer_int_fe)
     deallocate(cobalt%tot_layer_int_n)
@@ -7196,7 +7303,6 @@ contains
     deallocate(cobalt%jprod_cadet_arag_100)
     deallocate(cobalt%jprod_cadet_calc_100)
     deallocate(cobalt%jprod_mesozoo_200)
-    deallocate(cobalt%dp_fac)
     deallocate(cobalt%daylength)
     deallocate(cobalt%jremin_ndet_100)
     deallocate(cobalt%f_ndet_100)
@@ -7268,7 +7374,6 @@ contains
     deallocate(cobalt%wc_vert_int_si)
     deallocate(cobalt%wc_vert_int_o2)
     deallocate(cobalt%wc_vert_int_alk)
-    deallocate(cobalt%wc_vert_int_chemoautopp)
     deallocate(cobalt%wc_vert_int_npp)
     deallocate(cobalt%wc_vert_int_jdiss_sidet)
     deallocate(cobalt%wc_vert_int_jdiss_cadet)
@@ -7276,7 +7381,7 @@ contains
     deallocate(cobalt%wc_vert_int_jprod_cadet)
     deallocate(cobalt%wc_vert_int_jno3denit)
     deallocate(cobalt%wc_vert_int_jprod_no3nitrif)
-    deallocate(cobalt%wc_vert_int_jprod_n2amx)
+    deallocate(cobalt%wc_vert_int_jnamx)
     deallocate(cobalt%wc_vert_int_juptake_nh4)
     deallocate(cobalt%wc_vert_int_jprod_nh4)
     deallocate(cobalt%wc_vert_int_juptake_no3)

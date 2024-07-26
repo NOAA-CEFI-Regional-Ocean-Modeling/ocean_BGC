@@ -167,9 +167,6 @@ module COBALT_send_diag
        used = g_send_data(bact(1)%id_juptake_ldop, bact(1)%juptake_ldop*rho_dzt,           &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_juptake_po4, bact(1)%juptake_po4*rho_dzt,           &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        used = g_send_data(bact(1)%id_jprod_nh4, bact(1)%jprod_nh4*rho_dzt,           &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -177,24 +174,6 @@ module COBALT_send_diag
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        used = g_send_data(bact(1)%id_jprod_n, bact(1)%jprod_n*rho_dzt,           &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_jprod_n_het, bact(1)%jprod_n_het*rho_dzt,           &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_jprod_n_nitrif, bact(1)%jprod_n_nitrif*rho_dzt,  &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_jprod_n_amx, bact(1)%jprod_n_amx*rho_dzt,  &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_mu_h, bact(1)%mu_h,           &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_mu_cstar, bact(1)%mu_cstar,     &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(bact(1)%id_bhet, bact(1)%bhet,   &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        used = g_send_data(bact(1)%id_o2lim, bact(1)%o2lim,           &
@@ -279,9 +258,6 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask,&
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
             used = g_send_data(zoo(n)%id_temp_lim, zoo(n)%temp_lim,           &
-            model_time, rmask = grid_tmask,&
-            is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-            used = g_send_data(zoo(n)%id_vmove,    zoo(n)%vmove,              &
             model_time, rmask = grid_tmask,&
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        enddo
@@ -423,9 +399,6 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_irr_aclm_z,       cobalt%f_irr_aclm_z,               &
        model_time, rmask = grid_tmask(:,:,:),&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(cobalt%id_chl2sfcchl,     cobalt%chl2sfcchl,    &
-       model_time, rmask = grid_tmask(:,:,:),&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
         used = g_send_data(cobalt%id_jno3denit_wc,  cobalt%jno3denit_wc*rho_dzt,  &
         model_time, rmask = grid_tmask,&
         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -444,7 +417,7 @@ module COBALT_send_diag
         used = g_send_data(cobalt%id_juptake_nh4nitrif, cobalt%juptake_nh4nitrif*rho_dzt,       &
         model_time, rmask = grid_tmask,&
         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-        used = g_send_data(cobalt%id_jprod_n2amx, cobalt%jprod_n2amx*rho_dzt,       &
+        used = g_send_data(cobalt%id_jnamx, cobalt%jnamx*rho_dzt,       &
         model_time, rmask = grid_tmask,&
         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
         used = g_send_data(cobalt%id_tot_layer_int_c, cobalt%tot_layer_int_c,&
@@ -739,9 +712,6 @@ module COBALT_send_diag
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_sfc_irr_aclm,  cobalt%f_irr_aclm_sfc(:,:,1),       &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_sfc_irr_mem_dp,  cobalt%f_irr_mem_dp(:,:,1),       &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_mld_aclm,  cobalt%mld_aclm,       &
@@ -1076,9 +1046,6 @@ module COBALT_send_diag
         used = g_send_data(cobalt%id_jprod_mesozoo_200, cobalt%jprod_mesozoo_200,         &
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-        used = g_send_data(cobalt%id_dp_fac, cobalt%dp_fac,         &
-        model_time, rmask = grid_tmask(:,:,1),&
-        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
         used = g_send_data(cobalt%id_daylength, cobalt%daylength,         &
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -1166,9 +1133,6 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_wc_vert_int_alk,    cobalt%wc_vert_int_alk,         &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_chemoautopp, cobalt%wc_vert_int_chemoautopp, &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_wc_vert_int_npp,    cobalt%wc_vert_int_npp,         &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -1190,7 +1154,7 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_wc_vert_int_jprod_no3nitrif,    cobalt%wc_vert_int_jprod_no3nitrif,  &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_jprod_n2amx,    cobalt%wc_vert_int_jprod_n2amx,  &
+       used = g_send_data(cobalt%id_wc_vert_int_jnamx,    cobalt%wc_vert_int_jnamx,  &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_wc_vert_int_juptake_nh4,    cobalt%wc_vert_int_juptake_nh4,  &
@@ -2230,7 +2194,7 @@ module COBALT_send_diag
 
 ! JYL: Updated on 3/21/2021 to include anammox
         used = g_send_data(cobalt%id_frn,  cobalt%fno3denit_sed + cobalt%wc_vert_int_jno3denit + &
-        cobalt%wc_vert_int_jprod_n2amx + cobalt%fn_burial, &
+        cobalt%wc_vert_int_jnamx + cobalt%fn_burial, &
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
