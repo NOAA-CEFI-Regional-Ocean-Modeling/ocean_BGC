@@ -136,9 +136,6 @@ module generic_COBALT
   use data_override_mod, only: data_override
   use fms_mod,           only: write_version_number, FATAL, WARNING, stdout, stdlog,mpp_pe,mpp_root_pe
   use fms_mod,           only: check_nml_error
-#ifndef INTERNAL_FILE_NML
-  use fms_mod,           only: open_namelist_file, close_file
-#endif
   use MOM_EOS,           only: calculate_density, EOS_type
 
   use g_tracer_utils, only : g_tracer_type,g_tracer_start_param_list,g_tracer_end_param_list
@@ -247,15 +244,8 @@ contains
     !
     stdoutunit=stdout();stdlogunit=stdlog()
 
-#ifdef INTERNAL_FILE_NML
     read (input_nml_file, nml=generic_COBALT_nml, iostat=io_status)
     ierr = check_nml_error(io_status,'generic_COBALT_nml')
-#else
-    ioun = open_namelist_file()
-    read  (ioun, generic_COBALT_nml,iostat=io_status)
-    ierr = check_nml_error(io_status,'generic_COBALT_nml')
-    call close_file (ioun)
-#endif
 
     write (stdoutunit,'(/)')
     write (stdoutunit, generic_COBALT_nml)
@@ -2285,7 +2275,10 @@ contains
     real, dimension(:),             intent(in) :: max_wavelength_band
     real, dimension(:,ilb:,jlb:),   intent(in) :: sw_pen_band
     real, dimension(:,ilb:,jlb:,:), intent(in) :: opacity_band
-    real, dimension(ilb:,jlb:),     intent(in) :: internal_heat
+    ! internal_heat is optional because it will be a NULL pointer if
+    ! geothermal heating is disabled.
+    ! Later it will be tested if it is present (not NULL).
+    real, dimension(ilb:,jlb:),     intent(in), optional :: internal_heat
     real, dimension(ilb:,jlb:),     intent(in) :: frunoff
     real, dimension(ilb:,jlb:),     intent(in) :: geolat
     type(EOS_type),                 intent(in) :: eqn_of_state !< Equation of state structure
@@ -4323,7 +4316,13 @@ contains
           ! and the bottom water oxygen concentration (in microMolar units) in the denominator:
           cobalt%ffe_sed(i,j) = cobalt%ffe_sed_max * tanh( (cobalt%fntot_btm(i,j)*cobalt%c_2_n*sperd*1.0e3)/ &
                                 max(cobalt%btm_o2(i,j)*1.0e6,epsln) )
-          cobalt%ffe_geotherm(i,j) = cobalt%ffe_geotherm_ratio*internal_heat(i,j)*4184.0/dt
+          ! Have ffe_geotherm default to zero if the internal_heat variable
+          ! needed to calculate it is not available (if geothermal heating is disabled).
+          if(present(internal_heat)) then
+              cobalt%ffe_geotherm(i,j) = cobalt%ffe_geotherm_ratio*internal_heat(i,j)*4184.0/dt
+          else
+              cobalt%ffe_geotherm(i,j) = 0.0
+          endif
 
           !
           ! Calcium carbonate flux and burial, based on Dunne et al., 2012

@@ -80,6 +80,8 @@ subroutine get_COBALT_param_file(param_file)
         valid_param_files = valid_param_files + 1
      endif
    enddo
+   if (valid_param_files == 0) call MOM_error(FATAL, "There must be at "//&
+      "least 1 valid entry in parameter_filename in cobalt_input_nml in input.nml.")
 
 end subroutine get_COBALT_param_file
 
