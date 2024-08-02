@@ -190,11 +190,8 @@ module g_tracer_utils
 
      ! Surface flux, surface flux of gas, deltap and kw
      real, _ALLOCATABLE, dimension(:,:)    :: stf    _NULL
-
      real, _ALLOCATABLE, dimension(:,:)    :: stf_gas    _NULL
-
      real, _ALLOCATABLE, dimension(:,:)    :: deltap    _NULL
-
      real, _ALLOCATABLE, dimension(:,:)    :: kw    _NULL
 
      ! Bottom  flux
@@ -231,13 +228,13 @@ module g_tracer_utils
      ! An 3D field for implicit vertical diffusion
      real, _ALLOCATABLE, dimension(:,:,:)  :: vdiffuse_impl  _NULL
 
-     ! An 3D field for implicit vertical diffusion, concentration   !liao added
-     real, _ALLOCATABLE, dimension(:,:,:)  :: vdiffusec_impl  _NULL !liao added
-     ! An 3D field for implicit vertical diffusion                         !liao
-     real, _ALLOCATABLE, dimension(:,:,:)  :: boundary_forcing_tend  _NULL !liao
+     ! An 3D field for implicit vertical diffusion, concentration
+     real, _ALLOCATABLE, dimension(:,:,:)  :: vdiffusec_impl  _NULL
+     ! An 3D field for implicit vertical diffusion                         
+     real, _ALLOCATABLE, dimension(:,:,:)  :: boundary_forcing_tend  _NULL 
      
-     ! An 3D field for implicit vertical diffusion                  !Fan
-     real, _ALLOCATABLE, dimension(:,:,:)  :: vdiffuseh_impl  _NULL !Fan
+     ! An 3D field for implicit vertical diffusion                  
+     real, _ALLOCATABLE, dimension(:,:,:)  :: vdiffuseh_impl  _NULL 
 
      ! An auxiliary 3D field for keeping model dependent change tendencies, ... 
      real, pointer, dimension(:,:,:)  :: tendency  => NULL()
@@ -248,8 +245,8 @@ module g_tracer_utils
      integer :: diag_id_alpha=-1, diag_id_csurf=-1, diag_id_sc_no=-1, diag_id_aux=-1
      integer :: diag_id_btf=-1,diag_id_btm=-1, diag_id_vmove=-1, diag_id_vdiff=-1
      integer :: diag_id_vdiffuse_impl = -1, diag_id_tendency = -1, diag_id_field_taup1 = -1
-     integer :: diag_id_vdiffusec_impl = -1, diag_id_boundary_forcing_tend = -1 !liao
-     integer :: diag_id_vdiffuseh_impl = -1 !Fan
+     integer :: diag_id_vdiffusec_impl = -1, diag_id_boundary_forcing_tend = -1 
+     integer :: diag_id_vdiffuseh_impl = -1 
      ! Tracer Initial concentration if constant everywhere
      real    :: const_init_value = 0.0
      real    :: initial_value = 0.0
@@ -1067,17 +1064,16 @@ contains
     g_tracer%field_3d => remap_bounds(isd, jsd, 1, g_tracer%field(:,:,:,1))
 
     if(g_tracer%prog) then
-       allocate(g_tracer%tendency(isd:ied,jsd:jed,nk)); g_tracer%tendency(:,:,:) = 0.0
+       allocate(g_tracer%tendency(isd:ied,jsd:jed,nk)); 
+       g_tracer%tendency(:,:,:) = 0.0
        allocate(g_tracer%vdiffuse_impl(isd:ied,jsd:jed,nk))
        g_tracer%vdiffuse_impl(:,:,:) = 0.0
-       allocate(g_tracer%vdiffuseh_impl(isd:ied,jsd:jed,nk))  !Fan
-       g_tracer%vdiffuseh_impl(:,:,:) = 0.0                   !Fan
-       !liao
+       allocate(g_tracer%vdiffuseh_impl(isd:ied,jsd:jed,nk))  
+       g_tracer%vdiffuseh_impl(:,:,:) = 0.0                   
        allocate(g_tracer%vdiffusec_impl(isd:ied,jsd:jed,nk))
        g_tracer%vdiffusec_impl(:,:,:) = 0.0
        allocate(g_tracer%boundary_forcing_tend(isd:ied,jsd:jed,nk))
        g_tracer%boundary_forcing_tend(:,:,:) = 0.0
-       !liao
     endif
 
     if(g_tracer%flux_gas) then
@@ -1262,9 +1258,7 @@ contains
          'Implicit vertical diffusion of ' // trim(g_tracer%alias),      &
          trim('mole/m^2/s'),                  &
          missing_value = -1.0e+20)
-         
-         
-    !Fan     
+
     string=trim(g_tracer%alias) // trim("_vdiffuseh_impl")
     g_tracer%diag_id_vdiffuseh_impl = g_register_diag_field(g_tracer%package_name, &
          trim(string),                 &
@@ -1273,12 +1267,7 @@ contains
          'Content implicit vertical diffusion of ' // trim(g_tracer%alias),      &
          trim('mol/kg m s-1'),                  &
          missing_value = -1.0e+20)
-    !Fan
-         
-         
-       
 
-   !liao
     string=trim(g_tracer%alias) // trim("_vdiffusec_impl")
     g_tracer%diag_id_vdiffusec_impl = g_register_diag_field(g_tracer%package_name, &
          trim(string),                 &
@@ -1296,7 +1285,7 @@ contains
          'Boundary forcing tendency concentration of ' // trim(g_tracer%alias), &
          trim('mole/kg/s'),                  &
          missing_value = -1.0e+20)
-    !liao
+    
 
     string=trim(g_tracer%alias) // trim("_tendency")
     g_tracer%diag_id_tendency = g_register_diag_field(g_tracer%package_name, &
@@ -1906,16 +1895,13 @@ contains
        array_ptr => g_tracer%vdiff
     case ('vdiffuse_impl') 
        array_ptr => g_tracer%vdiffuse_impl
-       
-    case ('vdiffuseh_impl')                 !Fan
-       array_ptr => g_tracer%vdiffuseh_impl !Fan
-       
-    !liao
+    case ('vdiffuseh_impl')                 
+       array_ptr => g_tracer%vdiffuseh_impl 
     case ('vdiffusec_impl')
        array_ptr => g_tracer%vdiffusec_impl
     case ('boundary_forcing_tend')
        array_ptr => g_tracer%boundary_forcing_tend
-    !liao
+    
     case default 
        call mpp_error(FATAL, trim(sub_name)//": Not a known member variable: "//trim(member))   
     end select
@@ -2051,16 +2037,12 @@ contains
        array(:,:,:) = g_tracer%vdiff(:,:,:)
     case ('vdiffuse_impl') 
        array(:,:,:) = g_tracer%vdiffuse_impl(:,:,:)
-       
-   case ('vdiffuseh_impl')                           !Fan
-       array(:,:,:) = g_tracer%vdiffuseh_impl(:,:,:) !Fan
-       
-    !liao
+   case ('vdiffuseh_impl')                           
+       array(:,:,:) = g_tracer%vdiffuseh_impl(:,:,:) 
     case ('vdiffusec_impl')
        array(:,:,:) = g_tracer%vdiffusec_impl(:,:,:)
     case ('boundary_forcing_tend')
        array(:,:,:) = g_tracer%boundary_forcing_tend(:,:,:)
-    !liao
     case default 
        call mpp_error(FATAL, trim(sub_name)//": Not a known member variable: "//trim(member))   
     end select
@@ -2307,18 +2289,12 @@ contains
        g_tracer%vdiff  = array 
     case ('vdiffuse_impl') 
        g_tracer%vdiffuse_impl  = array
-       
-       
-    case ('vdiffuseh_impl')              !Fan
-       g_tracer%vdiffuseh_impl  = array  !Fan
-       
-       
-    !liao
+    case ('vdiffuseh_impl')              
+       g_tracer%vdiffuseh_impl  = array  
     case ('vdiffusec_impl')
        g_tracer%vdiffusec_impl  = array
     case ('boundary_forcing_tend')
        g_tracer%boundary_forcing_tend  = array
-    !liao
     case default 
        call mpp_error(FATAL, trim(sub_name)//": Not a known member variable: "//trim(member))   
     end select
@@ -2946,17 +2922,13 @@ contains
                ie_in=g_tracer_com%iec, je_in=g_tracer_com%jec, ke_in=g_tracer_com%nk)
        endif
        
-       !Fan
        if (g_tracer%diag_id_vdiffuseh_impl .gt. 0 .and._ALLOCATED(g_tracer%vdiffuseh_impl)) then
           used = g_send_data(g_tracer%diag_id_vdiffuseh_impl,g_tracer%vdiffuseh_impl(:,:,:), model_time,&
                rmask = g_tracer_com%grid_tmask(:,:,:),&
                is_in=g_tracer_com%isc, js_in=g_tracer_com%jsc, ks_in=1,&
                ie_in=g_tracer_com%iec, je_in=g_tracer_com%jec,ke_in=g_tracer_com%nk)
        endif
-       !Fan
        
-
-       !liao
        if (g_tracer%diag_id_vdiffuse_impl .gt. 0 .and._ALLOCATED(g_tracer%vdiffuse_impl)) then
           used = g_send_data(g_tracer%diag_id_vdiffuse_impl,g_tracer%vdiffuse_impl(:,:,:), model_time,&
                rmask = g_tracer_com%grid_tmask(:,:,:),&
@@ -2977,9 +2949,7 @@ contains
                is_in=g_tracer_com%isc, js_in=g_tracer_com%jsc, ks_in=1,&
                ie_in=g_tracer_com%iec, je_in=g_tracer_com%jec,ke_in=g_tracer_com%nk)
        endif
-       !liao
-
-
+       
        if (g_tracer%diag_id_aux .gt. 0) then
           used = g_send_data(g_tracer%diag_id_aux, g_tracer%tendency(:,:,:), model_time,&
                rmask = g_tracer_com%grid_tmask(:,:,:),& 
@@ -3134,16 +3104,13 @@ contains
                ie_in=g_tracer_com%iec, je_in=g_tracer_com%jec, ke_in=g_tracer_com%nk)
        endif
        
-       !Fan
        if (g_tracer%diag_id_vdiffuseh_impl .gt. 0 .and. _ALLOCATED(g_tracer%vdiffuseh_impl)) then
           used = g_send_data(g_tracer%diag_id_vdiffuseh_impl, g_tracer%vdiffuseh_impl(:,:,:), model_time,&
                rmask = g_tracer_com%grid_tmask(:,:,:),& 
                is_in=g_tracer_com%isc, js_in=g_tracer_com%jsc, ks_in=1,&
                ie_in=g_tracer_com%iec, je_in=g_tracer_com%jec, ke_in=g_tracer_com%nk)
        endif       
-       !Fan
-
-       !liao
+       
        if (g_tracer%diag_id_vdiffusec_impl .gt. 0 .and. _ALLOCATED(g_tracer%vdiffusec_impl)) then
           used = g_send_data(g_tracer%diag_id_vdiffusec_impl,g_tracer%vdiffusec_impl(:,:,:),model_time,&
                rmask = g_tracer_com%grid_tmask(:,:,:),&
@@ -3157,8 +3124,7 @@ contains
                is_in=g_tracer_com%isc, js_in=g_tracer_com%jsc, ks_in=1,&
                ie_in=g_tracer_com%iec,je_in=g_tracer_com%jec,ke_in=g_tracer_com%nk)
        endif
-       !liao
-
+       
        !traverse the linked list till hit NULL
        if(.NOT. associated(g_tracer%next)) exit
        g_tracer => g_tracer%next
@@ -3415,19 +3381,7 @@ contains
     !
     !   Save the current state for calculation of the implicit vertical diffusion term
     !
-
-    !if (g_tracer%diag_id_vdiffuse_impl .gt. 0) then !liao comment
-    if (g_tracer%diag_id_vdiffuse_impl .gt. 0 .or. g_tracer%diag_id_vdiffusec_impl .gt. 0) then !liao added
-      if (present(mom)) then
-        do_diagnostic = .not. mom
-      else
-        do_diagnostic = .false.
-      endif
-      do_diagnostic = .true. !liao turn on diagnostic
-    else
-      do_diagnostic = .false.
-    endif
-    if (do_diagnostic) then
+    if (g_tracer%diag_id_vdiffuse_impl .gt. 0 .or. g_tracer%diag_id_vdiffusec_impl .gt. 0) then
       do j = g_tracer_com%jsc, g_tracer_com%jec
          do i = g_tracer_com%isc, g_tracer_com%iec
             do k = 1, g_tracer_com%nk
@@ -3437,18 +3391,7 @@ contains
       enddo
     endif
     
-    !Fan
     if (g_tracer%diag_id_vdiffuseh_impl .gt. 0) then 
-      if (present(mom)) then
-        do_diagnostic = .not. mom
-      else
-        do_diagnostic = .false.
-      endif
-      do_diagnostic = .true. ! turn on diagnostic
-    else
-      do_diagnostic = .false.
-    endif
-    if (do_diagnostic) then
       do j = g_tracer_com%jsc, g_tracer_com%jec
          do i = g_tracer_com%isc, g_tracer_com%iec
             do k = 1, g_tracer_com%nk
@@ -3457,10 +3400,7 @@ contains
          enddo
       enddo
     endif
-    !Fan
     
-    
-
     d1 = 0.0
     H_to_kg_m2 = 1.0 / kg_m2_to_H
 
@@ -3564,18 +3504,13 @@ contains
       do j = g_tracer_com%jsc, g_tracer_com%jec
          do i = g_tracer_com%isc, g_tracer_com%iec
             do k = 1, g_tracer_com%nk
-               !liao let h_old into vdiffuse and this term is content tendency
+               !liao: let h_old into vdiffuse and this term is content tendency
                g_tracer%vdiffusec_impl(i,j,k) = g_tracer_com%grid_tmask(i,j,k) * &
                     (g_tracer%field(i,j,k,tau) - g_tracer%vdiffuse_impl(i,j,k))/ dt
                g_tracer%vdiffuse_impl(i,j,k) = h_old(i,j,k)*g_tracer_com%grid_tmask(i,j,k) *   &
                     (g_tracer%field(i,j,k,tau) - g_tracer%vdiffuse_impl(i,j,k))/ dt
-               !g_tracer%vdiffuse_impl(i,j,k) = g_tracer_com%grid_tmask(i,j,k) *   & !liao comment
-               !     (g_tracer%field(i,j,k,tau) - g_tracer%vdiffuse_impl(i,j,k)) / dt !liao comment
-               
-               !Fan
                g_tracer%vdiffuseh_impl(i,j,k) = h_old(i,j,k)*g_tracer_com%grid_tmask(i,j,k) *   &
                     (g_tracer%field(i,j,k,tau) - g_tracer%vdiffuseh_impl(i,j,k))/ dt
-               !Fan
             enddo
          enddo
       enddo
