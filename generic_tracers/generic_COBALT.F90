@@ -908,15 +908,22 @@ contains
     call get_param(param_file, "generic_COBALT", "hp_ipa_bact", cobalt%hp_ipa_bact, "hp_ipa_bact",  units="unitless", default=0.0)         ! dimensionless
     call get_param(param_file, "generic_COBALT", "hp_ipa_det",  cobalt%hp_ipa_det,  "hp_ipa_det",   units="unitless", default=0.0)         ! dimensionless
     call get_param(param_file, "generic_COBALT", "hp_phi_det",  cobalt%hp_phi_det,  "hp_phi_det",   units="unitless", default=0.35)        ! dimensionless
-    !
+    ! max iron from sediment entered as micromol Fe m-2 day-1, converted to moles Fe m-2 sec-1 for model calculations
     call get_param(param_file, "generic_COBALT", "ffe_sed_max", cobalt%ffe_sed_max, &
                    "maximum iron release from the sediment", units="micromoles Fe m-2 day-1", &
                    default= 170.0, scale = I_sperd*(1/micromol2mol) )
-    call get_param(param_file, "generic_COBALT", "ffe_geotherm_ratio", cobalt%ffe_geotherm_ratio,  "ffe_geotherm_ratio",units="mol Fe m-2 s-1 (W m-2)-1", default= 2.0e-12)         ! mol Fe m-2 s-1 (watt m-2)-1
-    call get_param(param_file, "generic_COBALT", "jfe_iceberg_ratio",  cobalt%jfe_iceberg_ratio,   "jfe_iceberg_ratio", units="mol Fe kg-1 ice melt", default= 1.0e-7)            ! mol Fe kg-1 ice melt
-    call get_param(param_file, "generic_COBALT", "jno3_iceberg_ratio", cobalt%jno3_iceberg_ratio,  "jno3_iceberg_ratio",units="mol N kg-1 ice melt", default= 2.0e-6)          ! mol N kg-1 ice melt
-    call get_param(param_file, "generic_COBALT", "jpo4_iceberg_ratio", cobalt%jpo4_iceberg_ratio,  "jpo4_iceberg_ratio",units="mol P kg-1 ice melt", default= 1.1e-7)          ! mol P kg-1 ice melt
-    call get_param(param_file, "generic_COBALT", "fe_coast",           cobalt%fe_coast,            "fe_coast",          units="mol Fe m kg-1 s-1", default= 0.0 )                                ! mol Fe m kg-1 s-1
+    call get_param(param_file, "generic_COBALT", "ffe_geotherm_ratio", cobalt%ffe_geotherm_ratio, &
+                   "iron release per unit of geothermal heat",units="mol Fe m-2 s-1 (W m-2)-1", default= 2.0e-12)
+    call get_param(param_file, "generic_COBALT", "jfe_iceberg_ratio",  cobalt%jfe_iceberg_ratio, &
+                   "iron release per kg of ice melt", units="mol Fe kg-1 ice melt", default= 1.0e-7)
+    call get_param(param_file, "generic_COBALT", "jno3_iceberg_ratio", cobalt%jno3_iceberg_ratio, &
+                   "nitrate release per kg of ice melt",units="mol N kg-1 ice melt", default= 2.0e-6)
+    call get_param(param_file, "generic_COBALT", "jpo4_iceberg_ratio", cobalt%jpo4_iceberg_ratio, &
+                   "phosphate release per kg of ice melt",units="mol P kg-1 ice melt", default= 1.1e-7)
+    ! fe_coast is effectively the fraction of the equivalent benthic flux that you would like to release from the
+    ! vertical land face.  This can be useful in regions of steep topography where benthic sources are not resolved
+    call get_param(param_file, "generic_COBALT", "fe_coast", cobalt%fe_coast, "coastal iron flux parameter", &          
+                   units="none", default= 0.0 )
 
     ! Radiocarbon
     call get_param(param_file, "generic_COBALT", "half_life_14c", cobalt%half_life_14c, "half_life_14c", units="s", default= 5730.0 )                  ! s
@@ -4144,38 +4151,43 @@ contains
 
 !
 !-------------------------------------------------------------------------------------------------
-! 5: Sedimentary/coastal fluxes/transformations
+! 5: Sediment, coastal and ice dynamics
 !-------------------------------------------------------------------------------------------------
 !
 
-    !
-    ! Iceberg and "Coastal" iron and other nutrient input.
-    !
+    ! Nutrient inputs associated with icebergs/frozen runoff.  This is currently entered as a surface flux.  The
+    ! parameters "jfe_iceberg_ratio", "jno3_iceberg_ratio" and "jpo4_iceberg_ratio" are the ratios of nutrient input
+    ! per kg of runoff.  For iron, values can be set within the broad ranges discussed in Laufkotter et al. (2018).
+    ! These inputs are currently entered at the ocean surface, but they have defined within a 3D array to allow
+    ! eventual consideration of depth-dependent inputs.
     do j = jsc, jec ; do i = isc, iec !{
+       ! CAS: Is this check relevant for MOM6?
        if (grid_kmt(i,j) .gt. 0) then !{
           cobalt%jfe_iceberg(i,j,1) = cobalt%jfe_iceberg_ratio*max(frunoff(i,j),0.0)/rho_dzt(i,j,1)
           cobalt%jno3_iceberg(i,j,1) = cobalt%jno3_iceberg_ratio*max(frunoff(i,j),0.0)/rho_dzt(i,j,1)
           cobalt%jpo4_iceberg(i,j,1) = cobalt%jpo4_iceberg_ratio*max(frunoff(i,j),0.0)/rho_dzt(i,j,1)
-          cobalt%jfe_coast(i,j,1) = cobalt%fe_coast * mask_coast(i,j) * grid_tmask(i,j,1) / &
-               sqrt(grid_dat(i,j))
        endif !}
     enddo; enddo  !} i,j
+    ! CAS: Is the necessary?
     do k = 2, nk ; do j = jsc, jec ; do i = isc, iec   !{
-       cobalt%jfe_coast(i,j,k) = cobalt%fe_coast * mask_coast(i,j) * grid_tmask(i,j,k) / &
-            sqrt(grid_dat(i,j))
        cobalt%jfe_iceberg(i,j,k) = 0.0
        cobalt%jno3_iceberg(i,j,k) = 0.0
-       cobalt%jpo4_iceberg(i,j,k) = 0.0
+       cobalt%jpo4_iceberg(i,j,k) = 0.0 
     enddo; enddo; enddo  !} i,j,k
 
+    ! Calculate the bottom conditions and the fluxes to the bottom for diagnostics and benthic flux calculations.
+    ! MOM4/5 used the bottom grid cell, but MOM6 often has a number of vanishingly thin layers overlying the bottom.
+    ! Grid scale noise in these layers can occur, particularly for quantitities with large bottom fluxes.  COBALT thus
+    ! uses conditions over a specified bottom layer thickness (cobalt%bottom_thickness, default = 1m) for bottom calcs.
+
+    ! Local variables used to determine the layers falling within the bottom thickness
     allocate(rho_dzt_bot(isc:iec,jsc:jec))
     allocate(k_bot(isc:iec,jsc:jec))
 
     do j = jsc, jec; do i = isc, iec  !{
        if (grid_kmt(i,j) .gt. 0) then !{
-          !
+
           ! Add the phytoplankton fluxes to the detritus fluxes to get total flux to benthos
-          !
           cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j,1) + cobalt%f_ndi_btf(i,j,1) + &
             cobalt%f_nsm_btf(i,j,1) + cobalt%f_nmd_btf(i,j,1) + cobalt%f_nlg_btf(i,j,1)
           cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j,1) + cobalt%f_pdi_btf(i,j,1) + &
@@ -4185,12 +4197,8 @@ contains
           cobalt%fsitot_btm(i,j) = cobalt%f_sidet_btf(i,j,1) + cobalt%f_silg_btf(i,j,1) + &
             cobalt%f_simd_btf(i,j,1)
 
-          !
           ! Calculate the values of tracers influencing the sedimentary transformations
-          ! and fluxes over a layer defined by "bottom_thickess".  The default is 1m. This
-          ! replaces the old approach with MOM4/5 that used the bottom layer since the
-          ! bottom layers in MOM6 are usually "vanished" layers that are 1 micron thick
-          !
+          ! and fluxes over a layer defined by "bottom_thickess".
           rho_dzt_bot(i,j) = 0.0
           cobalt%btm_o2(i,j) = 0.0
           cobalt%btm_no3(i,j) = 0.0
@@ -4198,21 +4206,20 @@ contains
           cobalt%btm_co3_ion(i,j) = 0.0
           cobalt%btm_omega_calc(i,j) = 0.0
           k_bot(i,j) = 0
+          ! Note that grid_kmt is always the total number of layers in MOM6
           do k = grid_kmt(i,j),1,-1   !{
+            ! Check if the top of layer k is within the bottom thickness.  If so, include its properties in the bottom
+            ! layer averages.  Overshoots will be subtracted off later.
             if (rho_dzt_bot(i,j).lt.(cobalt%Rho_0*cobalt%bottom_thickness)) then
               k_bot(i,j) = k
               rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
-              cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + &
-                cobalt%f_o2(i,j,k)*rho_dzt(i,j,k)
-              cobalt%btm_no3(i,j) = cobalt%btm_no3(i,j) + &
-                cobalt%f_no3(i,j,k)*rho_dzt(i,j,k)
-              cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + &
-                cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k)
-              cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + &
-                cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k)
+              cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%f_o2(i,j,k)*rho_dzt(i,j,k) 
+              cobalt%btm_no3(i,j) = cobalt%btm_no3(i,j) + cobalt%f_no3(i,j,k)*rho_dzt(i,j,k) 
+              cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k) 
+              cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k) 
             endif
           enddo
-          ! subtract off overshoot
+          ! Subtract off overshoot
           drho_dzt = rho_dzt_bot(i,j) - cobalt%Rho_0*cobalt%bottom_thickness
           cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)-cobalt%f_o2(i,j,k_bot(i,j))*drho_dzt
           cobalt%btm_no3(i,j)=cobalt%btm_no3(i,j)-cobalt%f_no3(i,j,k_bot(i,j))*drho_dzt
@@ -4231,7 +4238,6 @@ contains
           ! denitrification, and remineralization via sulfate reduction.  Note that the latter pathway is effectively
           ! a "catch all" for any other anaerobic pathway and the sulfate cycle is not explicitly modeled.
           k = grid_kmt(i,j)
-          ! Issue: do we need this check?
           if (cobalt%fntot_btm(i,j) .gt. 0.0) then !{
 
              ! The Burial flux estimates are based on Dunne et al., 2007. A synthesis of global particle export from
@@ -4249,6 +4255,7 @@ contains
              ! Since burial is highly uncertain and often used in global earth system simulations to balance inputs and
              ! outputs, a dimensionless scaling factor (cobalt%scale_burial) has also been included.
              fpoc_btm = cobalt%fntot_btm(i,j)*cobalt%c_2_n*sperd*1000.0
+             ! Should we use ztop?
              cobalt%frac_burial(i,j) = 0.013 + 0.53*fpoc_btm**2.0/((7.0+fpoc_btm)**2.0) * &
                   cobalt%zt(i,j,k) / (cobalt%z_burial + cobalt%zt(i,j,k))
              cobalt%frac_burial(i,j) = cobalt%scale_burial*cobalt%frac_burial(i,j)
@@ -4313,9 +4320,40 @@ contains
 
           ! Iron from sediment (Dale, 2015).  The maximum release from the sediment is set by ffe_sed_max.  The
           ! hyperbolic tangent requires the flux of carbon to the sediments (as mmoles m-2 day-1) in the numerator
-          ! and the bottom water oxygen concentration (in microMolar units) in the denominator:
+          ! and the bottom water oxygen concentration (in microMolar units) in the denominator. Note that ffe_sed_max
+          ! was converted to moles Fe m-2 sec-1 during parameter input, so ffe_sed has is in moles Fe m-2 sec-1
           cobalt%ffe_sed(i,j) = cobalt%ffe_sed_max * tanh( (cobalt%fntot_btm(i,j)*cobalt%c_2_n*sperd*1.0e3)/ &
                                 max(cobalt%btm_o2(i,j)*1.0e6,epsln) )
+
+          ! Additional coastal iron (Optional, default fe_coast = 0)
+          !
+          ! Coarse resolution models and/or intermediate resolution models in areas with exceptionally steep bathymetry
+          ! can under-represent coastal iron because they don't resolve shallow regions. An option to add iron through
+          ! the vertical face of the land mass has thus been included.  The flux is posed as a fraction (fe_coast) of
+          ! the sediment Fe flux (moles Fe m-2 sec-1) that would have result from the sinking organic matter flux and
+          ! O2 level of the adjacent waters.  This then spread across the layer mass (rho_dzt(i,j,k)) to give an input
+          ! in moles Fe kg-1 sec-1. Conceptually, this can be though of as a net iron flux resulting from the fraction
+          ! of the sinking flux that would have been intercepted at shallower depths were the model resolution finer.
+          ! default value of fe_coast is 0 (i.e., only the explicitly resolved benthic flux is included). Values of
+          ! fe_coast ~ 0.01-0.1 should produce reasonably elevated coastal iron values near steep bathymetry.
+          !
+          ! Old Expression:
+          ! cobalt%jfe_coast(i,j,1) = cobalt%fe_coast * mask_coast(i,j) * grid_tmask(i,j,1) / &
+          !     sqrt(grid_dat(i,j))
+          !
+          do j = jsc, jec ; do i = isc, iec ; do k = 1, nk !{
+             if (cobalt%fe_coast == 0.0) then
+               cobalt%jfe_coast(i,j,k) = 0.0
+             else
+               cobalt%jfe_coast(i,j,k) = cobalt%fe_coast*mask_coast(i,j)*grid_tmask(i,j,k)*cobalt%ffe_sed_max* &
+                 tanh( ( (cobalt%f_ndet(i,j,k)*cobalt%wsink+phyto(SMALL)%f_n(i,j,k)*phyto(SMALL)%vmove(i,j,k)+ &
+                 phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k)+ & 
+                 phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%vmove(i,j,k)+
+                 phyto(DIAZO)%f_n(i,j,k)*phyto(DIAZO)%vmove(i,j,k))*cobalt%c_2_n*sperd*1.0e3 )/ &
+                 /max(cobalt%btm_o2(i,j)*1.0e6,epsln) )/rho_dzt(i,j,k)
+             endif
+          enddo; enddo; enddo  !} i,j
+
           ! Have ffe_geotherm default to zero if the internal_heat variable
           ! needed to calculate it is not available (if geothermal heating is disabled).
           if(present(internal_heat)) then
