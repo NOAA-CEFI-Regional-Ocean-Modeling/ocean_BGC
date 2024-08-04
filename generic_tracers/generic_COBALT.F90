@@ -4341,18 +4341,18 @@ contains
           ! cobalt%jfe_coast(i,j,1) = cobalt%fe_coast * mask_coast(i,j) * grid_tmask(i,j,1) / &
           !     sqrt(grid_dat(i,j))
           !
-          do j = jsc, jec ; do i = isc, iec ; do k = 1, nk !{
-             if (cobalt%fe_coast == 0.0) then
-               cobalt%jfe_coast(i,j,k) = 0.0
-             else
-               cobalt%jfe_coast(i,j,k) = cobalt%fe_coast*mask_coast(i,j)*grid_tmask(i,j,k)*cobalt%ffe_sed_max* &
-                 tanh( ( (cobalt%f_ndet(i,j,k)*cobalt%wsink+phyto(SMALL)%f_n(i,j,k)*phyto(SMALL)%vmove(i,j,k)+ &
-                 phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k)+ & 
-                 phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%vmove(i,j,k)+
-                 phyto(DIAZO)%f_n(i,j,k)*phyto(DIAZO)%vmove(i,j,k))*cobalt%c_2_n*sperd*1.0e3 )/ &
-                 /max(cobalt%btm_o2(i,j)*1.0e6,epsln) )/rho_dzt(i,j,k)
-             endif
-          enddo; enddo; enddo  !} i,j
+          do k = 1, nk !{
+            if (cobalt%fe_coast == 0.0) then
+              cobalt%jfe_coast(i,j,k) = 0.0
+            else
+              cobalt%jfe_coast(i,j,k) = cobalt%fe_coast*mask_coast(i,j)*grid_tmask(i,j,k)*cobalt%ffe_sed_max* &
+                tanh( ( (cobalt%f_ndet(i,j,k)*cobalt%wsink+phyto(SMALL)%f_n(i,j,k)*phyto(SMALL)%vmove(i,j,k)+ &
+                phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k)+ & 
+                phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%vmove(i,j,k)+ &
+                phyto(DIAZO)%f_n(i,j,k)*phyto(DIAZO)%vmove(i,j,k))*cobalt%c_2_n*sperd*1.0e3 )/ &
+                max(cobalt%btm_o2(i,j)*1.0e6,epsln) )/rho_dzt(i,j,k)
+            endif
+          enddo  !} k
 
           ! Have ffe_geotherm default to zero if the internal_heat variable
           ! needed to calculate it is not available (if geothermal heating is disabled).
