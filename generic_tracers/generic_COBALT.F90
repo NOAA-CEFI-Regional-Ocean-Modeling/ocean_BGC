@@ -4384,6 +4384,8 @@ contains
           ! impacts alkalinity, but care must to ensure that cased starts in equilibrium with the
           ! mean ocean state to avoid unrealistic drifts.
 
+          k = grid_kmt(i,j)
+
           ! Enhanced dissolution by fast respiration near the sediment surface, proportional
           ! to organic flux, moles Ca m-2 s-1, limited to a max 1/2 the instantaneous calcite flux
           cobalt%fcased_redis_surfresp(i,j)=min(0.5*cobalt%f_cadet_calc_btf(i,j,1), &
