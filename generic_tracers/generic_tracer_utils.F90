@@ -3376,7 +3376,6 @@ contains
     real :: b_denom_1    ! The first term in the denominator of b1, in H.
     real :: H_to_kg_m2   ! 1 / kg_m2_to_H.
     integer :: i, j, k, nz
-    logical :: do_diagnostic
 
     !
     !   Save the current state for calculation of the implicit vertical diffusion term
@@ -3495,12 +3494,12 @@ contains
 
     enddo; enddo ! i,j
 
-    !
-    !   Calculate the implicit vertical diffusion term
-    !   (Note: not sure if this needs any unit conversion)
-    !
+   !
+   !   Calculate the implicit vertical diffusion term
+   !   (Note: not sure if this needs any unit conversion)
+   !
 
-    if (do_diagnostic) then
+   if (g_tracer%diag_id_vdiffuse_impl .gt. 0 .or. g_tracer%diag_id_vdiffusec_impl .gt. 0) then
       do j = g_tracer_com%jsc, g_tracer_com%jec
          do i = g_tracer_com%isc, g_tracer_com%iec
             do k = 1, g_tracer_com%nk
@@ -3509,12 +3508,20 @@ contains
                     (g_tracer%field(i,j,k,tau) - g_tracer%vdiffuse_impl(i,j,k))/ dt
                g_tracer%vdiffuse_impl(i,j,k) = h_old(i,j,k)*g_tracer_com%grid_tmask(i,j,k) *   &
                     (g_tracer%field(i,j,k,tau) - g_tracer%vdiffuse_impl(i,j,k))/ dt
+            enddo
+         enddo
+      enddo
+   endif
+   if (g_tracer%diag_id_vdiffuseh_impl .gt. 0) then
+      do j = g_tracer_com%jsc, g_tracer_com%jec
+         do i = g_tracer_com%isc, g_tracer_com%iec
+            do k = 1, g_tracer_com%nk
                g_tracer%vdiffuseh_impl(i,j,k) = h_old(i,j,k)*g_tracer_com%grid_tmask(i,j,k) *   &
                     (g_tracer%field(i,j,k,tau) - g_tracer%vdiffuseh_impl(i,j,k))/ dt
             enddo
          enddo
       enddo
-    endif
+   endif
 
   end subroutine g_tracer_vertdiff_G
 
