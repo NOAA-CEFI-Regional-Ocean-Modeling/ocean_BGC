@@ -973,7 +973,7 @@ module cobalt_types
           id_irr_aclm      = -1,       &
           id_irr_aclm_z    = -1,       &
           id_jfed          = -1,       &
-          id_jfedc          = -1,      & 
+          id_jfedc         = -1,       & 
           id_jprod_ndet    = -1,       &
           id_jprod_pdet    = -1,       &
           id_jprod_sldon   = -1,       &
@@ -1019,13 +1019,13 @@ module cobalt_types
           id_irr_mix       = -1,       &
           id_irr_aclm_inst = -1,       &
           id_jalk          = -1,       &
-          id_jalkc          = -1,       &  
+          id_jalkc         = -1,       &  
           id_jalk_plus_btm = -1,       &
           id_jdic          = -1,       &
-          id_jdicc          = -1,       &  
-          id_jno3c          = -1,       &  
-          id_jpo4c          = -1,       &  
-          id_jsio4c         = -1,       &  
+          id_jdicc         = -1,       &  
+          id_jno3c         = -1,       &  
+          id_jpo4c         = -1,       &  
+          id_jsio4c        = -1,       &  
           id_jdic_plus_btm = -1,       &
           id_jnh4          = -1,       &
           id_jndet         = -1,       &
