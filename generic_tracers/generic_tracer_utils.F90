@@ -230,7 +230,8 @@ module g_tracer_utils
 
      ! An 3D field for implicit vertical diffusion, concentration
      real, _ALLOCATABLE, dimension(:,:,:)  :: vdiffusec_impl  _NULL
-     ! An 3D field for implicit vertical diffusion                         
+
+     ! An 3D field for diagnosing forcing from the boundary                         
      real, _ALLOCATABLE, dimension(:,:,:)  :: boundary_forcing_tend  _NULL 
 
      ! An auxiliary 3D field for keeping model dependent change tendencies, ... 
