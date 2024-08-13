@@ -3104,27 +3104,6 @@ contains
                ie_in=g_tracer_com%iec, je_in=g_tracer_com%jec, ke_in=g_tracer_com%nk)
        endif
        
-       if (g_tracer%diag_id_vdiffuseh_impl .gt. 0 .and. _ALLOCATED(g_tracer%vdiffuseh_impl)) then
-          used = g_send_data(g_tracer%diag_id_vdiffuseh_impl, g_tracer%vdiffuseh_impl(:,:,:), model_time,&
-               rmask = g_tracer_com%grid_tmask(:,:,:),& 
-               is_in=g_tracer_com%isc, js_in=g_tracer_com%jsc, ks_in=1,&
-               ie_in=g_tracer_com%iec, je_in=g_tracer_com%jec, ke_in=g_tracer_com%nk)
-       endif       
-       
-       if (g_tracer%diag_id_vdiffusec_impl .gt. 0 .and. _ALLOCATED(g_tracer%vdiffusec_impl)) then
-          used = g_send_data(g_tracer%diag_id_vdiffusec_impl,g_tracer%vdiffusec_impl(:,:,:),model_time,&
-               rmask = g_tracer_com%grid_tmask(:,:,:),&
-               is_in=g_tracer_com%isc, js_in=g_tracer_com%jsc, ks_in=1,&
-               ie_in=g_tracer_com%iec,je_in=g_tracer_com%jec,ke_in=g_tracer_com%nk)
-       endif
-
-       if (g_tracer%diag_id_boundary_forcing_tend .gt. 0.and._ALLOCATED(g_tracer%boundary_forcing_tend)) then
-          used = g_send_data(g_tracer%diag_id_boundary_forcing_tend,g_tracer%boundary_forcing_tend(:,:,:),model_time,&
-               rmask = g_tracer_com%grid_tmask(:,:,:),&
-               is_in=g_tracer_com%isc, js_in=g_tracer_com%jsc, ks_in=1,&
-               ie_in=g_tracer_com%iec,je_in=g_tracer_com%jec,ke_in=g_tracer_com%nk)
-       endif
-       
        !traverse the linked list till hit NULL
        if(.NOT. associated(g_tracer%next)) exit
        g_tracer => g_tracer%next
