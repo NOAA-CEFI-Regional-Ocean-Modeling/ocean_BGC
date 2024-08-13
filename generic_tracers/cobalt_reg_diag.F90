@@ -1226,7 +1226,7 @@ module COBALT_reg_diag
     cobalt%id_jfed = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jfedc","Dissolved Iron Change concentration",'h','L','s','mol Fe m-2 s-1','f')
+    vardesc_temp = vardesc("jfedc","Dissolved Iron Change concentration",'h','L','s','mol Fe kg-1 s-1','f')
     cobalt%id_jfedc = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
@@ -2616,7 +2616,7 @@ module COBALT_reg_diag
     cobalt%id_jalk = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jalkc","Alkalinity source layer concentration",'h','L','s','eq m-3 s-1','f')
+    vardesc_temp = vardesc("jalkc","Alkalinity source layer concentration",'h','L','s','eq kg-1 s-1','f')
     cobalt%id_jalkc = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
@@ -2628,19 +2628,19 @@ module COBALT_reg_diag
     cobalt%id_jdic = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jdicc","Dissolved Inorganic Carbon source concentration",'h','L','s','mol m-2 s-1','f')
+    vardesc_temp = vardesc("jdicc","Dissolved Inorganic Carbon source concentration",'h','L','s','mol kg-1 s-1','f')
     cobalt%id_jdicc = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jno3c","no3 source concentration",'h','L','s','mol m-2 s-1','f')
+    vardesc_temp = vardesc("jno3c","no3 source concentration",'h','L','s','mol kg-1 s-1','f')
     cobalt%id_jno3c = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jpo4c","po4 source concentration",'h','L','s','mol m-2 s-1','f')
+    vardesc_temp = vardesc("jpo4c","po4 source concentration",'h','L','s','mol kg-1 s-1','f')
     cobalt%id_jpo4c = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jsio4c","sio4 source concentration",'h','L','s','mol m-2 s-1','f')
+    vardesc_temp = vardesc("jsio4c","sio4 source concentration",'h','L','s','mol kg-1 s-1','f')
     cobalt%id_jsio4c = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
@@ -2664,11 +2664,11 @@ module COBALT_reg_diag
     cobalt%id_jo2_plus_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jo2","O2 source concentration",'h','L','s','mol m-3 s-1','f')
+    vardesc_temp = vardesc("jo2","O2 source concentration",'h','L','s','mol m-2 s-1','f')
     cobalt%id_jo2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jo2c","O2 source concentration",'h','L','s','mol m-3 s-1','f')
+    vardesc_temp = vardesc("jo2c","O2 source concentration",'h','L','s','mol kg-1 s-1','f')
     cobalt%id_jo2c = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 

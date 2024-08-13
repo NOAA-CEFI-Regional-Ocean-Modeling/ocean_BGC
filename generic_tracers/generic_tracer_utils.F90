@@ -1259,7 +1259,7 @@ contains
          g_tracer_com%axes(1:3),       &
          g_tracer_com%init_time,       &
          'Implicit vertical diffusion concentration of ' //trim(g_tracer%alias),   &
-         trim('mole/kg/s'),                  &
+         trim('mol kg-1 s-1'),                  &
          missing_value = -1.0e+20)
 
     string=trim(g_tracer%alias) // trim("_boundary_forcing_tend")
@@ -1268,7 +1268,7 @@ contains
          g_tracer_com%axes(1:3),       &
          g_tracer_com%init_time,       &
          'Boundary forcing tendency concentration of ' // trim(g_tracer%alias), &
-         trim('mole/kg/s'),                  &
+         trim('mol kg-1 s-1'),                  &
          missing_value = -1.0e+20)
     
 
@@ -1278,7 +1278,7 @@ contains
          g_tracer_com%axes(1:3),       &
          g_tracer_com%init_time,       &
          'Generic tracer tendency of ' // trim(g_tracer%alias),      &
-         trim('mole/m^2/s'),                  &
+         trim('mol m-2 s-1'),                  &
          missing_value = -1.0e+20)
 
     string=trim(g_tracer%alias) // trim("_vdiff")
@@ -1296,7 +1296,7 @@ contains
          g_tracer_com%axes(1:2),       &
          g_tracer_com%init_time,       &
          'Total flux of ' // trim(g_tracer%alias) // ' into Ocean Surface', &
-         trim('mole/m^2/sec'),         &
+         trim('mol m-2 s-1'),         &
          missing_value = -1.0e+20)
 
     string=trim(g_tracer%alias) // trim("_stf_gas")
@@ -1305,7 +1305,7 @@ contains
          g_tracer_com%axes(1:2),       &
          g_tracer_com%init_time,       &
          'Gas exchange flux of ' // trim(g_tracer%alias) // ' into Ocean Surface', &
-         trim('mole/m^2/sec'),         &
+         trim('mol m-2 s-1'),         &
          missing_value = -1.0e+20)
 
     string=trim(g_tracer%alias) // trim("_stf_gas_aux")
@@ -1314,7 +1314,7 @@ contains
          g_tracer_com%axes(1:2),       &
          g_tracer_com%init_time,       &
          'Auxilliary Gas exchange flux of ' // trim(g_tracer%alias) // ' into Ocean Surface', &
-         trim('mole/m^2/sec'),         &
+         trim('mol m-2 s-1'),         &
          missing_value = -1.0e+20)
 
     string=trim(g_tracer%alias) // trim("_deltap")
@@ -1341,7 +1341,7 @@ contains
          g_tracer_com%axes(1:2),       &
          g_tracer_com%init_time,       &
          'Total flux of ' // trim(g_tracer%alias) // trim(' into Ocean Bottom'), &
-         trim('mole/m^2/sec'),         &
+         trim('mol m-2 s-1'),         &
          missing_value = -1.0e+20)
 
     string=trim(g_tracer%alias) // trim("_btm_reservoir")
