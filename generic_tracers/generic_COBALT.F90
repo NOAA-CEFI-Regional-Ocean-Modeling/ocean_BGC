@@ -2697,13 +2697,16 @@ contains
     ! de Boyer-Montegut reference:  https://doi.org/10.1029/2004JC002378
     !
     if (present(photo_acc_dpth)) then
+      call mpp_error(WARNING, "Using a photoacclimation MLD in COBALTv3 that was calculated in "//&
+                              "MOM6. Check that MLD_PHA_CALC is true in the MOM paramter files "//&
+                              "or you may be using an unrealistic constant value!")
       cobalt%mld_aclm(:,:) = photo_acc_dpth(:,:)
-    else 
+    else
       do j = jsc, jec ; do i = isc, iec   !{
-  
+
         if (grid_tmask(i,j,1).ne.0.0) then
-  
-          ! Find the k index closest to 10m  
+
+          ! Find the k index closest to 10m
           deltaRhoFlag = 0.0
           do k = 1,nk
             if (zmid(i,j,k) .lt. cobalt%zmld_ref) then
@@ -2717,10 +2720,10 @@ contains
               deltaRhoFlag = 1.0
             endif
           enddo
-  
+
           ! calculate the density at the reference depth
           call calculate_density(Temp(i,j,kmld_ref),Salt(i,j,kmld_ref),101325.0,rho_mld_ref,eqn_of_state)
-  
+
           ! Calculate effective mixed layer depth for photoacclimation (mld_aclm)
           ! (parts of this code were drawn from the MOM6 mld calculation)
           dK = 0.0
@@ -2744,12 +2747,12 @@ contains
               deltaRhoFlag = 1.0
             endif
           enddo  !} k
-  
+
           cobalt%mld_aclm(i,j) = cobalt%mld_aclm(i,j)*grid_tmask(i,j,1)
         else
           cobalt%mld_aclm(i,j) = 0.0
         endif
-  
+
       enddo; enddo !} j,i
     endif ! end if photo_acc_dpth was not present
 
