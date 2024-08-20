@@ -2326,6 +2326,7 @@ contains
     real :: rev_angle, dec_angle, temp_arg
 
     logical ::  phos_nh3_override
+    logical ::  pha_all_same 
 
     real, dimension(:,:,:), Allocatable :: ztop, zmid, zbot
     real, dimension(:,:,:), Allocatable :: pre_totn, net_srcn, post_totn
@@ -2696,10 +2697,13 @@ contains
     ! captures mixing on time scale of 1 to a few days.
     ! de Boyer-Montegut reference:  https://doi.org/10.1029/2004JC002378
     !
+    pha_all_same = all(photo_acc_dpth == photo_acc_dpth(isc,jsc))
     if (present(photo_acc_dpth)) then
-      call mpp_error(WARNING, "Using a photoacclimation MLD in COBALTv3 that was calculated in "//&
-                              "MOM6. Check that MLD_PHA_CALC is true in the MOM paramter files "//&
-                              "or you may be using an unrealistic constant value!")
+      if (pha_all_same) then
+        call mpp_error(WARNING, "Using uniform photoacclimation MLD in COBALTv3 which is not reccomended."//&
+                                "Check that PHA_MLD_CALC is true in the MOM paramter files or you "//&
+                                "may be using an unrealistic constant value!")
+      endif
       cobalt%mld_aclm(:,:) = photo_acc_dpth(:,:)
     else
       do j = jsc, jec ; do i = isc, iec   !{
