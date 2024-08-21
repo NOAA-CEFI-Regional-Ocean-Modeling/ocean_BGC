@@ -556,7 +556,7 @@ contains
           call generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
             hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
             nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff,&
-            geolat,eqn_of_state,photo_acc_dpth)
+            geolat,eqn_of_state)
 
     if(do_generic_SF6)  call generic_SF6_update_from_source(tracer_list,rho_dzt,dzt,hblt_depth,&
          ilb,jlb,tau,dtts,grid_dat,model_time)
