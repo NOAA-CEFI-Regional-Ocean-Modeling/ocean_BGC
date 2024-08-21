@@ -2664,7 +2664,7 @@ module COBALT_reg_diag
     cobalt%id_jo2_plus_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jo2","O2 source concentration",'h','L','s','mol m-2 s-1','f')
+    vardesc_temp = vardesc("jo2","O2 source concentration layer integral",'h','L','s','mol m-2 s-1','f')
     cobalt%id_jo2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
