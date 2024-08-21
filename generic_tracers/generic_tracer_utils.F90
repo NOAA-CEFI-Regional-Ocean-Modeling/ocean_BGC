@@ -225,6 +225,9 @@ module g_tracer_utils
      ! An 3D field for random vertical movement, esp. for zooplankton, ... 
      real, _ALLOCATABLE, dimension(:,:,:)  :: vdiff  _NULL
 
+     ! The following arrays are for tracer budget diagnostics
+     ! originally developed by Enhui Lao, Fan Yang, and Mathieu Poupon.
+
      ! An 3D field for implicit vertical diffusion
      real, _ALLOCATABLE, dimension(:,:,:)  :: vdiffuse_impl  _NULL
 
