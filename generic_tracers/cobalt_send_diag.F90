@@ -340,11 +340,9 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_jfed,       cobalt%jfed*rho_dzt,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-!liao
        used = g_send_data(cobalt%id_jfedc,       cobalt%jfed,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-!liao
        used = g_send_data(cobalt%id_jfe_ads,       cobalt%jfe_ads*rho_dzt,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1204,11 +1202,11 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_jalk, cobalt%jalk*rho_dzt,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-!liao
+
        used = g_send_data(cobalt%id_jalkc, cobalt%jalk,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-!liao
+
        used = g_send_data(cobalt%id_jalk_plus_btm, cobalt%jalk_plus_btm*rho_dzt,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1216,7 +1214,7 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_jdic, cobalt%jdic*rho_dzt,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-!liao
+
        used = g_send_data(cobalt%id_jdicc, cobalt%jdic,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1232,7 +1230,6 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_jsio4c, cobalt%jsio4,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-!liao
 
        used = g_send_data(cobalt%id_jdic_plus_btm, cobalt%jdic_plus_btm*rho_dzt,       &
        model_time, rmask = grid_tmask,&
@@ -1253,7 +1250,7 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_jo2_plus_btm, cobalt%jo2_plus_btm*rho_dzt,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-!liao
+
        used = g_send_data(cobalt%id_jo2, cobalt%jo2*rho_dzt,  &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1261,7 +1258,7 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_jo2c, cobalt%jo2,  &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-!liao
+
 !==============================================================================================================
 !  2016/07/05 jgj  send temperature as a test
 
