@@ -505,7 +505,7 @@ contains
 
   subroutine generic_tracer_source(Temp,Salt,rho_dzt,dzt,hblt_depth,ilb,jlb,tau,dtts,&
        grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,&
-       frunoff,grid_ht, current_wave_stress, sosga, geolat, eqn_of_state)
+       frunoff,grid_ht, current_wave_stress, sosga, geolat, eqn_of_state, photo_acc_dpth)
     real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,Salt,rho_dzt,dzt
     real, dimension(ilb:,jlb:),     intent(in) :: hblt_depth
     integer,                        intent(in) :: ilb,jlb,tau
@@ -523,7 +523,7 @@ contains
     real,                      optional , intent(in) :: sosga ! global avg. sea surface salinity
     real, dimension(ilb:,jlb:),  intent(in) :: geolat 
     type(EOS_type),              intent(in) :: eqn_of_state
-
+    real, dimension(ilb:,jlb:), optional, intent(in) :: photo_acc_dpth
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_update_from_source'
 
