@@ -2334,7 +2334,7 @@ contains
     real :: rev_angle, dec_angle, temp_arg
 
     logical ::  phos_nh3_override
-    logical ::  pha_all_same = .false.
+    logical ::  pha_all_same = .true.
 
     real, dimension(:,:,:), Allocatable :: ztop, zmid, zbot
     real, dimension(:,:,:), Allocatable :: pre_totn, net_srcn, post_totn
