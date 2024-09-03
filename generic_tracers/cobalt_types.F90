@@ -63,8 +63,8 @@ module cobalt_types
   real, parameter, public :: vb_nh3 = 25.             !< Liquid molar volume at boiling point for NH3 (cm3 mol−1)
   real, parameter, public :: micromol2mol = 1.0e6     !< convert micromoles to moles (used in concentration parameters)
   real, parameter, public :: c2n = 106.0/16.0         !< convert nutrient ratios relative to carbon to ratios relative to nitrogen
-  real, parameter, public :: micromolQpersec2W = 2.77e18/6.022e17 !< convert photosynthetically available radiation (micromole quanta
-                                                      !! per-second) to watts. 
+  real, parameter, public :: micromolQ2Joule = 2.77e18/6.022e17 !< convert photosynthetically available radiation (micromole quanta
+                                                      !! Joules 
 
   !> An auxiliary type for storing varible names
   type vardesc
@@ -445,7 +445,6 @@ module cobalt_types
           ml_aclm_efold,    &
           zmld_ref,         &
           densdiff_mld,     &
-          irrad_day_thresh, &
           case2_depth,      & ! depth threshold for case 2 (coastal) waters
           case2_salt,       & ! salt threshold for case 2 (coastal) waters
           case2_opac_add,   & ! added opacity for case 2 (coastal) waters
