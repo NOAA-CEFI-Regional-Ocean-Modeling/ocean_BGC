@@ -664,7 +664,7 @@ contains
     call get_param(param_file, "generic_COBALT", "alpha_Sm_ll", phyto(SMALL)%alpha_ll, &
                    "Chl-a specific initial slope of photosynth-irrad curve, low-light adapted small phytoplankton", &
                    units="g C g Chl-1 (micromol quanta m-2)-1", default=3.2e-5, scale = micromolQ2Joule)
-    ! Phytoplankton Maximum photosythetic rate parameters
+    ! Phytoplankton Maximum photosynthetic rate parameters
     call get_param(param_file, "generic_COBALT", "kappa_eppley", cobalt%kappa_eppley, &
                    "exponential temperature dependence of phytoplankton rates", units="deg C-1",default=0.063)
     ! Photosynthetic rates entered in units of day-1 and converted to sec-1 for model calculations.  I_sperd is 1 over
