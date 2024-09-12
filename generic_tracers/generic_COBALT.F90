@@ -2390,8 +2390,8 @@ contains
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
   ! If you'd like to pass the thermodynamic variables for a mld calculation
   subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
-       ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff,geolat,eqn_of_state, &
-       photo_acc_dpth)
+       ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff, &
+       geolat, photo_acc_dpth)
   !subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
 
@@ -2413,7 +2413,6 @@ contains
     real, dimension(ilb:,jlb:),     intent(in), optional :: internal_heat
     real, dimension(ilb:,jlb:),     intent(in) :: frunoff
     real, dimension(ilb:,jlb:),     intent(in) :: geolat
-    type(EOS_type),                 intent(in) :: eqn_of_state !< Equation of state structure
     real, dimension(ilb:,jlb:), optional, intent(in) :: photo_acc_dpth
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_source'
@@ -2837,58 +2836,9 @@ contains
       endif
       cobalt%mld_aclm(:,:) = photo_acc_dpth(:,:)
     else
-      do j = jsc, jec ; do i = isc, iec   !{
-
-        if (grid_tmask(i,j,1).ne.0.0) then
-
-          ! Find the k index closest to 10m
-          deltaRhoFlag = 0.0
-          do k = 1,nk
-            if (zmid(i,j,k) .lt. cobalt%zmld_ref) then
-              kmld_ref = k
-            elseif ((zmid(i,j,k).gt.cobalt%zmld_ref).and.(deltaRhoFlag.eq.0.0)) then
-              if (k.eq.1) then
-                kmld_ref = k
-              elseif ((zmid(i,j,k)-cobalt%zmld_ref).lt.(cobalt%zmld_ref-zmid(i,j,k-1))) then
-                kmld_ref = k
-              endif
-              deltaRhoFlag = 1.0
-            endif
-          enddo
-
-          ! calculate the density at the reference depth
-          call calculate_density(Temp(i,j,kmld_ref),Salt(i,j,kmld_ref),101325.0,rho_mld_ref,eqn_of_state)
-
-          ! Calculate effective mixed layer depth for photoacclimation (mld_aclm)
-          ! (parts of this code were drawn from the MOM6 mld calculation)
-          dK = 0.0
-          deltaRhoAtK = 0.0
-          deltaRhoAtKm1 = 0.0
-          deltaRhoFlag = 0.0
-          cobalt%mld_aclm(i,j) = 0.0
-          do k = 1,nk !{
-            deltaRhoAtKm1 = deltaRhoAtK
-            dKm1 = dK
-            dK = cobalt%mld_aclm(i,j) + 0.5*dzt(i,j,k)
-            ! Issue: Could MOM6 pass a potential density rather than recalculating
-            call calculate_density(Temp(i,j,k),Salt(i,j,k),101325.0,rho_k,eqn_of_state)
-            cobalt%rho_test(i,j,k) = rho_k
-            deltaRhoAtK = rho_k - rho_mld_ref
-            if (deltaRhoAtK.lt.cobalt%densdiff_mld) then
-              cobalt%mld_aclm(i,j) = cobalt%mld_aclm(i,j) + dzt(i,j,k)
-            elseif ((deltaRhoAtK.gt.cobalt%densdiff_mld).and.(deltaRhoFlag.eq.0.0)) then
-              afac = (cobalt%densdiff_mld - deltaRhoAtKm1)/(deltaRhoAtK - deltaRhoAtKm1)
-              cobalt%mld_aclm(i,j) = afac*dK + (1.0-afac)*dKm1
-              deltaRhoFlag = 1.0
-            endif
-          enddo  !} k
-
-          cobalt%mld_aclm(i,j) = cobalt%mld_aclm(i,j)*grid_tmask(i,j,1)
-        else
-          cobalt%mld_aclm(i,j) = 0.0
-        endif
-
-      enddo; enddo !} j,i
+        call mpp_error(FATAL, "COBALT has been updated to use a photoacclimation mixed layer depth from MOM6."//&
+                              "If you are seeing this error, you may not be using an updated version of MOM6  "//&
+                              "which includes that calculation.")
     endif ! end if photo_acc_dpth was not present
 
     !
