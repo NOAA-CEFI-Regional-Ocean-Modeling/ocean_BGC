@@ -536,129 +536,252 @@ contains
     ! Nutrient Limitation Parameters (phytoplankton)
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "k_fed_Di", phyto(DIAZO)%k_fed,            "k_fed_Di",       units="mol Fed kg-1", default=4.0e-9)  ! mol Fed kg-1
-    call get_param(param_file, "generic_COBALT", "k_fed_Lg", phyto(LARGE)%k_fed,            "k_fed_Lg",       units="mol Fed kg-1", default=2.0e-9)  ! mol Fed kg-1
-    call get_param(param_file, "generic_COBALT", "k_fed_Md", phyto(MEDIUM)%k_fed,           "k_fed_Md",       units="mol Fed kg-1", default=8.0e-10) ! mol Fed kg-1
-    call get_param(param_file, "generic_COBALT", "k_fed_Sm", phyto(SMALL)%k_fed,            "k_fed_Sm",       units="mol Fed kg-1", default=4.0e-10) ! mol Fed kg-1
-    call get_param(param_file, "generic_COBALT", "k_nh4_Lg", phyto(LARGE)%k_nh4,            "k_nh4_Lg",       units="mol NH4 kg-1", default=5.0e-8)  ! mol NH4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_nh4_Md", phyto(MEDIUM)%k_nh4,           "k_nh4_Md",       units="mol NH4 kg-1", default=2.0e-8)  ! mol NH4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_nh4_Sm", phyto(SMALL)%k_nh4,            "k_nh4_Sm",       units="mol NH4 kg-1", default=1.0e-8)  ! mol NH4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_nh4_Di", phyto(DIAZO)%k_nh4,            "k_nh4_Di",       units="mol NH4 kg-1", default=1.0e-7)  ! mol NH4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_no3_Lg", phyto(LARGE)%k_no3,            "k_no3_Lg",       units="mol NO3 kg-1", default=2.5e-6)  ! mol NO3 kg-1
-    call get_param(param_file, "generic_COBALT", "k_no3_Md", phyto(MEDIUM)%k_no3,           "k_no3_Md",       units="mol NO3 kg-1", default=1.0e-6)  ! mol NO3 kg-1
-    call get_param(param_file, "generic_COBALT", "k_no3_Sm", phyto(SMALL)%k_no3,            "k_no3_Sm",       units="mol NO3 kg-1", default=5.0e-7)  ! mol NO3 kg-1
-    call get_param(param_file, "generic_COBALT", "k_no3_Di", phyto(DIAZO)%k_no3,            "k_no3_Di",       units="mol NO3 kg-1", default=5.0e-6)  ! mol NO3 kg-1
-    call get_param(param_file, "generic_COBALT", "k_po4_Di", phyto(DIAZO)%k_po4,            "k_po4_Di",       units="mol PO4 kg-1", default=1.0e-7)  ! mol PO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_po4_Lg", phyto(LARGE)%k_po4,            "k_po4_Lg",       units="mol PO4 kg-1", default=5.0e-8)  ! mol PO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_po4_Md", phyto(MEDIUM)%k_po4,           "k_po4_Md",       units="mol PO4 kg-1", default=2.0e-8)  ! mol PO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_po4_Sm", phyto(SMALL)%k_po4,            "k_po4_Sm",       units="mol PO4 kg-1", default=1.0e-8)  ! mol PO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_sio4_Lg",phyto(LARGE)%k_sio4,           "k_sio4_Lg",      units="mol SiO4 kg-1", default=2.0e-6) ! mol SiO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_sio4_Md",phyto(MEDIUM)%k_sio4,          "k_sio4_Md",      units="mol SiO4 kg-1", default=1.0e-6) ! mol SiO4 kg-1
-    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Di", phyto(DIAZO)%k_fe_2_n,      "k_fe_2_n_Di",    units="mol Fe kg-1", &
-                   default= 12.0e-6, scale=c2n)! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Lg", phyto(LARGE)%k_fe_2_n,      "k_fe_2_n_Lg",    units="mol Fe kg-1", &
-                   default= 10.0e-6, scale=c2n)! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Md", phyto(MEDIUM)%k_fe_2_n,     "k_fe_2_n_Md",    units="mol Fe kg-1", &
-                   default= 4.0e-6, scale=c2n)! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Sm",phyto(SMALL)%k_fe_2_n,       "k_fe_2_n_Sm",    units="mol Fe kg-1", &
-                   default= 2.0e-6, scale=c2n)! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Sm",phyto(SMALL)%fe_2_n_max,   "fe_2_n_max_Sm",  units="mol Fe kg-1", &
-                   default= 50.0e-6, scale=c2n)! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Md", phyto(MEDIUM)%fe_2_n_max, "fe_2_n_max_Md",  units="mol Fe kg-1", &
-                   default= 250.0e-6, scale=c2n)! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Lg", phyto(LARGE)%fe_2_n_max,  "fe_2_n_max_Lg",  units="mol Fe kg-1", &
-                   default= 500.0e-6, scale=c2n)! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Di", phyto(DIAZO)%fe_2_n_max,  "fe_2_n_max_Di",  units="mol Fe kg-1", &
-                   default= 500.0e-6, scale=c2n)! mol Fe mol N-1
-    call get_param(param_file, "generic_COBALT", "fe_2_n_upt_fac", cobalt%fe_2_n_upt_fac,   "fe_2_n_upt_fac", units="mol Fe kg-1", default= 60.0e-6) ! mol Fe mol N-1
+    ! Nitrogen uptake and limitation parameters
+    call get_param(param_file, "generic_COBALT", "k_nh4_Di", phyto(DIAZO)%k_nh4, &
+                   "half-saturation for diazotroph ammonium uptake", units="mol NH4 kg-1", default=1.0e-7)
+    call get_param(param_file, "generic_COBALT", "k_nh4_Lg", phyto(LARGE)%k_nh4, &
+                   "half-saturation for large phytoplankton ammonium uptake and growth limitation", &
+                   units="mol NH4 kg-1", default=5.0e-8)
+    call get_param(param_file, "generic_COBALT", "k_nh4_Md", phyto(MEDIUM)%k_nh4, &
+                   "half-saturation for medium phytoplankton ammonium uptake and growth limitation", &
+                   units="mol NH4 kg-1", default=2.0e-8)
+    call get_param(param_file, "generic_COBALT", "k_nh4_Sm", phyto(SMALL)%k_nh4, &
+                   "half-saturation for small phytoplankton ammonium uptake and growth limitation", &
+                   units="mol NH4 kg-1", default=1.0e-8)
+    call get_param(param_file, "generic_COBALT", "k_no3_Di", phyto(DIAZO)%k_no3, &
+                   "half-saturation for diazotroph nitrate uptake", units="mol NO3 kg-1", default=5.0e-6)
+    call get_param(param_file, "generic_COBALT", "k_no3_Lg", phyto(LARGE)%k_no3, &
+                   "half-saturation for large phytoplankton nitrate uptake and growth limitation", &
+                   units="mol NO3 kg-1", default=2.5e-6)
+    call get_param(param_file, "generic_COBALT", "k_no3_Md", phyto(MEDIUM)%k_no3, &
+                   "half-saturation for medium phytoplankton nitrate uptake and growth limitation", &
+                   units="mol NO3 kg-1", default=1.0e-6)
+    call get_param(param_file, "generic_COBALT", "k_no3_Sm", phyto(SMALL)%k_no3, &
+                   "half-saturation for small phytoplankton nitrate uptake and growth limitation", &
+                   units="mol NO3 kg-1", default=5.0e-7)
+    ! Phosphate uptake and limitation parameters
+    call get_param(param_file, "generic_COBALT", "k_po4_Di", phyto(DIAZO)%k_po4, &
+                   "half-saturation for diazotroph phosphate uptake and limitation", units="mol PO4 kg-1", &
+                   default=1.0e-7)
+    call get_param(param_file, "generic_COBALT", "k_po4_Lg", phyto(LARGE)%k_po4, &
+                  "half-saturation for large phytoplankton phosphate uptake and growth limitation", &
+                  units="mol PO4 kg-1", default=5.0e-8)
+    call get_param(param_file, "generic_COBALT", "k_po4_Md", phyto(MEDIUM)%k_po4, &
+                   "half-saturation for medium phytoplankton phosphate uptake and growth limitation", &
+                   units="mol PO4 kg-1", default=2.0e-8)
+    call get_param(param_file, "generic_COBALT", "k_po4_Sm", phyto(SMALL)%k_po4, &
+                   "half-saturation for small phytoplankton phosphate uptake and growth limitation", &
+                   units="mol PO4 kg-1", default=1.0e-8)
+    ! Diatom-relevant Silica uptake and Si:N parameters only needed for medium and large phytoplankton
+    call get_param(param_file, "generic_COBALT", "k_sio4_Lg",phyto(LARGE)%k_sio4, &
+                   "half-saturation for large phytoplankton silicate uptake and Si:N ratio", units="mol SiO4 kg-1", &
+                   default=2.0e-6)
+    call get_param(param_file, "generic_COBALT", "k_sio4_Md",phyto(MEDIUM)%k_sio4, &
+                   "half-saturation for medium phytoplankton silicate uptake and Si:N ratio", units="mol SiO4 kg-1", &
+                   default=1.0e-6)
+    ! Iron uptake and limitation parameters
+    call get_param(param_file, "generic_COBALT", "k_fed_Di", phyto(DIAZO)%k_fed, &
+                   "half-saturation constant for diazotroph iron uptake and growth limitation", units="mol Fed kg-1", &
+                   default=4.0e-9)
+    call get_param(param_file, "generic_COBALT", "k_fed_Lg", phyto(LARGE)%k_fed, &
+                   "half-saturation for large phytoplankton iron uptake and growth limitation", units="mol Fed kg-1", &
+                   default=2.0e-9)
+    call get_param(param_file, "generic_COBALT", "k_fed_Md", phyto(MEDIUM)%k_fed, &
+                   "half-saturation for medium phytoplankton iron uptake and growth limitation", units="mol Fed kg-1", &
+                   default=8.0e-10)
+    call get_param(param_file, "generic_COBALT", "k_fed_Sm", phyto(SMALL)%k_fed, &
+                   "half-saturation for small phytoplankton iron uptake and growth limitation", units="mol Fed kg-1", &
+                   default=4.0e-10)
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Di", phyto(DIAZO)%k_fe_2_n, &
+                   "internal iron quota half-saturation for diazotroph growth", units="mol Fe (mol N)-1", &
+                   default=12.0e-6, scale=c2n)
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Lg", phyto(LARGE)%k_fe_2_n, &
+                   "internal iron quota half-saturation for large phytoplankton growth", units="mol Fe (mol N)-1", &
+                   default=10.0e-6, scale=c2n)
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Md", phyto(MEDIUM)%k_fe_2_n, &
+                   "internal iron quota half-saturation for medium phytoplankton growth", units="mol Fe (mol N)-1", &
+                   default=4.0e-6, scale=c2n)
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Sm",phyto(SMALL)%k_fe_2_n, & 
+                   "internal iron quota half-saturation for small phytoplankton growth", units="mol Fe (mol N)-1", &
+                   default=2.0e-6, scale=c2n)
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Di", phyto(DIAZO)%fe_2_n_max, &
+                   "maximum internal iron quota for diazotrophs",  units="mol Fe (mol N)-1", &
+                   default=500.0e-6, scale=c2n)
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Lg", phyto(LARGE)%fe_2_n_max, &
+                   "maximum internal iron quota for large phytoplankton",  units="mol Fe (mol N)-1", &
+                   default=500.0e-6, scale=c2n)
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Md", phyto(MEDIUM)%fe_2_n_max, &
+                   "maximum internal iron quota for medium phytoplankton",  units="mol Fe (mol N)-1", &
+                   default=250.0e-6, scale=c2n)
+    call get_param(param_file, "generic_COBALT", "fe_2_n_max_Sm",phyto(SMALL)%fe_2_n_max, &
+                   "maximum internal iron quota for small phytoplankton",  units="mol Fe (mol N)-1", &
+                   default=50.0e-6, scale=c2n)
+    call get_param(param_file, "generic_COBALT", "fe_2_n_upt_fac", cobalt%fe_2_n_upt_fac, &
+                   "scaling factor for iron uptake relative to maximum photosynthesis", &
+                   units="mol Fe (mol N)-1", default=60.0e-6)
     !
     !-----------------------------------------------------------------------
     ! Phytoplankton light limitation/growth rate
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "alpha_Di_hl", phyto(DIAZO)%alpha_hl,  "alpha_Di_hl", units="g C g chl-1 s-1", &
-                   default= 0.4e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Lg_hl", phyto(LARGE)%alpha_hl,  "alpha_Lg_hl", units="g C g chl-1 s-1", &
-                   default= 0.4e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Md_hl", phyto(MEDIUM)%alpha_hl, "alpha_Md_hl", units="g C g chl-1 s-1", &
-                   default= 0.8e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Sm_hl", phyto(SMALL)%alpha_hl,  "alpha_Sm_hl", units="g C g chl-1 s-1", &
-                   default= 1.6e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Di_ll", phyto(DIAZO)%alpha_ll,  "alpha_Di_ll", units="g C g chl-1 s-1", &
-                   default= 0.8e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Lg_ll", phyto(LARGE)%alpha_ll,  "alpha_Lg_ll", units="g C g chl-1 s-1", &
-                   default= 0.8e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Md_ll", phyto(MEDIUM)%alpha_ll, "alpha_Md_ll", units="g C g chl-1 s-1", & 
-                   default= 1.6e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
-    call get_param(param_file, "generic_COBALT", "alpha_Sm_ll", phyto(SMALL)%alpha_ll,  "alpha_Sm_ll", units="g C g chl-1 s-1", &
-                   default= 3.2e-5, scale = micromolQpersec2W )! g C g Chl-1 sec-1 (W m-2)-1
-
-    call get_param(param_file, "generic_COBALT", "kappa_eppley",        cobalt%kappa_eppley,            "kappa_eppley",        units="deg C-1",         default= 0.063)                   ! deg C-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Di_hl", phyto(DIAZO)%P_C_max_hl, "P_C_max_Di_hl", units="day-1", &
-                   default= 0.6, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Lg_hl", phyto(LARGE)%P_C_max_hl, "P_C_max_Lg_hl", units="day-1", &
-                   default= 1.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Md_hl", phyto(MEDIUM)%P_C_max_hl,"P_C_max_Md_hl", units="day-1", &
-                   default= 1.1, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Sm_hl", phyto(SMALL)%P_C_max_hl, "P_C_max_Sm_hl", units="day-1", &
-                   default= 1.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Di_ll", phyto(DIAZO)%P_C_max_ll, "P_C_max_Di_ll", units="day-1", &
-                   default= 0.3, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Lg_ll", phyto(LARGE)%P_C_max_ll, "P_C_max_Lg_ll", units="day-1", &
-                   default= 0.5, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Md_ll", phyto(MEDIUM)%P_C_max_ll,"P_C_max_Md_ll", units="day-1", &
-                   default= 0.55, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "P_C_max_Sm_ll", phyto(SMALL)%P_C_max_ll, "P_C_max_Sm_ll", units="day-1", &
-                   default= 0.5, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "numlightadapt",       cobalt%numlightadapt,           "numlightadapt",       units="",                default= 10)               ! dimensionless
-    call get_param(param_file, "generic_COBALT", "thetamax_Di",         phyto(DIAZO)%thetamax,          "thetamax_Di",         units="g chl g C-1",     default= 0.035)                  ! g Chl g C-1
-    call get_param(param_file, "generic_COBALT", "thetamax_Lg",         phyto(LARGE)%thetamax,          "thetamax_Lg",         units="g chl g C-1",     default= 0.07)                  ! g Chl g C-1
-    call get_param(param_file, "generic_COBALT", "thetamax_Md",         phyto(MEDIUM)%thetamax,         "thetamax_Md",         units="g chl g C-1",     default= 0.045)                 ! g Chl g C-1
-    call get_param(param_file, "generic_COBALT", "thetamax_Sm",         phyto(SMALL)%thetamax,          "thetamax_Sm",         units="g chl g C-1",     default= 0.035)                  ! g Chl g C-1
-    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Di", phyto(DIAZO)%bresp_frac_mixed,  "bresp_frac_mixed_Di", units="",                default= 0.02)   ! none
-    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Lg", phyto(LARGE)%bresp_frac_mixed,  "bresp_frac_mixed_Lg", units="",                default= 0.02)   ! none
-    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Md", phyto(MEDIUM)%bresp_frac_mixed, "bresp_frac_mixed_Md", units="",                default= 0.02)  ! none
-    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Sm", phyto(SMALL)%bresp_frac_mixed,  "bresp_frac_mixed_Sm", units="",                default= 0.02)   ! none
-    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Di", phyto(DIAZO)%bresp_frac_strat,  "bresp_frac_strat_Di", units="",                default= 0.01)   ! none
-    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Lg", phyto(LARGE)%bresp_frac_strat,  "bresp_frac_strat_Lg", units="",                default= 0.01)   ! none
-    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Md", phyto(MEDIUM)%bresp_frac_strat, "bresp_frac_strat_Md", units="",                default= 0.01)  ! none
-    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Sm", phyto(SMALL)%bresp_frac_strat,  "bresp_frac_strat_Sm", units="",                default= 0.01)   ! none
-    call get_param(param_file, "generic_COBALT", "sink_max_Di",         phyto(DIAZO)%sink_max,          "sink_max_Di",         units="m day-1", &
-                   default= 1.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "sink_max_Lg",         phyto(LARGE)%sink_max,          "sink_max_Lg",         units="m day-1", &
-                   default= 5.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "sink_max_Md",         phyto(MEDIUM)%sink_max,         "sink_max_Md",         units="m day-1", &
-                   default= 1.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "sink_max_Sm",         phyto(SMALL)%sink_max,          "sink_max_Sm",         units="m day-1", &
-                   default= 0.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "thetamin",            cobalt%thetamin,                "thetamin",            units="g chl g C-1", default= 0.002) ! g Chl g C-1
-    call get_param(param_file, "generic_COBALT", "zeta",                cobalt%zeta,                    "zeta",                units="",            default= 0.05)  ! dimensionless
-    call get_param(param_file, "generic_COBALT", "par_adj",             cobalt%par_adj,                 "par_adj",             units="",            default= 0.83)  ! dimensionless
-    call get_param(param_file, "generic_COBALT", "gamma_irr_aclm",      cobalt%gamma_irr_aclm,          "gamma_irr_aclm",      units="day-1", &
-                   default= 1.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "gamma_mu_mem",        cobalt%gamma_mu_mem,            "gamma_mu_mem",        units="day-1", &
-                   default= 1.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "ml_aclm_efold",       cobalt%ml_aclm_efold,           "ml_aclm_efold",       units="",            default= 2.5)   ! dimensionless
-    call get_param(param_file, "generic_COBALT", "zmld_ref",            cobalt%zmld_ref,                "zmld_ref",            units="m",           default= 10.0)  ! m
-    call get_param(param_file, "generic_COBALT", "densdiff_mld",        cobalt%densdiff_mld,            "densdiff_mld",        units="kg m-3",      default= 0.03)  ! kg m-3
-    call get_param(param_file, "generic_COBALT", "irrad_day_thresh",    cobalt%irrad_day_thresh,        "irrad_day_thresh",    units="watts m-2",   default= 1.0 )  ! watts m-2
-    call get_param(param_file, "generic_COBALT", "do_case2_mod",        cobalt%do_case2_mod, &
-                   "When ture, modify the opacity of case 2 (coastal) waters"//&
-                   "which are identified based on a temperature and depth threshold", default=.false. )
+    ! COBALT's photosynthesis calculation is based on Geider, MacIntyre and Kana (1997).  Light energy in this GMK97,
+    ! like many of those in biological oceanography, is measured in micromoles of photons - or "quanta" - per square
+    ! meter.  These units are retained in the input file to make it easier to relate model values to the literature,
+    ! but they must be converted to Joules per square meter to be integrated with the ocean model.  The conversion
+    ! from photons to joules varies with the light spectrum but Smith and Morel (1974) found that, for 2.77e18 quanta
+    ! sec-1 m-2 yielded 1 Joule sec-1 m-2 (i.e., a Watt). There are 6.02e17 quanta per micromol, so this corresponds to
+    ! 4.60 micromol quanta per Joule.
+    !
+    ! In the Geider formulation, the biomass-specific growth (sec-1) ~ alpha*theta*Irradiance. Comparing Geider's
+    ! calculation to COBALT's in MOM6 - which tracks irradiance in watts m-2, or Joules m-2 sec-1, confirms unit
+    ! consistency:
+    !
+    !  growth                alpha                   *    theta      *       Irradiance 
+    !  sec-1 = g C (g Chl)-1 (micromol quanta m-2)-1 * g Chl (g C)-1 * micromol quanta m-2 sec-1     (Geider)
+    !  sec-1 =     g C (g Chl)-1 (Joule m-2)-1       * g Chl (g C)-1 *    Joules m-2 sec-1           (COBALT)
+    !
+    call get_param(param_file, "generic_COBALT", "alpha_Di_hl", phyto(DIAZO)%alpha_hl, &
+                   "Chl-a specific initial slope of photosynth-irrad curve, high-light adapted diazotrophs", &
+                   units="g C g Chl-1 (micromol quanta m-2)-1", default=0.4e-5, scale = micromolQ2Joule)
+    call get_param(param_file, "generic_COBALT", "alpha_Lg_hl", phyto(LARGE)%alpha_hl, &
+                   "Chl-a specific initial slope of photosynth-irrad curve, high-light adapted large phytoplankton", &
+                   units="g C g Chl-1 (micromol quanta m-2)-1", default=0.4e-5, scale = micromolQ2Joule)
+    call get_param(param_file, "generic_COBALT", "alpha_Md_hl", phyto(MEDIUM)%alpha_hl, &
+                   "Chl-a specific initial slope of photosynth-irrad curve, high-light adapted medium phytoplankton", &
+                   units="g C g Chl-1 (micromol quanta m-2)-1",default=0.8e-5, scale = micromolQ2Joule)
+    call get_param(param_file, "generic_COBALT", "alpha_Sm_hl", phyto(SMALL)%alpha_hl, &
+                   "Chl-a specific initial slope of photosynth-irrad curve, high-light adapted small phytoplankton", &
+                   units="g C g Chl-1 (micromol quanta m-2)-1", default=1.6e-5, scale = micromolQ2Joule)
+    call get_param(param_file, "generic_COBALT", "alpha_Di_ll", phyto(DIAZO)%alpha_ll, &
+                   "Chl-a specific initial slope of photosynth-irrad curve, low-light adapted diazotrophs", &
+                   units="g C g Chl-1 (micromol quanta m-2)-1", default=0.8e-5, scale = micromolQ2Joule)
+    call get_param(param_file, "generic_COBALT", "alpha_Lg_ll", phyto(LARGE)%alpha_ll, &
+                   "Chl-a specific initial slope of photosynth-irrad curve, low-light adapted large phytoplankton", &
+                   units="g C g Chl-1 (micromol quanta m-2)-1", default=0.8e-5, scale = micromolQ2Joule)
+    call get_param(param_file, "generic_COBALT", "alpha_Md_ll", phyto(MEDIUM)%alpha_ll, &
+                   "Chl-a specific initial slope of photosynth-irrad curve, low-light adapted medium phytoplankton", &
+                   units="g C g Chl-1 (micromol quanta m-2)-1",default=1.6e-5, scale = micromolQ2Joule)
+    call get_param(param_file, "generic_COBALT", "alpha_Sm_ll", phyto(SMALL)%alpha_ll, &
+                   "Chl-a specific initial slope of photosynth-irrad curve, low-light adapted small phytoplankton", &
+                   units="g C g Chl-1 (micromol quanta m-2)-1", default=3.2e-5, scale = micromolQ2Joule)
+    ! Phytoplankton Maximum photosynthetic rate parameters
+    call get_param(param_file, "generic_COBALT", "kappa_eppley", cobalt%kappa_eppley, &
+                   "exponential temperature dependence of phytoplankton rates", units="deg C-1",default=0.063)
+    ! Photosynthetic rates entered in units of day-1 and converted to sec-1 for model calculations.  I_sperd is 1 over
+    ! seconds per day (i.e., 1/86400)
+    call get_param(param_file, "generic_COBALT", "P_C_max_Di_hl", phyto(DIAZO)%P_C_max_hl, &
+                   "maximum photosynthesis rate at 0 deg. C, high-light adapted diazotrophs", units="day-1", &
+                   default=0.6, scale = I_sperd)
+    call get_param(param_file, "generic_COBALT", "P_C_max_Lg_hl", phyto(LARGE)%P_C_max_hl, &
+                   "maximum photosynthesis rate at 0 deg. C, high-light adapted large phytoplankton", units="day-1", &
+                   default= 1.0, scale = I_sperd)
+    call get_param(param_file, "generic_COBALT", "P_C_max_Md_hl", phyto(MEDIUM)%P_C_max_hl, &
+                   "maximum photosynthesis rate at 0 deg. C, high-light adapted medium phytoplankton", units="day-1", &
+                   default= 1.1, scale = I_sperd)
+    call get_param(param_file, "generic_COBALT", "P_C_max_Sm_hl", phyto(SMALL)%P_C_max_hl, &
+                   "maximum photosynthesis rate at 0 deg. C, high-light adapted small phytoplankton", units="day-1", &
+                   default= 1.0, scale = I_sperd)
+    call get_param(param_file, "generic_COBALT", "P_C_max_Di_ll", phyto(DIAZO)%P_C_max_ll, &
+                   "maximum photosynthesis rate at 0 deg. C, low-light adapted diazotrophs", units="day-1", &
+                   default= 0.3, scale = I_sperd)
+    call get_param(param_file, "generic_COBALT", "P_C_max_Lg_ll", phyto(LARGE)%P_C_max_ll, &
+                   "maximum photosynthesis rate at 0 deg. C, low-light adapted large phytoplankton", units="day-1", &
+                   default= 0.5, scale = I_sperd)
+    call get_param(param_file, "generic_COBALT", "P_C_max_Md_ll", phyto(MEDIUM)%P_C_max_ll, &
+                   "maximum photosynthesis rate at 0 deg. C, low-light adapted medium phytoplankton", units="day-1", &
+                   default= 0.55, scale = I_sperd)
+    call get_param(param_file, "generic_COBALT", "P_C_max_Sm_ll", phyto(SMALL)%P_C_max_ll, &
+                   "maximum photosynthesis rate at 0 deg. C, low-light adapted small phytoplankton", units="day-1", &
+                   default= 0.5, scale = I_sperd)
+    call get_param(param_file, "generic_COBALT", "numlightadapt", cobalt%numlightadapt, &
+                   "number of light adaptation ecotypes", units="number of ecotypes", default= 10)
+    ! chlorophyll to carbon
+    call get_param(param_file, "generic_COBALT", "thetamax_Di", phyto(DIAZO)%thetamax, & 
+                   "maximum chlorophyll to carbon ratio for diazotrophs", units="g chl g C-1", default=0.035)
+    call get_param(param_file, "generic_COBALT", "thetamax_Lg", phyto(LARGE)%thetamax, &
+                   "maximum chlorophyll to carbon ratio for large phytoplankton", units="g chl g C-1", default=0.07)
+    call get_param(param_file, "generic_COBALT", "thetamax_Md", phyto(MEDIUM)%thetamax, &
+                   "maximum chlorophyll to carbon ratio for medium phytoplankton", units="g chl g C-1", default=0.045)
+    call get_param(param_file, "generic_COBALT", "thetamax_Sm", phyto(SMALL)%thetamax, &
+                   "maximum chlorophyll to carbon ratio for small phytoplankton", units="g chl g C-1", default=0.035)
+    ! basal respiration rates
+    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Di", phyto(DIAZO)%bresp_frac_mixed, &
+                   "diazotroph basal respiration rate in mixed layer as fraction of max photosynthesis", &
+                   units="none", default=0.02)
+    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Lg", phyto(LARGE)%bresp_frac_mixed, &
+                   "large phytoplankton basal respiration rate in mixed layer as fraction of max photosynthesis", &
+                   units="none", default=0.02)
+    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Md", phyto(MEDIUM)%bresp_frac_mixed, &
+                   "medium phytoplankton basal respiration rate in mixed layer as fraction of max photosynthesis", &
+                   units="none", default=0.02)
+    call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Sm", phyto(SMALL)%bresp_frac_mixed, &
+                   "small phytoplankton basal respiration rate in mixed layer as fraction of max photosynthesis", &
+                   units="none", default=0.02)
+    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Di", phyto(DIAZO)%bresp_frac_strat, &
+                   "diazotroph basal respiration rate below mixed layer as fraction of max photosynthesis", &
+                   units="none", default=0.01)
+    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Lg", phyto(LARGE)%bresp_frac_strat, &
+                   "large phytoplankton basal respiration rate below mixed layer as fraction of max photosynthesis", & 
+                   units="none", default=0.01)
+    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Md", phyto(MEDIUM)%bresp_frac_strat, & 
+                   "medium phytoplankton basal respiration rate below mixed layer as fraction of max photosynthesis", &
+                   units="none", default=0.01)
+    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Sm", phyto(SMALL)%bresp_frac_strat, &
+                   "small phytoplankton basal respiration rate below mixed layer as fraction of max photosynthesis", &
+                   units="none", default=0.01)
+    ! Phytoplankton maximum sinking rates (non-aggregated).  These are entered as m day-1 and converted to m sec-1
+    call get_param(param_file, "generic_COBALT", "sink_max_Di", phyto(DIAZO)%sink_max, &
+                   "diazotroph max sink rate (non-aggregated)", units="m day-1", default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "sink_max_Lg", phyto(LARGE)%sink_max, &
+                   "large phytoplankton max sink rate (non-aggregated)", units="m day-1", default=5.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "sink_max_Md", phyto(MEDIUM)%sink_max, &
+                   "medium phytoplankton max sink rate (non-aggregated)", units="m day-1", default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "sink_max_Sm", phyto(SMALL)%sink_max, &
+                   "small phytoplankton max sink rate (non-aggregated)", units="m day-1", default=0.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "thetamin", cobalt%thetamin, "minimum chlorophyll to carbon ratio", &
+                   units="g chl g C-1", default=0.002)
+    call get_param(param_file, "generic_COBALT", "zeta", cobalt%zeta, "cost of biosynthesis", units="none", &
+                   default=0.05)
+    ! Baseline MOM6 assumption is that 57% of incoming is in shortwave/visible spectrum.  Multiplication by par_adj
+    ! creates a photosynthetically active fraction of 0.83*0.57 = 0.47, consistent with Baker and Frouin (1987)
+    call get_param(param_file, "generic_COBALT", "par_adj", cobalt%par_adj, &
+                   "photosynthetically active fraction of shortwave radiation", units="none", default= 0.83)
+    call get_param(param_file, "generic_COBALT", "gamma_irr_aclm", cobalt%gamma_irr_aclm, &
+                   "time scale for determining the photoacclimation irradiance", units="day-1", &
+                   default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "gamma_mu_mem", cobalt%gamma_mu_mem, &
+                   "time scale for determining growth rates for phytoplankton stress calculations", units="day-1", &
+                   default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "ml_aclm_efold", cobalt%ml_aclm_efold, &
+                   "number of e-folding depths for photoacclimation in deep mixed layers", units="none", default=2.5)
+    ! Photoacclimation mixed layer parameters will be moved to MOM6
+    call get_param(param_file, "generic_COBALT", "zmld_ref", cobalt%zmld_ref, &
+                   "reference depth for mixed layer calculation", units="m", default=10.0)
+    call get_param(param_file, "generic_COBALT", "densdiff_mld", cobalt%densdiff_mld, &
+                   "potential density difference for determining mixed layer depth", units="kg m-3", default= 0.03)
+    ! Make shallow/fresh waters a bit more opaque to PAR.  This is false by default
+    call get_param(param_file, "generic_COBALT", "do_case2_mod", cobalt%do_case2_mod, &
+                   "When true, modify the opacity of case 2 (coastal) waters"//&
+                   "which are identified based on a salinity and depth threshold", default=.false.)
     if (cobalt%do_case2_mod) then
       call get_param(param_file, "generic_COBALT", "case2_depth",    cobalt%case2_depth, &
-                     "Depth threshold to identify Case 2 water when using a modified opacity.", units="m",  default=30.0 )                  ! m
+                     "Depth threshold to identify Case 2 water when using a modified opacity.", units="m", &
+                     default=30.0)
       call get_param(param_file, "generic_COBALT", "case2_salt",     cobalt%case2_salt,  &
-                     "Salinity threshold to identify Case 2 water when using a modified opacity.", units="PSU", default=30.0 )                    ! PSU
-      call get_param(param_file, "generic_COBALT", "case2_opac_add", cobalt%case2_opac_add, &     ! m-1
-                     "Additional opactity added in Case 2 waters when using a modified opacity.", units="m-1", default=0.05 )
+                     "Salinity threshold to identify Case 2 water when using a modified opacity.", units="PSU", &
+                     default=30.0)
+      call get_param(param_file, "generic_COBALT", "case2_opac_add", cobalt%case2_opac_add, &
+                     "Additional opactity added in Case 2 waters when using a modified opacity.", units="m-1", &
+                     default=0.05)
     else
-      cobalt%case2_depth = 0.0                                                           ! m
-      cobalt%case2_salt = 0.0                                                            ! PSU
-      cobalt%case2_opac_add = 0.0                                                        ! m-1
+      cobalt%case2_depth = 0.0       ! m
+      cobalt%case2_salt = 0.0        ! PSU
+      cobalt%case2_opac_add = 0.0    ! m-1
     endif
-    call get_param(param_file, "generic_COBALT", "min_daylength",       cobalt%min_daylength,           "min_daylength",       units="hours",       default= 6.0 )                 ! hours
-    call get_param(param_file, "generic_COBALT", "refuge_conc",         cobalt%refuge_conc,             "refuge_conc",         units="mol kg-1",    default= 1.0e-10)                  ! moles N kg-1
+    call get_param(param_file, "generic_COBALT", "min_daylength", cobalt%min_daylength, &
+                   "minimum daylength for calculating the daytime irradiance", units="hours", default= 6.0)
+    call get_param(param_file, "generic_COBALT", "refuge_conc", cobalt%refuge_conc, &
+                   "refuge concentration for grazing and loss terms", units="mol N kg-1", default= 1.0e-10)
     !
     !-----------------------------------------------------------------------
     ! Nitrogen fixation inhibition parameters
@@ -3029,8 +3152,8 @@ contains
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        do n = 1, NUM_PHYTO  !{
           if (phyto(n)%q_fe_2_n(i,j,k).lt.phyto(n)%fe_2_n_max) then
-             ! Scaling fe uptake with the maximum iron-limited photosynthesis allows for luxury iron uptake
-             ! when other nutrients are limiting but iron is not
+             ! Scaling fe uptake with the maximum photosynthesis allows for luxury iron uptake when other nutrients
+             ! are limiting but iron is not
              phyto(n)%juptake_fe(i,j,k) = phyto(n)%P_C_max(i,j,k)*cobalt%expkT(i,j,k)*phyto(n)%f_n(i,j,k)* &
                 phyto(n)%felim(i,j,k)*cobalt%fe_2_n_upt_fac
              phyto(n)%jexuloss_fe(i,j,k) = 0.0
