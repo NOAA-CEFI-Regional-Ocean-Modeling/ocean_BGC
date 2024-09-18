@@ -82,7 +82,6 @@ module cobalt_types
      real ::  alpha_hl          !< Chlorophyll a-specific initial slope of the photosynthesis-irradiance curve high level (g C g Chl-1 sec-1 (W m-2)-1)
      real ::  alpha_ll          !< Chlorophyll a-specific initial slope of the photosynthesis-irradiance curve low level (g C g Chl-1 sec-1 (W m-2)-1)
      real ::  fe_2_n_max        !< Maximum iron to nitrogen ratio (mol Fe mol N-1)
-     real ::  p_2_n_static      !< Fixed P:N ratio in phytoplankton (mol P mol N-1)
      real ::  p_2_n_min         !< Minimum P:N ratio (mol P mol N-1)
      real ::  p_2_n_slope       !< P:N slope (mol P mol N-1 mol P-1 kg)
      real ::  p_2_n_max         !< Maximum P:N ratio (mol P mol N-1)
@@ -95,7 +94,6 @@ module cobalt_types
      real ::  P_C_max_hl        !< Light-saturated carbon-specific photosynthesis rate high level (s-1)
      real ::  P_C_max_ll        !< Light-saturated carbon-specific photosynthesis rate low level  (s-1)
      real ::  si_2_n_max        !< Maximum silica to nitrogen ratio (mol Si mol N-1)
-     real ::  si_2_n_static     !< Fixed SI:N ratio in phytoplankton (mol Si mol N-1)
      real ::  thetamax          !< Maximum chlorophyll to carbon ratio (g Chl g C-1)
      real ::  bresp_frac_mixed  !< basal respiration rate in mixed layer (dimensionless)
      real ::  bresp_frac_strat  !< basal respiration rate outside mixed layer (dimensionless)
@@ -418,7 +416,6 @@ module cobalt_types
           force_update_fluxes,&                ! If OCMIP2 tracers fluxes should be updated every coupling timesteps
                                                !    when update_from_source is not called every coupling timesteps
                                                !    as is the case with MOM6  THERMO_SPANS_COUPLING option
-          p_2_n_static,     &                  ! If P:N is fixed in phytoplankton
           cased_steady,     &                  ! steady state approximation for cased
           tracer_debug
 
