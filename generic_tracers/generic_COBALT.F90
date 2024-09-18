@@ -594,28 +594,28 @@ contains
                    default=4.0e-10)
     call get_param(param_file, "generic_COBALT", "k_fe_2_n_Di", phyto(DIAZO)%k_fe_2_n, &
                    "internal iron quota half-saturation for diazotroph growth", units="mol Fe (mol N)-1", &
-                   default=12.0e-6, scale=c2n)
+                   default=12.0e-6*c2n)
     call get_param(param_file, "generic_COBALT", "k_fe_2_n_Lg", phyto(LARGE)%k_fe_2_n, &
                    "internal iron quota half-saturation for large phytoplankton growth", units="mol Fe (mol N)-1", &
-                   default=10.0e-6, scale=c2n)
+                   default=10.0e-6*c2n)
     call get_param(param_file, "generic_COBALT", "k_fe_2_n_Md", phyto(MEDIUM)%k_fe_2_n, &
                    "internal iron quota half-saturation for medium phytoplankton growth", units="mol Fe (mol N)-1", &
-                   default=4.0e-6, scale=c2n)
+                   default=4.0e-6*c2n)
     call get_param(param_file, "generic_COBALT", "k_fe_2_n_Sm",phyto(SMALL)%k_fe_2_n, & 
                    "internal iron quota half-saturation for small phytoplankton growth", units="mol Fe (mol N)-1", &
-                   default=2.0e-6, scale=c2n)
+                   default=2.0e-6*c2n)
     call get_param(param_file, "generic_COBALT", "fe_2_n_max_Di", phyto(DIAZO)%fe_2_n_max, &
                    "maximum internal iron quota for diazotrophs",  units="mol Fe (mol N)-1", &
-                   default=500.0e-6, scale=c2n)
+                   default=500.0e-6*c2n)
     call get_param(param_file, "generic_COBALT", "fe_2_n_max_Lg", phyto(LARGE)%fe_2_n_max, &
                    "maximum internal iron quota for large phytoplankton",  units="mol Fe (mol N)-1", &
-                   default=500.0e-6, scale=c2n)
+                   default=500.0e-6*c2n)
     call get_param(param_file, "generic_COBALT", "fe_2_n_max_Md", phyto(MEDIUM)%fe_2_n_max, &
                    "maximum internal iron quota for medium phytoplankton",  units="mol Fe (mol N)-1", &
-                   default=250.0e-6, scale=c2n)
+                   default=250.0e-6*c2n)
     call get_param(param_file, "generic_COBALT", "fe_2_n_max_Sm",phyto(SMALL)%fe_2_n_max, &
                    "maximum internal iron quota for small phytoplankton",  units="mol Fe (mol N)-1", &
-                   default=50.0e-6, scale=c2n)
+                   default=50.0e-6*c2n)
     call get_param(param_file, "generic_COBALT", "fe_2_n_upt_fac", cobalt%fe_2_n_upt_fac, &
                    "scaling factor for iron uptake relative to maximum photosynthesis", &
                    units="mol Fe (mol N)-1", default=60.0e-6)
