@@ -601,7 +601,7 @@ contains
     call get_param(param_file, "generic_COBALT", "k_fe_2_n_Md", phyto(MEDIUM)%k_fe_2_n, &
                    "internal iron quota half-saturation for medium phytoplankton growth", units="mol Fe (mol N)-1", &
                    default=4.0e-6*c2n)
-    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Sm",phyto(SMALL)%k_fe_2_n, & 
+    call get_param(param_file, "generic_COBALT", "k_fe_2_n_Sm",phyto(SMALL)%k_fe_2_n, &
                    "internal iron quota half-saturation for small phytoplankton growth", units="mol Fe (mol N)-1", &
                    default=2.0e-6*c2n)
     call get_param(param_file, "generic_COBALT", "fe_2_n_max_Di", phyto(DIAZO)%fe_2_n_max, &
@@ -784,53 +784,101 @@ contains
                    "refuge concentration for grazing and loss terms", units="mol N kg-1", default= 1.0e-10)
     !
     !-----------------------------------------------------------------------
-    ! Nitrogen fixation inhibition parameters
+    ! Parameters controlling the inhibition of nitrogen fixation by oxygen
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "o2_inhib_Di_pow", cobalt%o2_inhib_Di_pow, "o2_inhib_Di_pow", units="mol O2-1 m3",   default=4.0)                 ! mol O2-1 m3
-    call get_param(param_file, "generic_COBALT", "o2_inhib_Di_sat", cobalt%o2_inhib_Di_sat, "o2_inhib_Di_sat", units="mol kg-1",      default=3.0e-4)              ! mol O2 kg-1
+    call get_param(param_file, "generic_COBALT", "o2_inhib_Di_pow", cobalt%o2_inhib_Di_pow, &
+                   "exponent controlling the shape of the function inhibiting nitrogen fixation at high o2", &
+                   units="none",   default=4.0)
+    call get_param(param_file, "generic_COBALT", "o2_inhib_Di_sat", cobalt%o2_inhib_Di_sat, &
+            "oxygen concentration where nitrogen fixation is 1/2 maximal values", units="mol O2 kg-1", default=3.0e-4)
     !
     !-----------------------------------------------------------------------
-    ! Other stoichiometry
+    ! Plankton stoichiometry
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "p_2_n_static",     cobalt%p_2_n_static,          "p_2_n_static",    default=.false. )
-    call get_param(param_file, "generic_COBALT", "c_2_n",            cobalt%c_2_n,                 "c_2_n",           units="", default= 106.0 / 16.0)
-    call get_param(param_file, "generic_COBALT", "p_2_n_static_Di",  phyto(DIAZO)%p_2_n_static,    "p_2_n_static_Di", units="mol P mol N-1", default= 1.0/40.0 )         ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_static_Lg",  phyto(LARGE)%p_2_n_static,    "p_2_n_static_Lg", units="mol P mol N-1", default= 1.0/14.0 )         ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_static_Md",  phyto(MEDIUM)%p_2_n_static,   "p_2_n_static_Md", units="mol P mol N-1", default= 1.0/20.0 )        ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_static_Sm",  phyto(SMALL)%p_2_n_static,    "p_2_n_static_Sm", units="mol P mol N-1", default= 1.0/24.0 )         ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_min_Di",     phyto(DIAZO)%p_2_n_min,       "p_2_n_min_Di",    units="mol P mol N-1", default= 1.0/40.0 )               ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Di",   phyto(DIAZO)%p_2_n_slope,     "p_2_n_slope_Di",  units="mol P mol N-1 mol P-1 kg", default= 0.0*1.0e6)          ! mol P mol N-1 mol P-1 kg
-    call get_param(param_file, "generic_COBALT", "p_2_n_max_Di",     phyto(DIAZO)%p_2_n_max,       "p_2_n_max_Di",    units="mol P mol N-1", default= 1.0/40.0 )               ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_min_Sm",     phyto(SMALL)%p_2_n_min,       "p_2_n_min_Sm",    units="mol P mol N-1", default= 1.0/31.0 )               ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Sm",   phyto(SMALL)%p_2_n_slope,     "p_2_n_slope_Sm",  units="mol P mol N-1 mol P-1 kg", default= 0.048*1.0e6)        ! mol P mol N-1 mol P-1 kg
-    call get_param(param_file, "generic_COBALT", "p_2_n_max_Sm",     phyto(SMALL)%p_2_n_max,       "p_2_n_max_Sm",    units="mol P mol N-1", default= 1.0/20.0 )               ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_min_Md",     phyto(MEDIUM)%p_2_n_min,      "p_2_n_min_Md",    units="mol P mol N-1", default= 1.0/31.0 )              ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Md",   phyto(MEDIUM)%p_2_n_slope,    "p_2_n_slope_Md",  units="mol P mol N-1 mol P-1 kg", default= 0.048*1.0e6)       ! mol P mol N-1 mol P-1 kg
-    call get_param(param_file, "generic_COBALT", "p_2_n_max_Md",     phyto(MEDIUM)%p_2_n_max,      "p_2_n_max_Md",    units="mol P mol N-1", default= 1.0/16.0 )              ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_min_Lg",     phyto(LARGE)%p_2_n_min,       "p_2_n_min_Lg",    units="mol P mol N-1", default= 1.0/31.0 )               ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Lg",   phyto(LARGE)%p_2_n_slope,     "p_2_n_slope_Lg",  units="mol P mol N-1 mol P-1 kg", default= 0.048*1.0e6)        ! mol P mol N-1 mol P-1 kg
-    call get_param(param_file, "generic_COBALT", "p_2_n_max_Lg",     phyto(LARGE)%p_2_n_max,       "p_2_n_max_Lg",    units="mol P mol N-1", default= 1.0/14.0 )               ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "si_2_n_static_Lg", phyto(LARGE)%si_2_n_static,   "si_2_n_static_Lg",units="mol Si mol N-1", default= 2.0)            ! mol Si mol N-1
-    call get_param(param_file, "generic_COBALT", "si_2_n_static_Md", phyto(MEDIUM)%si_2_n_static,  "si_2_n_static_Md",units="mol Si mol N-1", default= 2.0)           ! mol Si mol N-1
-    call get_param(param_file, "generic_COBALT", "si_2_n_max_Lg",    phyto(LARGE)%si_2_n_max,      "si_2_n_max_Lg",   units="mol Si mol N-1", default= 3.0)                  ! mol Si mol N-1
-    call get_param(param_file, "generic_COBALT", "si_2_n_max_Lg",    phyto(MEDIUM)%si_2_n_max,     "si_2_n_max_Lg",   units="mol Si mol N-1", default= 1.0)                 ! mol Si mol N-1
+    call get_param(param_file, "generic_COBALT", "c_2_n", cobalt%c_2_n, "carbon to nitrogen ratio of organic matter", &
+                   units="mol C mol N-1", default= 106.0 / 16.0)
+    ! P:N ratios are simulated using the emergent negative relationship between phytoplankton N:P and the ambient PO4
+    ! concentration identified by Galbraith and Martiny (2015).  The default maximum N:P ratio, which is reached in low
+    ! P environments, is set to 31 (nearly twice the Redfield ratio).  Minimum N:P ratios were truncated to 
+    ! characteristic values for each size class (Finkel et al., 2010).  This allows the phytoplankton to use up excess
+    ! N when P is scarce (i.e., P frugality), but limits luxury uptake in PO4-rich regions and the low N:P ratios this
+    ! would generate.  Uncertainty in N:P ratios in such high PO4 concentrations is large.  Most of the highest PO4
+    ! concentrations in regional and global applications, furthermore, co-occur with even higher N concentrations. 
+    ! River mouths, for example, are often high N:P.  Other observations (Sterner and Elser, 2003, Hall et al., 2005)
+    ! suggest that such conditions would prevent low N:P ratios and support the truncation of those values in the
+    ! default settings.
+    !
+    ! Note that the default slope parameter (0.048) was derived from the binned lognormal mean regression (7.3 permil
+    ! per micromole PO4 L-1): 7.3 mole P/(1000 mole C)*0.001*106/16 = 0.048 mole P/mole N (micromol PO4 L-1)-1
+    !
+    ! Diazotrophs set to a constant default p2n value of 1:40 
+    !
+    ! References:
+    ! Galbraith and Martiny, 2015 (https://www.pnas.org/doi/full/10.1073/pnas.1423917112)
+    ! Finkel et al., 2010 (https://academic.oup.com/plankt/article/32/1/119/1492394)
+    ! Sterner and Elser, 2003 (https://www.degruyter.com/document/doi/10.1515/9781400885695/html)
+    ! Hall et al., 2005 (https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/04-1045)
+
+    call get_param(param_file, "generic_COBALT", "p_2_n_min_Di", phyto(DIAZO)%p_2_n_min, &
+                   "minimum diazotroph P:N ratio", units="mol P mol N-1", default= 1.0/40.0)
+    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Di", phyto(DIAZO)%p_2_n_slope, &
+                   "increase in diazotroph P:N ratio per unit phosphate concentration", &
+                   units="mol P mol N-1 mol PO4-1 kg", default=0.0)
+    call get_param(param_file, "generic_COBALT", "p_2_n_max_Di", phyto(DIAZO)%p_2_n_max, &
+                   "maximum diazotroph P:N ratio", units="mol P mol N-1", default= 1.0/40.0)
+    call get_param(param_file, "generic_COBALT", "p_2_n_min_Sm", phyto(SMALL)%p_2_n_min, &
+                   "minimum small phytoplankton P:N ratio", units="mol P mol N-1", default= 1.0/31.0)
+    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Sm", phyto(SMALL)%p_2_n_slope, &
+                   "increase in small phytoplankton P:N ratio per unit phosphate concentration", &
+                   units="mol P mol N-1 mol PO4-1 kg", default= 0.048*1.0e6)
+    call get_param(param_file, "generic_COBALT", "p_2_n_max_Sm", phyto(SMALL)%p_2_n_max, &
+                   "maximum small phytoplankton P:N ratio", units="mol P mol N-1", default= 1.0/20.0)
+    call get_param(param_file, "generic_COBALT", "p_2_n_min_Md", phyto(MEDIUM)%p_2_n_min, &
+                   "minimum medium phytoplankton P:N ratio", units="mol P mol N-1", default= 1.0/31.0)
+    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Md", phyto(MEDIUM)%p_2_n_slope, &
+                   "increase in medium phytoplankton P:N ratio per unit phosphate concentration", &
+                   units="mol P mol N-1 mol PO4-1 kg", default= 0.048*1.0e6)
+    call get_param(param_file, "generic_COBALT", "p_2_n_max_Md", phyto(MEDIUM)%p_2_n_max, &
+                   "maximum medium phytoplankton P:N ratio", units="mol P mol N-1", default= 1.0/16.0)
+    call get_param(param_file, "generic_COBALT", "p_2_n_min_Lg", phyto(LARGE)%p_2_n_min, &
+                   "minimum large phytoplankton P:N ratio", units="mol P mol N-1", default= 1.0/31.0)
+    call get_param(param_file, "generic_COBALT", "p_2_n_slope_Lg", phyto(LARGE)%p_2_n_slope, &
+                   "increase in large phytoplankton P:N ratio per unit phosphate concentration", &
+                   units="mol P mol N-1 mol PO4-1 kg", default= 0.048*1.0e6)
+    call get_param(param_file, "generic_COBALT", "p_2_n_max_Lg", phyto(LARGE)%p_2_n_max, &
+                   "maximum large phytoplankton P:N ratio",    units="mol P mol N-1", default= 1.0/14.0)
+    ! Maximum Si:N ratios based primarily on Sarthou et al., 2005 (https://doi.org/10.1016/j.seares.2004.01.007)
+    call get_param(param_file, "generic_COBALT", "si_2_n_max_Lg", phyto(LARGE)%si_2_n_max, &
+                   "maximum large phytoplankton silica to nitrogen ratio", units="mol Si mol N-1", default= 3.0)
+    call get_param(param_file, "generic_COBALT", "si_2_n_max_Md", phyto(MEDIUM)%si_2_n_max, &
+                   "maximum medium phytoplankton silica to nitrogen ratio", units="mol Si mol N-1", default= 1.0)
     !
     !-----------------------------------------------------------------------
-    ! Zooplankton Stoichiometry - presently static
+    ! Zooplankton Stoichiometry
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "q_p_2_n_smz",zoo(1)%q_p_2_n,"q_p_2_n_smz", units="mol P mol N-1", default= 1.0/20.0)          ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "q_p_2_n_mdz",zoo(2)%q_p_2_n,"q_p_2_n_mdz", units="mol P mol N-1", default= 1.0/18.0)          ! mol P mol N-1
-    call get_param(param_file, "generic_COBALT", "q_p_2_n_lgz",zoo(3)%q_p_2_n,"q_p_2_n_lgz", units="mol P mol N-1", default= 1.0/16.0)          ! mol P mol N-1
+    ! Zooplankton stoichiometry is currently static.  The lower values for smaller zooplankton reflect the tendency of
+    ! their prey to have lower P:N ratios.
+    !
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_smz", zoo(1)%q_p_2_n, "Small zooplankton P:N", &
+                   units="mol P mol N-1", default= 1.0/20.0)
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_mdz", zoo(2)%q_p_2_n, "Medium zooplankton P:N", &
+                   units="mol P mol N-1", default= 1.0/18.0)
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_lgz", zoo(3)%q_p_2_n, "Large zooplankton P:N", & 
+                   units="mol P mol N-1", default= 1.0/16.0)
     !
     !-----------------------------------------------------------------------
-    ! Bacteria Stoichiometry - presently static
+    ! Bacteria Stoichiometry
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "q_p_2_n_bact",bact(1)%q_p_2_n, "q_p_2_n_bact", units="mol P mol N-1", default=1.0/16.0)        ! mol P mol N-1
+    ! Bacterial stoichiometry currently static and set to Redfield, though some evidence suggests they may be more
+    ! P-rich and dynamic (Kirchman, D. (2000).  Uptake and Regeneration of Inorganic Nutrients by Marine Heterotrophic
+    ! Bacteria.  In "Microbial Ecology of the Oceans", Chapter 9.
     !
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_bact", bact(1)%q_p_2_n, "Bacteria P:N", &
+                   units="mol P mol N-1", default=1.0/16.0)
     !
     !-----------------------------------------------------------------------
     ! Phytoplankton aggregation
@@ -2760,7 +2808,6 @@ contains
        do n = 1,NUM_PHYTO    !{
           phyto(n)%q_fe_2_n(i,j,k) = max(0.0, phyto(n)%f_fe(i,j,k)/ &
                  max(epsln,phyto(n)%f_n(i,j,k)))
-          !phyto(n)%q_p_2_n(i,j,k) = phyto(n)%p_2_n_static
           phyto(n)%q_p_2_n(i,j,k) = max(0.0, phyto(n)%f_p(i,j,k)/ &
                  max(epsln,phyto(n)%f_n(i,j,k)))
           phyto(n)%uptake_p_2_n(i,j,k) = min(phyto(n)%p_2_n_min + phyto(n)%p_2_n_slope*cobalt%f_po4(i,j,k), &
