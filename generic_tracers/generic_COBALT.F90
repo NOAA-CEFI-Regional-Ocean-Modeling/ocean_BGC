@@ -729,15 +729,6 @@ contains
     call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Sm", phyto(SMALL)%bresp_frac_strat, &
                    "small phytoplankton basal respiration rate below mixed layer as fraction of max photosynthesis", &
                    units="none", default=0.01)
-    ! Phytoplankton maximum sinking rates (non-aggregated).  These are entered as m day-1 and converted to m sec-1
-    call get_param(param_file, "generic_COBALT", "sink_max_Di", phyto(DIAZO)%sink_max, &
-                   "diazotroph max sink rate (non-aggregated)", units="m day-1", default=1.0, scale=I_sperd)
-    call get_param(param_file, "generic_COBALT", "sink_max_Lg", phyto(LARGE)%sink_max, &
-                   "large phytoplankton max sink rate (non-aggregated)", units="m day-1", default=5.0, scale=I_sperd)
-    call get_param(param_file, "generic_COBALT", "sink_max_Md", phyto(MEDIUM)%sink_max, &
-                   "medium phytoplankton max sink rate (non-aggregated)", units="m day-1", default=1.0, scale=I_sperd)
-    call get_param(param_file, "generic_COBALT", "sink_max_Sm", phyto(SMALL)%sink_max, &
-                   "small phytoplankton max sink rate (non-aggregated)", units="m day-1", default=0.0, scale=I_sperd)
     call get_param(param_file, "generic_COBALT", "thetamin", cobalt%thetamin, "minimum chlorophyll to carbon ratio", &
                    units="g chl g C-1", default=0.002)
     call get_param(param_file, "generic_COBALT", "zeta", cobalt%zeta, "cost of biosynthesis", units="none", &
@@ -870,150 +861,347 @@ contains
                    units="mol P mol N-1", default= 1.0/16.0)
     !
     !-----------------------------------------------------------------------
-    ! Bacteria Stoichiometry
+    ! Bacteria growth and stoichiometry
     !-----------------------------------------------------------------------
     !
-    ! Bacterial stoichiometry currently static and set to Redfield, though some evidence suggests they may be more
-    ! P-rich and dynamic (Kirchman, D. (2000).  Uptake and Regeneration of Inorganic Nutrients by Marine Heterotrophic
-    ! Bacteria.  In "Microbial Ecology of the Oceans", Chapter 9.
+    ! Growth of free-living bacteria: Following Fasham et al., 1990, COBALT includes an explicit free living bacteria
+    ! group but does not explicitly model attached bacteria.  The bacteria function only as remineralizers of dissolved
+    ! organic nitrogen and do not compete with phytoplankton for inorganic nutrients.  Maximum growth rates of ~1 day-1
+    ! were chosen to be consistent with observed rates in polar waters (Ducklow, 2000; Rich et al., 1997). The default
+    ! half-saturation follows Fasham et al., (1990).  The maxium gross growth efficiency, which is the fraction of 
+    ! food ingested that contributes to new biomass, is set to 0.4 following del Giorgio and Cole (2000). Bacterial
+    ! stoichiometry currently static and set to Redfield, though some evidence suggests they may be more P-rich and
+    ! dynamic (Kirchman, 2000).  Rates entered as day-1 and converted to sec-1 for use in the model.  
     !
+    ! References:
+    ! Fasham (1990): https://elischolar.library.yale.edu/journal_of_marine_research/1981
+    ! Ducklow (2000): Chapter 4 of "Microbial Ecology of the Oceans, 1st ed." (Kirchman ed.)
+    ! Rich et al., (1997): https://doi.org/10.1016/S0967-0645(97)00058-1 
+    ! del Giorgio and Cole (2000): Chapter 10 of "Microbial Ecology of the Oceans, 1st ed." (Kirchman ed.)
+    ! Kirchman (2000): Chapter 9 of "Microbial Ecology of the Oceans, 1st ed." (Kirchman ed.)
+    !
+    call get_param(param_file, "generic_COBALT", "mu_max_bact", bact(1)%mu_max, "max bacterial growth at 0 deg. C", &
+                   units="day-1", default= 1.0, scale = I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_ldon_bact", bact(1)%k_ldon, &
+                   "half-sat for bacteria uptake of labile dissolved organic nitrogen", units="mol ldon kg-1", &
+                   default= 5.0e-7)
+    call get_param(param_file, "generic_COBALT", "ktemp_bact", bact(1)%ktemp, &
+                   "exponential temperature dependence of bacteria rates", units="deg. C-1", default= 0.063)
+    call get_param(param_file, "generic_COBALT", "gge_max_bact", bact(1)%gge_max, &
+                   "maximum gross growth efficiency for bacteria",  units="none", default=0.4)
+    call get_param(param_file, "generic_COBALT", "bresp_bact", bact(1)%bresp, &
+                   "basal respiration rate for bacteria at 0 deg. C", units="day-1", default=0.0075, scale=I_sperd)
     call get_param(param_file, "generic_COBALT", "q_p_2_n_bact", bact(1)%q_p_2_n, "Bacteria P:N", &
                    units="mol P mol N-1", default=1.0/16.0)
     !
     !-----------------------------------------------------------------------
-    ! Phytoplankton aggregation
+    ! Phytoplankton mortality terms
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "agg_Sm",           phyto(SMALL)%agg,  "agg_Sm", units="day-1(mol N kg)-1", &
-                   default=0.05, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "agg_Di",           phyto(DIAZO)%agg,  "agg_Di", units="day-1(mol N kg)-1", & 
-                   default=0.0 , scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "agg_Lg",           phyto(LARGE)%agg,  "agg_Lg", units="day-1(mol N kg)-1", &
-                   default=0.25, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "agg_Md",           phyto(MEDIUM)%agg, "agg_Md", units="day-1(mol N kg)-1", &
-                   default=0.10, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Sm",phyto(SMALL)%frac_mu_stress,  "frac_mu_stress_Sm",units="", default=0.25)  ! none
-    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Di",phyto(DIAZO)%frac_mu_stress,  "frac_mu_stress_Di",units="", default=0.25)  ! none
-    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Lg",phyto(LARGE)%frac_mu_stress,  "frac_mu_stress_Lg",units="", default=0.25)  ! none
-    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Md",phyto(MEDIUM)%frac_mu_stress, "frac_mu_stress_Md",units="", default=0.25)  ! none
+    ! The parameters that follow pertain to a range of different phytoplankton mortality processes other than being
+    ! consumed by zooplankton.  They include aggregation into sinking detrital particles, virus-driven losses (that
+    ! are also applied to bacteria), cell death (i.e., true phytoplankton mortality) and direct phytoplankton sinking. 
+    ! This section also includes parameters for the exudation of fixed carbon by phytoplankton.
+    ! 
+    ! Phytoplankton mortality terms differ by whether they are density-dependent (i.e., linear versus quadratic),
+    ! temperature-dependent, and whether they vary depending on the condition (or stress) of the phytoplankton. The
+    ! level of stress is defined based on the acheived growth rate relative to the maximum growth rate.  By default,
+    ! stress-dependent mortality begins to increase from 0 when this ratio falls below 0.25 (frac_mu_stress = 0.25).
+    !
+    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Sm", phyto(SMALL)%frac_mu_stress, &
+                   "fraction of max growth when stress-dependent losses initiate for small phytoplankton", &
+         units="none", default=0.25)
+    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Di", phyto(DIAZO)%frac_mu_stress, &
+                  "fraction of max growth when stress-dependent losses initiate for diazotrophs", &
+                  units="none", default=0.25)
+    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Lg", phyto(LARGE)%frac_mu_stress, &
+                   "fraction of max growth when stress-dependent losses initiate for large phytoplankton", &
+                   units="none", default=0.25)
+    call get_param(param_file, "generic_COBALT", "frac_mu_stress_Md", phyto(MEDIUM)%frac_mu_stress, &
+                   "fraction of max growth when stress-dependent losses initiate for medium phytoplankton", &
+                   units="none", default=0.25)
+    !
+    ! Phytoplankton aggregation is a density-dependent (quadratic) mortality term that is more effective for large
+    ! phytoplankton, following Jackson (1990).  Aggregation rates increase with stress (e.g., Waite et al, 1992).
+    ! As a primarily physical process of greatest importance in cold ecosystems, aggregation is assumed to be
+    ! temperature-independent.  Rates were informed by Jackson's experiments and tuning to satellite-observed blooms.
+    ! Note: Values for these parameters are entered in day-1 (micromol kg-1)-1 and converted to sec-1 (mol kg-1)-1
+    !
+    ! References:
+    ! Jackson, 1990 (https://doi.org/10.1016/0198-0149(90)90038-W)
+    ! Waite et al., 1992 (https://doi.org/10.1007/BF00350862)
+    !
+    call get_param(param_file, "generic_COBALT", "agg_Sm", phyto(SMALL)%agg, &
+                   "aggregation rate constant for small phytoplankton", units="day-1 (micromol N kg)-1", &
+                   default=0.05, scale = micromol2mol/sperd)
+    ! Diazotrophs, which are assumed not to aggregate, are modeled after trichodesmium
+    call get_param(param_file, "generic_COBALT", "agg_Di", phyto(DIAZO)%agg, &
+                   "aggregation rate constant for diazotrophs", units="day-1 (micromol N kg)-1", & 
+                   default=0.0 , scale = micromol2mol/sperd)
+    call get_param(param_file, "generic_COBALT", "agg_Lg", phyto(LARGE)%agg, &
+                   "aggregation rate constant for large phytoplankton", units="day-1 (micromol N kg)-1", &
+                   default=0.25, scale = micromol2mol/sperd)
+    call get_param(param_file, "generic_COBALT", "agg_Md", phyto(MEDIUM)%agg, &
+                   "aggregation rate constant for medium phytoplankton", units="day-1 (micromol N kg)-1", &
+                   default=0.10, scale = micromol2mol/sperd)
+    !
+    ! Phytoplankton viral losses are assumed to be a density-dependent (quadratic) loss term that is more effective
+    ! for small phytoplankton (Murray and Jackson, 1992).  Rates are temperature dependent and assumed to impact both
+    ! phytoplankton and free-living heterotrophic bacteria. For bacteria, rates were set such that ~20% of bacterial
+    ! production is lost to viral lysis (e.g., Fuhrman, 2000; Suttle, 2005).  Viral mortality for small phytoplankton
+    ! (i.e., picophytoplankton) was assumed similar to bacteria, with rates for larger phytoplankton scaled downward
+    ! in accordance with expected decreasing efficacy as surface area to volume ratios decrease.  Viruses are assumed
+    ! active regardless of the stress levels of the cell.
+    ! Note: Values for these parameters are entered in day-1 (micromol kg-1)-1 and converted to sec-1 (mol kg-1)-1
+    !
+    ! References:
+    ! Murray and Jackson, 1992 (MEPS, DOI:10.3354/meps089103)
+    ! Fuhrman, 2000.  Impact of viruses on bacterial processes.  In Microbial Ecology of the Oceans (Kirchman)
+    ! Suttle, 2005. (https://www.nature.com/articles/nature04160)
+    !  
+    call get_param(param_file, "generic_COBALT", "vir_Sm", phyto(SMALL)%vir, &
+                   "virus-driven loss rate constant for small phytoplankton @ 0 deg. C", & 
+                   units="day-1 (micromol N kg)-1", default=0.25, scale = micromol2mol/sperd)
+    call get_param(param_file, "generic_COBALT", "vir_Di", phyto(DIAZO)%vir, &
+                   "virus-driven loss rate constant for diazotrophs @ 0 deg. C", & 
+                   units="day-1 (micromol N kg)-1", default=0.05, scale = micromol2mol/sperd)
+    call get_param(param_file, "generic_COBALT", "vir_Lg", phyto(LARGE)%vir, &
+                   "virus-driven loss rate constant for large phytoplankton @ 0 deg. C", &
+                   units="day-1 (micromol N kg)-1", default=0.05, scale = micromol2mol/sperd)
+    call get_param(param_file, "generic_COBALT", "vir_Md", phyto(MEDIUM)%vir, &
+                   "virus-driven loss rate constant for medium phytoplankton @ 0 deg. C", &
+                   units="day-1 (micromol N kg)-1",default=0.125, scale = micromol2mol/sperd)
+    call get_param(param_file, "generic_COBALT", "vir_Bact", bact(1)%vir, &
+                   "virus-driven loss rate constant for bacteria @ 0 deg. C", &
+                   units="day-1 (mole N kg)-1", default=0.25, scale = micromol2mol/sperd)
+    call get_param(param_file, "generic_COBALT", "ktemp_vir", cobalt%vir_ktemp, &
+                   "temperature dependence of viral loss rates", units="deg. C-1", default= 0.063)
+    !
+    ! Phytoplankton cell death (mortality) is assumed to be a density-independent (linear) loss that increases
+    ! with temperature and stress.  It is currently turned off by default.  However, it has been found that a
+    ! modest amount of cell death (0.01 day-1 at 0 deg. C) may be important for controlling the remineralization
+    ! length scale of directly sinking phytoplankton, so this default may change.
+    ! Note: rates are entered as day-1 and converted to sec-1
+    !
+    call get_param(param_file, "generic_COBALT", "mort_Sm", phyto(SMALL)%mort, &
+                   "mortality (cell death) rate constant for small phytoplankton @ 0 deg. C", &
+                   units="day-1", default=0.0, scale=I_sperd) 
+    call get_param(param_file, "generic_COBALT", "mort_Di", phyto(DIAZO)%mort, &
+                   "mortality (cell death) rate constant for diazotrophs @ 0 deg. C", &
+                   units="day-1", default=0.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "mort_Lg", phyto(LARGE)%mort, &
+                   "mortality (cell death) rate constant for large phytoplankton @ 0 deg. C", &
+                   units="day-1", default=0.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "mort_Md", phyto(MEDIUM)%mort, &
+                   "mortality (cell death) rate constant for medium phytoplankton @ 0 deg. C", &
+                   units="day-1", default=0.0, scale=I_sperd)
+    !
+    ! Phytoplankton loss of organic carbon to exudation is assumed to be a constant fraction of NPP following Baines
+    ! and Pace (1991) (https://aslopubs.onlinelibrary.wiley.com/doi/abs/10.4319/lo.1991.36.6.1078)
+    !  
+    call get_param(param_file, "generic_COBALT", "exu_Sm",phyto(SMALL)%exu, &
+                   "fraction of small phytoplankton net primary production exuded as dissolved organic material", &
+                   units="none", default=0.13)
+    call get_param(param_file, "generic_COBALT", "exu_Di",phyto(DIAZO)%exu, &
+                   "fraction of diazotroph net primary production exuded as dissolved organic material", &
+                   units="none", default=0.13)
+    call get_param(param_file, "generic_COBALT", "exu_Lg",phyto(LARGE)%exu, &
+                   "fraction of large phytoplankton net primary production exuded as dissolved organic material", &
+                   units="none", default=0.13)
+    call get_param(param_file, "generic_COBALT", "exu_Md",phyto(MEDIUM)%exu, &
+                   "fraction of medium phytoplankton net primary production exuded as dissolved organic material", &
+                   units="none", default=0.13)
+    !
+    ! Phytoplankton maximum sinking rates (non-aggregated).  These are entered as m day-1 and converted to m sec-1.
+    ! Values are based on Smayda, 1971.  https://doi.org/10.1016/0025-3227(71)90070-3.  Sinking rates are stress
+    ! dependent and approach these maximum values as growth rates approach 0.
+    !
+    call get_param(param_file, "generic_COBALT", "sink_max_Di", phyto(DIAZO)%sink_max, &
+                   "diazotroph max sink rate (non-aggregated)", units="m day-1", default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "sink_max_Lg", phyto(LARGE)%sink_max, &
+                   "large phytoplankton max sink rate (non-aggregated)", units="m day-1", default=5.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "sink_max_Md", phyto(MEDIUM)%sink_max, &
+                   "medium phytoplankton max sink rate (non-aggregated)", units="m day-1", default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "sink_max_Sm", phyto(SMALL)%sink_max, &
+                   "small phytoplankton max sink rate (non-aggregated)", units="m day-1", default=0.0, scale=I_sperd)
     !
     !-----------------------------------------------------------------------
-    ! Phytoplankton and bacterial losses to viruses
+    ! Zooplankton grazing and growth parameters
     !-----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "vir_Sm",    phyto(SMALL)%vir,  "vir_Sm",   units="day-1 (mole N kg)-1", &
-                   default=0.25, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "vir_Di",    phyto(DIAZO)%vir,  "vir_Di",   units="day-1 (mole N kg)-1", &
-                   default=0.05, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "vir_Lg",    phyto(LARGE)%vir,  "vir_Lg",   units="day-1 (mole N kg)-1", &
-                   default=0.05, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "vir_Md",    phyto(MEDIUM)%vir, "vir_Md",   units="day-1 (mole N kg)-1", &
-                   default=0.125, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "vir_Bact",  bact(1)%vir,       "vir_Bact", units="day-1 (mole N kg)-1", &
-                   default=0.25, scale = micromol2mol / sperd)  ! s-1 (mole N kg)-1
-    call get_param(param_file, "generic_COBALT", "ktemp_vir", cobalt%vir_ktemp,  "ktemp_vir", units="C-1", default= 0.063)           ! C-1
+    ! Zooplankton maximum ingestion rates are based on the allometric relationship of Hansen et al. (1997) with tuning
+    ! as described in Stock and Dunne (2010): Grazing half-saturation constants are assumed to not vary with size and
+    ! are calibrated to create a phytoplankton standing stock/turnover that is consistent with observations.  The
+    ! maximum ingestion rate for small zooplankton is reduced by 20% relative to Hansen et al.'s mean value as a means
+    ! of calibrating the relative abundance of small, medium and large phytoplankton.  While some studies have suggest
+    ! that the temperature dependence of maximum zooplankton grazing may differ from the of phytoplankton growth,
+    ! published findings are equivocal, so the temperature dependence of zooplankton grazing was kep equal to that of
+    ! phytoplankton.  Discussion of this point, with references, can be found in Stock et al., 2014.
     !
-    !-----------------------------------------------------------------------
-    ! Phytoplankton losses to mortality
-    !-----------------------------------------------------------------------
+    ! Note: Maximum ingestion rates are entered in day-1 and then converted to sec-1
     !
-    call get_param(param_file, "generic_COBALT", "mort_Sm",phyto(SMALL)%mort,  "mort_Sm",units="day-1", &
-                   default= 0.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "mort_Di",phyto(DIAZO)%mort,  "mort_Di",units="day-1", &
-                   default= 0.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "mort_Lg",phyto(LARGE)%mort,  "mort_Lg",units="day-1", &
-                   default= 0.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "mort_Md",phyto(MEDIUM)%mort, "mort_Md",units="day-1", &
-                   default= 0.0, scale = I_sperd ) ! s-1
+    ! References:
+    ! Hansen et al., 1997 (https://doi.org/10.4319/lo.1997.42.4.0687)
+    ! Stock and Dunne, 2010 (https://doi.org/10.1016/j.dsr.2009.10.006)
+    ! Stock et al., 2014 (https://doi.org/10.1016/j.pocean.2013.07.001)
     !
-    !-----------------------------------------------------------------------
-    ! Phytoplankton losses to exudation
-    !-----------------------------------------------------------------------
+    call get_param(param_file, "generic_COBALT", "imax_smz", zoo(1)%imax,
+                   "max ingestion rate for small zooplankton @ 0 deg. C", units="day-1", default=0.8*1.42, &
+                   scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "imax_mdz", zoo(2)%imax,
+                   "max ingestion rate for medium zooplankton @ 0 deg. C", units="day-1", default=0.57, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "imax_lgz", zoo(3)%imax, &
+                   "max ingestion rate for large zooplankton @ 0 deg. C", units="day-1", default= 0.23, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "ki_smz", zoo(1)%ki, "half-sat for ingestion by small zooplankton", &
+                   units="mol N kg-1", default=1.25e-6)
+    call get_param(param_file, "generic_COBALT", "ki_mdz", zoo(2)%ki, "half-sat for ingestion by medium zooplankton", & 
+                   units="mol N kg-1", default=1.25e-6)
+    call get_param(param_file, "generic_COBALT", "ki_lgz", zoo(3)%ki, "half-sat for ingestion by large zooplankton", &
+                   units="mol N kg-1", default=1.25e-6)
+    call get_param(param_file, "generic_COBALT", "ktemp_smz", zoo(1)%ktemp, &
+                   "exponential temperature dependence of small zooplankton rates", units="deg. C-1", default=0.063)
+    call get_param(param_file, "generic_COBALT", "ktemp_mdz", zoo(2)%ktemp, &
+                   "exponential temperature dependence of medium zooplankton rates", units="deg. C-1", default=0.063)
+    call get_param(param_file, "generic_COBALT", "ktemp_lgz", zoo(3)%ktemp, &
+                   "exponential temperature dependence of large zooplankton rates", units="deg. C-1", default=0.063)
     !
-    call get_param(param_file, "generic_COBALT", "exu_Sm",phyto(SMALL)%exu, "exu_Sm",units="", default=0.13)       ! dimensionless (fraction of NPP)
-    call get_param(param_file, "generic_COBALT", "exu_Di",phyto(DIAZO)%exu, "exu_Di",units="", default=0.13)       ! dimensionless (fraction of NPP)
-    call get_param(param_file, "generic_COBALT", "exu_Lg",phyto(LARGE)%exu, "exu_Lg",units="", default=0.13)       ! dimensionless (fraction of NPP)
-    call get_param(param_file, "generic_COBALT", "exu_Md",phyto(MEDIUM)%exu,"exu_Md",units="", default=0.13)       ! dimensionless (fraction of NPP)
+    ! Prey availability parameters.  These parameters set the "innate prey availability", or ipa, of each plankton prey
+    ! resource to each zooplankton consumer.  The syntax is "consumer_ipa_prey".  These innate availabilities are then
+    ! modulated by density dependent switching between alternative prey types (e.g., herbivory versus carnivory) as
+    ! described in Stock et al. (2008).  The innate prey availabilities are informed by typical predator-prey size
+    ! ratios (Hansen et al., 1994; Fuchs and Franks, 2010), with the preferred size classes being 1 size below but
+    ! some flexibility around these preferred items.  All innate prey availabilities must fell between 0 and 1. 
     !
-    !-----------------------------------------------------------------------
-    ! Zooplankton ingestion parameterization and temperature dependence
-    !-----------------------------------------------------------------------
+    ! NOTE:FOR COMPUTATIONAL EFFICIENCY, ONLY THE DEFAULT INTERACTIONS ARE INCLUDED IN THE CODE.  IF YOU ADD A NEW
+    !      PREDATOR-PREY LINK, YOU WILL NEED TO ADD IT TO THE SOURCE/SINK CALCULATIONS LATER IN THIS ROUTINE AS WELL.
     !
-    call get_param(param_file, "generic_COBALT", "imax_smz", zoo(1)%imax, "imax_smz", units="day-1", & 
-                   default= 0.8*1.42, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "imax_mdz", zoo(2)%imax, "imax_mdz", units="day-1", & 
-                   default= 0.57, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "imax_lgz", zoo(3)%imax, "imax_lgz", units="day-1", & 
-                   default= 0.23, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "ki_smz",           zoo(1)%ki,                "ki_smz",           units="mol N kg-1", default=1.25e-6)                        ! moles N kg-1
-    call get_param(param_file, "generic_COBALT", "ki_mdz",           zoo(2)%ki,                "ki_mdz",           units="mol N kg-1", default=1.25e-6)                        ! moles N kg-1
-    call get_param(param_file, "generic_COBALT", "ki_lgz",           zoo(3)%ki,                "ki_lgz",           units="mol N kg-1", default=1.25e-6)                        ! moles N kg-1
-    call get_param(param_file, "generic_COBALT", "ktemp_smz",        zoo(1)%ktemp,             "ktemp_smz",        units="C-1", default=0.063)                   ! C-1
-    call get_param(param_file, "generic_COBALT", "ktemp_mdz",        zoo(2)%ktemp,             "ktemp_mdz",        units="C-1", default=0.063)                   ! C-1
-    call get_param(param_file, "generic_COBALT", "ktemp_lgz",        zoo(3)%ktemp,             "ktemp_lgz",        units="C-1", default=0.063)                   ! C-1
+    ! References:
+    ! Stock et al. (2008): https://doi.org/10.1016/j.jmarsys.2007.12.004
+    ! Hansen et al. (1994): https://doi.org/10.4319/lo.1994.39.2.0395
+    ! Fuchs and Franks (2010): https://doi.org/10.3354/meps08716
     !
-    !-----------------------------------------------------------------------
-    ! Bacterial growth and uptake parameters
-    !-----------------------------------------------------------------------
+    ! Small zooplankton innate prey availabilities
     !
-    call get_param(param_file, "generic_COBALT", "mu_max_bact",   bact(1)%mu_max,     "mu_max_bact",   units="day-1", & 
-                   default= 1.0, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "k_ldon_bact",   bact(1)%k_ldon,     "k_ldon_bact",   units="mol ldon kg-1", default= 5.0e-7)            ! mol ldon kg-1
-    call get_param(param_file, "generic_COBALT", "ktemp_bact",    bact(1)%ktemp,      "ktemp_bact",    units="C-1", default= 0.063)                ! C-1
-    call get_param(param_file, "generic_COBALT", "gge_max_bact",  bact(1)%gge_max,    "gge_max_bact",  units="", default= 0.4)                ! dimensionless
-    call get_param(param_file, "generic_COBALT", "bresp_bact",    bact(1)%bresp,      "bresp_bact",    units="day-1", & 
-                   default= 0.0075, scale = I_sperd ) ! s-1
+    call get_param(param_file, "generic_COBALT", "smz_ipa_smp", zoo(1)%ipa_smp, &
+                   "innate availability of small phytoplankton to small zooplankton feeding (0-1)", units="none", &
+                   default=1.0)
+    call get_param(param_file, "generic_COBALT", "smz_ipa_mdp", zoo(1)%ipa_mdp, &
+                   "innate availability of medium phytoplankton to small zooplankton feeding (0-1)", units="none", &
+                   default=0.4)
+    call get_param(param_file, "generic_COBALT", "smz_ipa_lgp", zoo(1)%ipa_lgp, &
+                   "innate availability of large phytoplankton to small zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "smz_ipa_diaz",zoo(1)%ipa_diaz, &
+                   "innate availability of diazotrophs to small zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "smz_ipa_smz", zoo(1)%ipa_smz, &
+                   "innate availability of small zooplankton to small zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "smz_ipa_mdz", zoo(1)%ipa_mdz, &
+                   "innate availability of medium zooplankton to small zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "smz_ipa_lgz", zoo(1)%ipa_lgz, &
+                   "innate availability of large zooplankton to small zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "smz_ipa_bact",zoo(1)%ipa_bact, &
+                   "innate availability of bacteria to small zooplankton feeding (0-1)", units="none", default=0.5)
+    call get_param(param_file, "generic_COBALT", "smz_ipa_det", zoo(1)%ipa_det, &
+                   "innate availability of detritus to small zooplankton feeding (0-1)", units="none", default=0.0)
     !
-    !-----------------------------------------------------------------------
-    ! Zooplankton switching and prey preference parameters
-    !-----------------------------------------------------------------------
+    ! Medium zooplankton innate prey availabilities
     !
-    ! parameters controlling the extent of biomass-based switching between
-    ! multiple prey options
-    call get_param(param_file, "generic_COBALT", "nswitch_smz",zoo(1)%nswitch, "nswitch_smz", units="unitless", default= 2.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "nswitch_mdz",zoo(2)%nswitch, "nswitch_mdz", units="unitless", default= 2.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "nswitch_lgz",zoo(3)%nswitch, "nswitch_lgz", units="unitless", default= 2.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mswitch_smz",zoo(1)%mswitch, "mswitch_smz", units="unitless", default= 2.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mswitch_mdz",zoo(2)%mswitch, "mswitch_mdz", units="unitless", default= 2.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mswitch_lgz",zoo(3)%mswitch, "mswitch_lgz", units="unitless", default= 2.0)          ! dimensionless
-    ! innate prey availability for small zooplankton
-    call get_param(param_file, "generic_COBALT", "smz_ipa_smp", zoo(1)%ipa_smp,  "smz_ipa_smp",  units="unitless", default=1.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "smz_ipa_mdp", zoo(1)%ipa_mdp,  "smz_ipa_mdp",  units="unitless", default=0.4)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "smz_ipa_lgp", zoo(1)%ipa_lgp,  "smz_ipa_lgp",  units="unitless", default=0.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "smz_ipa_diaz",zoo(1)%ipa_diaz, "smz_ipa_diaz", units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "smz_ipa_smz", zoo(1)%ipa_smz,  "smz_ipa_smz",  units="unitless", default=0.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "smz_ipa_mdz", zoo(1)%ipa_mdz,  "smz_ipa_mdz",  units="unitless", default=0.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "smz_ipa_lgz", zoo(1)%ipa_lgz,  "smz_ipa_lgz",  units="unitless", default=0.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "smz_ipa_bact",zoo(1)%ipa_bact, "smz_ipa_bact", units="unitless", default=0.5)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "smz_ipa_det", zoo(1)%ipa_det,  "smz_ipa_det",  units="unitless", default=0.0)          ! dimensionless
-    ! innate prey availability for medium zooplankton
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_smp", zoo(2)%ipa_smp,  "mdz_ipa_smp",  units="unitless", default=0.4)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_mdp", zoo(2)%ipa_mdp,  "mdz_ipa_mdp",  units="unitless", default=1.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_lgp", zoo(2)%ipa_lgp,  "mdz_ipa_lgp",  units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_diaz",zoo(2)%ipa_diaz, "mdz_ipa_diaz", units="unitless", default=0.75)        ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_smz", zoo(2)%ipa_smz,  "mdz_ipa_smz",  units="unitless", default=1.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_mdz", zoo(2)%ipa_mdz,  "mdz_ipa_mdz",  units="unitless", default=0.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_lgz", zoo(2)%ipa_lgz,  "mdz_ipa_lgz",  units="unitless", default=0.0)          ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_bact",zoo(2)%ipa_bact, "mdz_ipa_bact", units="unitless", default=0.0)        ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_det", zoo(2)%ipa_det,  "mdz_ipa_det",  units="unitless", default=0.0)          ! dimensionless
-    ! innate prey availability large predatory zooplankton/krill
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_smp", zoo(3)%ipa_smp,  "lgz_ipa_smp",  units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_mdp", zoo(3)%ipa_mdp,  "lgz_ipa_mdp",  units="unitless", default=0.4)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_lgp", zoo(3)%ipa_lgp,  "lgz_ipa_lgp",  units="unitless", default=1.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_diaz",zoo(3)%ipa_diaz, "lgz_ipa_diaz", units="unitless", default=0.4)       ! dimensionless
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_smz", zoo(3)%ipa_smz,  "lgz_ipa_smz",  units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_mdz", zoo(3)%ipa_mdz,  "lgz_ipa_mdz",  units="unitless", default=1.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_lgz", zoo(3)%ipa_lgz,  "lgz_ipa_lgz",  units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_bact",zoo(3)%ipa_bact, "lgz_ipa_bact", units="unitless", default=0.0)       ! dimensionless
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_det", zoo(3)%ipa_det,  "lgz_ipa_det",  units="unitless", default=0.0)         ! dimensionless
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_smp", zoo(2)%ipa_smp, &
+                   "innate availability of small phytoplankton to medium zooplankton feeding (0-1)", units="none", &
+                   default=0.4)
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_mdp", zoo(2)%ipa_mdp, &
+                   "innate availability of medium phytoplankton to medium zooplankton feeding (0-1)", units="none", &
+                   default=1.0)
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_lgp", zoo(2)%ipa_lgp, &
+                   "innate availability of large phytoplankton to medium zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_diaz",zoo(2)%ipa_diaz, &
+                   "innate availability of diazotrophs to medium zooplankton feeding (0-1)", units="none", &
+                   default=0.75)
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_smz", zoo(2)%ipa_smz, &
+                   "innate availability of small zooplankton to medium zooplankton feeding (0-1)", units="none", &
+                   default=1.0)
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_mdz", zoo(2)%ipa_mdz, &
+                   "innate availability of medium zooplankton to medium zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_lgz", zoo(2)%ipa_lgz, &
+                   "innate availability of large zooplankton to medium zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_bact", zoo(2)%ipa_bact, &
+                   "innate availability of bacteria to medium zooplankton feeding (0-1)", units="none", default=0.0)
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_det", zoo(2)%ipa_det, &
+                   "innate availability of detritus to medium zooplankton feeding (0-1)", units="none", default=0.0)
+    !
+    ! Large zooplankton/krill innate prey availabilities
+    !
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_smp", zoo(3)%ipa_smp, &
+                   "innate availability of small phytoplankton to large zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_mdp", zoo(3)%ipa_mdp, &
+                   "innate availability of medium phytoplankton to large zooplankton feeding (0-1)", units="none", &
+                   default=0.4)
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_lgp", zoo(3)%ipa_lgp, &
+                   "innate availability of large phytoplankton to large zooplankton feeding (0-1)", units="none", &
+                   default=1.0)
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_diaz",zoo(3)%ipa_diaz, &
+                   "innate availability of diazotrophs to large zooplankton feeding (0-1)", units="none", &
+                   default=0.4)
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_smz", zoo(3)%ipa_smz, &
+                   "innate availability of small zooplankton to large zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_mdz", zoo(3)%ipa_mdz, &
+                   "innate availability of medium zooplankton to large zooplankton feeding (0-1)", units="none", &
+                   default=1.0)
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_lgz", zoo(3)%ipa_lgz, &
+                   "innate availability of large zooplankton to large zooplankton feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_bact",zoo(3)%ipa_bact, &
+                   "innate availability of bacteria to large zooplankton feeding (0-1)", units="none", default=0.0)
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_det", zoo(3)%ipa_det, &
+                   "innate availability of detritus to large zooplankton feeding (0-1)", units="none", default=0.0)
+    !
+    ! Switching parameters: The innate availabilities of prey items defined above are modulated by density dependent
+    ! switching between alternative prey types.  That is, when phytoplankton prey are more abundant than zooplankton
+    ! prey, the consumer community is implicitly assumed to be mainly herbivores rather than carnivores, reducing
+    ! feeding on the less abundant prey type and increasing feeding on the more abundant type.  This has a stabilizing
+    ! effect on the model dynamics and promotes co-existence.  Following Fasham et al. (1990), a ratio-based approach
+    ! was used.  The strength of the switching response, however, was weakened to avoid unrealistically strong
+    ! interference between alternative prey types (Gentleman et al., 2003).  The parameters below are exponents applied
+    ! in the ratio-based calculation that control the strength of this response.  Higher values reduce the response
+    ! strength while lower values increase it (mswitch = nswitch = 1 gives Fasham).  The parameterization is fully
+    ! described in Stock et al., (2008).  Note that the switching occurs between broadly defined groups
+    ! (i.e., phytoplankton versus zooplankton) rather than between each state variable. Details of these groups can
+    ! be found in the grazing dynamics (Section 3.1).
+    !
+    ! References:
+    ! Fasham et al., (1990): https://elischolar.library.yale.edu/journal_of_marine_research/1981
+    ! Gentleman et al. (2003): https://doi.org/10.1016/j.dsr2.2003.07.001
+    ! Stock et al. (2008): https://doi.org/10.1016/j.jmarsys.2007.12.004
+    ! 
+    call get_param(param_file, "generic_COBALT", "nswitch_smz", zoo(1)%nswitch, &
+                   "prey switching parameter 1 for small zooplankton", units="none", default= 2.0)
+    call get_param(param_file, "generic_COBALT", "nswitch_mdz", zoo(2)%nswitch, &
+                   "prey switching parameter 1 for medium zooplankton", units="none", default= 2.0)
+    call get_param(param_file, "generic_COBALT", "nswitch_lgz", zoo(3)%nswitch, &
+                   "prey switching parameter 1 for large zooplankton", units="none", default= 2.0)
+    call get_param(param_file, "generic_COBALT", "mswitch_smz", zoo(1)%mswitch, &
+                   "prey switching parameter 2 for small zooplankton", units="none", default= 2.0)
+    call get_param(param_file, "generic_COBALT", "mswitch_mdz", zoo(2)%mswitch, &
+                   "prey switching parameter 2 for medium zooplankton", units="none", default= 2.0)
+    call get_param(param_file, "generic_COBALT", "mswitch_lgz", zoo(3)%mswitch, &
+                   "prey switching parameter 2 for large zooplankton", units="none", default= 2.0)
     !
     !----------------------------------------------------------------------
     ! Zooplankton bioenergetics
     !----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "gge_max_smz",zoo(1)%gge_max, "gge_max_smz",  units="unitless", default=0.4)              ! dimensionless
-    call get_param(param_file, "generic_COBALT", "gge_max_mdz",zoo(2)%gge_max, "gge_max_mdz",  units="unitless", default=0.4)              ! dimensionless
-    call get_param(param_file, "generic_COBALT", "gge_max_lgz",zoo(3)%gge_max, "gge_max_lgz",  units="unitless", default=0.4)              ! dimensionless
+    call get_param(param_file, "generic_COBALT", "gge_max_smz",zoo(1)%gge_max, "gge_max_smz",  units="unitless", default=0.4)
+    call get_param(param_file, "generic_COBALT", "gge_max_mdz",zoo(2)%gge_max, "gge_max_mdz",  units="unitless", default=0.4)
+    call get_param(param_file, "generic_COBALT", "gge_max_lgz",zoo(3)%gge_max, "gge_max_lgz",  units="unitless", default=0.4)
     call get_param(param_file, "generic_COBALT", "bresp_smz",  zoo(1)%bresp,   "bresp_smz",    units="day-1", & 
                    default= 0.8*0.020, scale = I_sperd ) ! s-1
     call get_param(param_file, "generic_COBALT", "bresp_mdz",  zoo(2)%bresp,   "bresp_mdz",    units="day-1", & 
