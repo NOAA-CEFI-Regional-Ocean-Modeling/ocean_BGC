@@ -1045,10 +1045,10 @@ contains
     ! Stock and Dunne, 2010 (https://doi.org/10.1016/j.dsr.2009.10.006)
     ! Stock et al., 2014 (https://doi.org/10.1016/j.pocean.2013.07.001)
     !
-    call get_param(param_file, "generic_COBALT", "imax_smz", zoo(1)%imax,
+    call get_param(param_file, "generic_COBALT", "imax_smz", zoo(1)%imax, &
                    "max ingestion rate for small zooplankton @ 0 deg. C", units="day-1", default=0.8*1.42, &
                    scale=I_sperd)
-    call get_param(param_file, "generic_COBALT", "imax_mdz", zoo(2)%imax,
+    call get_param(param_file, "generic_COBALT", "imax_mdz", zoo(2)%imax, &
                    "max ingestion rate for medium zooplankton @ 0 deg. C", units="day-1", default=0.57, scale=I_sperd)
     call get_param(param_file, "generic_COBALT", "imax_lgz", zoo(3)%imax, &
                    "max ingestion rate for large zooplankton @ 0 deg. C", units="day-1", default= 0.23, scale=I_sperd)
