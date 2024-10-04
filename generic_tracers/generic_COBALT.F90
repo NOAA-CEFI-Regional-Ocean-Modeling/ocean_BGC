@@ -925,24 +925,24 @@ contains
     ! phytoplankton, following Jackson (1990).  Aggregation rates increase with stress (e.g., Waite et al, 1992).
     ! As a primarily physical process of greatest importance in cold ecosystems, aggregation is assumed to be
     ! temperature-independent.  Rates were informed by Jackson's experiments and tuning to satellite-observed blooms.
-    ! Note: Values for these parameters are entered in day-1 (micromol kg-1)-1 and converted to sec-1 (mol kg-1)-1
+    ! Note: Values for these parameters are entered in day-1 (micromol N kg-1)-1 and converted to sec-1 (mol N kg-1)-1
     !
     ! References:
     ! Jackson, 1990 (https://doi.org/10.1016/0198-0149(90)90038-W)
     ! Waite et al., 1992 (https://doi.org/10.1007/BF00350862)
     !
     call get_param(param_file, "generic_COBALT", "agg_Sm", phyto(SMALL)%agg, &
-                   "aggregation rate constant for small phytoplankton", units="day-1 (micromol N kg)-1", &
+                   "aggregation rate constant for small phytoplankton", units="day-1 (micromol N kg-1)-1", &
                    default=0.05, scale = micromol2mol/sperd)
     ! Diazotrophs, which are assumed not to aggregate, are modeled after trichodesmium
     call get_param(param_file, "generic_COBALT", "agg_Di", phyto(DIAZO)%agg, &
-                   "aggregation rate constant for diazotrophs", units="day-1 (micromol N kg)-1", & 
+                   "aggregation rate constant for diazotrophs", units="day-1 (micromol N kg-1)-1", & 
                    default=0.0 , scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "agg_Lg", phyto(LARGE)%agg, &
-                   "aggregation rate constant for large phytoplankton", units="day-1 (micromol N kg)-1", &
+                   "aggregation rate constant for large phytoplankton", units="day-1 (micromol N kg-1)-1", &
                    default=0.25, scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "agg_Md", phyto(MEDIUM)%agg, &
-                   "aggregation rate constant for medium phytoplankton", units="day-1 (micromol N kg)-1", &
+                   "aggregation rate constant for medium phytoplankton", units="day-1 (micromol N kg-1)-1", &
                    default=0.10, scale = micromol2mol/sperd)
     !
     ! Phytoplankton viral losses are assumed to be a density-dependent (quadratic) loss term that is more effective
@@ -952,7 +952,7 @@ contains
     ! (i.e., picophytoplankton) was assumed similar to bacteria, with rates for larger phytoplankton scaled downward
     ! in accordance with expected decreasing efficacy as surface area to volume ratios decrease.  Viruses are assumed
     ! active regardless of the stress levels of the cell.
-    ! Note: Values for these parameters are entered in day-1 (micromol kg-1)-1 and converted to sec-1 (mol kg-1)-1
+    ! Note: Values for these parameters are entered in day-1 (micromol N kg-1)-1 and converted to sec-1 (mol N kg-1)-1
     !
     ! References:
     ! Murray and Jackson, 1992 (MEPS, DOI:10.3354/meps089103)
@@ -961,19 +961,19 @@ contains
     !  
     call get_param(param_file, "generic_COBALT", "vir_Sm", phyto(SMALL)%vir, &
                    "virus-driven loss rate constant for small phytoplankton @ 0 deg. C", & 
-                   units="day-1 (micromol N kg)-1", default=0.25, scale = micromol2mol/sperd)
+                   units="day-1 (micromol N kg-1)-1", default=0.25, scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "vir_Di", phyto(DIAZO)%vir, &
                    "virus-driven loss rate constant for diazotrophs @ 0 deg. C", & 
-                   units="day-1 (micromol N kg)-1", default=0.05, scale = micromol2mol/sperd)
+                   units="day-1 (micromol N kg-1)-1", default=0.05, scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "vir_Lg", phyto(LARGE)%vir, &
                    "virus-driven loss rate constant for large phytoplankton @ 0 deg. C", &
-                   units="day-1 (micromol N kg)-1", default=0.05, scale = micromol2mol/sperd)
+                   units="day-1 (micromol N kg-1)-1", default=0.05, scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "vir_Md", phyto(MEDIUM)%vir, &
                    "virus-driven loss rate constant for medium phytoplankton @ 0 deg. C", &
-                   units="day-1 (micromol N kg)-1",default=0.125, scale = micromol2mol/sperd)
+                   units="day-1 (micromol N kg-1)-1",default=0.125, scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "vir_Bact", bact(1)%vir, &
                    "virus-driven loss rate constant for bacteria @ 0 deg. C", &
-                   units="day-1 (micromol N kg)-1", default=0.25, scale = micromol2mol/sperd)
+                   units="day-1 (micromol N kg-1)-1", default=0.25, scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "ktemp_vir", cobalt%vir_ktemp, &
                    "temperature dependence of viral loss rates", units="deg. C-1", default= 0.063)
     !
