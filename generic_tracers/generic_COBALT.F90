@@ -868,9 +868,9 @@ contains
     ! group but does not explicitly model attached bacteria.  The bacteria function only as remineralizers of dissolved
     ! organic nitrogen and do not compete with phytoplankton for inorganic nutrients.  Maximum growth rates of ~1 day-1
     ! were chosen to be consistent with observed rates in polar waters (Ducklow, 2000; Rich et al., 1997). The default
-    ! half-saturation follows Fasham et al., (1990).  The maxium gross growth efficiency, which is the fraction of 
+    ! half-saturation follows Fasham et al., (1990).  The maximum gross growth efficiency, which is the fraction of 
     ! food ingested that contributes to new biomass, is set to 0.4 following del Giorgio and Cole (2000). Bacterial
-    ! stoichiometry currently static and set to Redfield, though some evidence suggests they may be more P-rich and
+    ! stoichiometry is currently static and set to Redfield, though some evidence suggests they may be more P-rich and
     ! dynamic (Kirchman, 2000).  Rates entered as day-1 and converted to sec-1 for use in the model.  
     !
     ! References:
@@ -905,7 +905,7 @@ contains
     ! 
     ! Phytoplankton mortality terms differ by whether they are density-dependent (i.e., linear versus quadratic),
     ! temperature-dependent, and whether they vary depending on the condition (or stress) of the phytoplankton. The
-    ! level of stress is defined based on the acheived growth rate relative to the maximum growth rate.  By default,
+    ! level of stress is defined based on the achieved growth rate relative to the maximum growth rate.  By default,
     ! stress-dependent mortality begins to increase from 0 when this ratio falls below 0.25 (frac_mu_stress = 0.25).
     !
     call get_param(param_file, "generic_COBALT", "frac_mu_stress_Sm", phyto(SMALL)%frac_mu_stress, &
@@ -973,7 +973,7 @@ contains
                    units="day-1 (micromol N kg)-1",default=0.125, scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "vir_Bact", bact(1)%vir, &
                    "virus-driven loss rate constant for bacteria @ 0 deg. C", &
-                   units="day-1 (mole N kg)-1", default=0.25, scale = micromol2mol/sperd)
+                   units="day-1 (micromol N kg)-1", default=0.25, scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "ktemp_vir", cobalt%vir_ktemp, &
                    "temperature dependence of viral loss rates", units="deg. C-1", default= 0.063)
     !
@@ -1033,9 +1033,9 @@ contains
     ! as described in Stock and Dunne (2010): Grazing half-saturation constants are assumed to not vary with size and
     ! are calibrated to create a phytoplankton standing stock/turnover that is consistent with observations.  The
     ! maximum ingestion rate for small zooplankton is reduced by 20% relative to Hansen et al.'s mean value as a means
-    ! of calibrating the relative abundance of small, medium and large phytoplankton.  While some studies have suggest
-    ! that the temperature dependence of maximum zooplankton grazing may differ from the of phytoplankton growth,
-    ! published findings are equivocal, so the temperature dependence of zooplankton grazing was kep equal to that of
+    ! of calibrating the relative abundance of small, medium and large phytoplankton.  While some studies have suggested
+    ! that the temperature dependence of maximum zooplankton grazing may differ from that of phytoplankton growth,
+    ! published findings are equivocal, so the temperature dependence of zooplankton grazing was kept equal to that of
     ! phytoplankton.  Discussion of this point, with references, can be found in Stock et al., 2014.
     !
     ! Note: Maximum ingestion rates are entered in day-1 and then converted to sec-1
@@ -1070,9 +1070,9 @@ contains
     ! modulated by density dependent switching between alternative prey types (e.g., herbivory versus carnivory) as
     ! described in Stock et al. (2008).  The innate prey availabilities are informed by typical predator-prey size
     ! ratios (Hansen et al., 1994; Fuchs and Franks, 2010), with the preferred size classes being 1 size below but
-    ! some flexibility around these preferred items.  All innate prey availabilities must fell between 0 and 1. 
+    ! some flexibility around these preferred items.  All innate prey availabilities must fall between 0 and 1. 
     !
-    ! NOTE:FOR COMPUTATIONAL EFFICIENCY, ONLY THE DEFAULT INTERACTIONS ARE INCLUDED IN THE CODE.  IF YOU ADD A NEW
+    ! NOTE: FOR COMPUTATIONAL EFFICIENCY, ONLY THE DEFAULT INTERACTIONS ARE INCLUDED IN THE CODE.  IF YOU ADD A NEW
     !      PREDATOR-PREY LINK, YOU WILL NEED TO ADD IT TO THE SOURCE/SINK CALCULATIONS LATER IN THIS ROUTINE AS WELL.
     !
     ! References:
@@ -1173,27 +1173,27 @@ contains
     ! interference between alternative prey types (Gentleman et al., 2003).  The parameters below are exponents applied
     ! in the ratio-based calculation that control the strength of this response.  Higher values reduce the response
     ! strength while lower values increase it (mswitch = nswitch = 1 gives Fasham).  The parameterization is fully
-    ! described in Stock et al., (2008).  Note that the switching occurs between broadly defined groups
+    ! described in Stock et al. (2008).  Note that the switching occurs between broadly defined groups
     ! (i.e., phytoplankton versus zooplankton) rather than between each state variable. Details of these groups can
     ! be found in the grazing dynamics (Section 3.1).
     !
     ! References:
-    ! Fasham et al., (1990): https://elischolar.library.yale.edu/journal_of_marine_research/1981
+    ! Fasham et al. (1990): https://elischolar.library.yale.edu/journal_of_marine_research/1981
     ! Gentleman et al. (2003): https://doi.org/10.1016/j.dsr2.2003.07.001
     ! Stock et al. (2008): https://doi.org/10.1016/j.jmarsys.2007.12.004
     ! 
     call get_param(param_file, "generic_COBALT", "nswitch_smz", zoo(1)%nswitch, &
-                   "prey switching parameter 1 for small zooplankton", units="none", default= 2.0)
+                   "prey switching parameter 1 for small zooplankton", units="none", default=2.0)
     call get_param(param_file, "generic_COBALT", "nswitch_mdz", zoo(2)%nswitch, &
-                   "prey switching parameter 1 for medium zooplankton", units="none", default= 2.0)
+                   "prey switching parameter 1 for medium zooplankton", units="none", default=2.0)
     call get_param(param_file, "generic_COBALT", "nswitch_lgz", zoo(3)%nswitch, &
-                   "prey switching parameter 1 for large zooplankton", units="none", default= 2.0)
+                   "prey switching parameter 1 for large zooplankton", units="none", default=2.0)
     call get_param(param_file, "generic_COBALT", "mswitch_smz", zoo(1)%mswitch, &
-                   "prey switching parameter 2 for small zooplankton", units="none", default= 2.0)
+                   "prey switching parameter 2 for small zooplankton", units="none", default=2.0)
     call get_param(param_file, "generic_COBALT", "mswitch_mdz", zoo(2)%mswitch, &
-                   "prey switching parameter 2 for medium zooplankton", units="none", default= 2.0)
+                   "prey switching parameter 2 for medium zooplankton", units="none", default=2.0)
     call get_param(param_file, "generic_COBALT", "mswitch_lgz", zoo(3)%mswitch, &
-                   "prey switching parameter 2 for large zooplankton", units="none", default= 2.0)
+                   "prey switching parameter 2 for large zooplankton", units="none", default=2.0)
     !
     !----------------------------------------------------------------------
     ! Zooplankton bioenergetics
