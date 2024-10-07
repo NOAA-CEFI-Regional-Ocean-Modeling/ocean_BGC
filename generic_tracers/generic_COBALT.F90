@@ -1196,78 +1196,206 @@ contains
                    "prey switching parameter 2 for large zooplankton", units="none", default=2.0)
     !
     !----------------------------------------------------------------------
-    ! Zooplankton bioenergetics
+    ! Zooplankton bioenergetics and partitioning of ingested material
     !----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "gge_max_smz",zoo(1)%gge_max, "gge_max_smz",  units="unitless", default=0.4)
-    call get_param(param_file, "generic_COBALT", "gge_max_mdz",zoo(2)%gge_max, "gge_max_mdz",  units="unitless", default=0.4)
-    call get_param(param_file, "generic_COBALT", "gge_max_lgz",zoo(3)%gge_max, "gge_max_lgz",  units="unitless", default=0.4)
-    call get_param(param_file, "generic_COBALT", "bresp_smz",  zoo(1)%bresp,   "bresp_smz",    units="day-1", & 
-                   default= 0.8*0.020, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "bresp_mdz",  zoo(2)%bresp,   "bresp_mdz",    units="day-1", & 
-                   default= 0.008, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "bresp_lgz",  zoo(3)%bresp,   "bresp_lgz",    units="day-1", & 
-                   default= 0.0032, scale = I_sperd ) ! s-1
+    ! Prey consumed by zooplankton is either used to produce new zooplankton biomass (anabolic matabolism), respired
+    ! (catabolic metabolism), or egested as fecal pellets or dissolved organic material.  The maximum fraction of
+    ! ingestion partitioned to growth is set by the gross growth efficiency, which is 0.4 following Hansen et al.,
+    ! (1997, https://doi.org/10.4319/lo.1997.42.4.0687) and Straile (1997, https://doi.org/10.4319/lo.1997.42.6.1375).
+    ! This value is approached as grazing rates far exceed basal respiration rates (bresp). The gross growth efficiency 
+    ! approaches 0 as ingestion approaches basal metabolic rates.  Basal metabolic rates were calibrated to produce
+    ! reasonable mesozooplankton biomass/production in subtropical gyres following Stock and Dunne (2010, 
+    ! https://doi.org/10.1016/j.dsr.2009.10.006).  Values near the lower end of observed range were needed.   
+    ! 
+    call get_param(param_file, "generic_COBALT", "gge_max_smz", zoo(1)%gge_max, &
+                   "maximum gross growth efficiency for small zooplankton", units="none", default=0.4)
+    call get_param(param_file, "generic_COBALT", "gge_max_mdz",zoo(2)%gge_max, &
+                   "maximum gross growth efficiency for medium zooplankton", units="none", default=0.4)
+    call get_param(param_file, "generic_COBALT", "gge_max_lgz",zoo(3)%gge_max, &
+                   "maximum gross growth efficiency for large zooplankton", units="none", default=0.4)
+    call get_param(param_file, "generic_COBALT", "bresp_smz", zoo(1)%bresp, & 
+                   "basal respiration rate for small zooplankton", units="day-1", default=0.8*0.020, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "bresp_mdz", zoo(2)%bresp, &
+                   "basal respiration rate for medium zooplankton", units="day-1", default=0.008,scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "bresp_lgz", zoo(3)%bresp, &
+                   "basal respiration rate for large zooplankton", units="day-1", default=0.0032, scale=I_sperd)
     !
-    !----------------------------------------------------------------------
-    ! Partitioning of zooplankton ingestion to other compartments
-    !----------------------------------------------------------------------
+    ! By default, 30% of food ingested by zooplankton is egested as either particulate or dissolved organic material.
+    ! Fluxes to dissolved organic material must then be partitioned between labile, semilabile and semirefractory
+    ! pools.  30% egestion is based on the finding that 70% of ingested material is assimilated (Carlotti et al., 2000,
+    ! Nagata, 2000).  Partitioning is skewed toward particulate detritus for large zooplankton and dissolved for small.
+    ! Tuning the fraction of egested material that goes to sinking detritus is one of the primary ways of adjusting the
+    ! export ratio and the total net primary production (Stock and Dunne, 2010).  The partitioning between dissolved
+    ! organic pools calibrated for broad-scale consistency with observed patterns (Abell et al., 2000; Wheeler et al.,
+    ! 1997; and Vidal et al., 1999).
     !
-    call get_param(param_file, "generic_COBALT", "phi_det_smz",   zoo(1)%phi_det,    "phi_det_smz",   units="unitless", default= 0.00)            ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_det_mdz",   zoo(2)%phi_det,    "phi_det_mdz",   units="unitless", default= 0.15)            ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_det_lgz",   zoo(3)%phi_det,    "phi_det_lgz",   units="unitless", default= 0.30)            ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_ldon_smz",  zoo(1)%phi_ldon,   "phi_ldon_smz",  units="unitless", default= 0.625*0.30)      ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_ldon_mdz",  zoo(2)%phi_ldon,   "phi_ldon_mdz",  units="unitless", default= 0.625*0.15)      ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_ldon_lgz",  zoo(3)%phi_ldon,   "phi_ldon_lgz",  units="unitless", default= 0.625*0.0)       ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_ldop_smz",  zoo(1)%phi_ldop,   "phi_ldop_smz",  units="unitless", default= 0.575*0.30)     ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_ldop_mdz",  zoo(2)%phi_ldop,   "phi_ldop_mdz",  units="unitless", default= 0.575*0.15)     ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_ldop_lgz",  zoo(3)%phi_ldop,   "phi_ldop_lgz",  units="unitless", default= 0.575*0.0)      ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_srdon_smz", zoo(1)%phi_srdon,  "phi_srdon_smz", units="unitless", default= 0.075*0.30)    ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_srdon_mdz", zoo(2)%phi_srdon,  "phi_srdon_mdz", units="unitless", default= 0.075*0.15)    ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_srdon_lgz", zoo(3)%phi_srdon,  "phi_srdon_lgz", units="unitless", default= 0.075*0.0)     ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_srdop_smz", zoo(1)%phi_srdop,  "phi_srdop_smz", units="unitless", default= 0.125*0.30)   ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_srdop_mdz", zoo(2)%phi_srdop,  "phi_srdop_mdz", units="unitless", default= 0.125*0.15)   ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_srdop_lgz", zoo(3)%phi_srdop,  "phi_srdop_lgz", units="unitless", default= 0.125*0.0)    ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_sldon_smz", zoo(1)%phi_sldon,  "phi_sldon_smz", units="unitless", default= 0.3*0.30)    ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_sldon_mdz", zoo(2)%phi_sldon,  "phi_sldon_mdz", units="unitless", default= 0.3*0.15)    ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_sldon_lgz", zoo(3)%phi_sldon,  "phi_sldon_lgz", units="unitless", default= 0.3*0.0)     ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_sldop_smz", zoo(1)%phi_sldop,  "phi_sldop_smz", units="unitless", default= 0.3*0.30)    ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_sldop_mdz", zoo(2)%phi_sldop,  "phi_sldop_mdz", units="unitless", default= 0.3*0.15)    ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_sldop_lgz", zoo(3)%phi_sldop,  "phi_sldop_lgz", units="unitless", default= 0.3*0.0)     ! dimensionless
+    ! Note: The total partitioning of ingestion to particulate and dissolved phases should equal 30% in the default
+    !       settings.  To ensure this, the partitioning to the dissolved pools is referenced to (0.3 - phi_det), where
+    !       phi_det is the fraction of ingestion partitioned to particulate detritus.  100% of the material partitioned
+    !       to the dissolved pool must be enter labile, semi-labile or semi-refractory pools.  The defaults are:
+    !
+    !                            nitrogen        phosphorus
+    !           labile             62.5%            57.5%
+    !         semi-labile          30.0%            30.0%
+    !       semi-refractory         7.5%            12.5%
+    !           total             100.0%           100.0%
+    !
+    ! IF YOU CHOOSE TO ALTER THESE PARAMETERS, BE SURE TO ALTER THEM IN A MANNER THAT ENSURES THAT ALL UNDIGESTED
+    ! MATERIAL IN ACCOUNTED FOR.  IF YOU CHANGE ONE, YOU MAY NEED TO CHANGE OTHERS!  
+    !
+    ! References:
+    ! Carlotti et al., 2000. Modeling zooplankton dynamics. Zooplankton Methodology Manual, pp. 571-667.
+    ! Nagata, 2000. Chapter 5 of "Microbial Ecology of the Oceans, 1st ed." (Kirchman ed.)
+    ! Stock and Dunne, 2010. (https://doi.org/10.1016/j.dsr.2009.10.006) 
+    ! Abell et al., 2000. (https://elischolar.library.yale.edu/journal_of_marine_research/2349) 
+    ! Wheeler et al., 1997. (https://doi.org/10.1016/S0967-0637(96)00089-1)
+    ! Vidal et al., 1999. (https://doi.org/10.4319/lo.1999.44.1.0106)
+    !
+    call get_param(param_file, "generic_COBALT", "phi_det_smz", zoo(1)%phi_det, &
+                   "fraction of ingestion by small zooplankton to detritus", units="none", default=0.0)
+    call get_param(param_file, "generic_COBALT", "phi_det_mdz", zoo(2)%phi_det, &
+                   "fraction of ingestion by medium zooplankton to detritus", units="none", default=0.15)
+    call get_param(param_file, "generic_COBALT", "phi_det_lgz", zoo(3)%phi_det, &
+                   "fraction of ingestion by large zooplankton to detritus", units="none", default=0.30)
+    ! partitioning of zooplanton ingestion to labile dissolved organic material
+    call get_param(param_file, "generic_COBALT", "phi_ldon_smz", zoo(1)%phi_ldon, &
+                   "fraction of N ingestion by small zooplankton to labile dissolved organic nitrogen", &
+                   units="none", default=0.625*(0.30-zoo(1)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_ldon_mdz", zoo(2)%phi_ldon, &
+                   "fraction of N ingestion by medium zooplankton to labile dissolved organic nitrogen", &
+                   units="none", default=0.625*(0.30-zoo(2)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_ldon_lgz", zoo(3)%phi_ldon, &
+                   "fraction of N ingestion by large zooplankton to labile dissolved organic nitrogen", &
+                   units="none", default=0.625*(0.30-zoo(3)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_ldop_smz", zoo(1)%phi_ldop, &
+                   "fraction of P ingestion by small zooplankton to labile dissolved organic phosphorus", &
+                   units="none", default=0.575*(0.30-zoo(1)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_ldop_mdz", zoo(2)%phi_ldop, &
+                   "fraction of P ingestion by medium zooplankton to labile dissolved organic phosphorus", &
+                   units="none", default=0.575*(0.30-zoo(2)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_ldop_lgz", zoo(3)%phi_ldop, &
+                   "fraction of P ingestion by large zooplankton to labile dissolved organic phosphorus", &
+                   units="none", default=0.575*(0.30-zoo(3)%phi_det))
+    ! partitioning of zooplankton ingestion to semi-refractory dissolved organic material
+    call get_param(param_file, "generic_COBALT", "phi_srdon_smz", zoo(1)%phi_srdon, &
+                   "fraction of N ingestion by small zooplankton to semi-refractory dissolved organic nitrogen", &
+                   units="none", default=0.075*(0.30-zoo(1)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_srdon_mdz", zoo(2)%phi_srdon, &
+                   "fraction of N ingestion by medium zooplankton to semi-refractory dissolved organic nitrogen", &
+                   units="none", default=0.075*(0.30-zoo(2)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_srdon_lgz", zoo(3)%phi_srdon, &
+                   "fraction of N ingestion by large zooplankton to semi-refractory dissolved organic nitrogen", &
+                   units="none", default=0.075*(0.30-zoo(3)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_srdop_smz", zoo(1)%phi_srdop, &
+                   "fraction of P ingestion by small zooplankton to semi-refractory dissolved organic phosphorus", &
+                   units="none", default=0.125*(0.30-zoo(1)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_srdop_mdz", zoo(2)%phi_srdop, &
+                   "fraction of P ingestion by medium zooplankton to semi-refractory dissolved organic phosphorus", &
+                   units="none", default=0.125*(0.30-zoo(2)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_srdop_lgz", zoo(3)%phi_srdop, &
+                   "fraction of P ingestion by large zooplankton to semi-refractory dissolved organic phosphorus", &
+                   units="none", default=0.125*(0.30-zoo(3)%phi_det))
+    ! partitioning of zooplankton ingestion to semi-labile dissolved organic material
+    call get_param(param_file, "generic_COBALT", "phi_sldon_smz", zoo(1)%phi_sldon, &
+                   "fraction of N ingestion by small zooplankton to semi-labile dissolved organic nitrogen", &
+                   units="none", default=0.3*(0.30-zoo(1)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_sldon_mdz", zoo(2)%phi_sldon, &
+                   "fraction of N ingestion by medium zooplankton to semi-labile dissolved organic nitrogen", &
+                   units="none", default=0.3*(0.30-zoo(2)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_sldon_lgz", zoo(3)%phi_sldon, &
+                   "fraction of N ingestion by large zooplankton to semi-labile dissolved organic nitrogen", &
+                   units="none", default=0.3*(0.30-zoo(3)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_sldop_smz", zoo(1)%phi_sldop, &
+                   "fraction of P ingestion by small zooplankton to semi-labile dissolved organic phosphorus", &
+                   units="none", default=0.3*(0.30-zoo(1)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_sldop_mdz", zoo(2)%phi_sldop, &
+                   "fraction of P ingestion by medium zooplankton to semi-labile dissolved organic phosphorus", &
+                   units="none", default=0.3*(0.30-zoo(2)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_sldop_lgz", zoo(3)%phi_sldop, &
+                   "fraction of P ingestion by large zooplankton to semi-labile dissolved organic phosphorus", &
+                   units="none", default=0.3*(0.30-zoo(3)%phi_det))
     !
     !----------------------------------------------------------------------
     ! Partitioning of viral losses to various dissolved pools
     !----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "phi_ldon_vir",  cobalt%lysis_phi_ldon,  "phi_ldon_vir",  units="unitless", default=0.625)    ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_srdon_vir", cobalt%lysis_phi_srdon, "phi_srdon_vir", units="unitless", default=0.075)  ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_sldon_vir", cobalt%lysis_phi_sldon, "phi_sldon_vir", units="unitless", default=0.3)  ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_ldop_vir",  cobalt%lysis_phi_ldop,  "phi_ldop_vir",  units="unitless", default=0.575)   ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_srdop_vir", cobalt%lysis_phi_srdop, "phi_srdop_vir", units="unitless", default=0.125) ! dimensionless
-    call get_param(param_file, "generic_COBALT", "phi_sldop_vir", cobalt%lysis_phi_sldop, "phi_sldop_vir", units="unitless", default=0.3) ! dimensionless
+    ! All mortality from viruses goes to dissolved organic carbon pools.  Partitioning is assumed to be the same as
+    ! zooplankton egestion that is routed to dissolved organic nitrogen pools. 
+    !
+    call get_param(param_file, "generic_COBALT", "phi_ldon_vir",  cobalt%lysis_phi_ldon, &
+                   "fraction of viral lysis of N to labile dissolved organic nitrogen", units="none", default=0.625)
+    call get_param(param_file, "generic_COBALT", "phi_srdon_vir", cobalt%lysis_phi_srdon, &
+                   "fraction of viral lysis of N to semi-refractory dissolved organic nitrogen", units="none", &
+                   default=0.075)
+    call get_param(param_file, "generic_COBALT", "phi_sldon_vir", cobalt%lysis_phi_sldon, &
+                   "fraction of viral lysis of N to semi-labile dissolved organic nitrogen", units="none", default=0.3)
+    call get_param(param_file, "generic_COBALT", "phi_ldop_vir",  cobalt%lysis_phi_ldop, &
+                   "fraction of viral lysis of P to labile dissolved organic phosphorus", units="none", default=0.575)
+    call get_param(param_file, "generic_COBALT", "phi_srdop_vir", cobalt%lysis_phi_srdop, &
+                   "fraction of viral lysis of P to semi-refractory dissolved organic phosphorus", units="none", &
+                   default=0.125)
+    call get_param(param_file, "generic_COBALT", "phi_sldop_vir", cobalt%lysis_phi_sldop, &
+                   "fraction of viral lysis of P to semi-labile dissolved organic phosphorus", units="none", &
+                   default=0.3)
     !
     !----------------------------------------------------------------------
-    ! Parameters for unresolved higher predators
+    ! Parameters for feeding by unresolved higher predators
     !----------------------------------------------------------------------
     !
-    call get_param(param_file, "generic_COBALT", "imax_hp",     cobalt%imax_hp,     "imax_hp",      units="day-1", &
-                   default= 0.09, scale = I_sperd ) ! s-1
-    call get_param(param_file, "generic_COBALT", "ki_hp",       cobalt%ki_hp,       "ki_hp",        units="mol N kg-1", default=1.25e-6)           ! mol N kg-1
-    call get_param(param_file, "generic_COBALT", "coef_hp",     cobalt%coef_hp,     "coef_hp",      units="unitless", default=2.0)            ! dimensionless
-    call get_param(param_file, "generic_COBALT", "ktemp_hp",    cobalt%ktemp_hp,    "ktemp_hp",     units="C-1", default=0.063)         ! C-1
-    call get_param(param_file, "generic_COBALT", "nswitch_hp",  cobalt%nswitch_hp,  "nswitch_hp",   units="unitless", default=2.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "mswitch_hp",  cobalt%mswitch_hp,  "mswitch_hp",   units="unitless", default=2.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "hp_ipa_smp",  cobalt%hp_ipa_smp,  "hp_ipa_smp",   units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "hp_ipa_mdp",  cobalt%hp_ipa_mdp,  "hp_ipa_mdp",   units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "hp_ipa_lgp",  cobalt%hp_ipa_lgp,  "hp_ipa_lgp",   units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "hp_ipa_diaz", cobalt%hp_ipa_diaz, "hp_ipa_diaz",  units="unitless", default=0.0)        ! dimensionless
-    call get_param(param_file, "generic_COBALT", "hp_ipa_smz",  cobalt%hp_ipa_smz,  "hp_ipa_smz",   units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "hp_ipa_mdz",  cobalt%hp_ipa_mdz,  "hp_ipa_mdz",   units="unitless", default=1.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "hp_ipa_lgz",  cobalt%hp_ipa_lgz,  "hp_ipa_lgz",   units="unitless", default=1.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "hp_ipa_bact", cobalt%hp_ipa_bact, "hp_ipa_bact",  units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "hp_ipa_det",  cobalt%hp_ipa_det,  "hp_ipa_det",   units="unitless", default=0.0)         ! dimensionless
-    call get_param(param_file, "generic_COBALT", "hp_phi_det",  cobalt%hp_phi_det,  "hp_phi_det",   units="unitless", default=0.35)        ! dimensionless
+    ! Higher predators (e.g., fish) in the default COBALT setup are modeled as a density-dependent (quadratic) loss
+    ! term on medium and large zooplankton.  This implicitly assumes that the biomass of higher predators scales in
+    ! proportion with the biomass of the prey (as one might expect from mobile prey-seeking predators).  Parameter
+    ! values are based on a simple extrapolation of allometric relationships for zooplankton (i.e., Hansen et al.,
+    ! 1997; https://doi.org/10.4319/lo.1997.42.4.0687).  Prey switching is assumed to occur between medium and large
+    ! zooplankton (Rykaczewski and Checkley, https://doi.org/10.1073/pnas.0711777105).
+    !
+    call get_param(param_file, "generic_COBALT", "imax_hp", cobalt%imax_hp, &
+                   "max ingestion rate for higher predators @ 0 deg. C", units="day-1", default=0.09, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "ki_hp", cobalt%ki_hp, "half-sat for ingestion by higher predators", &
+                   units="mol N kg-1", default=1.25e-6)
+    call get_param(param_file, "generic_COBALT", "coef_hp", cobalt%coef_hp, &
+                   "coefficient for higher predator losses (2=quadratic)", units="none", default=2.0)
+    call get_param(param_file, "generic_COBALT", "ktemp_hp", cobalt%ktemp_hp, &
+                   "exponential temperature dependence of higher predator rates", units="deg. C-1", default=0.063)
+    call get_param(param_file, "generic_COBALT", "nswitch_hp", cobalt%nswitch_hp, &
+                   "prey switching parameter 1 for higher predators", units="none", default=2.0)
+    call get_param(param_file, "generic_COBALT", "mswitch_hp", cobalt%mswitch_hp, &
+                   "prey switching parameter 2 for higher predators", units="none", default=2.0)
+    ! NOTE: FOR COMPUTATIONAL EFFICIENCY, ONLY THE DEFAULT INTERACTIONS ARE INCLUDED IN THE CODE.  IF YOU ADD A NEW
+    !      PREDATOR-PREY LINK, YOU WILL NEED TO ADD IT TO THE SOURCE/SINK CALCULATIONS LATER IN THIS ROUTINE AS WELL.
+    call get_param(param_file, "generic_COBALT", "hp_ipa_smp", cobalt%hp_ipa_smp, &
+                   "innate availability of small phytoplankton to higher predator feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "hp_ipa_mdp", cobalt%hp_ipa_mdp, &
+                   "innate availability of medium phytoplankton to higher predator feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "hp_ipa_lgp",  cobalt%hp_ipa_lgp, &
+                   "innate availability of large phytoplankton to higher predator feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "hp_ipa_diaz", cobalt%hp_ipa_diaz, &
+                   "innate availability of diazotrophs to higher predator feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "hp_ipa_smz", cobalt%hp_ipa_smz, &
+                   "innate availability of small zooplankton to higher predator feeding (0-1)", units="none", &
+                   default=0.0)
+    call get_param(param_file, "generic_COBALT", "hp_ipa_mdz", cobalt%hp_ipa_mdz, &
+                   "innate availability of medium zooplankton to higher predator feeding (0-1)", units="none", &
+                   default=1.0)
+    call get_param(param_file, "generic_COBALT", "hp_ipa_lgz", cobalt%hp_ipa_lgz, &
+                   "innate availability of large zooplankton to higher predator feeding (0-1)", units="none", &
+                   default=1.0)
+    call get_param(param_file, "generic_COBALT", "hp_ipa_bact", cobalt%hp_ipa_bact, &
+                   "innate availability of bacteria to higher predator feeding (0-1)", units="none", default=0.0)
+    call get_param(param_file, "generic_COBALT", "hp_ipa_det", cobalt%hp_ipa_det, &
+                   "innate availability of detritus to higher predator feeding (0-1)", units="none", default=0.0)
+    ! The material ingested by higher predators is partitioned between detritus and remineralization.
+    ! Remineralization = 1.0 - hp_phi_det 
+    call get_param(param_file, "generic_COBALT", "hp_phi_det", cobalt%hp_phi_det, &
+                   "fraction of ingestion by higher predators to detritus", units="none", default=0.35)
+    !
     ! max iron from sediment entered as micromol Fe m-2 day-1, converted to moles Fe m-2 sec-1 for model calculations
+    !
     call get_param(param_file, "generic_COBALT", "ffe_sed_max", cobalt%ffe_sed_max, &
                    "maximum iron release from the sediment", units="micromoles Fe m-2 day-1", &
                    default= 170.0, scale = I_sperd*(1/micromol2mol) )
