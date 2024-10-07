@@ -1199,7 +1199,7 @@ contains
     ! Zooplankton bioenergetics and partitioning of ingested material
     !----------------------------------------------------------------------
     !
-    ! Prey consumed by zooplankton is either used to produce new zooplankton biomass (anabolic matabolism), respired
+    ! Prey consumed by zooplankton is either used to produce new zooplankton biomass (anabolic metabolism), respired
     ! (catabolic metabolism), or egested as fecal pellets or dissolved organic material.  The maximum fraction of
     ! ingestion partitioned to growth is set by the gross growth efficiency, which is 0.4 following Hansen et al.,
     ! (1997, https://doi.org/10.4319/lo.1997.42.4.0687) and Straile (1997, https://doi.org/10.4319/lo.1997.42.6.1375).
@@ -1242,7 +1242,7 @@ contains
     !           total             100.0%           100.0%
     !
     ! IF YOU CHOOSE TO ALTER THESE PARAMETERS, BE SURE TO ALTER THEM IN A MANNER THAT ENSURES THAT ALL UNDIGESTED
-    ! MATERIAL IN ACCOUNTED FOR.  IF YOU CHANGE ONE, YOU MAY NEED TO CHANGE OTHERS!  
+    ! MATERIAL IS ACCOUNTED FOR.  IF YOU CHANGE ONE, YOU MAY NEED TO CHANGE OTHERS!  
     !
     ! References:
     ! Carlotti et al., 2000. Modeling zooplankton dynamics. Zooplankton Methodology Manual, pp. 571-667.
@@ -1258,7 +1258,7 @@ contains
                    "fraction of ingestion by medium zooplankton to detritus", units="none", default=0.15)
     call get_param(param_file, "generic_COBALT", "phi_det_lgz", zoo(3)%phi_det, &
                    "fraction of ingestion by large zooplankton to detritus", units="none", default=0.30)
-    ! partitioning of zooplanton ingestion to labile dissolved organic material
+    ! partitioning of zooplankton ingestion to labile dissolved organic material
     call get_param(param_file, "generic_COBALT", "phi_ldon_smz", zoo(1)%phi_ldon, &
                    "fraction of N ingestion by small zooplankton to labile dissolved organic nitrogen", &
                    units="none", default=0.625*(0.30-zoo(1)%phi_det))
