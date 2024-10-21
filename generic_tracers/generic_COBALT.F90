@@ -3515,7 +3515,7 @@ contains
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        do n = 1, NUM_PHYTO  !{
           ! Take up iron if below maximum guota and day averaged growth is positive
-          if (phyto(n)%q_fe_2_n(i,j,k).lt.phyto(n)%fe_2_n_max) then
+          if ( (phyto(n)%q_fe_2_n(i,j,k).lt.phyto(n)%fe_2_n_max).and.(phyto(n)%f_mu_mem(i,j,k).gt.0.0) ) then
              ! Scaling fe uptake with the maximum photosynthesis allows for luxury iron uptake when other nutrients
              ! are limiting but iron is not. Added light dependence to prevent excessive iron scavenging while sinking
              phyto(n)%juptake_fe(i,j,k) = phyto(n)%P_C_max(i,j,k)*cobalt%expkT(i,j,k)*phyto(n)%f_n(i,j,k)* &
