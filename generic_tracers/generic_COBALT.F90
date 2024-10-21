@@ -3423,7 +3423,7 @@ contains
               phyto(n)%theta(i,j,k) = theta_temp
               phyto(n)%bresp(i,j,k) =  bresp_temp*P_C_max_temp
               phyto(n)%mu(i,j,k) = P_C_m_temp/(1.0 + cobalt%zeta)*phyto(n)%irrlim(i,j,k) - phyto(n)%bresp(i,j,k)
-              phyto(n)%P_C_max(i,j,k) = P_C_max_temp*cobalt%expkT(i,j,k)
+              phyto(n)%P_C_max(i,j,k) = P_C_max_temp
               phyto(n)%alpha(i,j,k) = alpha_temp
             endif
           enddo
@@ -3514,14 +3514,17 @@ contains
     !
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        do n = 1, NUM_PHYTO  !{
-          if (phyto(n)%q_fe_2_n(i,j,k).lt.phyto(n)%fe_2_n_max) then
+          ! Take up iron if below maximum guota and day averaged growth is positive
+          if ( (phyto(n)%q_fe_2_n(i,j,k).lt.phyto(n)%fe_2_n_max).and.(phyto(n)%f_mu_mem(i,j,k).gt.0.0) ) then
              ! Scaling fe uptake with the maximum photosynthesis allows for luxury iron uptake when other nutrients
-             ! are limiting but iron is not
+             ! are limiting but iron is not. Added light dependence to prevent excessive iron scavenging while sinking
              phyto(n)%juptake_fe(i,j,k) = phyto(n)%P_C_max(i,j,k)*cobalt%expkT(i,j,k)*phyto(n)%f_n(i,j,k)* &
+                (1.0 - exp(-phyto(n)%alpha(i,j,k)*cobalt%f_irr_aclm(i,j,k)*phyto(n)%theta(i,j,k)/ &
+                max(phyto(n)%liebig_lim(i,j,k)*phyto(n)%P_C_max(i,j,k)*cobalt%expkT(i,j,k),epsln)))* &
                 phyto(n)%felim(i,j,k)*cobalt%fe_2_n_upt_fac
              phyto(n)%jexuloss_fe(i,j,k) = 0.0
           else
-             ! if you've exceeded the maximum quota, stop uptake and exude extra
+             ! if you've exceeded the maximum quota or day averaged growth is negative, stop uptake and exude extra
              phyto(n)%juptake_fe(i,j,k) = 0.0
              phyto(n)%jexuloss_fe(i,j,k) = cobalt%expkT(i,j,k)*phyto(n)%bresp(i,j,k)*phyto(n)%f_fe(i,j,k)
           endif
