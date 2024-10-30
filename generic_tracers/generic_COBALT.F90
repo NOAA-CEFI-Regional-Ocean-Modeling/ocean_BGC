@@ -906,20 +906,20 @@ contains
     ! Phytoplankton mortality terms differ by whether they are density-dependent (i.e., linear versus quadratic),
     ! temperature-dependent, and whether they vary depending on the condition (or stress) of the phytoplankton. The
     ! level of stress is defined based on the achieved growth rate relative to the maximum growth rate.  By default,
-    ! stress-dependent mortality begins to increase from 0 when this ratio falls below 0.25 (frac_mu_stress = 0.25).
+    ! stress-dependent mortality begins to increase from 0 when this ratio falls below 0.4 (frac_mu_stress = 0.4).
     !
     call get_param(param_file, "generic_COBALT", "frac_mu_stress_Sm", phyto(SMALL)%frac_mu_stress, &
                    "fraction of max growth when stress-dependent losses initiate for small phytoplankton", &
-         units="none", default=0.25)
+         units="none", default=0.4)
     call get_param(param_file, "generic_COBALT", "frac_mu_stress_Di", phyto(DIAZO)%frac_mu_stress, &
                   "fraction of max growth when stress-dependent losses initiate for diazotrophs", &
-                  units="none", default=0.25)
+                  units="none", default=0.4)
     call get_param(param_file, "generic_COBALT", "frac_mu_stress_Lg", phyto(LARGE)%frac_mu_stress, &
                    "fraction of max growth when stress-dependent losses initiate for large phytoplankton", &
-                   units="none", default=0.25)
+                   units="none", default=0.4)
     call get_param(param_file, "generic_COBALT", "frac_mu_stress_Md", phyto(MEDIUM)%frac_mu_stress, &
                    "fraction of max growth when stress-dependent losses initiate for medium phytoplankton", &
-                   units="none", default=0.25)
+                   units="none", default=0.4)
     !
     ! Phytoplankton aggregation is a density-dependent (quadratic) mortality term that is more effective for large
     ! phytoplankton, following Jackson (1990).  Aggregation rates increase with stress (e.g., Waite et al, 1992).
