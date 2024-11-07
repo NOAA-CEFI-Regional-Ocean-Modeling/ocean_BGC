@@ -11,7 +11,7 @@ use MOM_io,            only : file_exists, close_file, slasher, ensembler
 use MOM_io,            only : open_namelist_file, check_nml_error
 use MOM_time_manager,  only : time_type, time_type_to_real, real_to_time_type
 use MOM_time_manager,  only : operator(+), operator(-), operator(>)
-use posix, only : mkdir, stat, stat_buf
+!use posix, only : mkdir, stat, stat_buf
 
 implicit none ; private
 
@@ -53,7 +53,7 @@ subroutine get_COBALT_param_file(param_file)
   character(len=240) :: output_dir
   integer :: unit, io, ierr, valid_param_files
 
-  type(stat_buf) :: buf
+!  type(stat_buf) :: buf
 
   namelist /cobalt_input_nml/ parameter_filename
 
