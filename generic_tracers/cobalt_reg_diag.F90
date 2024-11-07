@@ -1238,6 +1238,10 @@ module COBALT_reg_diag
     cobalt%id_jfe_coast = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
+    vardesc_temp = vardesc("jfe_fert","Iron fertilization efflux layer integral",'h','L','s','mol Fe m-2 s-1','f')
+    cobalt%id_jfe_fert = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
     vardesc_temp = vardesc("jfe_iceberg","iceberg iron efflux layer integral",'h','L','s','mol Fe m-2 s-1','f')
     cobalt%id_jfe_iceberg = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
@@ -2323,6 +2327,14 @@ module COBALT_reg_diag
     cobalt%id_jprod_mesozoo_200 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
+    vardesc_temp = vardesc("jfe_ads_100","Iron adsorption integral in upper 100m",'h','1','s','mol m-2 s-1','f')  
+    cobalt%id_jfe_ads_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1) 
+
+    vardesc_temp = vardesc("jfe_fert_100","Iron fertilization integral in upper 100m",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_jfe_fert_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
     vardesc_temp = vardesc("daylength","daylength",'h','1','s','hours','f')
     cobalt%id_daylength = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
@@ -3247,6 +3259,13 @@ module COBALT_reg_diag
          cmor_field_name="fediss", cmor_units="mol m-3 s-1",                          &
          cmor_standard_name="tendency_of_mole_concentration_of_dissolved_iron_in_sea_water_due_to_dissolution_from_inorganic_particles", &
          cmor_long_name="Particle Source of Dissolved Iron")
+
+    vardesc_temp = vardesc("fefert_raw","Iron Source through Fertilization",'h','L','s','mol m-3 s-1','f')
+    cobalt%id_fefert = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="fefert", cmor_units="mol m-3 s-1",                          &
+         cmor_standard_name="tendency_of_mole_concentration_of_dissolved_iron_in_sea_water_due_to_fertilization", &
+         cmor_long_name="Iron Source through Fertilization")
 
 ! CHECK3:
 ! 2017/08/04 jgj: CMOR requires area:areacello, volume:volcello

@@ -349,6 +349,9 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_jfe_coast, cobalt%jfe_coast*rho_dzt,         &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+       used = g_send_data(cobalt%id_jfe_fert, cobalt%jfe_fert*rho_dzt,         &
+       model_time, rmask = grid_tmask,&
+       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        used = g_send_data(cobalt%id_jfe_iceberg, cobalt%jfe_iceberg*rho_dzt,         &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1044,6 +1047,12 @@ module COBALT_send_diag
         used = g_send_data(cobalt%id_jprod_mesozoo_200, cobalt%jprod_mesozoo_200,         &
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+        used = g_send_data(cobalt%id_jfe_ads_100, cobalt%jfe_ads_100,         &
+        model_time, rmask = grid_tmask(:,:,1),&
+        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+        used = g_send_data(cobalt%id_jfe_fert_100, cobalt%jfe_fert_100,         &
+        model_time, rmask = grid_tmask(:,:,1),&
+        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
         used = g_send_data(cobalt%id_daylength, cobalt%daylength,         &
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -1678,6 +1687,11 @@ module COBALT_send_diag
 
 ! CAS: fixed conversion
         used = g_send_data(cobalt%id_fediss,  cobalt%jremin_fedet * rho_dzt / dzt,  &
+        model_time, rmask = grid_tmask,&
+        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+
+! XLiu: fixed conversion
+        used = g_send_data(cobalt%id_fefert,  cobalt%jfe_fert * rho_dzt / dzt,  &
         model_time, rmask = grid_tmask,&
         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
 

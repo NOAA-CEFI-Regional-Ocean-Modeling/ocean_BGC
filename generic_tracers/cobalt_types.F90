@@ -685,6 +685,7 @@ module cobalt_types
           jremin_fedet,&
           jfe_ads,&
           jfe_coast,&
+          jfe_fert,&
           jfe_iceberg,&
           jno3_iceberg,&
           jpo4_iceberg,&
@@ -789,6 +790,8 @@ module cobalt_types
           jprod_cadet_calc_100,&
           jprod_cadet_arag_100,&
           jprod_mesozoo_200, &
+          jfe_ads_100, &
+          jfe_fert_100, &          
           jremin_ndet_100, &
           f_ndet_100, &
           f_don_100, &
@@ -1000,6 +1003,7 @@ module cobalt_types
           id_jremin_fedet  = -1,       &
           id_jfe_ads       = -1,       &
           id_jfe_coast     = -1,       &
+          id_jfe_fert      = -1,       &
           id_jfe_iceberg   = -1,       &
           id_jno3_iceberg  = -1,       &
           id_jpo4_iceberg  = -1,       &
@@ -1185,6 +1189,8 @@ module cobalt_types
           id_jprod_cadet_calc_100 = -1, &
           id_jprod_cadet_arag_100 = -1, &
           id_jprod_mesozoo_200 = -1,   &
+          id_jfe_ads_100 = -1,         &
+          id_jfe_fert_100 = -1,        & 
           id_daylength         = -1,   &
           id_jremin_ndet_100 = -1,     &
           id_f_ndet_100 = -1,          &
@@ -1313,6 +1319,7 @@ module cobalt_types
           id_bddtalk        = -1, &
           id_fescav         = -1, &
           id_fediss         = -1, &
+          id_fefert         = -1, & 
           id_graz           = -1, &
           id_dissicos           = -1, &
           id_dissicnatos        = -1, &

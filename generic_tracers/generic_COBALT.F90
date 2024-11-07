@@ -2829,6 +2829,9 @@ contains
     real, dimension(:,:,:), Allocatable :: pre_totfe, net_srcfe, post_totfe
     real, dimension(:,:,:), Allocatable :: pre_totc, net_srcc, post_totc
     real, dimension(:,:),   Allocatable :: pka_nh3,phos_nh3_exchange
+    real, dimension(:,:), Allocatable :: jfe_fert_data
+
+    logical :: jfe_fert_override
 
     real :: tr,ltr
     real :: imbal
@@ -2867,6 +2870,7 @@ contains
        call g_tracer_get_values(tracer_list,'nh4'   ,'field', cobalt%f_nh4  ,isd,jsd)
     end if
     allocate(phos_nh3_exchange(isd:ied,jsd:jed))
+    allocate(jfe_fert_data(isd:ied,jsd:jed))
 
     !
     ! Calculate some thickness/vertical reference points for later calculations
@@ -2948,6 +2952,8 @@ contains
     call g_tracer_set_values(tracer_list,'dic','csurf',cobalt%co2_csurf    ,isd,jsd)
 
     call mpp_clock_end(id_clock_carbon_calculations)
+
+    call data_override('OCN', 'jfe_fert', jfe_fert_data(isc:iec,jsc:jec), model_time, override=jfe_fert_override)
 
     if (do_nh3_atm_ocean_exchange) then
        !to override pH used for ocean nh3 exchange
@@ -5241,11 +5247,20 @@ contains
     enddo; enddo ; enddo  !} i,j,k
 
     ! 2016/06/13 JGJ: keep original Fed calculation
+
+    do k = 1, nk ; do j = jsc, jec ; do i = isc, iec  !{
+       if (k .le. 1) then
+               cobalt%jfe_fert(i,j,k) = jfe_fert_data(i,j)
+       else
+               cobalt%jfe_fert(i,j,k) = 0.0
+       end if
+    enddo; enddo; enddo  !} i,j,k
+
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec  !{
        !
        ! Fed
        !
-       cobalt%jfed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jfe_coast(i,j,k) + &
+       cobalt%jfed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jfe_coast(i,j,k) + cobalt%jfe_fert(i,j,k) + &
                             cobalt%jfe_iceberg(i,j,k) - phyto(DIAZO)%juptake_fe(i,j,k) - &
                             phyto(LARGE)%juptake_fe(i,j,k) - phyto(MEDIUM)%juptake_fe(i,j,k) - &
                             phyto(SMALL)%juptake_fe(i,j,k) - cobalt%jfe_ads(i,j,k)
@@ -5927,6 +5942,8 @@ contains
        cobalt%jprod_cadet_calc_100(i,j) = cobalt%jprod_cadet_calc(i,j,1) * rho_dzt(i,j,1)
        cobalt%jprod_cadet_arag_100(i,j) = cobalt%jprod_cadet_arag(i,j,1) * rho_dzt(i,j,1)
        cobalt%jremin_ndet_100(i,j) = cobalt%jremin_ndet(i,j,1) * rho_dzt(i,j,1)
+       cobalt%jfe_ads_100(i,j) = cobalt%jfe_ads(i,j,1) * rho_dzt(i,j,1)
+       cobalt%jfe_fert_100(i,j) = cobalt%jfe_fert(i,j,1) * rho_dzt(i,j,1)
 
        cobalt%f_ndet_100(i,j) = cobalt%f_ndet(i,j,1)*rho_dzt(i,j,1)
        cobalt%f_don_100(i,j) = (cobalt%f_ldon(i,j,1)+cobalt%f_sldon(i,j,1)+cobalt%f_srdon(i,j,1))* &
@@ -6054,6 +6071,8 @@ contains
              cobalt%jprod_cadet_calc_100(i,j) = cobalt%jprod_cadet_calc_100(i,j) + cobalt%jprod_cadet_calc(i,j,k) * rho_dzt(i,j,k)
              cobalt%jprod_cadet_arag_100(i,j) = cobalt%jprod_cadet_arag_100(i,j) + cobalt%jprod_cadet_arag(i,j,k) * rho_dzt(i,j,k)
              cobalt%jremin_ndet_100(i,j) = cobalt%jremin_ndet_100(i,j) + cobalt%jremin_ndet(i,j,k) * rho_dzt(i,j,k)
+             cobalt%jfe_ads_100(i,j) = cobalt%jfe_ads_100(i,j) + cobalt%jfe_ads(i,j,k) * rho_dzt(i,j,k)
+             cobalt%jfe_fert_100(i,j) = cobalt%jfe_fert_100(i,j) + cobalt%jfe_fert(i,j,k) * rho_dzt(i,j,k)             
              cobalt%f_ndet_100(i,j) = cobalt%f_ndet_100(i,j) + cobalt%f_ndet(i,j,k)*rho_dzt(i,j,k)
              cobalt%f_don_100(i,j) = cobalt%f_don_100(i,j) + (cobalt%f_ldon(i,j,k) + cobalt%f_sldon(i,j,k) + &
                 cobalt%f_srdon(i,j,k))*rho_dzt(i,j,k)
@@ -6186,6 +6205,11 @@ contains
            cobalt%jprod_cadet_arag_100(i,j) = cobalt%jprod_cadet_arag_100(i,j) + cobalt%jprod_cadet_arag(i,j,k_100)* &
                 drho_dzt
            cobalt%jremin_ndet_100(i,j) = cobalt%jremin_ndet_100(i,j) + cobalt%jremin_ndet(i,j,k_100)* &
+                drho_dzt
+
+           cobalt%jfe_ads_100(i,j) = cobalt%jfe_ads_100(i,j) + cobalt%jfe_ads(i,j,k_100)* &
+                drho_dzt
+           cobalt%jfe_fert_100(i,j) = cobalt%jfe_fert_100(i,j) + cobalt%jfe_fert(i,j,k_100)* &
                 drho_dzt
 
            cobalt%f_ndet_100(i,j) = cobalt%f_ndet_100(i,j) + cobalt%f_ndet(i,j,k_100)*drho_dzt
@@ -6456,6 +6480,7 @@ contains
     end if
     if (allocated(pka_nh3)) deallocate(pka_nh3)
     deallocate(phos_nh3_exchange)
+    deallocate(jfe_fert_data)
 !
 !---------------------------------------------------------------------
 !
@@ -7136,6 +7161,7 @@ contains
     allocate(cobalt%jremin_fedet(isd:ied, jsd:jed, 1:nk)) ; cobalt%jremin_fedet=0.0
     allocate(cobalt%jfe_ads(isd:ied, jsd:jed, 1:nk))      ; cobalt%jfe_ads=0.0
     allocate(cobalt%jfe_coast(isd:ied, jsd:jed, 1:nk))    ; cobalt%jfe_coast=0.0
+    allocate(cobalt%jfe_fert(isd:ied, jsd:jed, 1:nk)) ; cobalt%jfe_fert=0.0
     allocate(cobalt%jfe_iceberg(isd:ied, jsd:jed, 1:nk))  ; cobalt%jfe_iceberg=0.0
     allocate(cobalt%jno3_iceberg(isd:ied, jsd:jed, 1:nk)) ; cobalt%jno3_iceberg=0.0
     allocate(cobalt%jpo4_iceberg(isd:ied, jsd:jed, 1:nk)) ; cobalt%jpo4_iceberg=0.0
@@ -7324,6 +7350,8 @@ contains
    allocate(cobalt%jprod_cadet_arag_100(isd:ied,jsd:jed))   ; cobalt%jprod_cadet_arag_100 = 0.0
    allocate(cobalt%jremin_ndet_100(isd:ied,jsd:jed))        ; cobalt%jremin_ndet_100 = 0.0
    allocate(cobalt%jprod_mesozoo_200(isd:ied,jsd:jed))      ; cobalt%jprod_mesozoo_200 = 0.0
+   allocate(cobalt%jfe_ads_100(isd:ied,jsd:jed))            ; cobalt%jfe_ads_100 = 0.0
+   allocate(cobalt%jfe_fert_100(isd:ied,jsd:jed))            ; cobalt%jfe_fert_100 = 0.0
    allocate(cobalt%daylength(isd:ied,jsd:jed))              ; cobalt%daylength = 0.0
 
    allocate(cobalt%f_ndet_100(isd:ied,jsd:jed))             ; cobalt%f_ndet_100 = 0.0
@@ -7688,6 +7716,7 @@ contains
     deallocate(cobalt%jremin_fedet)
     deallocate(cobalt%jfe_ads)
     deallocate(cobalt%jfe_coast)
+    deallocate(cobalt%jfe_fert)
     deallocate(cobalt%jfe_iceberg)
     deallocate(cobalt%jno3_iceberg)
     deallocate(cobalt%jpo4_iceberg)
@@ -7789,6 +7818,8 @@ contains
     deallocate(cobalt%jprod_cadet_arag_100)
     deallocate(cobalt%jprod_cadet_calc_100)
     deallocate(cobalt%jprod_mesozoo_200)
+    deallocate(cobalt%jfe_ads_100)
+    deallocate(cobalt%jfe_fert_100)    
     deallocate(cobalt%daylength)
     deallocate(cobalt%jremin_ndet_100)
     deallocate(cobalt%f_ndet_100)
