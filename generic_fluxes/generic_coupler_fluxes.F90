@@ -15,7 +15,7 @@ module generic_coupler_fluxes
   
   integer :: id_nh3_sc_no=-1, id_nh3_csurf=-1, id_nh3_alpha=-1, id_nh3_kw=-1
   integer :: id_dms_sc_no=-1, id_dms_csurf=-1, id_dms_alpha=-1, id_dms_kw=-1
-  integer :: id_phos=-1, id_sos=-1, id_pka_nh3=-1, id_nh4_csurf=-1
+  integer :: id_phos=-1, id_sos=-1, id_pka_nh3=-1, id_nh4_csurf=-1, id_tos=-1
 
   integer :: ind_nh3_flux = 0 
   integer :: ind_dms_flux = 0
@@ -42,6 +42,8 @@ contains
                                   'unitless', missing_value=1.e10)
     id_sos = register_diag_field('ocean_model', 'sos',axt, ocean_time, 'ocean surface salt', &
                                  'psu', missing_value=1.e10)
+    id_tos = register_diag_field('ocean_model', 'tos',axt, ocean_time, 'ocean surface temperature', &
+                                 'K', missing_value=1.e10)
 
   end subroutine generic_coupler_fluxes_init
     
@@ -134,21 +136,19 @@ contains
     real            :: ltr,tr
     integer         :: i,j
     real            :: sstc
-    real, dimension(size(ocean_mask,1),size(ocean_mask,2)) :: nh3_alpha,nh3_csurf,nh3_sc_no,pka_nh3
-    real, dimension(size(ocean_mask,1),size(ocean_mask,2)) :: nh3_kw
-    
-    nh3_kw(is:ie,js:je) = iob_fluxes%bc(ind_nh3_flux)%field(ind_kw)%values(is:ie,js:je)
-    if (id_nh3_kw>0) sent = send_data(id_nh3_kw, nh3_kw, ocean_time, mask=ocean_mask)
+    real, dimension(is:ie,js:je) :: nh3_alpha,nh3_csurf,nh3_sc_no,pka_nh3,nh3_kw
 
-    do i = 1,size(ocean_sst,1); do j=1,size(ocean_sst,2)
-       !Note that COBALT uses sst in C. For consistency. To avoid mistakes, I am converting sst to C
+    nh3_kw(:,:) = iob_fluxes%bc(ind_nh3_flux)%field(ind_kw)%values(is:ie,js:je)
+
+    do i = is,ie; do j=js,je
+       !Input sst is in Kelvin. To avoid mistakes convert sst to C
        sstc = ocean_sst(i,j)-273.15
        pka_nh3(i,j)   = calc_pka_nh3(sstc,salt_surf(i,j))
        tr             = 298.15/(sstc+273.15)-1.
-       ltr            = -tr+log(298.15/(sstc+273.15))       
-
+       ltr            = -tr+log(298.15/(sstc+273.15))
        !calculate solubility/schmidt number for NH3
        nh3_alpha(i,j) = 5.76e1*exp(13.79*tr-5.39*ltr)*997.
+
        nh3_alpha(i,j) = nh3_alpha(i,j)&
            /saltout_correction(101325./(1.e-3*rdgas*wtmair*(sstc+273.15)*nh3_alpha(i,j)),vb_nh3,salt_surf(i,j)) !mol/m3/atm  
        nh3_csurf(i,j) = nh4_surf(i,j)/(1.+10**(pka_nh3(i,j)-max(min(ph_surf(i,j),11.),3.))) !in mol/m3
@@ -163,9 +163,11 @@ contains
     if (id_nh3_csurf>0) sent = send_data(id_nh3_csurf, nh3_csurf, ocean_time, mask=ocean_mask)
     if (id_nh4_csurf>0) sent = send_data(id_nh4_csurf, nh4_surf, ocean_time, mask=ocean_mask)            
     if (id_sos>0) sent = send_data(id_sos, salt_surf, ocean_time, mask=ocean_mask)
+    if (id_tos>0) sent = send_data(id_tos, ocean_sst, ocean_time, mask=ocean_mask)
     if (id_phos>0) sent = send_data(id_phos, ph_surf, ocean_time, mask=ocean_mask)                        
     if (id_nh3_alpha>0) sent = send_data(id_nh3_alpha, nh3_alpha, ocean_time, mask=ocean_mask)
     if (id_pka_nh3>0)   sent = send_data(id_pka_nh3,   pka_nh3, ocean_time, mask=ocean_mask)
+    if (id_nh3_kw>0) sent = send_data(id_nh3_kw, nh3_kw, ocean_time, mask=ocean_mask)
 
   end subroutine generic_coupler_fluxes_set_iob_nh3
 
@@ -187,7 +189,7 @@ contains
     dms_kw(is:ie,js:je) = iob_fluxes%bc(ind_dms_flux)%field(ind_kw)%values(is:ie,js:je)
     if (id_dms_kw>0) sent = send_data(id_dms_kw, dms_kw, ocean_time, mask=ocean_mask)
 
-    do i = 1,size(ocean_sst,1); do j=1,size(ocean_sst,2)
+    do i = is,ie; do j=js,je
        !Note that COBALT uses sst in C. For consistency. To avoid mistakes, I am converting sst to C
        dms_alpha(i,j) = 0.537023e3*exp(3500*(1/ocean_sst(i,j)-1/298.15)) !M/atm
        dms_alpha(i,j) = dms_alpha(i,j)&
