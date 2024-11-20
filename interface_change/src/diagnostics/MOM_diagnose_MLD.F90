@@ -94,12 +94,14 @@ subroutine diagnoseMLDbyDensityDifference(id_MLD, h, tv, densityDiff, G, GV, US,
     endif
   endif
 
-  gE_rho0 = (US%L_to_Z**2 * GV%g_Earth) / GV%H_to_RZ
+  !gE_rho0 = (US%L_to_Z**2 * GV%g_Earth) / GV%H_to_RZ
+  gE_rho0 = US%L_to_Z**2*GV%g_Earth / GV%Rho0
 
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = GV%ke
 
   hRef_MLD(:) = ref_h_mld
-  pRef_MLD(:) = GV%H_to_RZ*GV%g_Earth*ref_h_mld
+  !pRef_MLD(:) = GV%H_to_RZ*GV%g_Earth*ref_h_mld
+  pRef_MLD(:) = GV%Rho0*GV%g_Earth*ref_h_mld
   z_ref_diag(:,:) = 0.
 
   !EOSdom(:) = EOS_domain(G%HI)
@@ -109,7 +111,7 @@ subroutine diagnoseMLDbyDensityDifference(id_MLD, h, tv, densityDiff, G, GV, US,
 
     if (pRef_MLD(is) /= 0.0) then
       rhoSurf(:) = 0.0
-      do i=is,ie
+      do i=is,ie 
         dZ(i) = 0.5 * dZ_2d(i,1) ! Depth of center of surface layer
         if (dZ(i) >= hRef_MLD(i)) then
           call calculate_density(tv%T(i,j,1), tv%S(i,j,1), pRef_MLD(i), rhoSurf_k, tv%eqn_of_state)
@@ -126,7 +128,7 @@ subroutine diagnoseMLDbyDensityDifference(id_MLD, h, tv, densityDiff, G, GV, US,
             aFac = ( hRef_MLD(i) - dZm1(i) ) / dddpth
             z_ref_diag(i,j) = (dZ(i) * aFac + dZm1(i) * (1. - aFac))
             call calculate_density(tv%T(i,j,k)  , tv%S(i,j,k)  , pRef_MLD(i), rhoSurf_k, tv%eqn_of_state)
-            call calculate_density(tv%T(i,j,k-1), tv%S(i,j,k-1), pRef_MLD(i), rhoSurf_km1, tv%eqn_of_state)
+            call calculate_density(tv%T(i,j,k-1), tv%S(i,j,k-1), pRef_MLD(i), rhoSurf_km1,tv%eqn_of_state)
             rhoSurf(i) = (rhoSurf_k * aFac + rhoSurf_km1 * (1. - aFac))
             H_subML(i) = h(i,j,k)
           elseif ((rhoSurf(i) == 0.) .and. (k >= nz)) then
@@ -150,7 +152,7 @@ subroutine diagnoseMLDbyDensityDifference(id_MLD, h, tv, densityDiff, G, GV, US,
     elseif (pRef_MLD(is) == 0.0) then
       rhoSurf(:) = 0.0
       do i=is,ie ; dZ(i) = 0.5 * dZ_2d(i,1) ; enddo ! Depth of center of surface layer
-      call calculate_density(tv%T(:,j,1), tv%S(:,j,1), pRef_MLD, rhoSurf, tv%eqn_of_state) !, EOSdom)
+      call calculate_density(tv%T(:,j,1), tv%S(:,j,1), pRef_MLD, rhoSurf, is, ie-is+1, tv%eqn_of_state) !, EOSdom)
       do i=is,ie
         rhoSurf_2d(i,j) = rhoSurf(i)
         deltaRhoAtK(i) = 0.
@@ -197,7 +199,7 @@ subroutine diagnoseMLDbyDensityDifference(id_MLD, h, tv, densityDiff, G, GV, US,
 
       ! Mixed-layer depth, using sigma-0 (surface reference pressure)
       do i=is,ie ; deltaRhoAtKm1(i) = deltaRhoAtK(i) ; enddo ! Store value from previous iteration of K
-      call calculate_density(tv%T(:,j,k), tv%S(:,j,k), pRef_MLD, deltaRhoAtK, tv%eqn_of_state) !, EOSdom)
+      call calculate_density(tv%T(:,j,k), tv%S(:,j,k), pRef_MLD, deltaRhoAtK, is, ie-is+1, tv%eqn_of_state) !, EOSdom)
       do i = is, ie
         deltaRhoAtK(i) = deltaRhoAtK(i) - rhoSurf(i) ! Density difference between layer K and surface
         ddRho = deltaRhoAtK(i) - deltaRhoAtKm1(i)
@@ -214,14 +216,15 @@ subroutine diagnoseMLDbyDensityDifference(id_MLD, h, tv, densityDiff, G, GV, US,
     enddo
 
     if (id_N2>0) then  ! Now actually calculate stratification, N2, below the mixed layer.
-      do i=is,ie ; pRef_N2(i) = (GV%g_Earth * GV%H_to_RZ) * (H_subML(i) + 0.5*dH_N2(i)) ; enddo
+      !do i=is,ie ; pRef_N2(i) = (GV%g_Earth * GV%H_to_RZ) * (H_subML(i) + 0.5*dH_N2(i)) ; enddo
+      do i=is,ie ; pRef_N2(i) = (GV%g_Earth * GV%Rho0) * (H_subML(i) + 0.5*dH_N2(i)) ; enddo
       ! if ((.not.N2_region_set(i)) .and. (dZ_N2(i) > 0.5*dZ_sub_ML)) then
       !    ! Use whatever stratification we can, measured over whatever distance is available?
       !    T_deeper(i) = tv%T(i,j,nz) ; S_deeper(i) = tv%S(i,j,nz)
       !    N2_region_set(i) = .true.
       ! endif
-      call calculate_density(T_subML, S_subML, pRef_N2, rho_subML, tv%eqn_of_state) !, EOSdom)
-      call calculate_density(T_deeper, S_deeper, pRef_N2, rho_deeper, tv%eqn_of_state) !, EOSdom)
+      call calculate_density(T_subML, S_subML, pRef_N2, rho_subML, is, ie-is+1, tv%eqn_of_state) !, EOSdom)
+      call calculate_density(T_deeper, S_deeper, pRef_N2, rho_deeper, is, ie-is+1, tv%eqn_of_state) !, EOSdom)
       do i=is,ie ; if ((G%mask2dT(i,j) > 0.0) .and. N2_region_set(i)) then
         subMLN2(i,j) =  gE_rho0 * (rho_deeper(i) - rho_subML(i)) / dH_N2(i)
       endif ; enddo
