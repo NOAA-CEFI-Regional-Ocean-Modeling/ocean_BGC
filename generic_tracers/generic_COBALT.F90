@@ -311,7 +311,7 @@ contains
 
     ! add MOM6-style interfaces for a parameter file
     call get_COBALT_param_file(param_file)
-    call log_version(param_file, "COBALT", version, "", log_to_all=.true., debugging=.true.)
+    call log_version(param_file, "COBALT", version, "") !, log_to_all=.true., debugging=.true.)
     !Specify and initialize all parameters used by this package
     call user_add_params(param_file)
 
@@ -1621,7 +1621,7 @@ contains
     
     ! add MOM6-style interfaces for a parameter file
     call get_COBALT_param_file(param_file)
-    call log_version(param_file, "COBALT", version, "", log_to_all=.true., debugging=.true.)
+    call log_version(param_file, "COBALT", version, "") ! , log_to_all=.true., debugging=.true.)
     !Specify and initialize all parameters used by this package
     call user_add_params(param_file)
     
