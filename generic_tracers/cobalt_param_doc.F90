@@ -1,17 +1,12 @@
 ! this module will contain a few main routines: one to get the
 module cobalt_param_doc 
 
-use MOM_cpu_clock,     only : cpu_clock_id, cpu_clock_begin, cpu_clock_end, CLOCK_COMPONENT
-use MOM_data_override, only : data_override
-use MOM_domains,       only : domain2D, same_domain
-use MOM_error_handler, only : MOM_error, FATAL, WARNING, callTree_enter, callTree_leave
+use MOM_error_handler, only : MOM_error, FATAL
 use MOM_file_parser,   only : param_file_type, open_param_file
-use MOM_file_parser,   only : read_param, get_param, log_param, log_version
 use MOM_io,            only : file_exists, close_file, slasher, ensembler
 use MOM_io,            only : open_namelist_file, check_nml_error
-use MOM_time_manager,  only : time_type, time_type_to_real, real_to_time_type
-use MOM_time_manager,  only : operator(+), operator(-), operator(>)
-use posix, only : mkdir, stat, stat_buf
+!use MOM_time_manager,  only : time_type, time_type_to_real, real_to_time_type
+!use MOM_time_manager,  only : operator(+), operator(-), operator(>)
 
 implicit none ; private
 
@@ -52,8 +47,6 @@ subroutine get_COBALT_param_file(param_file)
                                ! the run segment should be started.
   character(len=240) :: output_dir
   integer :: unit, io, ierr, valid_param_files
-
-  type(stat_buf) :: buf
 
   namelist /cobalt_input_nml/ parameter_filename
 

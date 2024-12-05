@@ -293,8 +293,6 @@ contains
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_init'
 
-    type(param_file_type) :: param_file  !< structure indicating parameter file to parse
-
     ! This include declares and sets the variable "version". (use of include statement copied from MOM6)
 # include "version_variable.h"
 
@@ -308,12 +306,6 @@ contains
     else
        do_nh3_diag=.false.
     end if
-
-    ! add MOM6-style interfaces for a parameter file
-    call get_COBALT_param_file(param_file)
-    call log_version(param_file, "COBALT", version, "", log_to_all=.true., debugging=.true.)
-    !Specify and initialize all parameters used by this package
-    call user_add_params(param_file)
 
     !Allocate all the private work arrays used by this module.
     call user_allocate_arrays
@@ -372,15 +364,30 @@ contains
     !in this module.
     !All the g_tracer_add_param calls must happen between
     !g_tracer_start_param_list and g_tracer_end_param_list  calls.
-    !This implementation enables runtime overwrite via field_table.
+    !This implementation enables runtime overwrite via COBALT_input or COBALT_override.
 
     stdoutunit=stdout()
-    if (is_root_pe()) write(stdoutunit,*) '!-----------------------START-------------------------------------------'
-    if (is_root_pe()) write(stdoutunit,*) '! ', trim(package_name), ' parameter check'
-    if (is_root_pe()) write(stdoutunit,*) '!-----------------------START-------------------------------------------'
 
     call g_tracer_start_param_list(package_name)
     call get_param(param_file, "generic_COBALT", "init", cobalt%init, "init", default=.false.)
+
+    call get_param(param_file, "generic_COBALT", "htotal_in", cobalt%htotal_in, "htotal_in", units="", default=1.0e-08)
+    !
+    ! Sinking velocity of detritus: a value of 20 m d-1 is consistent with a characteristic sinking
+    ! velocity of 100 m d-1 of marine aggregates and a disaggregation rate constant
+    ! of 5 d-1 in the surface ocean (Clegg and Whitfield, 1992; Dunne, 1999).  Alternatively, 100 m d-1
+    ! is more in line with the deep water synthesis of Berelson (2002; Particle settling rates increase
+    ! with depth in the ocean, DSR-II, 49, 237-252).
+    !
+    call get_param(param_file, "generic_COBALT", "wsink",  cobalt%wsink, "wsink", units="m day-1", &
+                   default= 100.0, scale = I_sperd ) ! s-1
+
+    call get_param(param_file, "generic_COBALT", "ice_restart_file"   , cobalt%ice_restart_file   ,  &
+            "ice_restart_file", default="ice_cobalt.res.nc")
+    call get_param(param_file, "generic_COBALT", "ocean_restart_file" , cobalt%ocean_restart_file ,  &
+            "ocean_restart_file", default="ocean_cobalt.res.nc")
+    call get_param(param_file, "generic_COBALT", "IC_file"            , cobalt%IC_file            ,  &
+            "IC_file"           , default="")
 
     call get_param(param_file, "generic_COBALT", "htotal_scale_lo", cobalt%htotal_scale_lo, &
                    "scaling factor for initializing carbon chemistry solver", units=" ", default=0.01)
@@ -1587,12 +1594,6 @@ contains
     call get_param(param_file, "generic_COBALT", "tracer_debug",  cobalt%tracer_debug, "tracer_debug", default=.false.)
 
     call g_tracer_end_param_list(package_name)
-    !===========
-    !Block Ends: g_tracer_add_param
-    !===========
-    if (is_root_pe()) write(stdoutunit,*) '!------------------------END--------------------------------------------'
-    if (is_root_pe()) write(stdoutunit,*) '! ', trim(package_name), ' parameter check'
-    if (is_root_pe()) write(stdoutunit,*) '!------------------------END--------------------------------------------'
   end subroutine user_add_params
 
   subroutine user_add_tracers(tracer_list)
@@ -1625,22 +1626,7 @@ contains
     !Specify and initialize all parameters used by this package
     call user_add_params(param_file)
     
-    call get_param(param_file, "generic_COBALT", "htotal_in", cobalt%htotal_in, "htotal_in", units="", default=1.0e-08)
-    !
-    ! Sinking velocity of detritus: a value of 20 m d-1 is consistent with a characteristic sinking
-    ! velocity of 100 m d-1 of marine aggregates and a disaggregation rate constant
-    ! of 5 d-1 in the surface ocean (Clegg and Whitfield, 1992; Dunne, 1999).  Alternatively, 100 m d-1
-    ! is more in line with the deep water synthesis of Berelson (2002; Particle settling rates increase
-    ! with depth in the ocean, DSR-II, 49, 237-252).
-    !
-    call get_param(param_file, "generic_COBALT", "wsink",  cobalt%wsink, "wsink", units="m day-1", &
-                   default= 100.0, scale = I_sperd ) ! s-1
-
-    call get_param(param_file, "generic_COBALT", "ice_restart_file"   , cobalt%ice_restart_file   ,  "ice_restart_file", default="ice_cobalt.res.nc")
-    call get_param(param_file, "generic_COBALT", "ocean_restart_file" , cobalt%ocean_restart_file ,  "ocean_restart_file", default="ocean_cobalt.res.nc")
-    call get_param(param_file, "generic_COBALT", "IC_file"            , cobalt%IC_file            ,  "IC_file"           , default="")
-    
-    ! Any additional get_param calls should be done before closing the param_file
+    ! Any additional get_param calls should be done in user_add_params and before closing the param_file
     call close_param_file(param_file)
     
     call g_tracer_end_param_list(package_name)
