@@ -28,11 +28,6 @@ module cobalt_types
   !
   logical, public :: do_vertfill_pre = .false.             !< Returns tracer arrays with sensible values
   logical, public :: debug           = .false.             !< not use   
-  real, public    :: o2_min_nit= 0.01e-6                   !< Oxygen threshold for nitrification (mol O2 kg-1)
-  real, public    :: k_o2_nit  = 3.9e-6                    !< Oxygen half saturation constant for nitrification
-  real, public    :: irr_inhibit = 10.                     !< Irradiance inhibition term for nitrification (W m-2)
-  real, public    :: gamma_nitrif= 3.5e6                   !< Rate constant for nitrification (month-1)
-  real, public    :: k_nh3_nitrif= 3.1e-9                  !< NH3 half-saturation for nitrification (mol NH3 kg-1)  
   real, public    :: imbalance_tolerance=1.0e-10           !< the tolerance for non-conservation in C,N,P,Sc,Fe
 
   integer, public :: scheme_no3_nh4_lim = 2 !< Nitrate and ammonia limitation scheme options
@@ -491,7 +486,7 @@ module cobalt_types
           gamma_cased,      &
           Co_cased,         &
           o2_min,           &
-          o2_min_amx,       &
+          o2_max_amx,       &
           o2_min_nit,       &
           o2_2_nfix,        &
           o2_2_nh4,         &
