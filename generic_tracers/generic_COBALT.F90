@@ -154,7 +154,7 @@ module generic_COBALT
   use cobalt_reg_diag, only : cobalt_reg_diagnostics
   use cobalt_param_doc, only : get_COBALT_param_file
 
-  use MOM_file_parser,   only : read_param, get_param, log_version, param_file_type
+  use MOM_file_parser,   only : read_param, get_param, log_version, param_file_type, close_param_file
 
   use FMS_co2calc_mod, only : FMS_co2calc, CO2_dope_vector
 
@@ -1654,7 +1654,7 @@ contains
     endif
 
     !
-    !Add here only the parameters that are required at the time of registeration
+    !Add here only the parameters that are required at the time of registration
     !(to make flux exchanging Ocean tracers known for all PE's)
     !
     call g_tracer_start_param_list(package_name)
@@ -1670,7 +1670,7 @@ contains
     ! Sinking velocity of detritus: a value of 20 m d-1 is consistent with a characteristic sinking
     ! velocity of 100 m d-1 of marine aggregates and a disaggregation rate constant
     ! of 5 d-1 in the surface ocean (Clegg and Whitfield, 1992; Dunne, 1999).  Alternatively, 100 m d-1
-    ! is more in line with the deep water synthesis of Berelson (2002; Particel settling rates increase
+    ! is more in line with the deep water synthesis of Berelson (2002; Particle settling rates increase
     ! with depth in the ocean, DSR-II, 49, 237-252).
     !
     call get_param(param_file, "generic_COBALT", "wsink",  cobalt%wsink, "wsink", units="m day-1", &
@@ -1679,7 +1679,10 @@ contains
     call get_param(param_file, "generic_COBALT", "ice_restart_file"   , cobalt%ice_restart_file   ,  "ice_restart_file", default="ice_cobalt.res.nc")
     call get_param(param_file, "generic_COBALT", "ocean_restart_file" , cobalt%ocean_restart_file ,  "ocean_restart_file", default="ocean_cobalt.res.nc")
     call get_param(param_file, "generic_COBALT", "IC_file"            , cobalt%IC_file            ,  "IC_file"           , default="")
-    !
+    
+    ! Any additional get_param calls should be done before closing the param_file
+    call close_param_file(param_file)
+    
     call g_tracer_end_param_list(package_name)
 
     ! Set Restart files

@@ -5,7 +5,7 @@ use MOM_cpu_clock,     only : cpu_clock_id, cpu_clock_begin, cpu_clock_end, CLOC
 use MOM_data_override, only : data_override
 use MOM_domains,       only : domain2D, same_domain
 use MOM_error_handler, only : MOM_error, FATAL, WARNING, callTree_enter, callTree_leave
-use MOM_file_parser,   only : param_file_type, open_param_file, close_param_file
+use MOM_file_parser,   only : param_file_type, open_param_file
 use MOM_file_parser,   only : read_param, get_param, log_param, log_version
 use MOM_io,            only : file_exists, close_file, slasher, ensembler
 use MOM_io,            only : open_namelist_file, check_nml_error
