@@ -2554,8 +2554,8 @@ contains
     call g_tracer_get_values(tracer_list,'fedet','btm_reservoir',cobalt%ffedet_btm,isd,jsd)
     cobalt%ffedet_btm = cobalt%ffedet_btm/dt
     ! uncomment for "no mass change check"
-    !call g_tracer_get_pointer(tracer_list,'fedet_btf','field',temp_field)
-    !temp_field(:,:,1) = cobalt%ffedet_btm(:,:)
+    call g_tracer_get_pointer(tracer_list,'fedet_btf','field',temp_field)
+    temp_field(:,:,1) = cobalt%ffedet_btm(:,:)
     call g_tracer_set_values(tracer_list,'fedet','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_ffedet_btm, cobalt%ffedet_btm, &
     model_time, rmask = grid_tmask(:,:,1), &
