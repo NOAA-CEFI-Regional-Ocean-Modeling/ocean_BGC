@@ -2647,6 +2647,8 @@ contains
     !! handled separately later using a relationship based on Dale et al., 2015. 
     call g_tracer_get_values(tracer_list,'fedi','btm_reservoir',phyto(DIAZO)%ffe_btm,isd,jsd)
     phyto(DIAZO)%ffe_btm = phyto(DIAZO)%ffe_btm/dt
+    call g_tracer_get_pointer(tracer_list,'fedi_btf','field',temp_field)
+    temp_field(:,:,1) = phyto(DIAZO)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'fedi','btm_reservoir',0.0)
     used = g_send_data(phyto(DIAZO)%id_ffe_btm,phyto(DIAZO)%ffe_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2654,6 +2656,8 @@ contains
 
     call g_tracer_get_values(tracer_list,'felg','btm_reservoir',phyto(LARGE)%ffe_btm,isd,jsd)
     phyto(LARGE)%ffe_btm = phyto(LARGE)%ffe_btm/dt
+    call g_tracer_get_pointer(tracer_list,'felg_btf','field',temp_field)
+    temp_field(:,:,1) = phyto(LARGE)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'felg','btm_reservoir',0.0)
     used = g_send_data(phyto(LARGE)%id_ffe_btm,phyto(LARGE)%ffe_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2661,6 +2665,8 @@ contains
 
     call g_tracer_get_values(tracer_list,'femd','btm_reservoir',phyto(MEDIUM)%ffe_btm,isd,jsd)
     phyto(MEDIUM)%ffe_btm = phyto(MEDIUM)%ffe_btm/dt
+    call g_tracer_get_pointer(tracer_list,'femd_btf','field',temp_field)
+    temp_field(:,:,1) = phyto(MEDIUM)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'femd','btm_reservoir',0.0)
     used = g_send_data(phyto(MEDIUM)%id_ffe_btm,phyto(MEDIUM)%ffe_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2668,6 +2674,8 @@ contains
 
     call g_tracer_get_values(tracer_list,'fesm','btm_reservoir',phyto(SMALL)%ffe_btm,isd,jsd)
     phyto(SMALL)%ffe_btm = phyto(SMALL)%ffe_btm/dt
+    call g_tracer_get_pointer(tracer_list,'fesm_btf','field',temp_field)
+    temp_field(:,:,1) = phyto(SMALL)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'fesm','btm_reservoir',0.0)
     used = g_send_data(phyto(SMALL)%id_ffe_btm,phyto(SMALL)%ffe_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
