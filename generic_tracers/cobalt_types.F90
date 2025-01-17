@@ -411,7 +411,8 @@ module cobalt_types
           force_update_fluxes,&                ! If OCMIP2 tracers fluxes should be updated every coupling timesteps
                                                !    when update_from_source is not called every coupling timesteps
                                                !    as is the case with MOM6  THERMO_SPANS_COUPLING option
-          cased_steady,     &                  ! steady state approximation for cased
+          do_fnso4red_sed,  &     ! Simulate O2 deficit and alkalinity flux from implied sedimentary sulfate reduction
+          cased_steady,     &     ! steady state approximation for cased
           tracer_debug
 
      real  ::          &
@@ -765,7 +766,7 @@ module cobalt_types
           ffe_sed,&
           ffe_geotherm,&
           ffe_iceberg,&
-          fnfeso4red_sed,&
+          fnso4red_sed,&
           fno3denit_sed,&
           fnoxic_sed,&
           frac_burial,&
@@ -1063,7 +1064,7 @@ module cobalt_types
           id_ffe_sed       = -1,       &
           id_ffe_geotherm  = -1,       &
           id_ffe_iceberg = -1,         &
-          id_fnfeso4red_sed= -1,       &
+          id_fnso4red_sed= -1,       &
           id_fno3denit_sed = -1,       &
           id_fnoxic_sed    = -1,       &
           id_frac_burial   = -1,       &

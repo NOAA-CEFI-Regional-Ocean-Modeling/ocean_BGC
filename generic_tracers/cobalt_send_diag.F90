@@ -526,7 +526,7 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_ffe_iceberg,  cobalt%ffe_iceberg,          &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_fnfeso4red_sed,cobalt%fnfeso4red_sed,        &
+       used = g_send_data(cobalt%id_fnso4red_sed,cobalt%fnso4red_sed,        &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_fno3denit_sed, cobalt%fno3denit_sed,         &

@@ -516,6 +516,21 @@ contains
     !   5NH4+ + 3NO3- --> 4N2 + 9H2O + 2H+
     !   Effect is to decrease alkalinity by 0.4 mole equivalents per mole of NH4 removed
     !
+    ! Sulfate reduction: 
+    ! In the sediment, organic material that is not buried, aerobically respired or denitrified
+    ! is assumed to undergo 2-step sulfate reduction: 
+    !   C106H172O38N16 + 59*SO4-- + 75*H+ --> 106*CO2 + 16*NH4+ + 59*HS- + 62*H2O
+    !   59*HS- + 118O2 --> 59*SO4-- + 59*H+
+    ! 
+    ! Yielding the overall reaction:
+    !   C106H172O38N16 + 16*H+ + 118*O2 -> 106*CO2 + 16*NH4+ + 62H2O
+    !
+    ! The effect is an increase of 1 alkalinity equivalent and consumption of 1 mole O2 per mole of
+    ! N remineralized.  In anaerobic environments this complete reaction does not occur until HS- 
+    ! encounters O2 but, because we do not track S, we allow it to occur locally.  This can result
+    ! in negative O2 values, which should be interpreted as zero oxygen plus additional O2 demand
+    ! in the form of HS-.
+    !
     call get_param(param_file, "generic_COBALT", "n_2_n_denit", cobalt%n_2_n_denit, &
                    "moles NO3 used per mole org. N remineralized via denitrification", &
                    units="mol N mol N-1",default= 472.0/(5.0*16.0))
@@ -1523,6 +1538,9 @@ contains
            "depth scale for ramping up benthic denitrification", units="m", default=10.0)
     call get_param(param_file, "generic_COBALT", "scale_burial", cobalt%scale_burial, &
            "scaling factor for particulate organic burial", units="none", default= 0.0)
+    ! Flag to include impact of sulfate reduction on o2 and alkalinity locally 
+    call get_param(param_file, "generic_COBALT", "do_fnso4red_sed", cobalt%do_fnso4red_sed, &
+            "logical flag to include O2 and alk impact of sulfate reduction in sediment", default=.false.)
     !
     ! Parameters controlling the preservation and dissolution of calcite in the sediments following Dunne et al., 2012
     ! "Global calcite cycling constrained by sediment preservation controls" https://doi.org/10.1029/2010GB003935.
@@ -4778,8 +4796,16 @@ contains
                   cobalt%zt(i,j,k) / (cobalt%z_denit + cobalt%zt(i,j,k))
 
              ! Calculate the organic matter remineralized via sediment aerobic processes (fnoxic_sed).  This generally
-             ! equals the total flux minus burial and denitrification.  However, if there is insufficient bottom
-             ! oxygen to support this, some is assumed to be remineralized via sulfate reduction.
+             ! equals the total org N flux minus what is lost to burial and what is remineralized via sedimentary 
+             ! denitrification (the second expression in the "min" function below).  However, if there is insufficient
+             ! bottom oxygen, some org N is assumed to be remineralized via sulfate reduction. The max rate of aerobic
+             ! aerobic respiration that can be sustained is based on the specified "bottom thickness" and the bottom
+             ! oxygen concentration ("btm_o2").  The max rate of organic nitrogen remineralization is then:
+             !
+             ! btm_o2(moles O2 kg-1)*bottom_thickness(m)*density(kg m-3)* 1/dt(s-1)*molN/molO2 = moles N m-2 s-1
+             !
+             ! Note: the thickness of the bottom boundary layer (cobalt%bottom_thickness) impacts this upper bound.
+             ! Efforts are underway to implement a more dynamic bottom boundary layer scheme.
              if (cobalt%btm_o2(i,j) .gt. cobalt%o2_min) then  !{
                 cobalt%fnoxic_sed(i,j) = max(0.0, min(cobalt%btm_o2(i,j)*cobalt%bottom_thickness* &
                                          cobalt%Rho_0*r_dt*(1.0/cobalt%o2_2_nh4), &
@@ -4789,10 +4815,10 @@ contains
                 cobalt%fnoxic_sed(i,j) = 0.0
              endif !}
              ! Any remaining organic matter is remineralized via sulfate reduction
-             cobalt%fnfeso4red_sed(i,j) = max(0.0, cobalt%fntot_btm(i,j)-cobalt%fnoxic_sed(i,j)- &
+             cobalt%fnso4red_sed(i,j) = max(0.0, cobalt%fntot_btm(i,j)-cobalt%fnoxic_sed(i,j)- &
                                           cobalt%fn_burial(i,j)-cobalt%fno3denit_sed(i,j)/cobalt%n_2_n_denit)
           else
-             cobalt%fnfeso4red_sed(i,j) = 0.0
+             cobalt%fnso4red_sed(i,j) = 0.0
              cobalt%fno3denit_sed(i,j) = 0.0
              cobalt%fnoxic_sed(i,j) = 0.0
           endif !}
@@ -4914,21 +4940,20 @@ contains
           ! Bottom flux boundaries passed to the vertical mixing routine
           ! (negative values are fluxes into the ocean)
           !
-          cobalt%b_alk(i,j) = - 2.0*(cobalt%fcased_redis(i,j)+cobalt%f_cadet_arag_btf(i,j,1)) -    &
-             cobalt%fnoxic_sed(i,j) - cobalt%fno3denit_sed(i,j)*cobalt%alk_2_n_denit
           cobalt%b_dic(i,j) =  - cobalt%fcased_redis(i,j) - cobalt%f_cadet_arag_btf(i,j,1) -       &
              (cobalt%fntot_btm(i,j) - cobalt%fn_burial(i,j)) * cobalt%c_2_n
-          ! uncomment for "no mass change" test (next 2 lines)
-          !cobalt%b_dic(i,j) =  - cobalt%f_cadet_calc_btf(i,j,1)  - cobalt%f_cadet_arag_btf(i,j,1) -            &
-          !   (cobalt%fntot_btm(i,j) - cobalt%fn_burial(i,j)) * cobalt%c_2_n
           cobalt%b_fed(i,j) = - cobalt%ffe_sed(i,j) - cobalt%ffe_geotherm(i,j)
-          ! uncomment for "no mass change" test (next line)
-          !cobalt%b_fed(i,j) = - cobalt%ffetot_btm(i,j)
           cobalt%b_nh4(i,j) = - cobalt%fntot_btm(i,j) + cobalt%fn_burial(i,j)
           cobalt%b_no3(i,j) = cobalt%fno3denit_sed(i,j)
-          ! uncomment if you want to include sulfate reduction
-          !cobalt%b_o2(i,j)  = cobalt%o2_2_nh4 * (cobalt%fnoxic_sed(i,j) + cobalt%fnfeso4red_sed(i,j))
-          cobalt%b_o2(i,j)  = cobalt%o2_2_nh4 * cobalt%fnoxic_sed(i,j)
+          if (do_fnso4red_sed) then
+            cobalt%b_o2(i,j)  = cobalt%o2_2_nh4 * (cobalt%fnoxic_sed(i,j) + cobalt%fnso4red_sed(i,j))
+            cobalt%b_alk(i,j) = - 2.0*(cobalt%fcased_redis(i,j)+cobalt%f_cadet_arag_btf(i,j,1)) -    &
+              cobalt%fnoxic_sed(i,j) - cobalt%fno3denit_sed(i,j)*cobalt%alk_2_n_denit - cobalt%fnso4red_sed(i,j) 
+          else
+            cobalt%b_o2(i,j)  = cobalt%o2_2_nh4 * cobalt%fnoxic_sed(i,j)
+            cobalt%b_alk(i,j) = - 2.0*(cobalt%fcased_redis(i,j)+cobalt%f_cadet_arag_btf(i,j,1)) -    &
+               cobalt%fnoxic_sed(i,j) - cobalt%fno3denit_sed(i,j)*cobalt%alk_2_n_denit
+          endif
           cobalt%b_po4(i,j) = - cobalt%fptot_btm(i,j) + cobalt%fp_burial(i,j)
           cobalt%b_sio4(i,j)= - cobalt%fsitot_btm(i,j)
 
@@ -5613,11 +5638,9 @@ contains
          endif
     enddo; enddo ; enddo  !} i,j,k
 
-
-    !
     !
     !-----------------------------------------------------------------------
-    !       Save variables for diagnostics
+    ! 6: Source/sink diagnostic calculations
     !-----------------------------------------------------------------------
     !
 
@@ -5680,68 +5703,62 @@ contains
 
     enddo; enddo ; enddo  !} i,j,k
 
+    ! 
+    ! Calculate layer integrals for key combinations of tracers, most of which are ultimately used to calculate global
+    ! budgets.  The variable "rho_dzt" is the layer mass per unit area (kg m-2) calculated by multiplying the layer
+    ! thickness by the density.  Multiplication by a concentration per mass (moles kg-1) thus yields a tracer layer
+    ! integral per unit area (moles m-2).  Summing these layer integrals gives the water column (wc) integral of the
+    ! tracer per unit area.  Multiplying this by the grid cell area and summing across all grid cells yields the 
+    ! global inventory in moles.
+    ! (TRACERS, MOVE AFTER TRIDAGONAL)
     !
-    !---------------------------------------------------------------------
-    ! Calculate total carbon  = Dissolved Inorganic Carbon + Phytoplankton Carbon
-    !   + Dissolved Organic Carbon (including refractory) + Heterotrophic Biomass
-    !   + Detrital Orgainc and Inorganic Carbon
-    ! For the oceanic carbon budget, a constant 42 uM of dissolved organic
-    ! carbon is added to represent the refractory component.
-    ! For the oceanic nitrogen budget, a constant 2 uM of dissolved organic
-    ! nitrogen is added to represent the refractory component.
-    !---------------------------------------------------------------------
-    !
+
+    ! The carbon layer integral (organic + inorganic).  Note that this can be calculated with or without a constant
+    ! background level of recalcitrant dissolved organic carbon by setting cobalt%doc_background.  This is included
+    ! at a level of 40 micromoles kg-1 by default.
     cobalt%tot_layer_int_c(:,:,:) = (cobalt%p_dic(:,:,:,tau) + cobalt%doc_background + cobalt%p_cadet_arag(:,:,:,tau) +&
-         cobalt%p_cadet_calc(:,:,:,tau) + cobalt%c_2_n * (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) +      &
-         cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + &
-         cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) +  &
-         cobalt%p_ndet(:,:,:,tau) + cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + &
-         cobalt%p_nlgz(:,:,:,tau))) * rho_dzt(:,:,:)
+         cobalt%p_cadet_calc(:,:,:,tau) + cobalt%c_2_n * (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + &
+         cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + cobalt%p_ldon(:,:,:,tau) + &
+         cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_nsmz(:,:,:,tau) + &
+         cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau))) * rho_dzt(:,:,:)
 
-    cobalt%tot_layer_int_fe(:,:,:) = (cobalt%p_fed(:,:,:,tau) + cobalt%p_fedi(:,:,:,tau) + &
-         cobalt%p_felg(:,:,:,tau) + cobalt%p_femd(:,:,:,tau) + cobalt%p_fesm(:,:,:,tau) + &
-         cobalt%p_fedet(:,:,:,tau)) * rho_dzt(:,:,:)
+    ! dissolved organic component also includes an optional background doc
+    cobalt%tot_layer_int_doc(:,:,:) = (cobalt%c_2_n * (cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) + &
+         cobalt%p_srdon(:,:,:,tau)) + cobalt%doc_background) * rho_dzt(:,:,:)
 
-    cobalt%tot_layer_int_n(:,:,:) = (cobalt%p_no3(:,:,:,tau) + &
-         cobalt%p_nh4(:,:,:,tau) + cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + &
-         cobalt%p_nsm(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + &
+    cobalt%tot_layer_int_poc(:,:,:) = (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + &
+         cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_nsmz(:,:,:,tau) + &
+         cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau))*cobalt%c_2_n*rho_dzt(:,:,:)
+
+    cobalt%tot_layer_int_dic(:,:,:) = cobalt%p_dic(:,:,:,tau)*rho_dzt(:,:,:)
+
+    cobalt%tot_layer_int_fe(:,:,:) = (cobalt%p_fed(:,:,:,tau) + cobalt%p_fedi(:,:,:,tau) + cobalt%p_felg(:,:,:,tau) + &
+         cobalt%p_femd(:,:,:,tau) + cobalt%p_fesm(:,:,:,tau) + cobalt%p_fedet(:,:,:,tau)) * rho_dzt(:,:,:)
+
+    cobalt%tot_layer_int_n(:,:,:) = (cobalt%p_no3(:,:,:,tau) + cobalt%p_nh4(:,:,:,tau) + cobalt%p_ndi(:,:,:,tau) + &
+         cobalt%p_nlg(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + &
          cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) +  cobalt%p_ndet(:,:,:,tau) + &
-         cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau)) * &
-         rho_dzt(:,:,:)
+         cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau)) * rho_dzt(:,:,:)
 
-    cobalt%tot_layer_int_p(:,:,:) = (cobalt%p_po4(:,:,:,tau) + &
-         cobalt%p_pdi(:,:,:,tau) + cobalt%p_plg(:,:,:,tau) + &
-         cobalt%p_pmd(:,:,:,tau) + cobalt%p_psm(:,:,:,tau) + &
-         cobalt%p_ldop(:,:,:,tau) + cobalt%p_sldop(:,:,:,tau) + &
-         cobalt%p_srdop(:,:,:,tau) + cobalt%p_pdet(:,:,:,tau) + &
-         bact(1)%q_p_2_n*cobalt%p_nbact(:,:,:,tau) + zoo(1)%q_p_2_n*cobalt%p_nsmz(:,:,:,tau) +  &
-         zoo(2)%q_p_2_n*cobalt%p_nmdz(:,:,:,tau) + zoo(3)%q_p_2_n*cobalt%p_nlgz(:,:,:,tau))  &
-         * rho_dzt(:,:,:)
+    cobalt%tot_layer_int_p(:,:,:) = (cobalt%p_po4(:,:,:,tau) + cobalt%p_pdi(:,:,:,tau) + cobalt%p_plg(:,:,:,tau) + &
+         cobalt%p_pmd(:,:,:,tau) + cobalt%p_psm(:,:,:,tau) + cobalt%p_ldop(:,:,:,tau) + cobalt%p_sldop(:,:,:,tau) + &
+         cobalt%p_srdop(:,:,:,tau) + cobalt%p_pdet(:,:,:,tau) + bact(1)%q_p_2_n*cobalt%p_nbact(:,:,:,tau) + &
+         zoo(1)%q_p_2_n*cobalt%p_nsmz(:,:,:,tau) + zoo(2)%q_p_2_n*cobalt%p_nmdz(:,:,:,tau) + &
+         zoo(3)%q_p_2_n*cobalt%p_nlgz(:,:,:,tau))*rho_dzt(:,:,:)
 
-    cobalt%tot_layer_int_si(:,:,:) = (cobalt%p_sio4(:,:,:,tau) + cobalt%p_silg(:,:,:,tau) +   &
+    cobalt%tot_layer_int_si(:,:,:) = (cobalt%p_sio4(:,:,:,tau) + cobalt%p_silg(:,:,:,tau) + &
          cobalt%p_simd(:,:,:,tau) + cobalt%p_sidet(:,:,:,tau)) * rho_dzt(:,:,:)
 
     cobalt%tot_layer_int_o2(:,:,:) = cobalt%p_o2(:,:,:,tau)*rho_dzt(:,:,:)
 
     cobalt%tot_layer_int_alk(:,:,:) = cobalt%p_alk(:,:,:,tau)*rho_dzt(:,:,:)
 
-    cobalt%tot_layer_int_dic(:,:,:) = cobalt%p_dic(:,:,:,tau)*rho_dzt(:,:,:)
-
-    ! CAS: background excluded in accordance with CMIP6 request
-    cobalt%tot_layer_int_doc(:,:,:) = cobalt%c_2_n * (cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) +  &
-         cobalt%p_srdon(:,:,:,tau)) * rho_dzt(:,:,:)
-
-   cobalt%tot_layer_int_poc(:,:,:) = (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + &
-         cobalt%p_nbact(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + &
-         cobalt%p_nlgz(:,:,:,tau))*cobalt%c_2_n*rho_dzt(:,:,:)
-
-
     !
-    !---------------------------------------------------------------------
-    ! calculate water column vertical integrals for diagnostics
-    !---------------------------------------------------------------------
+    ! calculate water column vertical integrals for tracers and fluxes (per unit area)
+    ! tracer units are moles m-2, fluxes are moles sec-1 m-2
     !
     do j = jsc, jec ; do i = isc, iec !{
+       ! Tracers (MOVE AFTER TRIDAGONAL?) 
        cobalt%wc_vert_int_c(i,j) = 0.0
        cobalt%wc_vert_int_dic(i,j) = 0.0
        cobalt%wc_vert_int_doc(i,j) = 0.0
@@ -5752,23 +5769,25 @@ contains
        cobalt%wc_vert_int_si(i,j) = 0.0
        cobalt%wc_vert_int_o2(i,j) = 0.0
        cobalt%wc_vert_int_alk(i,j) = 0.0
-       cobalt%wc_vert_int_npp(i,j) = 0.0
-       cobalt%wc_vert_int_jdiss_sidet(i,j) = 0.0
-       cobalt%wc_vert_int_jdiss_cadet(i,j) = 0.0
-       cobalt%wc_vert_int_jo2resp(i,j) = 0.0
-       cobalt%wc_vert_int_jprod_cadet(i,j) = 0.0
-       cobalt%wc_vert_int_jno3denit(i,j) = 0.0
-       cobalt%wc_vert_int_jprod_no3nitrif(i,j) = 0.0
-       cobalt%wc_vert_int_juptake_nh4(i,j) = 0.0
-       cobalt%wc_vert_int_jprod_nh4(i,j) = 0.0
-       cobalt%wc_vert_int_juptake_no3(i,j) = 0.0
-       cobalt%wc_vert_int_nfix(i,j) = 0.0
-       cobalt%wc_vert_int_jfe_iceberg(i,j) = 0.0
-       cobalt%wc_vert_int_jno3_iceberg(i,j) = 0.0
-       cobalt%wc_vert_int_jpo4_iceberg(i,j) = 0.0
-       cobalt%wc_vert_int_jnamx(i,j) = 0.0
+       ! Fluxes
+       cobalt%wc_vert_int_npp(i,j) = 0.0              ! wc integrated net primary production
+       cobalt%wc_vert_int_jdiss_sidet(i,j) = 0.0      ! wc integrated dissolution of silica detritus     
+       cobalt%wc_vert_int_jdiss_cadet(i,j) = 0.0      ! wc integrated dissolution of calcite detritus
+       cobalt%wc_vert_int_jo2resp(i,j) = 0.0          ! wc integrated oxygen consumption
+       cobalt%wc_vert_int_jprod_cadet(i,j) = 0.0      ! wc integrated production of calcite detritus
+       cobalt%wc_vert_int_jno3denit(i,j) = 0.0        ! wc integrated nitrate use in denitrification
+       cobalt%wc_vert_int_jprod_no3nitrif(i,j) = 0.0  ! wc integrated nitrate production in nitrification
+       cobalt%wc_vert_int_juptake_nh4(i,j) = 0.0      ! wc integrated nh4 uptake by phytoplankton (recycled production)
+       cobalt%wc_vert_int_jprod_nh4(i,j) = 0.0        ! wc integrated production of nh4 through remineralization
+       cobalt%wc_vert_int_juptake_no3(i,j) = 0.0      ! wc integrated no3 uptake by phytoplankton (new production)
+       cobalt%wc_vert_int_nfix(i,j) = 0.0             ! wc integrated nitrogen fixation
+       cobalt%wc_vert_int_jnamx(i,j) = 0.0            ! wc integrated N lost to N2 via anammox
+       cobalt%wc_vert_int_jfe_iceberg(i,j) = 0.0      ! wc integrated iron additions from icebergs
+       cobalt%wc_vert_int_jno3_iceberg(i,j) = 0.0     ! wc integrated no3 additions from icebergs
+       cobalt%wc_vert_int_jpo4_iceberg(i,j) = 0.0     ! wc integrated po4 additions from icebergs
     enddo; enddo !} i,j
     do j = jsc, jec ; do i = isc, iec ; do k = 1, nk  !{
+          ! Tracers ("tot_layer_int" variables already multiplied by "rho_dzt", so just sum over k to get moles m-2)
           cobalt%wc_vert_int_c(i,j) = cobalt%wc_vert_int_c(i,j) + cobalt%tot_layer_int_c(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_dic(i,j) = cobalt%wc_vert_int_dic(i,j) + cobalt%tot_layer_int_dic(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_doc(i,j) = cobalt%wc_vert_int_doc(i,j) + cobalt%tot_layer_int_doc(i,j,k)*grid_tmask(i,j,k)
@@ -5779,56 +5798,53 @@ contains
           cobalt%wc_vert_int_si(i,j) = cobalt%wc_vert_int_si(i,j) + cobalt%tot_layer_int_si(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_o2(i,j) = cobalt%wc_vert_int_o2(i,j) + cobalt%tot_layer_int_o2(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_alk(i,j) = cobalt%wc_vert_int_alk(i,j) + cobalt%tot_layer_int_alk(i,j,k)*grid_tmask(i,j,k)
-          cobalt%wc_vert_int_npp(i,j) = cobalt%wc_vert_int_npp(i,j) + (phyto(SMALL)%jprod_n(i,j,k) +  &
+
+          ! Fluxes, multiply by rho_dzt and sum over k to get from moles kg-1 sec-1 to moles m-2 sec-1
+          cobalt%wc_vert_int_npp(i,j) = cobalt%wc_vert_int_npp(i,j) + (phyto(SMALL)%jprod_n(i,j,k) + &
               phyto(MEDIUM)%jprod_n(i,j,k) + phyto(LARGE)%jprod_n(i,j,k) + phyto(DIAZO)%jprod_n(i,j,k))* &
               rho_dzt(i,j,k)*grid_tmask(i,j,k)
-          cobalt%wc_vert_int_jdiss_sidet(i,j) = cobalt%wc_vert_int_jdiss_sidet(i,j) +                 &
+          cobalt%wc_vert_int_jdiss_sidet(i,j) = cobalt%wc_vert_int_jdiss_sidet(i,j) + &
              cobalt%jdiss_sidet(i,j,k) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
-          cobalt%wc_vert_int_jdiss_cadet(i,j) = cobalt%wc_vert_int_jdiss_cadet(i,j) +                 &
+          cobalt%wc_vert_int_jdiss_cadet(i,j) = cobalt%wc_vert_int_jdiss_cadet(i,j) + &
              (cobalt%jdiss_cadet_calc(i,j,k)+cobalt%jdiss_cadet_arag(i,j,k))*rho_dzt(i,j,k)*grid_tmask(i,j,k)
-          cobalt%wc_vert_int_jo2resp(i,j) = cobalt%wc_vert_int_jo2resp(i,j) +                         &
+          cobalt%wc_vert_int_jo2resp(i,j) = cobalt%wc_vert_int_jo2resp(i,j) + &
              cobalt%jo2resp_wc(i,j,k) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
-          cobalt%wc_vert_int_jprod_cadet(i,j) = cobalt%wc_vert_int_jprod_cadet(i,j) +                 &
+          cobalt%wc_vert_int_jprod_cadet(i,j) = cobalt%wc_vert_int_jprod_cadet(i,j) + &
              (cobalt%jprod_cadet_calc(i,j,k)+cobalt%jprod_cadet_arag(i,j,k))*rho_dzt(i,j,k)*grid_tmask(i,j,k)
-          cobalt%wc_vert_int_jno3denit(i,j) = cobalt%wc_vert_int_jno3denit(i,j) +                     &
+          cobalt%wc_vert_int_jno3denit(i,j) = cobalt%wc_vert_int_jno3denit(i,j) + &
              cobalt%jno3denit_wc(i,j,k) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
-          cobalt%wc_vert_int_jprod_no3nitrif(i,j) = cobalt%wc_vert_int_jprod_no3nitrif(i,j) +                         &
+          cobalt%wc_vert_int_jprod_no3nitrif(i,j) = cobalt%wc_vert_int_jprod_no3nitrif(i,j) + &
              cobalt%jprod_no3nitrif(i,j,k) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
-          cobalt%wc_vert_int_juptake_nh4(i,j) = cobalt%wc_vert_int_juptake_nh4(i,j) +                     &
-             (phyto(SMALL)%juptake_nh4(i,j,k)+phyto(MEDIUM)%juptake_nh4(i,j,k)+ &
-              phyto(LARGE)%juptake_nh4(i,j,k)+phyto(DIAZO)%juptake_nh4(i,j,k) )* &
-             rho_dzt(i,j,k) * grid_tmask(i,j,k)
-
-          cobalt%wc_vert_int_jprod_nh4(i,j) = cobalt%wc_vert_int_jprod_nh4(i,j) +                     &
+          cobalt%wc_vert_int_juptake_nh4(i,j) = cobalt%wc_vert_int_juptake_nh4(i,j) + &
+             (phyto(SMALL)%juptake_nh4(i,j,k)+phyto(MEDIUM)%juptake_nh4(i,j,k)+phyto(LARGE)%juptake_nh4(i,j,k)+ &
+              phyto(DIAZO)%juptake_nh4(i,j,k) )*rho_dzt(i,j,k) * grid_tmask(i,j,k)
+          cobalt%wc_vert_int_jprod_nh4(i,j) = cobalt%wc_vert_int_jprod_nh4(i,j) +  &
              cobalt%jprod_nh4(i,j,k)*rho_dzt(i,j,k) * grid_tmask(i,j,k)
-
-          cobalt%wc_vert_int_juptake_no3(i,j) = cobalt%wc_vert_int_juptake_no3(i,j) +                     &
-             (phyto(DIAZO)%juptake_no3(i,j,k)+phyto(LARGE)%juptake_no3(i,j,k)+ &
-              phyto(MEDIUM)%juptake_no3(i,j,k)+phyto(SMALL)%juptake_no3(i,j,k))* &
-             rho_dzt(i,j,k) * grid_tmask(i,j,k)
-          cobalt%wc_vert_int_nfix(i,j) = cobalt%wc_vert_int_nfix(i,j) + phyto(DIAZO)%juptake_n2(i,j,k) *&
+          cobalt%wc_vert_int_juptake_no3(i,j) = cobalt%wc_vert_int_juptake_no3(i,j) + &
+             (phyto(SMALL)%juptake_no3(i,j,k) + phyto(MEDIUM)%juptake_no3(i,j,k) + phyto(LARGE)%juptake_no3(i,j,k) + &
+              phyto(DIAZO)%juptake_no3(i,j,k))*rho_dzt(i,j,k) * grid_tmask(i,j,k)
+          cobalt%wc_vert_int_nfix(i,j) = cobalt%wc_vert_int_nfix(i,j) + phyto(DIAZO)%juptake_n2(i,j,k) * &
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_jnamx(i,j)=cobalt%wc_vert_int_jnamx(i,j)+cobalt%jnamx(i,j,k)* &
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
 
+          ! Iceberg fluxes
           cobalt%wc_vert_int_jfe_iceberg(i,j) = cobalt%wc_vert_int_jfe_iceberg(i,j) + cobalt%jfe_iceberg(i,j,k) *&
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_jno3_iceberg(i,j) = cobalt%wc_vert_int_jno3_iceberg(i,j) + cobalt%jno3_iceberg(i,j,k) *&
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_jpo4_iceberg(i,j) = cobalt%wc_vert_int_jpo4_iceberg(i,j) + cobalt%jpo4_iceberg(i,j,k) *&
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
-
     enddo; enddo; enddo  !} i,j,k
+
     !
-    !---------------------------------------------------------------------
-    ! Add external bottom fluxes to specific rates
-    !---------------------------------------------------------------------
-    !
+    ! Numerous CMIP variables require the bottom source to be added to rate of change diagnotics before they are assigned
+    ! to the relevant CMIP variable in cobalt_send_diag.F90
+    ! 
+    ! First populate the entire array with the water column changes
     do j = jsc, jec ; do i = isc, iec ; do k = 1, nk  !{
-       ! CAS added calcite and aragonite redisolution terms
        cobalt%jdiss_cadet_calc_plus_btm(i,j,k)  = cobalt%jdiss_cadet_calc(i,j,k)
        cobalt%jdiss_cadet_arag_plus_btm(i,j,k)  = cobalt%jdiss_cadet_arag(i,j,k)
-       ! CAS added a jprod_nh4_plus_btm for remoc CMIP variable
        cobalt%jprod_nh4_plus_btm(i,j,k) = cobalt%jprod_nh4(i,j,k)
        cobalt%jalk_plus_btm(i,j,k)  = cobalt%jalk(i,j,k)
        cobalt%jdic_plus_btm(i,j,k)  = cobalt%jdic(i,j,k)
@@ -5841,19 +5857,27 @@ contains
        cobalt%jdin_plus_btm(i,j,k)  = cobalt%jno3(i,j,k) + cobalt%jnh4(i,j,k)
     enddo; enddo; enddo  !} i,j,k
 
+    ! Then find all the layers within the specified bottm boundary layer thickness.  The first layer is always included.
+    ! Additional layers are included if they fall, in part or whole, within the specified bottom thickness.  This
+    ! could be done more finely, but awaiting an explicit bottom boundary layer scheme.
     do j = jsc, jec ; do i = isc, iec  !{
-      k = grid_kmt(i,j)
-      rho_dzt_bot(i,j) = 0.0
+      k = grid_kmt(i,j)         ! start at the bottom
+      rho_dzt_bot(i,j) = 0.0    ! local variable to track the mass of the cells assigned to the bottom (kg m-2) 
       if (k .gt. 0) then !{
         do k = grid_kmt(i,j),1,-1   !{
           if (rho_dzt_bot(i,j).lt.cobalt%Rho_0*cobalt%bottom_thickness) then
             rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
-            k_bot(i,j) = k
+            k_bot(i,j) = k      ! tracks the k index of the last layer included in the bottom boundary
           endif
         enddo
       endif
     enddo; enddo
 
+    ! Lastly add the bottom fluxes to the bottom of the water column to form the "plus_btm" diagnostics.  The bottom 
+    ! fluxes are in moles m-2 sec-1.  Dividing by the bottom layer mass (rho_dzt_bot, kg m-2) gives  moles kg-1 sec-1,
+    ! which is dimensionally consistent with other water column fluxes.
+    ! Note: Updated to directly reference the bottom fluxes passed to the tridiagonal solver when possible.  The
+    ! convention for these is that a negative flux is into the domain, explaining subtractions below 
     do j = jsc, jec ; do i = isc, iec  !{
       k = grid_kmt(i,j)
       if (k .gt. 0) then !{
@@ -5862,31 +5886,16 @@ contains
             cobalt%fcased_redis(i,j) / rho_dzt_bot(i,j)
           cobalt%jdiss_cadet_arag_plus_btm(i,j,k)  = cobalt%jdiss_cadet_arag(i,j,k) +  &
             cobalt%f_cadet_arag_btf(i,j,1) / rho_dzt_bot(i,j)
-          cobalt%jprod_nh4_plus_btm(i,j,k) = cobalt%jprod_nh4(i,j,k) + &
-            (cobalt%f_ndet_btf(i,j,1) - cobalt%fn_burial(i,j)) / rho_dzt_bot(i,j)
-          cobalt%jalk_plus_btm(i,j,k) = cobalt%jalk(i,j,k) +                       &
-            (2.0 * (cobalt%fcased_redis(i,j) + cobalt%f_cadet_arag_btf(i,j,1)) +    &
-            cobalt%f_ndet_btf(i,j,1) + cobalt%alk_2_n_denit * cobalt%fno3denit_sed(i,j)) / &
-            rho_dzt_bot(i,j)
-          cobalt%jdic_plus_btm(i,j,k) = cobalt%jdic(i,j,k) +                       &
-             (cobalt%fcased_redis(i,j) + cobalt%f_cadet_arag_btf(i,j,1) +            &
-             ((cobalt%f_ndet_btf(i,j,1) - cobalt%fn_burial(i,j)) * cobalt%c_2_n)) / &
-             rho_dzt_bot(i,j)
-          cobalt%jfed_plus_btm(i,j,k) = cobalt%jfed(i,j,k) + &
-             (cobalt%ffe_sed(i,j)+cobalt%ffe_geotherm(i,j)) / rho_dzt_bot(i,j)
-          cobalt%jnh4_plus_btm(i,j,k) = cobalt%jnh4(i,j,k) + &
-             (cobalt%f_ndet_btf(i,j,1) - cobalt%fn_burial(i,j)) / rho_dzt_bot(i,j)
-          cobalt%jno3_plus_btm(i,j,k) = cobalt%jno3(i,j,k) - &
-             cobalt%fno3denit_sed(i,j) / rho_dzt_bot(i,j)
-          cobalt%jo2_plus_btm(i,j,k) = cobalt%jo2(i,j,k) + &
-             (cobalt%o2_2_nh4 * (cobalt%fnoxic_sed(i,j) + cobalt%fnfeso4red_sed(i,j))) / &
-             rho_dzt_bot(i,j)
-          cobalt%jpo4_plus_btm(i,j,k) = cobalt%jpo4(i,j,k) + &
-             (cobalt%f_pdet_btf(i,j,1) - cobalt%fp_burial(i,j)) / rho_dzt_bot(i,j)
-          cobalt%jsio4_plus_btm(i,j,k) = cobalt%jsio4(i,j,k) + &
-             cobalt%f_sidet_btf(i,j,1) / rho_dzt_bot(i,j)
-          cobalt%jdin_plus_btm(i,j,k)  = cobalt%jno3_plus_btm(i,j,k) + &
-             cobalt%jnh4_plus_btm(i,j,k)
+          cobalt%jprod_nh4_plus_btm(i,j,k) = cobalt%jprod_nh4(i,j,k) - b_nh4(i,j)/rho_dzt_bot(i,j)
+          cobalt%jalk_plus_btm(i,j,k) = cobalt%jalk(i,j,k) - b_alk(i,j)/rho_dzt_bot(i,j)
+          cobalt%jo2_plus_btm(i,j,k) = cobalt%jo2(i,j,k) - b_o2(i,j)/rho_dzt_bot(i,k)
+          cobalt%jdic_plus_btm(i,j,k) = cobalt%jdic(i,j,k) - b_dic(i,j)/rho_dzt_bot(i,j)
+          cobalt%jfed_plus_btm(i,j,k) = cobalt%jfed(i,j,k) - b_fed(i,j)/rho_dzt_bot(i,j)
+          cobalt%jnh4_plus_btm(i,j,k) = cobalt%jnh4(i,j,k) - b_nh4(i,j)/rho_dzt_bot(i,j)
+          cobalt%jno3_plus_btm(i,j,k) = cobalt%jno3(i,j,k) - cobalt%fno3denit_sed(i,j)/rho_dzt_bot(i,j)
+          cobalt%jpo4_plus_btm(i,j,k) = cobalt%jpo4(i,j,k) - b_po4(i,j)/rho_dzt_bot(i,j) 
+          cobalt%jsio4_plus_btm(i,j,k) = cobalt%jsio4(i,j,k) - b_sio4(i,j)/rho_dzt_bot(i,j)
+          cobalt%jdin_plus_btm(i,j,k)  = cobalt%jno3_plus_btm(i,j,k) + cobalt%jnh4_plus_btm(i,j,k)
         enddo
       endif
     enddo; enddo
@@ -7242,7 +7251,7 @@ contains
     allocate(cobalt%ffe_sed(isd:ied, jsd:jed))            ; cobalt%ffe_sed=0.0
     allocate(cobalt%ffe_geotherm(isd:ied, jsd:jed))       ; cobalt%ffe_geotherm=0.0
     allocate(cobalt%ffe_iceberg(isd:ied, jsd:jed))        ; cobalt%ffe_iceberg=0.0
-    allocate(cobalt%fnfeso4red_sed(isd:ied, jsd:jed))     ; cobalt%fnfeso4red_sed=0.0
+    allocate(cobalt%fnso4red_sed(isd:ied, jsd:jed))       ; cobalt%fnso4red_sed=0.0
     allocate(cobalt%fno3denit_sed(isd:ied, jsd:jed))      ; cobalt%fno3denit_sed=0.0
     allocate(cobalt%fnoxic_sed(isd:ied, jsd:jed))         ; cobalt%fnoxic_sed=0.0
     allocate(cobalt%frac_burial(isd:ied, jsd:jed))        ; cobalt%frac_burial=0.0
@@ -7809,7 +7818,7 @@ contains
     deallocate(cobalt%ffe_sed)
     deallocate(cobalt%ffe_geotherm)
     deallocate(cobalt%ffe_iceberg)
-    deallocate(cobalt%fnfeso4red_sed)
+    deallocate(cobalt%fnso4red_sed)
     deallocate(cobalt%fno3denit_sed)
     deallocate(cobalt%fnoxic_sed)
     deallocate(cobalt%frac_burial)
