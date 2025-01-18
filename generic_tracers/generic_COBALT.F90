@@ -4945,7 +4945,7 @@ contains
           cobalt%b_fed(i,j) = - cobalt%ffe_sed(i,j) - cobalt%ffe_geotherm(i,j)
           cobalt%b_nh4(i,j) = - cobalt%fntot_btm(i,j) + cobalt%fn_burial(i,j)
           cobalt%b_no3(i,j) = cobalt%fno3denit_sed(i,j)
-          if (do_fnso4red_sed) then
+          if (cobalt%do_fnso4red_sed) then
             cobalt%b_o2(i,j)  = cobalt%o2_2_nh4 * (cobalt%fnoxic_sed(i,j) + cobalt%fnso4red_sed(i,j))
             cobalt%b_alk(i,j) = - 2.0*(cobalt%fcased_redis(i,j)+cobalt%f_cadet_arag_btf(i,j,1)) -    &
               cobalt%fnoxic_sed(i,j) - cobalt%fno3denit_sed(i,j)*cobalt%alk_2_n_denit - cobalt%fnso4red_sed(i,j) 
@@ -5886,15 +5886,15 @@ contains
             cobalt%fcased_redis(i,j) / rho_dzt_bot(i,j)
           cobalt%jdiss_cadet_arag_plus_btm(i,j,k)  = cobalt%jdiss_cadet_arag(i,j,k) +  &
             cobalt%f_cadet_arag_btf(i,j,1) / rho_dzt_bot(i,j)
-          cobalt%jprod_nh4_plus_btm(i,j,k) = cobalt%jprod_nh4(i,j,k) - b_nh4(i,j)/rho_dzt_bot(i,j)
-          cobalt%jalk_plus_btm(i,j,k) = cobalt%jalk(i,j,k) - b_alk(i,j)/rho_dzt_bot(i,j)
-          cobalt%jo2_plus_btm(i,j,k) = cobalt%jo2(i,j,k) - b_o2(i,j)/rho_dzt_bot(i,k)
-          cobalt%jdic_plus_btm(i,j,k) = cobalt%jdic(i,j,k) - b_dic(i,j)/rho_dzt_bot(i,j)
-          cobalt%jfed_plus_btm(i,j,k) = cobalt%jfed(i,j,k) - b_fed(i,j)/rho_dzt_bot(i,j)
-          cobalt%jnh4_plus_btm(i,j,k) = cobalt%jnh4(i,j,k) - b_nh4(i,j)/rho_dzt_bot(i,j)
+          cobalt%jprod_nh4_plus_btm(i,j,k) = cobalt%jprod_nh4(i,j,k) - cobalt%b_nh4(i,j)/rho_dzt_bot(i,j)
+          cobalt%jalk_plus_btm(i,j,k) = cobalt%jalk(i,j,k) - cobalt%b_alk(i,j)/rho_dzt_bot(i,j)
+          cobalt%jo2_plus_btm(i,j,k) = cobalt%jo2(i,j,k) - cobalt%b_o2(i,j)/rho_dzt_bot(i,k)
+          cobalt%jdic_plus_btm(i,j,k) = cobalt%jdic(i,j,k) - cobalt%b_dic(i,j)/rho_dzt_bot(i,j)
+          cobalt%jfed_plus_btm(i,j,k) = cobalt%jfed(i,j,k) - cobalt%b_fed(i,j)/rho_dzt_bot(i,j)
+          cobalt%jnh4_plus_btm(i,j,k) = cobalt%jnh4(i,j,k) - cobalt%b_nh4(i,j)/rho_dzt_bot(i,j)
           cobalt%jno3_plus_btm(i,j,k) = cobalt%jno3(i,j,k) - cobalt%fno3denit_sed(i,j)/rho_dzt_bot(i,j)
-          cobalt%jpo4_plus_btm(i,j,k) = cobalt%jpo4(i,j,k) - b_po4(i,j)/rho_dzt_bot(i,j) 
-          cobalt%jsio4_plus_btm(i,j,k) = cobalt%jsio4(i,j,k) - b_sio4(i,j)/rho_dzt_bot(i,j)
+          cobalt%jpo4_plus_btm(i,j,k) = cobalt%jpo4(i,j,k) - cobalt%b_po4(i,j)/rho_dzt_bot(i,j) 
+          cobalt%jsio4_plus_btm(i,j,k) = cobalt%jsio4(i,j,k) - cobalt%b_sio4(i,j)/rho_dzt_bot(i,j)
           cobalt%jdin_plus_btm(i,j,k)  = cobalt%jno3_plus_btm(i,j,k) + cobalt%jnh4_plus_btm(i,j,k)
         enddo
       endif
