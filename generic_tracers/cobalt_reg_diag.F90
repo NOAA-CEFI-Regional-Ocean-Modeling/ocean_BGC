@@ -1638,7 +1638,8 @@ module COBALT_reg_diag
     cobalt%id_fntot_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("fnso4red_sed","Sediment Ndet Fe and SO4 reduction flux",'h','1','s','mol m-2 s-1','f')
+    vardesc_temp = vardesc("fnso4red_sed","Sediment Ndet remineralized by SO4 reduction without HS- oxidation", &
+            'h','1','s','mol m-2 s-1','f')
     cobalt%id_fnso4red_sed = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
