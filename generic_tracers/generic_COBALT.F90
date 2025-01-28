@@ -4808,7 +4808,7 @@ contains
              !
              ! fnoxic_sed (moles N m-2 sec-1) accounts for organic material remineralized by processes using oxygen
              ! *within the sediment*, resulting in an oxygen demand at the sediment-water interface.  These
-             ! include direct aerobic remineralization and sulfate reduction/HS- oxidation (see stoichiometry for
+             ! include direct aerobic remineralization and sulfate reduction/HS- oxidation (see stoichiometry
              ! for details).  Note that the partitioning between these two pathways is not calculated, just the
              ! combined effect. 
              !
