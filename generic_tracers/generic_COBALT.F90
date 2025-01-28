@@ -5862,7 +5862,7 @@ contains
     enddo; enddo; enddo  !} i,j,k
 
     !
-    ! Numerous CMIP variables require the bottom source to be added to rate of change diagnotics before they are assigned
+    ! Numerous CMIP variables require the bottom source to be added to rate of change diagnostics before they are assigned
     ! to the relevant CMIP variable in cobalt_send_diag.F90
     ! 
     ! First populate the entire array with the water column changes
@@ -5881,7 +5881,7 @@ contains
        cobalt%jdin_plus_btm(i,j,k)  = cobalt%jno3(i,j,k) + cobalt%jnh4(i,j,k)
     enddo; enddo; enddo  !} i,j,k
 
-    ! Then find all the layers within the specified bottm boundary layer thickness.  The first layer is always included.
+    ! Then find all the layers within the specified bottom boundary layer thickness.  The first layer is always included.
     ! Additional layers are included if they fall, in part or whole, within the specified bottom thickness.  This
     ! could be done more finely, but awaiting an explicit bottom boundary layer scheme.
     do j = jsc, jec ; do i = isc, iec  !{
