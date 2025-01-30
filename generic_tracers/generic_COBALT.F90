@@ -5912,7 +5912,7 @@ contains
             cobalt%f_cadet_arag_btf(i,j,1) / rho_dzt_bot(i,j)
           cobalt%jprod_nh4_plus_btm(i,j,k) = cobalt%jprod_nh4(i,j,k) - cobalt%b_nh4(i,j)/rho_dzt_bot(i,j)
           cobalt%jalk_plus_btm(i,j,k) = cobalt%jalk(i,j,k) - cobalt%b_alk(i,j)/rho_dzt_bot(i,j)
-          cobalt%jo2_plus_btm(i,j,k) = cobalt%jo2(i,j,k) - cobalt%b_o2(i,j)/rho_dzt_bot(i,k)
+          cobalt%jo2_plus_btm(i,j,k) = cobalt%jo2(i,j,k) - cobalt%b_o2(i,j)/rho_dzt_bot(i,j)
           cobalt%jdic_plus_btm(i,j,k) = cobalt%jdic(i,j,k) - cobalt%b_dic(i,j)/rho_dzt_bot(i,j)
           cobalt%jfed_plus_btm(i,j,k) = cobalt%jfed(i,j,k) - cobalt%b_fed(i,j)/rho_dzt_bot(i,j)
           cobalt%jnh4_plus_btm(i,j,k) = cobalt%jnh4(i,j,k) - cobalt%b_nh4(i,j)/rho_dzt_bot(i,j)
