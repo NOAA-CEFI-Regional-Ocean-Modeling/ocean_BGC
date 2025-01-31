@@ -1798,16 +1798,6 @@ contains
          sink_rate  = cobalt%wsink,     &
          btm_reservoir = .true.        )
     !
-    !    Fedet_fast (Fast sinking detrital/particulate iron)
-    !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'fedet_fast',         &
-         longname   = 'Fast sinking Detrital Iron', &
-         units      = 'mol/kg',        &
-         prog       = .true.,          &
-         sink_rate  = cobalt%wsink_fast, &
-         btm_reservoir = .true.        )
-    !
     !       Diazotroph Fe (Iron in N2-fixing phytoplankton for variable Fe:N ratios)
     !
     call g_tracer_add(tracer_list,package_name,&
@@ -2354,14 +2344,6 @@ contains
          longname   = 'Fast sinking P flux to Sediments', &
          units      = 'mol m-2 s-1',         &
          prog       = .false.                )
-    !
-    !      fedet_fast_btf (Fast sinking Fe flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'fedet_fast_btf',              &
-         longname   = 'Fast sinking Fe flux to Sediments',   &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
 	!
     !  add bottom flux for nsm_btf
     !
@@ -2643,21 +2625,9 @@ contains
     call g_tracer_get_values(tracer_list,'fedet','btm_reservoir',cobalt%ffedet_btm,isd,jsd)
     cobalt%ffedet_btm = cobalt%ffedet_btm/dt
     call g_tracer_get_pointer(tracer_list,'fedet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%ffedet_btm(:,:) + cobalt%ffedet_fast_btm(:,:)
+    temp_field(:,:,1) = cobalt%ffedet_btm(:,:)
     call g_tracer_set_values(tracer_list,'fedet','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_ffedet_btm, cobalt%ffedet_btm, &
-    model_time, rmask = grid_tmask(:,:,1), &
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    ! pointer declaration for fedet_fast_btf (and ndet_fast_btf, pdet_fast_btf) is commented out
-	! because the *det_fast_btf terms are added to the regular *det_btf terms
-	! so here we are setting the bottom reservoir to zero at each time step to avoid double-counting
-    call g_tracer_get_values(tracer_list,'fedet_fast','btm_reservoir',cobalt%ffedet_fast_btm,isd,jsd)
-    cobalt%ffedet_fast_btm = cobalt%ffedet_fast_btm/dt
-    !call g_tracer_get_pointer(tracer_list,'fedet_fast_btf','field',temp_field)
-    !temp_field(:,:,1) = cobalt%ffedet_fast_btm(:,:)
-    call g_tracer_set_values(tracer_list,'fedet_fast','btm_reservoir',0.0)
-    used = g_send_data(cobalt%id_ffedet_fast_btm, cobalt%ffedet_fast_btm, &
     model_time, rmask = grid_tmask(:,:,1), &
     is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
     !
@@ -2678,7 +2648,7 @@ contains
     call g_tracer_get_values(tracer_list,'ndet','btm_reservoir',cobalt%fndet_btm,isd,jsd)
     cobalt%fndet_btm = cobalt%fndet_btm/dt
     call g_tracer_get_pointer(tracer_list,'ndet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fndet_btm(:,:) + cobalt%fndet_fast_btm(:,:)
+    temp_field(:,:,1) = cobalt%fndet_btm(:,:)
     call g_tracer_set_values(tracer_list,'ndet','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_fndet_btm,cobalt%fndet_btm,          &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2686,8 +2656,8 @@ contains
 
 	call g_tracer_get_values(tracer_list,'ndet_fast','btm_reservoir',cobalt%fndet_fast_btm,isd,jsd)
 	cobalt%fndet_fast_btm = cobalt%fndet_fast_btm/dt
-	!call g_tracer_get_pointer(tracer_list,'ndet_fast_btf','field',temp_field)
-	!temp_field(:,:,1) = cobalt%fndet_fast_btm(:,:)
+	call g_tracer_get_pointer(tracer_list,'ndet_fast_btf','field',temp_field)
+	temp_field(:,:,1) = cobalt%fndet_fast_btm(:,:)
 	call g_tracer_set_values(tracer_list,'ndet_fast','btm_reservoir',0.0)
 	if (cobalt%id_fndet_fast_btm .gt. 0)           &
 	used = g_send_data(cobalt%id_fndet_fast_btm,cobalt%fndet_fast_btm,          &
@@ -2697,7 +2667,7 @@ contains
     call g_tracer_get_values(tracer_list,'pdet','btm_reservoir',cobalt%fpdet_btm,isd,jsd)
     cobalt%fpdet_btm = cobalt%fpdet_btm/dt
     call g_tracer_get_pointer(tracer_list,'pdet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fpdet_btm(:,:) + cobalt%fpdet_fast_btm(:,:)
+    temp_field(:,:,1) = cobalt%fpdet_btm(:,:)
     call g_tracer_set_values(tracer_list,'pdet','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_fpdet_btm,cobalt%fpdet_btm,          &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2705,8 +2675,8 @@ contains
 
 	call g_tracer_get_values(tracer_list,'pdet_fast','btm_reservoir',cobalt%fpdet_fast_btm,isd,jsd)
 	cobalt%fpdet_fast_btm = cobalt%fpdet_fast_btm/dt
-	!call g_tracer_get_pointer(tracer_list,'pdet_fast_btf','field',temp_field)
-	!temp_field(:,:,1) = cobalt%fpdet_fast_btm(:,:)
+	call g_tracer_get_pointer(tracer_list,'pdet_fast_btf','field',temp_field)
+	temp_field(:,:,1) = cobalt%fpdet_fast_btm(:,:)
 	call g_tracer_set_values(tracer_list,'pdet_fast','btm_reservoir',0.0)
 	if (cobalt%id_fpdet_fast_btm .gt. 0)           &
 	used = g_send_data(cobalt%id_fpdet_fast_btm,cobalt%fpdet_fast_btm,          &
@@ -3166,7 +3136,6 @@ contains
     call g_tracer_get_values(tracer_list,'cadet_calc','field',cobalt%f_cadet_calc ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'fed'    ,'field',cobalt%f_fed      ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'fedet'  ,'field',cobalt%f_fedet    ,isd,jsd,positive=.true.)
-    call g_tracer_get_values(tracer_list,'fedet_fast','field',cobalt%f_fedet_fast ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'ldon'   ,'field',cobalt%f_ldon     ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'ldop'   ,'field',cobalt%f_ldop     ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'lith'   ,'field',cobalt%f_lith     ,isd,jsd,positive=.true.)
@@ -3245,7 +3214,6 @@ contains
     call g_tracer_get_values(tracer_list,'silg_btf','field',cobalt%f_silg_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'simd_btf','field',cobalt%f_simd_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'fedet_btf','field',cobalt%f_fedet_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'fedet_fast_btf','field',cobalt%f_fedet_fast_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_sfc','field',cobalt%f_irr_aclm_sfc ,isd,jsd)
@@ -3254,7 +3222,6 @@ contains
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec
        cobalt%jprod_fed(i,j,k) = 0.0
        cobalt%jprod_fedet(i,j,k) = 0.0
-       cobalt%jprod_fedet_fast(i,j,k) = 0.0
        cobalt%jprod_ndet(i,j,k) = 0.0
        cobalt%jprod_ndet_fast(i,j,k) = 0.0
        cobalt%jprod_pdet(i,j,k) = 0.0
@@ -3981,7 +3948,7 @@ contains
        prey_fe2n_vec(2) = phyto(LARGE)%q_fe_2_n(i,j,k)
        prey_fe2n_vec(3) = phyto(MEDIUM)%q_fe_2_n(i,j,k)
        prey_fe2n_vec(4) = phyto(SMALL)%q_fe_2_n(i,j,k)
-       prey_fe2n_vec(9) = (cobalt%f_fedet(i,j,k) + cobalt%f_fedet_fast(i,j,k))/ &
+       prey_fe2n_vec(9) = cobalt%f_fedet(i,j,k)/ &
 	                      (cobalt%f_ndet(i,j,k) + cobalt%f_ndet_fast(i,j,k) + epsln)
        prey_si2n_vec(2) = phyto(LARGE)%q_si_2_n(i,j,k)
        prey_si2n_vec(3) = phyto(MEDIUM)%q_si_2_n(i,j,k)
@@ -4399,11 +4366,11 @@ contains
 
        ! Production of detritus and dissolved organic material from higher predator egestion
 	   ! Assume all the egestion from higher predators will sink quickly and go to fast-sinking detritus
-       cobalt%jprod_ndet_fast(i,j,k) = cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
-       cobalt%jprod_pdet_fast(i,j,k) = cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
-       cobalt%jprod_fedet_fast(i,j,k) = cobalt%hp_phi_det*cobalt%hp_jingest_fe(i,j,k)
+       cobalt%jprod_ndet_fast(i,j,k) = cobalt%jprod_ndet_fast(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
+       cobalt%jprod_pdet_fast(i,j,k) = cobalt%jprod_pdet_fast(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
 
-       ! Silica detritus from HP does not sink quickly - just gets added to the bulk total
+       ! Silica and iron detritus from HP does not sink quickly - just gets added to the bulk total
+       cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_fe(i,j,k)
        cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_sio2(i,j,k)
 
        ! Detritus produced via phytoplankton aggregation
@@ -4706,11 +4673,8 @@ contains
        cobalt%jremin_fedet(i,j,k) = cobalt%jremin_ndet(i,j,k) * &
          (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))/max(cobalt%f_o2(i,j,k),cobalt%o2_min) / &
          (cobalt%f_ndet(i,j,k) + epsln) * cobalt%remin_eff_fedet*cobalt%f_fedet(i,j,k)
-       cobalt%jremin_fedet_fast(i,j,k) = cobalt%jremin_ndet_fast(i,j,k) * &
-         (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))/max(cobalt%f_o2(i,j,k),cobalt%o2_min) / &
-         (cobalt%f_ndet_fast(i,j,k) + epsln) * cobalt%remin_eff_fedet*cobalt%f_fedet_fast(i,j,k)
 		 
-       cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jremin_fedet(i,j,k) + cobalt%jremin_fedet_fast(i,j,k)
+       cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jremin_fedet(i,j,k)
     enddo; enddo; enddo  !} i,j,k
 
     ! 
@@ -4829,7 +4793,7 @@ contains
             cobalt%f_nsm_btf(i,j,1) + cobalt%f_nmd_btf(i,j,1) + cobalt%f_nlg_btf(i,j,1)
           cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j,1) + cobalt%f_pdet_fast_btf(i,j,1) + cobalt%f_pdi_btf(i,j,1) + &
             cobalt%f_psm_btf(i,j,1) + cobalt%f_pmd_btf(i,j,1) + cobalt%f_plg_btf(i,j,1)
-          cobalt%ffetot_btm(i,j) = cobalt%f_fedet_btf(i,j,1) + cobalt%f_fedet_fast_btf(i,j,1) + cobalt%f_fedi_btf(i,j,1) + &
+          cobalt%ffetot_btm(i,j) = cobalt%f_fedet_btf(i,j,1) + cobalt%f_fedi_btf(i,j,1) + &
             cobalt%f_fesm_btf(i,j,1) + cobalt%f_femd_btf(i,j,1) + cobalt%f_felg_btf(i,j,1)
           cobalt%fsitot_btm(i,j) = cobalt%f_sidet_btf(i,j,1) + cobalt%f_silg_btf(i,j,1) + &
             cobalt%f_simd_btf(i,j,1)
@@ -5147,7 +5111,6 @@ contains
     call g_tracer_get_pointer(tracer_list,'femd'   ,'field',cobalt%p_femd   )
     call g_tracer_get_pointer(tracer_list,'fesm'   ,'field',cobalt%p_fesm )
     call g_tracer_get_pointer(tracer_list,'fedet'  ,'field',cobalt%p_fedet  )
-    call g_tracer_get_pointer(tracer_list,'fedet_fast','field',cobalt%p_fedet_fast)
     call g_tracer_get_pointer(tracer_list,'ldon'   ,'field',cobalt%p_ldon   )
     call g_tracer_get_pointer(tracer_list,'ldop'   ,'field',cobalt%p_ldop   )
     call g_tracer_get_pointer(tracer_list,'lith'   ,'field',cobalt%p_lith   )
@@ -5233,7 +5196,7 @@ contains
          net_srcp(i,j,k) = cobalt%jpo4_iceberg(i,j,k)*dt*grid_tmask(i,j,k)
          pre_totfe(i,j,k) = (cobalt%p_fed(i,j,k,tau) + cobalt%p_fedi(i,j,k,tau) + &
                     cobalt%p_felg(i,j,k,tau) + cobalt%p_femd(i,j,k,tau) + cobalt%p_fesm(i,j,k,tau) + &
-                    cobalt%p_fedet(i,j,k,tau) + cobalt%p_fedet_fast(i,j,k,tau))*grid_tmask(i,j,k)
+                    cobalt%p_fedet(i,j,k,tau))*grid_tmask(i,j,k)
          net_srcfe(i,j,k) = (cobalt%jfe_coast(i,j,k)+cobalt%jfe_iceberg(i,j,k))*dt*grid_tmask(i,j,k)
          pre_totsi(i,j,k) = (cobalt%p_sio4(i,j,k,tau) + cobalt%p_silg(i,j,k,tau) + &
                     cobalt%p_simd(i,j,k,tau) + cobalt%p_sidet(i,j,k,tau))*grid_tmask(i,j,k)
@@ -5526,14 +5489,10 @@ contains
        ! Fedet
        !
        cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + cobalt%jfe_ads(i,j,k)
-       cobalt%jprod_fedet_fast(i,j,k) = cobalt%jprod_fedet_fast(i,j,k) + cobalt%jfe_ads_fast(i,j,k)
        cobalt%jfedet(i,j,k) = cobalt%jprod_fedet(i,j,k) - &
                               cobalt%jremin_fedet(i,j,k) - cobalt%det_jzloss_fe(i,j,k) - &
                               cobalt%det_jhploss_fe(i,j,k)
-       cobalt%jfedet_fast(i,j,k) = cobalt%jprod_fedet_fast(i,j,k) - &
-                              cobalt%jremin_fedet_fast(i,j,k)
        cobalt%p_fedet(i,j,k,tau) = cobalt%p_fedet(i,j,k,tau) + cobalt%jfedet(i,j,k)*dt*grid_tmask(i,j,k)
-       cobalt%p_fedet_fast(i,j,k,tau) = cobalt%p_fedet_fast(i,j,k,tau) + cobalt%jfedet_fast(i,j,k)*dt*grid_tmask(i,j,k)
     enddo; enddo; enddo  !} i,j,k
     !
     !     Dissolved Organic Matter
@@ -5795,7 +5754,7 @@ contains
 
          post_totfe(i,j,k) = (cobalt%p_fed(i,j,k,tau) + cobalt%p_fedi(i,j,k,tau) + &
                     cobalt%p_felg(i,j,k,tau) + cobalt%p_femd(i,j,k,tau) + cobalt%p_fesm(i,j,k,tau) + &
-                    cobalt%p_fedet(i,j,k,tau) + cobalt%p_fedet_fast(i,j,k,tau))*grid_tmask(i,j,k)
+                    cobalt%p_fedet(i,j,k,tau))*grid_tmask(i,j,k)
          imbal = (post_totfe(i,j,k) - pre_totfe(i,j,k) - net_srcfe(i,j,k))*86400.0/dt*1.03e6
          if (abs(imbal).gt.imbalance_tolerance) then
            call mpp_error(FATAL,&
@@ -5906,8 +5865,7 @@ contains
     cobalt%tot_layer_int_dic(:,:,:) = cobalt%p_dic(:,:,:,tau)*rho_dzt(:,:,:)
 
     cobalt%tot_layer_int_fe(:,:,:) = (cobalt%p_fed(:,:,:,tau) + cobalt%p_fedi(:,:,:,tau) + cobalt%p_felg(:,:,:,tau) + &
-         cobalt%p_femd(:,:,:,tau) + cobalt%p_fesm(:,:,:,tau) + cobalt%p_fedet(:,:,:,tau) + cobalt%p_fedet_fast(:,:,:,tau)) * &
-		 rho_dzt(:,:,:)
+         cobalt%p_femd(:,:,:,tau) + cobalt%p_fesm(:,:,:,tau) + cobalt%p_fedet(:,:,:,tau)) * rho_dzt(:,:,:)
 
     cobalt%tot_layer_int_n(:,:,:) = (cobalt%p_no3(:,:,:,tau) + cobalt%p_nh4(:,:,:,tau) + cobalt%p_ndi(:,:,:,tau) + &
          cobalt%p_nlg(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + &
@@ -6163,7 +6121,6 @@ contains
        cobalt%fpdet_100(i,j) = cobalt%f_pdet(i,j,1) * cobalt%Rho_0 * cobalt%wsink
        cobalt%fpdet_fast_100(i,j) = cobalt%f_pdet_fast(i,j,1) * cobalt%Rho_0 * cobalt%wsink_fast
        cobalt%ffedet_100(i,j) = cobalt%f_fedet(i,j,1) * cobalt%Rho_0 * cobalt%wsink
-       cobalt%ffedet_fast_100(i,j) = cobalt%f_fedet_fast(i,j,1) * cobalt%Rho_0 * cobalt%wsink_fast
        cobalt%flithdet_100(i,j) = cobalt%f_lithdet(i,j,1) * cobalt%Rho_0 * cobalt%wsink
        cobalt%fsidet_100(i,j) = cobalt%f_sidet(i,j,1) * cobalt%Rho_0 * cobalt%wsink
        cobalt%fcadet_arag_100(i,j) = cobalt%f_cadet_arag(i,j,1) * cobalt%Rho_0 * cobalt%wsink
@@ -6181,7 +6138,6 @@ contains
          phyto(LARGE)%f_p(i,j,1)*phyto(LARGE)%vmove(i,j,1) + &
          phyto(DIAZO)%f_p(i,j,1)*phyto(DIAZO)%vmove(i,j,1))*cobalt%Rho_0
        cobalt%ffetot_100(i,j) = (cobalt%f_fedet(i,j,1)*cobalt%wsink + &
-	     cobalt%f_fedet_fast(i,j,1)*cobalt%wsink_fast + &
          phyto(SMALL)%f_fe(i,j,1)*phyto(SMALL)%vmove(i,j,1) + &
          phyto(MEDIUM)%f_fe(i,j,1)*phyto(MEDIUM)%vmove(i,j,1) + &
          phyto(LARGE)%f_fe(i,j,1)*phyto(LARGE)%vmove(i,j,1) + &
@@ -6296,7 +6252,6 @@ contains
              cobalt%fpdet_100(i,j) = cobalt%f_pdet(i,j,k) * cobalt%Rho_0 * cobalt%wsink
              cobalt%fpdet_fast_100(i,j) = cobalt%f_pdet_fast(i,j,k) * cobalt%Rho_0 * cobalt%wsink_fast
              cobalt%ffedet_100(i,j) = cobalt%f_fedet(i,j,k) * cobalt%Rho_0 * cobalt%wsink
-             cobalt%ffedet_fast_100(i,j) = cobalt%f_fedet_fast(i,j,k) * cobalt%Rho_0 * cobalt%wsink_fast
              cobalt%flithdet_100(i,j) = cobalt%f_lithdet(i,j,k) * cobalt%Rho_0 * cobalt%wsink
              cobalt%fsidet_100(i,j) = cobalt%f_sidet(i,j,k) * cobalt%Rho_0 * cobalt%wsink
              cobalt%fcadet_arag_100(i,j) = cobalt%f_cadet_arag(i,j,k) * cobalt%Rho_0 * cobalt%wsink
@@ -6315,7 +6270,6 @@ contains
                phyto(LARGE)%f_p(i,j,k)*phyto(LARGE)%vmove(i,j,k) + &
                phyto(DIAZO)%f_p(i,j,k)*phyto(DIAZO)%vmove(i,j,k))*cobalt%Rho_0
              cobalt%ffetot_100(i,j) = (cobalt%f_fedet(i,j,k)*cobalt%wsink + &
-			   cobalt%f_fedet_fast(i,j,k)*cobalt%wsink_fast + &
                phyto(SMALL)%f_fe(i,j,k)*phyto(SMALL)%vmove(i,j,k) + &
                phyto(MEDIUM)%f_fe(i,j,k)*phyto(MEDIUM)%vmove(i,j,k) + &
                phyto(LARGE)%f_fe(i,j,k)*phyto(LARGE)%vmove(i,j,k) + &
@@ -6437,7 +6391,6 @@ contains
            cobalt%fpdet_100(i,j) = cobalt%f_pdet(i,j,k_100) * cobalt%Rho_0 * cobalt%wsink
            cobalt%fpdet_fast_100(i,j) = cobalt%f_pdet_fast(i,j,k_100) * cobalt%Rho_0 * cobalt%wsink_fast
            cobalt%ffedet_100(i,j) = cobalt%f_fedet(i,j,k_100) * cobalt%Rho_0 * cobalt%wsink
-           cobalt%ffedet_fast_100(i,j) = cobalt%f_fedet_fast(i,j,k_100) * cobalt%Rho_0 * cobalt%wsink_fast
            cobalt%flithdet_100(i,j) = cobalt%f_lithdet(i,j,k_100) * cobalt%Rho_0 * cobalt%wsink
            cobalt%fsidet_100(i,j) = cobalt%f_sidet(i,j,k_100) * cobalt%Rho_0 * cobalt%wsink
            cobalt%fcadet_arag_100(i,j) = cobalt%f_cadet_arag(i,j,k_100) * cobalt%Rho_0 * cobalt%wsink
@@ -6456,7 +6409,6 @@ contains
                phyto(LARGE)%f_p(i,j,k_100)*phyto(LARGE)%vmove(i,j,k_100) + &
                phyto(DIAZO)%f_p(i,j,k_100)*phyto(DIAZO)%vmove(i,j,k_100))*cobalt%Rho_0
            cobalt%ffetot_100(i,j) = (cobalt%f_fedet(i,j,k_100)*cobalt%wsink + &
-		       cobalt%f_fedet_fast(i,j,k_100)*cobalt%wsink_fast + &
                phyto(SMALL)%f_fe(i,j,k_100)*phyto(SMALL)%vmove(i,j,k_100) + &
                phyto(MEDIUM)%f_fe(i,j,k_100)*phyto(MEDIUM)%vmove(i,j,k_100) + &
                phyto(LARGE)%f_fe(i,j,k_100)*phyto(LARGE)%vmove(i,j,k_100) + &
@@ -7244,7 +7196,6 @@ contains
     allocate(cobalt%f_dic(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_dic=0.0
     allocate(cobalt%f_fed(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_fed=0.0
     allocate(cobalt%f_fedet(isd:ied, jsd:jed, 1:nk))      ; cobalt%f_fedet=0.0
-    allocate(cobalt%f_fedet_fast(isd:ied, jsd:jed, 1:nk)) ; cobalt%f_fedet_fast=0.0
     allocate(cobalt%f_ldon(isd:ied, jsd:jed, 1:nk))       ; cobalt%f_ldon=0.0
     allocate(cobalt%f_ldop(isd:ied, jsd:jed, 1:nk))       ; cobalt%f_ldop=0.0
     allocate(cobalt%f_lith(isd:ied, jsd:jed, 1:nk))       ; cobalt%f_lith=0.0
@@ -7279,7 +7230,6 @@ contains
     allocate(cobalt%f_cadet_arag_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_cadet_arag_btf=0.0
     allocate(cobalt%f_cadet_calc_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_cadet_calc_btf=0.0
     allocate(cobalt%f_fedet_btf(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_fedet_btf=0.0
-    allocate(cobalt%f_fedet_fast_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_fedet_fast_btf=0.0
     allocate(cobalt%f_lithdet_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_lithdet_btf=0.0
     allocate(cobalt%f_ndet_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_ndet_btf=0.0
     allocate(cobalt%f_ndet_fast_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_ndet_fast_btf=0.0
@@ -7327,7 +7277,6 @@ contains
     allocate(cobalt%jfemd(isd:ied, jsd:jed, 1:nk))        ; cobalt%jfemd=0.0
     allocate(cobalt%jfesm(isd:ied, jsd:jed, 1:nk))        ; cobalt%jfesm=0.0
     allocate(cobalt%jfedet(isd:ied, jsd:jed, 1:nk))       ; cobalt%jfedet=0.0
-    allocate(cobalt%jfedet_fast(isd:ied, jsd:jed, 1:nk))  ; cobalt%jfedet_fast=0.0
     allocate(cobalt%jldon(isd:ied, jsd:jed, 1:nk))        ; cobalt%jldon=0.0
     allocate(cobalt%jldop(isd:ied, jsd:jed, 1:nk))        ; cobalt%jldop=0.0
     allocate(cobalt%jlith(isd:ied, jsd:jed, 1:nk))        ; cobalt%jlith=0.0
@@ -7355,7 +7304,6 @@ contains
     allocate(cobalt%jsio4_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jsio4_plus_btm=0.0
     allocate(cobalt%jprod_fed(isd:ied, jsd:jed, 1:nk))    ; cobalt%jprod_fed=0.0
     allocate(cobalt%jprod_fedet(isd:ied, jsd:jed, 1:nk))  ; cobalt%jprod_fedet=0.0
-    allocate(cobalt%jprod_fedet_fast(isd:ied, jsd:jed, 1:nk)); cobalt%jprod_fedet_fast=0.0
     allocate(cobalt%jprod_ndet(isd:ied, jsd:jed, 1:nk))   ; cobalt%jprod_ndet=0.0
     allocate(cobalt%jprod_ndet_fast(isd:ied, jsd:jed, 1:nk)); cobalt%jprod_ndet_fast=0.0
     allocate(cobalt%jprod_pdet(isd:ied, jsd:jed, 1:nk))   ; cobalt%jprod_pdet=0.0
@@ -7392,9 +7340,7 @@ contains
     allocate(cobalt%jremin_pdet(isd:ied, jsd:jed, 1:nk))  ; cobalt%jremin_pdet=0.0
     allocate(cobalt%jremin_pdet_fast(isd:ied, jsd:jed, 1:nk)); cobalt%jremin_pdet_fast=0.0
     allocate(cobalt%jremin_fedet(isd:ied, jsd:jed, 1:nk)) ; cobalt%jremin_fedet=0.0
-    allocate(cobalt%jremin_fedet_fast(isd:ied, jsd:jed, 1:nk)); cobalt%jremin_fedet_fast=0.0
     allocate(cobalt%jfe_ads(isd:ied, jsd:jed, 1:nk))      ; cobalt%jfe_ads=0.0
-    allocate(cobalt%jfe_ads_fast(isd:ied, jsd:jed, 1:nk)) ; cobalt%jfe_ads_fast=0.0
     allocate(cobalt%jfe_coast(isd:ied, jsd:jed, 1:nk))    ; cobalt%jfe_coast=0.0
     allocate(cobalt%jfe_iceberg(isd:ied, jsd:jed, 1:nk))  ; cobalt%jfe_iceberg=0.0
     allocate(cobalt%jno3_iceberg(isd:ied, jsd:jed, 1:nk)) ; cobalt%jno3_iceberg=0.0
@@ -7449,7 +7395,6 @@ contains
     allocate(cobalt%fcadet_arag_btm(isd:ied, jsd:jed))    ; cobalt%fcadet_arag_btm=0.0
     allocate(cobalt%fcadet_calc_btm(isd:ied, jsd:jed))    ; cobalt%fcadet_calc_btm=0.0
     allocate(cobalt%ffedet_btm(isd:ied, jsd:jed))         ; cobalt%ffedet_btm=0.0
-    allocate(cobalt%ffedet_fast_btm(isd:ied, jsd:jed))    ; cobalt%ffedet_fast_btm=0.0
     allocate(cobalt%flithdet_btm(isd:ied, jsd:jed))       ; cobalt%flithdet_btm=0.0
     allocate(cobalt%fpdet_btm(isd:ied, jsd:jed))          ; cobalt%fpdet_btm=0.0
     allocate(cobalt%fpdet_fast_btm(isd:ied, jsd:jed))     ; cobalt%fpdet_fast_btm=0.0
@@ -7606,7 +7551,6 @@ contains
    allocate(cobalt%fcadet_calc_100(isd:ied,jsd:jed))       ; cobalt%fcadet_calc_100 = 0.0
    allocate(cobalt%fcadet_arag_100(isd:ied,jsd:jed))       ; cobalt%fcadet_arag_100 = 0.0
    allocate(cobalt%ffedet_100(isd:ied,jsd:jed))            ; cobalt%ffedet_100 = 0.0
-   allocate(cobalt%ffedet_fast_100(isd:ied,jsd:jed))       ; cobalt%ffedet_fast_100 = 0.0
    allocate(cobalt%fntot_100(isd:ied,jsd:jed))             ; cobalt%fntot_100 = 0.0
    allocate(cobalt%fptot_100(isd:ied,jsd:jed))             ; cobalt%fptot_100 = 0.0
    allocate(cobalt%fsitot_100(isd:ied,jsd:jed))            ; cobalt%fsitot_100 = 0.0
@@ -7821,7 +7765,6 @@ contains
     deallocate(cobalt%f_dic)
     deallocate(cobalt%f_fed)
     deallocate(cobalt%f_fedet)
-    deallocate(cobalt%f_fedet_fast)
     deallocate(cobalt%f_ldon)
     deallocate(cobalt%f_ldop)
     deallocate(cobalt%f_lith)
@@ -7856,7 +7799,6 @@ contains
     deallocate(cobalt%f_cadet_arag_btf)
     deallocate(cobalt%f_cadet_calc_btf)
     deallocate(cobalt%f_fedet_btf)
-    deallocate(cobalt%f_fedet_fast_btf)
     deallocate(cobalt%f_lithdet_btf)
     deallocate(cobalt%f_ndet_btf)
     deallocate(cobalt%f_ndet_fast_btf)
@@ -7903,7 +7845,6 @@ contains
     deallocate(cobalt%jfemd)
     deallocate(cobalt%jfesm)
     deallocate(cobalt%jfedet)
-    deallocate(cobalt%jfedet_fast)
     deallocate(cobalt%jldon)
     deallocate(cobalt%jldop)
     deallocate(cobalt%jlith)
@@ -7941,7 +7882,6 @@ contains
     deallocate(cobalt%jprod_srdop)
     deallocate(cobalt%jprod_fed)
     deallocate(cobalt%jprod_fedet)
-    deallocate(cobalt%jprod_fedet_fast)
     deallocate(cobalt%jprod_sidet)
     deallocate(cobalt%jprod_sio4)
     deallocate(cobalt%jprod_lithdet)
@@ -7968,9 +7908,7 @@ contains
     deallocate(cobalt%jremin_pdet)
     deallocate(cobalt%jremin_pdet_fast)
     deallocate(cobalt%jremin_fedet)
-    deallocate(cobalt%jremin_fedet_fast)
     deallocate(cobalt%jfe_ads)
-    deallocate(cobalt%jfe_ads_fast)
     deallocate(cobalt%jfe_coast)
     deallocate(cobalt%jfe_iceberg)
     deallocate(cobalt%jno3_iceberg)
@@ -8040,7 +7978,6 @@ contains
     deallocate(cobalt%fcadet_arag_btm)
     deallocate(cobalt%fcadet_calc_btm)
     deallocate(cobalt%ffedet_btm)
-    deallocate(cobalt%ffedet_fast_btm)
     deallocate(cobalt%flithdet_btm)
     deallocate(cobalt%fpdet_btm)
     deallocate(cobalt%fpdet_fast_btm)
@@ -8093,7 +8030,6 @@ contains
     deallocate(cobalt%fcadet_calc_100)
     deallocate(cobalt%fcadet_arag_100)
     deallocate(cobalt%ffedet_100)
-    deallocate(cobalt%ffedet_fast_100)
     deallocate(cobalt%flithdet_100)
     deallocate(cobalt%btm_temp)
     deallocate(cobalt%fntot_100)

@@ -1100,10 +1100,6 @@ module COBALT_reg_diag
     vardesc_temp = vardesc("jprod_fedet","Detrital Fedet production layer integral",'h','L','s','mol Fe m-2 s-1','f')
     cobalt%id_jprod_fedet = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("jprod_fedet_fast","Fast-sinking detrital Fedet production layer integral",'h','L','s','mol Fe m-2 s-1','f')
-    cobalt%id_jprod_fedet = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 		 
     vardesc_temp = vardesc("jprod_ndet","Detrital PON production layer integral",'h','L','s','mol N m-2 s-1','f')
     cobalt%id_jprod_ndet = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
@@ -1539,10 +1535,6 @@ module COBALT_reg_diag
     vardesc_temp = vardesc("ffedet","Iron detritus sinking flux",'h','1','s','mol m-2 s-1','f')
     cobalt%id_ffedet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("ffedet_fast","Fast-sinking iron detritus flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_ffedet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 		 
     vardesc_temp = vardesc("flithdet","Lithogenic detritus sinking flux",'h','1','s','g m-2 s-1','f')
     cobalt%id_flithdet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
@@ -1618,10 +1610,6 @@ module COBALT_reg_diag
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("ffedet_btm","Iron detritus sinking flux burial",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_ffedet_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
-        init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("ffedet_fast_btm","Iron detritus fast-sinking flux burial",'h','1','s','mol m-2 s-1','f')
     cobalt%id_ffedet_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 		
@@ -2576,10 +2564,6 @@ module COBALT_reg_diag
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 		 
     vardesc_temp = vardesc("ffedet_100","Iron detritus sinking flux @ 100m",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_ffedet_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("ffedet_fast_100","Iron detritus fast-sinking flux @ 100m",'h','1','s','mol m-2 s-1','f')
     cobalt%id_ffedet_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 		 
