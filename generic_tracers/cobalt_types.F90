@@ -414,6 +414,8 @@ module cobalt_types
           do_fnso4red_sed,  &     ! Simulate O2 deficit and alkalinity flux from implied sedimentary sulfate reduction
           cased_steady,     &     ! steady state approximation for cased
           tracer_debug
+     real  ::          &
+          min_thickness       ! minimum thickness of a layer that will be checked for source/sink imbalances
 
      real  ::          &
           atm_co2_flux,     &
