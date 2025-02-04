@@ -510,6 +510,7 @@ module cobalt_types
           lysis_phi_srdop,  &
           lysis_phi_sldop,  &
           wsink,            &
+          wsink_fast,       &
           bottom_thickness, &
           z_sed,            &
           zeta,             &

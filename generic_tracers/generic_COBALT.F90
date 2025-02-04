@@ -5612,7 +5612,7 @@ contains
 
       do j = jsc, jec ;      do i = isc, iec   !{
         cobalt%fpo14c(i,j,1) =  (cobalt%jprod_ndet(i,j,1) + cobalt%jprod_ndet_fast(i,j,1) -          &
-	                         (cobalt%jremin_ndet(i,j,1) + cobalt%jremin_ndet_fast(i,j,1) +        &
+                             (cobalt%jremin_ndet(i,j,1) + cobalt%jremin_ndet_fast(i,j,1) +        &
                              cobalt%det_jzloss_n(i,j,1) + cobalt%det_jhploss_n(i,j,1))) *         &
                              cobalt%c14_2_n(i,j,1) * rho_dzt(i,j,1)
         cobalt%j14c_reminp(i,j,1) = (-1) * cobalt%fpo14c(i,j,1) / rho_dzt(i,j,1)
@@ -5623,7 +5623,7 @@ contains
                                (cobalt%jprod_ndet(i,j,k) * cobalt%c14_2_n(i,j,k) - (cobalt%jremin_ndet(i,j,k) + &
                                cobalt%det_jzloss_n(i,j,k) + cobalt%det_jhploss_n(i,j,k)) *                      &
                                cobalt%fpo14c(i,j,k-1) / max(epsln,cobalt%f_ndet(i,j,k-1) * cobalt%Rho_0 *       &
-                               cobalt%wsink)) +
+                               cobalt%wsink)) +                                                                 &
                                (cobalt%jprod_ndet_fast(i,j,k) * cobalt%c14_2_n(i,j,k) -                         &
                                cobalt%jremin_ndet_fast(i,j,k) * cobalt%fpo14c(i,j,k-1) /                        &
                                max(epsln,cobalt%f_ndet_fast(i,j,k-1) * cobalt%Rho_0 * cobalt%wsink_fast)) *     &
