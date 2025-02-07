@@ -505,7 +505,7 @@ contains
 
   subroutine generic_tracer_source(Temp,Salt,rho_dzt,dzt,hblt_depth,ilb,jlb,tau,dtts,&
        grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,&
-       frunoff,grid_ht, current_wave_stress, sosga, geolat, photo_acc_dpth)
+       frunoff,grid_ht, current_wave_stress, sosga, geolat, photo_acc_dpth, salt_flux_added)
     real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,Salt,rho_dzt,dzt
     real, dimension(ilb:,jlb:),     intent(in) :: hblt_depth
     integer,                        intent(in) :: ilb,jlb,tau
@@ -523,6 +523,7 @@ contains
     real,                      optional , intent(in) :: sosga ! global avg. sea surface salinity
     real, dimension(ilb:,jlb:),  intent(in) :: geolat 
     real, dimension(ilb:,jlb:), optional, intent(in) :: photo_acc_dpth
+    real, dimension(ilb:, jlb:), optional, intent(in):: salt_flux_added !Virtual salt flux from salt restoring [kg Salt m-2 s-1]
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_update_from_source'
 
@@ -555,7 +556,7 @@ contains
           call generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
             hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
             nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff,&
-            geolat,photo_acc_dpth)
+            geolat,photo_acc_dpth,salt_flux_added)
 
     if(do_generic_SF6)  call generic_SF6_update_from_source(tracer_list,rho_dzt,dzt,hblt_depth,&
          ilb,jlb,tau,dtts,grid_dat,model_time)

@@ -91,7 +91,9 @@ type, public :: MOM_generic_tracer_CS ; private
   real    :: mld_pha_href = 0.0               !< The reference depth for density difference based MLD
   real    :: mld_pha_drho = 0.03              !< The density thershold for a density difference based MLD
   logical :: mld_pha_use_delta_eng = .False.  !< If true, use an energy diference to find the MLD
-  real    :: mld_pha_deng = 25.0              !< The energy threshold for an energy d ifference based MLD
+  real    :: mld_pha_deng = 25.0              !< The energy threshold for an energy difference based MLD
+
+  logical :: restore_salt = .False.           !< If true, there is surface salt restoring 
 
   type(diag_ctrl), pointer :: diag => NULL() !< A structure that is used to
                                              !! regulate the timing of diagnostic output.
@@ -327,12 +329,14 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
   real, dimension(SZI_(G),SZJ_(G),SZK_(GV)) :: dz ! Layer vertical extent [Z ~> m]
   real,    dimension(SZI_(G),SZJ_(G),SZK_(GV)) :: grid_tmask ! A 3-d copy of G%mask2dT [nondim]
   integer, dimension(SZI_(G),SZJ_(G))          :: grid_kmt   ! A 2-d array of nk
+  logical :: salt_restore_as_sflux
 
   !! 2010/02/04  Add code to re-initialize Generic Tracers if needed during a model simulation
   !! By default, restart cpio should not contain a Generic Tracer IC file and step below will be skipped.
   !! Ideally, the generic tracer IC file should have the tracers on Z levels.
 
   isc = G%isc ; iec = G%iec ; jsc = G%jsc ; jec = G%jec ; nk = GV%ke
+  salt_restore_as_sflux = .false.
 
   CS%diag=>diag
   !Get the tracer list
@@ -469,7 +473,19 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
                  "The depth of photoacclimation if fixed depth is used [m].", &
                   units='m', default=0.0, scale=US%m_to_Z)
   endif
-
+  ! Check if surface salinity is being used by MOM, this is already logged by MOM so it is not logged here.
+  call get_param(param_file, "MOM", "RESTORE_SALINITY", CS%restore_salt, &
+                 "If true, the coupled driver will add a globally-balanced "//&
+                 "fresh-water flux that drives sea-surface salinity "//&
+                 "toward specified values.", default=.false., do_not_log=.true.)
+  if (CS%restore_salt) then
+    call get_param(param_file, "MOM", "SRESTORE_AS_SFLUX", salt_restore_as_sflux, &
+                   "If true, the restoring of salinity is applied as a salt "//&
+                   "flux instead of as a freshwater flux.", default=.false., do_not_log=.true.)
+    ! if salt_restore_as_sflux is false, then there does not need to be an adjustment in COBALT
+    ! because the restoring is handled by the precipitation, vprec. See MOM_surface_forcing_gfdl.F90 
+    if (.not. salt_restore_as_sflux) CS%restore_salt = .false.
+  endif
 
   !Now we can reset the grid mask, axes and time to their true values
   !Note that grid_tmask must be set correctly on the data domain boundary
@@ -701,6 +717,7 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
   real, dimension(SZI_(G),SZJ_(G),SZK_(GV)) :: h_work  ! A work array of thicknesses [H ~> m or kg m-2]
   real, dimension(SZI_(G),SZJ_(G)) :: mld_pha          ! The mixed layer depth calculated for photoacclimation
                                                        ! that is used in COBALTv3
+  real, dimension(SZI_(G),SZJ_(G)) :: salt_flux_added  ! Virtual salt flux added when salt restoring is used [kg Salt m-2 s-1]
   integer :: i, j, k, isc, iec, jsc, jec, nk
 
   isc = G%isc ; iec = G%iec ; jsc = G%jsc ; jec = G%jec ; nk = GV%ke
@@ -780,6 +797,15 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
   endif
 
   !
+  !Extract salt flux associated with surface salt restoring from fluxes
+  !
+  if (CS%restore_salt) then
+    salt_flux_added(:,:) = fluxes%salt_flux_added
+  else
+    salt_flux_added(:,:) = 0.0 
+  endif 
+
+  !
   !Calculate tendencies (i.e., field changes at dt) from the sources / sinks
   !
   if ((G%US%L_to_m == 1.0) .and. (G%US%s_to_T == 1.0) .and. (G%US%Z_to_m == 1.0) .and. &
@@ -790,7 +816,7 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
              G%areaT, get_diag_time_end(CS%diag), &
              optics%nbands, optics%max_wavelength_band, optics%sw_pen_band, optics%opacity_band, &
              internal_heat=tv%internal_heat, frunoff=fluxes%frunoff, sosga=sosga, geolat=G%geolatT, &
-             photo_acc_dpth=mld_pha)
+             photo_acc_dpth=mld_pha, salt_flux_added=salt_flux_added)
   else
     ! tv%internal_heat is a null pointer unless DO_GEOTHERMAL = True,
     ! so we have to check and only do the scaling if it is associated.
@@ -802,7 +828,7 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
              opacity_band=G%US%m_to_Z*optics%opacity_band(:,:,:,:), &
              internal_heat=G%US%RZ_to_kg_m2*US%C_to_degC*tv%internal_heat(:,:), &
              frunoff=G%US%RZ_T_to_kg_m2s*fluxes%frunoff(:,:), sosga=sosga, geolat=G%geolatT, &
-             photo_acc_dpth=mld_pha*US%Z_to_m)
+             photo_acc_dpth=mld_pha*US%Z_to_m, salt_flux_added=salt_flux_added*US%RZ_T_to_kg_m2s)
     else
       call generic_tracer_source(US%C_to_degC*tv%T, US%S_to_ppt*tv%S, rho_dzt, dzt, dz_ml, G%isd, G%jsd, 1, dt, &
              G%US%L_to_m**2*G%areaT(:,:), get_diag_time_end(CS%diag), &
@@ -810,7 +836,7 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
              sw_pen_band=G%US%QRZ_T_to_W_m2*optics%sw_pen_band(:,:,:), &
              opacity_band=G%US%m_to_Z*optics%opacity_band(:,:,:,:), &
              frunoff=G%US%RZ_T_to_kg_m2s*fluxes%frunoff(:,:), sosga=sosga, geolat=G%geolatT, &
-             photo_acc_dpth=mld_pha*US%Z_to_m)
+             photo_acc_dpth=mld_pha*US%Z_to_m, salt_flux_added=salt_flux_added*US%RZ_T_to_kg_m2s)
     endif
   endif
 

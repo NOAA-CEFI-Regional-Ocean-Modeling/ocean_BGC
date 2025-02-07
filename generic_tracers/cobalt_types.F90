@@ -413,11 +413,13 @@ module cobalt_types
                                                !    as is the case with MOM6  THERMO_SPANS_COUPLING option
           do_fnso4red_sed,  &     ! Simulate O2 deficit and alkalinity flux from implied sedimentary sulfate reduction
           cased_steady,     &     ! steady state approximation for cased
-          tracer_debug
+          tracer_debug,     &
+          sflux_impact
      real  ::          &
           min_thickness       ! minimum thickness of a layer that will be checked for source/sink imbalances
 
      real  ::          &
+          sflux_coeff,      &   
           atm_co2_flux,     &
           c_2_n,            &
           ca_2_n_arag,      &

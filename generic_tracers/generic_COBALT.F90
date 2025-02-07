@@ -388,8 +388,7 @@ contains
     call get_param(param_file, "generic_COBALT", "IC_file"            , cobalt%IC_file            ,  &
             "IC_file"           , default="")
 
-    call get_param(param_file, "generic_COBALT", "htotal_scale_lo", cobalt%htotal_scale_lo, &
-                   "scaling factor for initializing carbon chemistry solver", units=" ", default=0.01)
+
     call get_param(param_file, "generic_COBALT", "htotal_scale_hi", cobalt%htotal_scale_hi, &
                    "scaling factor for initializing carbon chemistry solver", units=" ", default=100.0)
 
@@ -1661,6 +1660,14 @@ contains
     call get_param(param_file, "generic_COBALT", "min_thickness_for_imbalance",  cobalt%min_thickness, &
                    "minimum thickness of a layer that will be checked for source/sink imbalances", &
                    units="m", default= 0.001)
+    call get_param(param_file, "generic_COBALT", "sflux_impact",  cobalt%sflux_impact, &
+                   "flag for sflux dilution impact on carbon chemistry", &
+                   default= .false.)
+    if (cobalt%sflux_impact) then
+      call get_param(param_file, "generic_COBALT", "sflux_coeff", cobalt%sflux_coeff, & 
+                     "Coefficient to convert salinity to alkalinity for sflux dilution impact", &
+                     units="mol/Kg", default= 1.0 )
+    endif        
 
     call g_tracer_end_param_list(package_name)
   end subroutine user_add_params
@@ -2821,7 +2828,7 @@ contains
   ! If you'd like to pass the thermodynamic variables for a mld calculation
   subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
        ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff, &
-       geolat, photo_acc_dpth)
+       geolat, photo_acc_dpth, salt_flux_added)
   !subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
 
@@ -2844,6 +2851,7 @@ contains
     real, dimension(ilb:,jlb:),     intent(in) :: frunoff
     real, dimension(ilb:,jlb:),     intent(in) :: geolat
     real, dimension(ilb:,jlb:), optional, intent(in) :: photo_acc_dpth
+    real, dimension(ilb:,jlb:), optional, intent(in) :: salt_flux_added 
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_source'
     integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kmld_ref
@@ -2895,6 +2903,7 @@ contains
     real, dimension(:,:,:), Allocatable :: pre_totfe, net_srcfe, post_totfe
     real, dimension(:,:,:), Allocatable :: pre_totc, net_srcc, post_totc
     real, dimension(:,:),   Allocatable :: pka_nh3,phos_nh3_exchange
+    real, dimension(:,:)  ,pointer    :: stf_alk
 
     real :: tr,ltr
     real :: imbal
@@ -6520,6 +6529,16 @@ contains
     call g_tracer_get_values(tracer_list,'dic','deltap',cobalt%deltap_dic,isd,jsd)
     call g_tracer_get_values(tracer_list,'o2','deltap',cobalt%deltap_o2,isd,jsd)
 
+!---------------------------------------------------------------------
+! Add virtual salt flux to alkalinity 
+!---------------------------------------------------------------------
+! salt_flux_added is Virtual salt flux from salt restoring [kg Salt m-2 s-1]
+! stf_alk is alkalinity surface sflux [mol m-2 s-1]
+! sflux_coeff is coefficient coverting sflux to stf_alk [mol/kg]
+    if (present(salt_flux_added) .and. cobalt%sflux_impact) then
+      call g_tracer_get_pointer(tracer_list,'alk','stf',stf_alk)
+      stf_alk = stf_alk + cobalt%sflux_coeff*salt_flux_added
+    end if
 
 !---------------------------------------------------------------------
 ! Add vertical integrals for diagnostics
