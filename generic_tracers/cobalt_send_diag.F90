@@ -39,12 +39,21 @@ module COBALT_send_diag
       !> local variables
       integer :: n,i,j,k
       logical :: used  
-!
+      logical :: is_post_vertdiff
+
+      ! Set default value
+      is_post_vertdiff = .false.
+
+      ! Check if post_vertdiff is present
+      if (present(post_vertdiff)) then
+        is_post_vertdiff = post_vertdiff
+      endif
+      
+      !
       ! Determine the case (default to .false. if post_vertdiff is not present)
-      select case (present(post_vertdiff) .and. post_vertdiff)
+      select case (is_post_vertdiff)
         case (.true.)
         ! Logic for "post_vertdiff" case     
-
 !
 !---------------------------------------------------------------------
 ! Save water column vertical integrals
