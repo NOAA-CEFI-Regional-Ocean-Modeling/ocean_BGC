@@ -2543,17 +2543,22 @@ contains
   !  </IN>
   !
   ! </SUBROUTINE>
-  subroutine generic_COBALT_update_from_bottom(tracer_list, dt, tau, model_time)
+  subroutine generic_COBALT_update_from_bottom(tracer_list, dt, tau, model_time,Temp, rho_dzt, dzt, ilb, jlb)
     type(g_tracer_type), pointer :: tracer_list
     real,               intent(in) :: dt
     integer,            intent(in) :: tau
     type(time_type),    intent(in) :: model_time
+    real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,rho_dzt,dzt
+    integer,                        intent(in) :: ilb,jlb
     integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau
+    integer :: i, j, k
     logical :: used
     real, dimension(:,:,:),pointer :: grid_tmask
     real, dimension(:,:,:),pointer :: temp_field
+    integer, dimension(:,:),pointer :: grid_kmt
 
-    call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,grid_tmask=grid_tmask)
+    call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,grid_tmask=grid_tmask,&
+                             grid_kmt=grid_kmt)
 
     !
     ! The bottom reservoirs of aragonite and calcite are immediately redistributed to the
@@ -2767,6 +2772,56 @@ contains
     used = g_send_data(phyto(MEDIUM)%id_fsi_btm,phyto(MEDIUM)%fsi_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
     is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+
+    ! Re-calculate aggregated flux diagnostics here
+    call g_tracer_get_values(tracer_list,'ndet_btf','field',cobalt%f_ndet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pdet_btf','field',cobalt%f_pdet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'sidet_btf','field',cobalt%f_sidet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'ndi_btf','field',cobalt%f_ndi_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'nlg_btf','field',cobalt%f_nlg_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'nmd_btf','field',cobalt%f_nmd_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'nsm_btf','field',cobalt%f_nsm_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pdi_btf','field',cobalt%f_pdi_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'plg_btf','field',cobalt%f_plg_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pmd_btf','field',cobalt%f_pmd_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'psm_btf','field',cobalt%f_psm_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'silg_btf','field',cobalt%f_silg_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'simd_btf','field',cobalt%f_simd_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'fedet_btf','field',cobalt%f_fedet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'fedi_btf','field',cobalt%f_fedi_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'felg_btf','field',cobalt%f_felg_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'femd_btf','field',cobalt%f_femd_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'fesm_btf','field',cobalt%f_fesm_btf,isd,jsd)
+
+    do j = jsc, jec; do i = isc, iec  !{
+       if (grid_kmt(i,j) .gt. 0) then !{
+          cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j,1) + cobalt%f_ndi_btf(i,j,1) + &
+            cobalt%f_nsm_btf(i,j,1) + cobalt%f_nmd_btf(i,j,1) + cobalt%f_nlg_btf(i,j,1)
+          cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j,1) + cobalt%f_pdi_btf(i,j,1) + &
+            cobalt%f_psm_btf(i,j,1) + cobalt%f_pmd_btf(i,j,1) + cobalt%f_plg_btf(i,j,1)
+          cobalt%ffetot_btm(i,j) = cobalt%f_fedet_btf(i,j,1) + cobalt%f_fedi_btf(i,j,1) + &
+            cobalt%f_fesm_btf(i,j,1) + cobalt%f_femd_btf(i,j,1) + cobalt%f_felg_btf(i,j,1)
+          cobalt%fsitot_btm(i,j) = cobalt%f_sidet_btf(i,j,1) + cobalt%f_silg_btf(i,j,1) + &
+            cobalt%f_simd_btf(i,j,1)
+       endif !}
+    enddo; enddo  !} i, j
+
+    used = g_send_data(cobalt%id_ffetot_btm,   cobalt%ffetot_btm,             &
+    model_time, rmask = grid_tmask(:,:,1),&
+    is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+    used = g_send_data(cobalt%id_fntot_btm,    cobalt%fntot_btm,              &
+    model_time, rmask = grid_tmask(:,:,1),&
+    is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+    used = g_send_data(cobalt%id_fptot_btm,    cobalt%fptot_btm,              &
+    model_time, rmask = grid_tmask(:,:,1),&
+    is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+    used = g_send_data(cobalt%id_fsitot_btm,   cobalt%fsitot_btm,             &
+    model_time, rmask = grid_tmask(:,:,1),&
+    is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)    
+
+    ! send_diag for integeral outputs
+    call cobalt_send_diagnostics(tracer_list,model_time,grid_tmask,Temp,rho_dzt,dzt, &
+         isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt,post_vertdiff=.true.)
 
   end subroutine generic_COBALT_update_from_bottom
 
@@ -6541,7 +6596,7 @@ contains
 !
 ! Send phytoplankton diagnostic data
 
-    call cobalt_send_diagnostics(model_time,grid_tmask,Temp,rho_dzt,dzt, &
+    call cobalt_send_diagnostics(tracer_list,model_time,grid_tmask,Temp,rho_dzt,dzt, &
             isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt) 
 
 !==============================================================================================================
