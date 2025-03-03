@@ -1,4 +1,3 @@
-! <CONTACT EMAIL="Charles.Stock@noaa.gov"> Charles Stock
 ! </CONTACT>
 !
 ! <OVERVIEW>
@@ -3542,19 +3541,33 @@ contains
        phyto(n)%juptake_nh4(i,j,k) = max(0.0,phyto(n)%nh4lim(i,j,k)* phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
        phyto(n)%juptake_no3(i,j,k) = max(0.0,phyto(n)%no3lim(i,j,k)* phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
 
-       ! If growth is negative, results in net respiration and production of nh4, aerobic loss in all cases
+       ! If growth is negative, results in net respiration and production of nh4 if oxygen is above minimum threshold.
        ! jo2resp_wc is a cumulative variable that tracks the total oxygen consumption in the water column
-       cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
-       cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))*cobalt%o2_2_nh4
+       ! If oxygen is below that threshold, exude carbon and nutrients
+       if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
+         cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
+         cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))*cobalt%o2_2_nh4
+         phyto(n)%jexuloss_n(i,j,k) = 0.0
+       else
+         phyto(n)%jexuloss_n(i,j,k) = -1.0*min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
+       endif
+
        do n = 2, NUM_PHYTO !{
           ! Nitrate versus ammonia uptake proportional to their relative limitations
           phyto(n)%juptake_no3(i,j,k) = max( 0.0, phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k)*   &
              phyto(n)%no3lim(i,j,k)/(phyto(n)%no3lim(i,j,k)+phyto(n)%nh4lim(i,j,k)+epsln) )
           phyto(n)%juptake_nh4(i,j,k) = max( 0.0, phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k)*   &
              phyto(n)%nh4lim(i,j,k)/(phyto(n)%no3lim(i,j,k)+phyto(n)%nh4lim(i,j,k)+epsln) )
-          ! If growth is negative, results in net respiration and production of nh4, aerobic loss in all cases
-          cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
-          cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))*cobalt%o2_2_nh4
+          ! If growth is negative, results in net respiration and production of nh4 if oxygen is above minimum threshold.
+          ! If oxygen is below that threshold, exude carbon and nutrients 
+          if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
+            cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
+            cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) - &
+               min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))*cobalt%o2_2_nh4
+            phyto(n)%jexuloss_n(i,j,k) = 0.0
+          else
+            phyto(n)%jexuloss_n(i,j,k) = -1.0*min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
+          endif
        enddo !} n
     enddo;  enddo ; enddo !} i,j,k
     !
@@ -3564,15 +3577,23 @@ contains
        n=DIAZO
        phyto(n)%juptake_po4(i,j,k) = (phyto(n)%juptake_n2(i,j,k)+phyto(n)%juptake_nh4(i,j,k) + &
           phyto(n)%juptake_no3(i,j,k))*phyto(n)%uptake_p_2_n(i,j,k)
-       ! If growth is negative, results in net release of po4
-       cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) - &
-          min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
+       ! If growth is negative, address in a manner analogous to N
+       if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
+         cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
+         phyto(n)%jexuloss_p(i,j,k) = 0.0
+       else
+         phyto(n)%jexuloss_p(i,j,k) = -1.0*min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
+       endif
        do n = 2, NUM_PHYTO
           phyto(n)%juptake_po4(i,j,k) = (phyto(n)%juptake_nh4(i,j,k)+phyto(n)%juptake_no3(i,j,k))* &
             phyto(n)%uptake_p_2_n(i,j,k)
-          ! If growth is negative, results in net release of po4
-          cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) - &
-            min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
+          ! If growth is negative, address in a manner analogous to N
+          if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then 
+            cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
+            phyto(n)%jexuloss_p(i,j,k) = 0.0
+          else
+            phyto(n)%jexuloss_p(i,j,k) = -1.0*min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
+          endif
        enddo !} n
     enddo; enddo ; enddo !} i,j,k
     !
@@ -4206,13 +4227,14 @@ contains
        ! 1078-1090. https://doi.org/10.4319/lo.1991.36.6.1078 
 
        n = DIAZO
-       phyto(n)%jexuloss_n(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+ &
+       phyto(n)%jexuloss_n(i,j,k) = phyto(n)%jexuloss_n(i,j,k) + phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+ &
                                     phyto(n)%juptake_nh4(i,j,k)+phyto(n)%juptake_n2(i,j,k),0.0)
-       phyto(n)%jexuloss_p(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_po4(i,j,k),0.0)
+       phyto(n)%jexuloss_p(i,j,k) = phyto(n)%jexuloss_p(i,j,k) + phyto(n)%exu*max(phyto(n)%juptake_po4(i,j,k),0.0)
        phyto(n)%jexuloss_fe(i,j,k) = phyto(n)%jexuloss_fe(i,j,k) + phyto(n)%exu*max(phyto(n)%juptake_fe(i,j,k),0.0)
        do n = 2,NUM_PHYTO !{
-          phyto(n)%jexuloss_n(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+phyto(n)%juptake_nh4(i,j,k),0.0)
-          phyto(n)%jexuloss_p(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_po4(i,j,k),0.0)
+          phyto(n)%jexuloss_n(i,j,k) = phyto(n)%jexuloss_n(i,j,k)+phyto(n)%exu* &
+             max(phyto(n)%juptake_no3(i,j,k)+phyto(n)%juptake_nh4(i,j,k),0.0)
+          phyto(n)%jexuloss_p(i,j,k) = phyto(n)%jexuloss_p(i,j,k)+phyto(n)%exu*max(phyto(n)%juptake_po4(i,j,k),0.0)
           phyto(n)%jexuloss_fe(i,j,k) = phyto(n)%jexuloss_fe(i,j,k) + phyto(n)%exu*max(phyto(n)%juptake_fe(i,j,k),0.0)
        enddo
 
@@ -4393,6 +4415,7 @@ contains
 
           ! Ingested material that does not go to zooplankton production or egestion (i.e., detrital production or
           ! production of dissolved organic material) is excreted as nh4 or po4 as part of the respiration process.
+          ! Note that ingestion is oxygen limited and is 0 below o2_min, so jprod_n(i,j,k) > 0 implies o2 is present 
           if (zoo(m)%jprod_n(i,j,k) .gt. 0.0) then
              zoo(m)%jprod_nh4(i,j,k) =  zoo(m)%jingest_n(i,j,k) - zoo(m)%jprod_ndet(i,j,k) -  &
                                         zoo(m)%jprod_n(i,j,k) - zoo(m)%jprod_ldon(i,j,k) - &
@@ -4401,6 +4424,9 @@ contains
                                         zoo(m)%jprod_n(i,j,k)*zoo(m)%q_p_2_n - zoo(m)%jprod_ldop(i,j,k) -  &
                                         zoo(m)%jprod_sldop(i,j,k) - zoo(m)%jprod_srdop(i,j,k)
           ! If production is negative, respire all assimilated material and route negative production to large detritus
+          ! Note: if o2 < 02_min, jingest, detritus and dissolved organic matter production terms are 0 from zoo%o2_lim
+          ! jprod_nh4 and jprod_po4 will thus be 0, ensuring no O2 respiration when o2 < o2_min, and all net mortality
+          ! will then be routed to detritus.
           else
              zoo(m)%jprod_nh4(i,j,k) =  zoo(m)%jingest_n(i,j,k) - zoo(m)%jprod_ndet(i,j,k) - &
                                         zoo(m)%jprod_ldon(i,j,k) - zoo(m)%jprod_sldon(i,j,k) - &
@@ -4417,7 +4443,7 @@ contains
           ! Add respiration-associated excretion to the cumulative production of inorganic nutrients
           cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + zoo(m)%jprod_nh4(i,j,k)
           cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + zoo(m)%jprod_po4(i,j,k)
-          ! Zooplankton respiration uses oxygen 
+          ! Zooplankton respiration uses oxygen (note zoo%jprod_nh4=0 when o2<02_min from zoo%o2_lim)
           cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + zoo(m)%jprod_nh4(i,j,k)*cobalt%o2_2_nh4
 
           ! Any ingested iron that is not allocated to detritus is routed back to the dissolved pool
@@ -4432,10 +4458,16 @@ contains
        ! Food ingested by higher predators that is not egested to detritus is excreted
        cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_fe(i,j,k)
        cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_sio2(i,j,k)
-       cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)
-       cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_p(i,j,k)
-       cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)* &
-                                  cobalt%o2_2_nh4
+       ! If o2 is sufficient, respire what is not egested.  If not, everything is routed to detritus
+       if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
+         cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)
+         cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_p(i,j,k)
+         cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)* &
+                                    cobalt%o2_2_nh4
+       else
+         cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)
+         cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_p(i,j,k)
+       endif
 
     enddo; enddo ; enddo !} i,j,k
     call mpp_clock_end(id_clock_production_loop)
@@ -5452,8 +5484,8 @@ contains
             phyto(LARGE)%juptake_no3(i,j,k) + phyto(MEDIUM)%juptake_no3(i,j,k) + &
             phyto(SMALL)%juptake_no3(i,j,k)) + cobalt%o2_2_nh4 *       &
             (phyto(DIAZO)%juptake_nh4(i,j,k) + phyto(LARGE)%juptake_nh4(i,j,k) +      &
-            phyto(MEDIUM)%juptake_nh4(i,j,k) + phyto(SMALL)%juptake_nh4(i,j,k) + &
-            phyto(DIAZO)%juptake_n2(i,j,k))) * grid_tmask(i,j,k)
+            phyto(MEDIUM)%juptake_nh4(i,j,k) + phyto(SMALL)%juptake_nh4(i,j,k)) + &
+            cobalt%o2_2_nfix*phyto(DIAZO)%juptake_n2(i,j,k)) * grid_tmask(i,j,k)
        cobalt%jo2(i,j,k) = cobalt%jo2(i,j,k) - cobalt%jo2resp_wc(i,j,k)
        cobalt%p_o2(i,j,k,tau) = cobalt%p_o2(i,j,k,tau) + cobalt%jo2(i,j,k) * dt * grid_tmask(i,j,k)
     enddo; enddo ; enddo  !} i,j,k
