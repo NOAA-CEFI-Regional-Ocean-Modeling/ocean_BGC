@@ -1,3 +1,4 @@
+! <CONTACT EMAIL="Charles.Stock@noaa.gov"> Charles Stock
 ! </CONTACT>
 !
 ! <OVERVIEW>
@@ -3543,13 +3544,12 @@ contains
 
        ! If growth is negative, results in net respiration and production of nh4 if oxygen is above minimum threshold.
        ! jo2resp_wc is a cumulative variable that tracks the total oxygen consumption in the water column
-       ! If oxygen is below that threshold, exude carbon and nutrients
+       ! If oxygen is below that threshold, cell death results in labile dissolved organic production
        if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
          cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
          cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))*cobalt%o2_2_nh4
-         phyto(n)%jexuloss_n(i,j,k) = 0.0
        else
-         phyto(n)%jexuloss_n(i,j,k) = -1.0*min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
+         cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
        endif
 
        do n = 2, NUM_PHYTO !{
@@ -3559,14 +3559,13 @@ contains
           phyto(n)%juptake_nh4(i,j,k) = max( 0.0, phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k)*   &
              phyto(n)%nh4lim(i,j,k)/(phyto(n)%no3lim(i,j,k)+phyto(n)%nh4lim(i,j,k)+epsln) )
           ! If growth is negative, results in net respiration and production of nh4 if oxygen is above minimum threshold.
-          ! If oxygen is below that threshold, exude carbon and nutrients 
+          ! If oxygen is below that threshold, cell death results in labile dissolved organic production
           if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
             cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
             cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) - &
                min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))*cobalt%o2_2_nh4
-            phyto(n)%jexuloss_n(i,j,k) = 0.0
           else
-            phyto(n)%jexuloss_n(i,j,k) = -1.0*min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
+            cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
           endif
        enddo !} n
     enddo;  enddo ; enddo !} i,j,k
@@ -3580,9 +3579,8 @@ contains
        ! If growth is negative, address in a manner analogous to N
        if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
          cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
-         phyto(n)%jexuloss_p(i,j,k) = 0.0
        else
-         phyto(n)%jexuloss_p(i,j,k) = -1.0*min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
+         cobalt%jprod_ldop(i,j,k) = cobalt%jprod_ldop(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
        endif
        do n = 2, NUM_PHYTO
           phyto(n)%juptake_po4(i,j,k) = (phyto(n)%juptake_nh4(i,j,k)+phyto(n)%juptake_no3(i,j,k))* &
@@ -3590,9 +3588,8 @@ contains
           ! If growth is negative, address in a manner analogous to N
           if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then 
             cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
-            phyto(n)%jexuloss_p(i,j,k) = 0.0
           else
-            phyto(n)%jexuloss_p(i,j,k) = -1.0*min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
+            cobalt%jprod_ldop(i,j,k) = cobalt%jprod_ldop(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k)) 
           endif
        enddo !} n
     enddo; enddo ; enddo !} i,j,k
@@ -4227,14 +4224,13 @@ contains
        ! 1078-1090. https://doi.org/10.4319/lo.1991.36.6.1078 
 
        n = DIAZO
-       phyto(n)%jexuloss_n(i,j,k) = phyto(n)%jexuloss_n(i,j,k) + phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+ &
+       phyto(n)%jexuloss_n(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+ &
                                     phyto(n)%juptake_nh4(i,j,k)+phyto(n)%juptake_n2(i,j,k),0.0)
-       phyto(n)%jexuloss_p(i,j,k) = phyto(n)%jexuloss_p(i,j,k) + phyto(n)%exu*max(phyto(n)%juptake_po4(i,j,k),0.0)
+       phyto(n)%jexuloss_p(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_po4(i,j,k),0.0)
        phyto(n)%jexuloss_fe(i,j,k) = phyto(n)%jexuloss_fe(i,j,k) + phyto(n)%exu*max(phyto(n)%juptake_fe(i,j,k),0.0)
        do n = 2,NUM_PHYTO !{
-          phyto(n)%jexuloss_n(i,j,k) = phyto(n)%jexuloss_n(i,j,k)+phyto(n)%exu* &
-             max(phyto(n)%juptake_no3(i,j,k)+phyto(n)%juptake_nh4(i,j,k),0.0)
-          phyto(n)%jexuloss_p(i,j,k) = phyto(n)%jexuloss_p(i,j,k)+phyto(n)%exu*max(phyto(n)%juptake_po4(i,j,k),0.0)
+          phyto(n)%jexuloss_n(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+phyto(n)%juptake_nh4(i,j,k),0.0)
+          phyto(n)%jexuloss_p(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_po4(i,j,k),0.0)
           phyto(n)%jexuloss_fe(i,j,k) = phyto(n)%jexuloss_fe(i,j,k) + phyto(n)%exu*max(phyto(n)%juptake_fe(i,j,k),0.0)
        enddo
 
