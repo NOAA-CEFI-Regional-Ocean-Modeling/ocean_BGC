@@ -688,6 +688,30 @@ module COBALT_send_diag
    !     used = g_send_data(cobalt%id_fsidet_btm,   cobalt%fsidet_btm,             &
    !     model_time, rmask = grid_tmask(:,:,1),&
    !     is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_alk,    -cobalt%b_alk,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_dic,    -cobalt%b_dic,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_fed,    -cobalt%b_fed,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_nh4,    -cobalt%b_nh4,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_no3,    -cobalt%b_no3,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_o2,    -cobalt%b_o2,                &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_po4,    -cobalt%b_po4,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_sio4,    -cobalt%b_sio4,            &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_ffetot_btm,   cobalt%ffetot_btm,             &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)

@@ -1115,6 +1115,14 @@ module cobalt_types
           id_btm_co3_ion_old  = -1,    &
           id_btm_omega_calc   = -1,    &
           id_btm_omega_arag   = -1,    &
+          id_b_dic            = -1,    &
+          id_b_fed            = -1,    &
+          id_b_nh4            = -1,    &
+          id_b_no3            = -1,    &
+          id_b_o2             = -1,    &
+          id_b_alk            = -1,    &
+          id_b_po4            = -1,    &
+          id_b_sio4           = -1,    &
           id_cased_2d      = -1,       &
           id_sfc_co3_ion   = -1,       &
           id_sfc_co3_sol_arag = -1,    &
