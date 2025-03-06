@@ -4420,7 +4420,7 @@ contains
                                         zoo(m)%jprod_n(i,j,k)*zoo(m)%q_p_2_n - zoo(m)%jprod_ldop(i,j,k) -  &
                                         zoo(m)%jprod_sldop(i,j,k) - zoo(m)%jprod_srdop(i,j,k)
           ! If production is negative, respire all assimilated material and route negative production to large detritus
-          ! Note: if o2 < 02_min, jingest, detritus and dissolved organic matter production terms are 0 from zoo%o2_lim
+          ! Note: if o2 < 02_min, jingest, detritus and dissolved organic matter production terms are 0 from zoo%o2lim
           ! jprod_nh4 and jprod_po4 will thus be 0, ensuring no O2 respiration when o2 < o2_min, and all net mortality
           ! will then be routed to detritus.
           else
@@ -4439,7 +4439,7 @@ contains
           ! Add respiration-associated excretion to the cumulative production of inorganic nutrients
           cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + zoo(m)%jprod_nh4(i,j,k)
           cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + zoo(m)%jprod_po4(i,j,k)
-          ! Zooplankton respiration uses oxygen (note zoo%jprod_nh4=0 when o2<02_min from zoo%o2_lim)
+          ! Zooplankton respiration uses oxygen (note zoo%jprod_nh4=0 when o2<02_min from zoo%o2lim)
           cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + zoo(m)%jprod_nh4(i,j,k)*cobalt%o2_2_nh4
 
           ! Any ingested iron that is not allocated to detritus is routed back to the dissolved pool
