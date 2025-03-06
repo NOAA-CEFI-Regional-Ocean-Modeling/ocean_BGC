@@ -245,7 +245,7 @@ module g_tracer_utils
      integer :: diag_id_stf_gas_aux=-1
      integer :: diag_id_alpha=-1, diag_id_csurf=-1, diag_id_sc_no=-1, diag_id_aux=-1
      integer :: diag_id_btf=-1,diag_id_btm=-1, diag_id_vmove=-1, diag_id_vdiff=-1
-     integer :: diag_id_vdiffuse_impl = -1, diag_id_tendency = -1, diag_id_field_taup1 = -1
+     integer :: diag_id_vdiffuse_impl = -1
      integer :: diag_id_vdiffusec_impl = -1, diag_id_boundary_forcing_tend = -1 
      ! Tracer Initial concentration if constant everywhere
      real    :: const_init_value = 0.0
@@ -365,7 +365,6 @@ module g_tracer_utils
   public :: g_tracer_coupler_set
   public :: g_tracer_coupler_get
   public :: g_tracer_send_diag
-  public :: g_tracer_diag
   public :: g_tracer_get_name
   public :: g_tracer_get_alias
   public :: g_tracer_get_next
@@ -1221,15 +1220,6 @@ contains
          standard_name = g_tracer%standard_name)
     endif
 
-    string=trim(g_tracer%alias) // trim("_taup1")
-    g_tracer%diag_id_field_taup1 = g_register_diag_field(g_tracer%package_name, &
-         trim(string),                 &
-         g_tracer_com%axes(1:3),       &
-         g_tracer_com%init_time,       &
-         trim(g_tracer%longname) // ' at taup1',      &
-         trim(g_tracer%units),         &
-         missing_value = -1.0e+20)
-
     string=trim(g_tracer%alias) // trim("_aux")
     g_tracer%diag_id_aux = g_register_diag_field(g_tracer%package_name, &
          trim(string),                 &
@@ -1275,16 +1265,6 @@ contains
          trim('mol kg-1 s-1'),                  &
          missing_value = -1.0e+20)
     
-
-    string=trim(g_tracer%alias) // trim("_tendency")
-    g_tracer%diag_id_tendency = g_register_diag_field(g_tracer%package_name, &
-         trim(string),                 &
-         g_tracer_com%axes(1:3),       &
-         g_tracer_com%init_time,       &
-         'Generic tracer tendency of ' // trim(g_tracer%alias),      &
-         trim('mol m-2 s-1'),                  &
-         missing_value = -1.0e+20)
-
     string=trim(g_tracer%alias) // trim("_vdiff")
     g_tracer%diag_id_vdiff = g_register_diag_field(g_tracer%package_name, &
          trim(string),                 &
@@ -3009,84 +2989,6 @@ contains
     enddo
 
   end subroutine g_tracer_send_diag
-
-
-  ! <SUBROUTINE NAME="g_tracer_diag">
-  !  <OVERVIEW>
-  !   Send diagnostics for all registered fields at finish (if in diag_table)
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   Collectively sends out the diagnostics for all registered fields of all generic tracers
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_diag(g_tracer_list,model_time , tau)
-  !  </TEMPLATE>
-  !  <IN NAME="g_tracer_list" TYPE="type(g_tracer_type),    pointer">
-  !   pointer to the head of the generic tracer list
-  !  </IN>
-  !  <IN NAME="model_time" TYPE="type(time_type)">
-  !   Time that the diagnostics is sent
-  !  </IN>
-  !  <IN NAME="tau" TYPE="integer">
-  !   The time step for the %field 4D field to be reported
-  !  </IN>
-  ! </SUBROUTINE>
-
-  subroutine g_tracer_diag(g_tracer_list, ilb, jlb, rho_dzt_tau, rho_dzt_taup1, model_time, tau, taup1, dtts)
-    type(g_tracer_type),    pointer    :: g_tracer_list
-    integer,                  intent(in) :: ilb
-    integer,                  intent(in) :: jlb
-    real, dimension(ilb:,jlb:,:),   intent(in) :: rho_dzt_tau
-    real, dimension(ilb:,jlb:,:),   intent(in) :: rho_dzt_taup1
-    type(time_type),        intent(in) :: model_time
-    integer,                  intent(in) :: tau
-    integer,                  intent(in) :: taup1
-    real,                     intent(in) :: dtts
-
-    type(g_tracer_type),    pointer    :: g_tracer
-    integer :: tau_1
-    logical :: used
-
-    character(len=fm_string_len), parameter :: sub_name = 'g_tracer_diag'
-
-    if(.NOT. associated(g_tracer_list)) call mpp_error(FATAL, trim(sub_name)//&
-         ": No tracer in the list.")
-
-    g_tracer => g_tracer_list !Local pointer. Do not change the input pointer!
-
-    !Go through the list of tracers 
-    do  
-       tau_1=taup1
-       if (g_tracer%diag_id_field_taup1 .gt. 0) then
-          if(.NOT. g_tracer_is_prog(g_tracer)) tau_1=1
-          used = g_send_data(g_tracer%diag_id_field_taup1, g_tracer%field(:,:,:,tau_1), model_time,&
-               rmask = g_tracer_com%grid_tmask(:,:,:),& 
-               is_in=g_tracer_com%isc, js_in=g_tracer_com%jsc, ks_in=1,&
-               ie_in=g_tracer_com%iec, je_in=g_tracer_com%jec, ke_in=g_tracer_com%nk)
-       endif
-
-       if (g_tracer%diag_id_tendency .gt. 0  .and. g_tracer%prog) then
-          used = g_send_data(g_tracer%diag_id_tendency,&
-               (g_tracer%field(:,:,:,taup1)*rho_dzt_taup1(:,:,:) - g_tracer%field(:,:,:,tau)*rho_dzt_tau(:,:,:))/dtts, model_time,&
-               rmask = g_tracer_com%grid_tmask(:,:,:),& 
-               is_in=g_tracer_com%isc, js_in=g_tracer_com%jsc, ks_in=1,&
-               ie_in=g_tracer_com%iec, je_in=g_tracer_com%jec, ke_in=g_tracer_com%nk)
-       endif
-
-       if (g_tracer%diag_id_vdiffuse_impl .gt. 0 .and. _ALLOCATED(g_tracer%vdiffuse_impl)) then
-          used = g_send_data(g_tracer%diag_id_vdiffuse_impl, g_tracer%vdiffuse_impl(:,:,:), model_time,&
-               rmask = g_tracer_com%grid_tmask(:,:,:),& 
-               is_in=g_tracer_com%isc, js_in=g_tracer_com%jsc, ks_in=1,&
-               ie_in=g_tracer_com%iec, je_in=g_tracer_com%jec, ke_in=g_tracer_com%nk)
-       endif
-       
-       !traverse the linked list till hit NULL
-       if(.NOT. associated(g_tracer%next)) exit
-       g_tracer => g_tracer%next
-    enddo
-
-  end subroutine g_tracer_diag
-
 
   subroutine g_tracer_traverse(g_tracer_list)
     type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer 
