@@ -4748,11 +4748,9 @@ contains
        if (cobalt%feprime(i,j,k) .lt. cobalt%fe_sol(i,j,k)) then
          cobalt%jfe_ads(i,j,k) = cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
                                  cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet(i,j,k)
-         cobalt%jfe_ads_fast(i,j,k) = cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet_fast(i,j,k)						 
        else
          cobalt%jfe_ads(i,j,k) = cobalt%fast_fescav_fac*(cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
                                  cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet(i,j,k))
-         cobalt%jfe_ads_fast(i,j,k) = 10.0*(cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet_fast(i,j,k))
        endif
        ! Add a limiter so you don't scavenge more than half the available iron in a single time step.
        cobalt%jfe_ads(i,j,k) = min(cobalt%jfe_ads(i,j,k),cobalt%f_fed(i,j,k)/(2.0*dt))
@@ -5433,7 +5431,7 @@ contains
        cobalt%jfed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jfe_coast(i,j,k) + &
                             cobalt%jfe_iceberg(i,j,k) - phyto(DIAZO)%juptake_fe(i,j,k) - &
                             phyto(LARGE)%juptake_fe(i,j,k) - phyto(MEDIUM)%juptake_fe(i,j,k) - &
-                            phyto(SMALL)%juptake_fe(i,j,k) - cobalt%jfe_ads(i,j,k) - cobalt%jfe_ads_fast(i,j,k)
+                            phyto(SMALL)%juptake_fe(i,j,k) - cobalt%jfe_ads(i,j,k)
        cobalt%p_fed(i,j,k,tau) = cobalt%p_fed(i,j,k,tau) + cobalt%jfed(i,j,k) * dt * grid_tmask(i,j,k)
     enddo; enddo; enddo  !} i,j,k
 
@@ -5491,7 +5489,7 @@ contains
        !
        ! Fedet
        !
-       cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + cobalt%jfe_ads(i,j,k) + cobalt%jfe_ads_fast(i,j,k)
+       cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + cobalt%jfe_ads(i,j,k)
        cobalt%jfedet(i,j,k) = cobalt%jprod_fedet(i,j,k) - &
                               cobalt%jremin_fedet(i,j,k) - cobalt%det_jzloss_fe(i,j,k) - &
                               cobalt%det_jhploss_fe(i,j,k)
@@ -7351,7 +7349,6 @@ contains
     allocate(cobalt%jremin_pdet_fast(isd:ied, jsd:jed, 1:nk)); cobalt%jremin_pdet_fast=0.0
     allocate(cobalt%jremin_fedet(isd:ied, jsd:jed, 1:nk)) ; cobalt%jremin_fedet=0.0
     allocate(cobalt%jfe_ads(isd:ied, jsd:jed, 1:nk))      ; cobalt%jfe_ads=0.0
-    allocate(cobalt%jfe_ads_fast(isd:ied, jsd:jed, 1:nk)) ; cobalt%jfe_ads_fast=0.0
     allocate(cobalt%jfe_coast(isd:ied, jsd:jed, 1:nk))    ; cobalt%jfe_coast=0.0
     allocate(cobalt%jfe_iceberg(isd:ied, jsd:jed, 1:nk))  ; cobalt%jfe_iceberg=0.0
     allocate(cobalt%jno3_iceberg(isd:ied, jsd:jed, 1:nk)) ; cobalt%jno3_iceberg=0.0
@@ -7920,7 +7917,6 @@ contains
     deallocate(cobalt%jremin_pdet_fast)
     deallocate(cobalt%jremin_fedet)
     deallocate(cobalt%jfe_ads)
-    deallocate(cobalt%jfe_ads_fast)
     deallocate(cobalt%jfe_coast)
     deallocate(cobalt%jfe_iceberg)
     deallocate(cobalt%jno3_iceberg)

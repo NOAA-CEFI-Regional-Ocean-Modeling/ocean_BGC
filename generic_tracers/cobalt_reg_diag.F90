@@ -1256,10 +1256,6 @@ module COBALT_reg_diag
     vardesc_temp = vardesc("jfe_ads","Iron adsorption layer integral",'h','L','s','mol Fe m-2 s-1','f')
     cobalt%id_jfe_ads = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("jfe_ads_fast","Iron adsorption on fast-sinking detritus layer integral",'h','L','s','mol Fe m-2 s-1','f')
-    cobalt%id_jfe_ads = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 		 
     vardesc_temp = vardesc("jfe_coast","Coastal iron efflux layer integral",'h','L','s','mol Fe m-2 s-1','f')
     cobalt%id_jfe_coast = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&

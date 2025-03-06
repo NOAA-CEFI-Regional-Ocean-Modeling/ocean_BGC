@@ -698,7 +698,6 @@ module cobalt_types
           jremin_fedet,&
           jremin_fedet_fast,&
           jfe_ads,&
-          jfe_ads_fast,&
           jfe_coast,&
           jfe_iceberg,&
           jno3_iceberg,&
@@ -1031,7 +1030,6 @@ module cobalt_types
           id_jremin_fedet  = -1,       &
           id_jremin_fedet_fast = -1,       &
           id_jfe_ads       = -1,       &
-          id_jfe_ads_fast  = -1,       &
           id_jfe_coast     = -1,       &
           id_jfe_iceberg   = -1,       &
           id_jno3_iceberg  = -1,       &

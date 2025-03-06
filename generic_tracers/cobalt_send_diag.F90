@@ -358,9 +358,6 @@ module COBALT_send_diag
        used = g_send_data(cobalt%id_jfe_ads,       cobalt%jfe_ads*rho_dzt,       &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-       used = g_send_data(cobalt%id_jfe_ads_fast,  cobalt%jfe_ads_fast*rho_dzt,       &
-       model_time, rmask = grid_tmask,&
-       is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
        used = g_send_data(cobalt%id_jfe_coast, cobalt%jfe_coast*rho_dzt,         &
        model_time, rmask = grid_tmask,&
        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1714,7 +1711,7 @@ module COBALT_send_diag
         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
 
 ! CAS: fixed conversion
-        used = g_send_data(cobalt%id_fescav,  (cobalt%jfe_ads + cobalt%jfe_ads_fast) * rho_dzt / dzt,  &
+        used = g_send_data(cobalt%id_fescav,  cobalt%jfe_ads * rho_dzt / dzt,  &
         model_time, rmask = grid_tmask,&
         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
 
