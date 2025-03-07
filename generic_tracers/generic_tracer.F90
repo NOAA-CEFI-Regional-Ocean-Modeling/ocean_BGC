@@ -45,7 +45,7 @@ module generic_tracer
   use g_tracer_utils, only : g_tracer_get_common, g_tracer_set_common, g_tracer_is_prog
   use g_tracer_utils, only : g_tracer_coupler_set,g_tracer_coupler_get, g_tracer_register_diag
   use g_tracer_utils, only : g_tracer_vertdiff_G, g_tracer_get_next     
-  use g_tracer_utils, only : g_tracer_diag, g_tracer_print_info, g_tracer_vertfill
+  use g_tracer_utils, only : g_tracer_print_info, g_tracer_vertfill
   use g_tracer_utils, only : g_tracer_coupler_accumulate
 
   use generic_abiotic, only : generic_abiotic_register, generic_abiotic_register_diag
@@ -116,7 +116,6 @@ module generic_tracer
   public generic_tracer_init
   public generic_tracer_register_diag
   public generic_tracer_source
-  public generic_tracer_diag
   public generic_tracer_update_from_bottom
   public generic_tracer_coupler_get
   public generic_tracer_coupler_set
@@ -411,53 +410,6 @@ contains
     if(do_generic_tracer) call g_tracer_coupler_accumulate(tracer_list,IOB_struc,weight, model_time)
 
   end subroutine generic_tracer_coupler_accumulate
-
-
-  ! <SUBROUTINE NAME="generic_tracer_diag">
-  !  <OVERVIEW>
-  !   Do things which must be done after all transports and sources have been calculated
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   Calls the corresponding generic_X_diag routine for each package X.
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call  generic_tracer_diag(tau,model_time)
-  !  </TEMPLATE>
-  !  <IN NAME="ilb,jlb" TYPE="integer">
-  !   Lower bounds of x and y extents of input arrays on data domain
-  !  </IN>
-  !  <IN NAME="tau" TYPE="integer">
-  !   Time step index of %field
-  !  </IN>
-  !  <IN NAME="model_time" TYPE="time_type">
-  !   Model time
-  !  </IN>
-  !  <IN NAME="dzt" TYPE="real, dimension(ilb:,jlb:,:)">
-  !   Ocean layer thickness (meters)
-  !  </IN>
-  ! </SUBROUTINE>
-
-  subroutine generic_tracer_diag(ilb, jlb, tau, taup1, dtts, model_time, dzt, rho_dzt_tau, rho_dzt_taup1)
-    integer,                        intent(in) :: ilb
-    integer,                        intent(in) :: jlb
-    integer,                        intent(in) :: tau
-    integer,                        intent(in) :: taup1
-    real,                           intent(in) :: dtts
-    type(time_type),                intent(in) :: model_time
-    real, dimension(ilb:,jlb:,:),   intent(in) :: dzt
-    real, dimension(ilb:,jlb:,:),   intent(in) :: rho_dzt_tau
-    real, dimension(ilb:,jlb:,:),   intent(in) :: rho_dzt_taup1
-
-    character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_update_from_diag'
-
-!    if(do_generic_miniBLING)  call generic_miniBLING_diag(tracer_list, ilb, jlb, taup1, model_time, dzt, rho_dzt_taup1)
-
-    call g_tracer_diag(tracer_list, ilb, jlb, rho_dzt_tau, rho_dzt_taup1, model_time, tau, taup1, dtts)
-
-    return
-
-  end subroutine generic_tracer_diag
-
 
   ! <SUBROUTINE NAME="generic_tracer_source">
   !  <OVERVIEW>
