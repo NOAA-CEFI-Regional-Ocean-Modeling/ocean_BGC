@@ -4743,9 +4743,6 @@ contains
           rho_dzt_bot(i,j) = 0.0
           cobalt%btm_o2(i,j) = 0.0
           cobalt%btm_no3(i,j) = 0.0
-          cobalt%btm_co3_sol_calc(i,j) = 0.0
-          cobalt%btm_co3_ion(i,j) = 0.0
-          cobalt%btm_omega_calc(i,j) = 0.0
           k_bot(i,j) = 0
           ! Note that grid_kmt is always the total number of layers in MOM6
           do k = grid_kmt(i,j),1,-1   !{
@@ -4756,23 +4753,15 @@ contains
               rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
               cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%f_o2(i,j,k)*rho_dzt(i,j,k) 
               cobalt%btm_no3(i,j) = cobalt%btm_no3(i,j) + cobalt%f_no3(i,j,k)*rho_dzt(i,j,k) 
-              cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k) 
-              cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k) 
             endif
           enddo
           ! Subtract off overshoot
           drho_dzt = rho_dzt_bot(i,j) - cobalt%Rho_0*cobalt%bottom_thickness
           cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)-cobalt%f_o2(i,j,k_bot(i,j))*drho_dzt
           cobalt%btm_no3(i,j)=cobalt%btm_no3(i,j)-cobalt%f_no3(i,j,k_bot(i,j))*drho_dzt
-          cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)-cobalt%co3_sol_calc(i,j,k_bot(i,j))*drho_dzt
-          cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)-cobalt%f_co3_ion(i,j,k_bot(i,j))*drho_dzt
           ! convert back to moles kg-1
           cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
           cobalt%btm_no3(i,j)=cobalt%btm_no3(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-          cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-          cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-          ! calculate the saturation state with respect to calcite for subsequent calculations
-          cobalt%btm_omega_calc(i,j)=cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
 
           ! Calculate the processing of organic matter in the sediment.  The fate of organic matter is partitioned
           ! between burial (i.e., removal from the system), aerobic remineralization, remineralization via 
@@ -6408,7 +6397,6 @@ contains
     do j = jsc, jec ; do i = isc, iec  !{
        rho_dzt_bot(i,j) = 0.0
        cobalt%btm_temp(i,j) = 0.0
-       cobalt%btm_o2(i,j) = 0.0
        cobalt%btm_dic(i,j) = 0.0
        cobalt%btm_alk(i,j) = 0.0
        cobalt%btm_htotal(i,j) = 0.0
@@ -6427,8 +6415,6 @@ contains
              k_bot(i,j) = k
              rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
              cobalt%k_bot_diag(i,j) = grid_kmt(i,j)-float(k)+1.0
-             cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + &
-               cobalt%f_o2(i,j,k)*rho_dzt(i,j,k)
              cobalt%btm_alk(i,j) = cobalt%btm_alk(i,j) + &
                cobalt%f_alk(i,j,k)*rho_dzt(i,j,k)
              cobalt%btm_dic(i,j) = cobalt%btm_dic(i,j) + &
@@ -6450,7 +6436,6 @@ contains
          ! calculate overshoot and subtract off
          drho_dzt = rho_dzt_bot(i,j) - cobalt%Rho_0*cobalt%bottom_thickness
          cobalt%btm_temp(i,j)=cobalt%btm_temp(i,j)-Temp(i,j,k_bot(i,j))*drho_dzt
-         cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)-cobalt%f_o2(i,j,k_bot(i,j))*drho_dzt
          cobalt%btm_alk(i,j)=cobalt%btm_alk(i,j)-cobalt%f_alk(i,j,k_bot(i,j))*drho_dzt
          cobalt%btm_dic(i,j)=cobalt%btm_dic(i,j)-cobalt%f_dic(i,j,k_bot(i,j))*drho_dzt
          cobalt%btm_htotal(i,j)=cobalt%btm_htotal(i,j)-cobalt%f_htotal(i,j,k_bot(i,j))*drho_dzt
@@ -6459,7 +6444,6 @@ contains
          cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)-cobalt%f_co3_ion(i,j,k_bot(i,j))*drho_dzt
          ! convert back to moles kg-1
          cobalt%btm_temp(i,j)=cobalt%btm_temp(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-         cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
          cobalt%btm_alk(i,j)=cobalt%btm_alk(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
          cobalt%btm_dic(i,j)=cobalt%btm_dic(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
          cobalt%btm_htotal(i,j)=cobalt%btm_htotal(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
