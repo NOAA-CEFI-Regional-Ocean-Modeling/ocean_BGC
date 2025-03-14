@@ -4743,6 +4743,7 @@ contains
           rho_dzt_bot(i,j) = 0.0
           cobalt%btm_o2(i,j) = 0.0
           cobalt%btm_no3(i,j) = 0.0
+          cobalt%btm_omega_calc(i,j) = 0.0
           k_bot(i,j) = 0
           ! Note that grid_kmt is always the total number of layers in MOM6
           do k = grid_kmt(i,j),1,-1   !{
@@ -4762,6 +4763,8 @@ contains
           ! convert back to moles kg-1
           cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
           cobalt%btm_no3(i,j)=cobalt%btm_no3(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
+          ! calculate the saturation state with respect to calcite for subsequent calculations
+          cobalt%btm_omega_calc(i,j)=cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
 
           ! Calculate the processing of organic matter in the sediment.  The fate of organic matter is partitioned
           ! between burial (i.e., removal from the system), aerobic remineralization, remineralization via 
@@ -6403,7 +6406,6 @@ contains
        cobalt%btm_co3_sol_arag(i,j) = 0.0
        cobalt%btm_co3_sol_calc(i,j) = 0.0
        cobalt%btm_co3_ion(i,j) = 0.0
-       cobalt%btm_omega_calc(i,j) = 0.0
        cobalt%btm_omega_arag(i,j) = 0.0
        k_bot(i,j) = 0
        k = grid_kmt(i,j)
@@ -6451,7 +6453,6 @@ contains
          cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
          cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
          ! calculate bottom saturation states
-         cobalt%btm_omega_calc(i,j) = cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
          cobalt%btm_omega_arag(i,j) = cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_arag(i,j)
        endif
     enddo; enddo
