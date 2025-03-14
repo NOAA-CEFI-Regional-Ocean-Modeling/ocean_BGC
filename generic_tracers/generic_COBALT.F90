@@ -4743,6 +4743,8 @@ contains
           rho_dzt_bot(i,j) = 0.0
           cobalt%btm_o2(i,j) = 0.0
           cobalt%btm_no3(i,j) = 0.0
+          cobalt%btm_co3_sol_calc(i,j) = 0.0
+          cobalt%btm_co3_ion(i,j) = 0.0          
           cobalt%btm_omega_calc(i,j) = 0.0
           k_bot(i,j) = 0
           ! Note that grid_kmt is always the total number of layers in MOM6
@@ -4754,15 +4756,21 @@ contains
               rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
               cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%f_o2(i,j,k)*rho_dzt(i,j,k) 
               cobalt%btm_no3(i,j) = cobalt%btm_no3(i,j) + cobalt%f_no3(i,j,k)*rho_dzt(i,j,k) 
+              cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k) 
+              cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k)               
             endif
           enddo
           ! Subtract off overshoot
           drho_dzt = rho_dzt_bot(i,j) - cobalt%Rho_0*cobalt%bottom_thickness
           cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)-cobalt%f_o2(i,j,k_bot(i,j))*drho_dzt
           cobalt%btm_no3(i,j)=cobalt%btm_no3(i,j)-cobalt%f_no3(i,j,k_bot(i,j))*drho_dzt
+          cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)-cobalt%co3_sol_calc(i,j,k_bot(i,j))*drho_dzt
+          cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)-cobalt%f_co3_ion(i,j,k_bot(i,j))*drho_dzt          
           ! convert back to moles kg-1
           cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
           cobalt%btm_no3(i,j)=cobalt%btm_no3(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
+          cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
+          cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)          
           ! calculate the saturation state with respect to calcite for subsequent calculations
           cobalt%btm_omega_calc(i,j)=cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
 
@@ -6404,8 +6412,6 @@ contains
        cobalt%btm_alk(i,j) = 0.0
        cobalt%btm_htotal(i,j) = 0.0
        cobalt%btm_co3_sol_arag(i,j) = 0.0
-       cobalt%btm_co3_sol_calc(i,j) = 0.0
-       cobalt%btm_co3_ion(i,j) = 0.0
        cobalt%btm_omega_arag(i,j) = 0.0
        k_bot(i,j) = 0
        k = grid_kmt(i,j)
@@ -6427,10 +6433,6 @@ contains
                cobalt%f_htotal(i,j,k)*rho_dzt(i,j,k)
              cobalt%btm_co3_sol_arag(i,j) = cobalt%btm_co3_sol_arag(i,j) + &
                cobalt%co3_sol_arag(i,j,k)*rho_dzt(i,j,k)
-             cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + &
-               cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k)
-             cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + &
-               cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k)
            endif
          enddo
          ! diagnostic to assess how far up into the water column info is being drawn from
@@ -6442,16 +6444,12 @@ contains
          cobalt%btm_dic(i,j)=cobalt%btm_dic(i,j)-cobalt%f_dic(i,j,k_bot(i,j))*drho_dzt
          cobalt%btm_htotal(i,j)=cobalt%btm_htotal(i,j)-cobalt%f_htotal(i,j,k_bot(i,j))*drho_dzt
          cobalt%btm_co3_sol_arag(i,j)=cobalt%btm_co3_sol_arag(i,j)-cobalt%co3_sol_arag(i,j,k_bot(i,j))*drho_dzt
-         cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)-cobalt%co3_sol_calc(i,j,k_bot(i,j))*drho_dzt
-         cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)-cobalt%f_co3_ion(i,j,k_bot(i,j))*drho_dzt
          ! convert back to moles kg-1
          cobalt%btm_temp(i,j)=cobalt%btm_temp(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
          cobalt%btm_alk(i,j)=cobalt%btm_alk(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
          cobalt%btm_dic(i,j)=cobalt%btm_dic(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
          cobalt%btm_htotal(i,j)=cobalt%btm_htotal(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
          cobalt%btm_co3_sol_arag(i,j)=cobalt%btm_co3_sol_arag(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-         cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-         cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
          ! calculate bottom saturation states
          cobalt%btm_omega_arag(i,j) = cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_arag(i,j)
        endif
