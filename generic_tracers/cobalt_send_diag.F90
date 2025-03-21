@@ -7,7 +7,8 @@ module COBALT_send_diag
 
   use time_manager_mod,  only: time_type
 
-  use g_tracer_utils, only : g_send_data
+  use g_tracer_utils, only : g_send_data,g_tracer_get_pointer
+  use g_tracer_utils, only : g_tracer_type
 
   implicit none; private
   public cobalt_send_diagnostics
@@ -15,8 +16,10 @@ module COBALT_send_diag
   contains
 
     !> subroutine that handles send_diag calls for COBALT phyto, zoo, and bact      
-    subroutine cobalt_send_diagnostics(model_time,grid_tmask,Temp,rho_dzt,dzt,&
-                                 isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt)         
+    subroutine cobalt_send_diagnostics(tracer_list, model_time,grid_tmask,Temp,rho_dzt,dzt,&
+                                 isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt,&
+                                 post_vertdiff)         
+      type(g_tracer_type),                       pointer :: tracer_list
       type(time_type),                           intent(in) :: model_time
       real, dimension(:,:,:),                    pointer :: grid_tmask
       real, dimension(isc:,jsc:,:),                    intent(in) :: Temp
@@ -32,10 +35,208 @@ module COBALT_send_diag
       type(zooplankton), dimension(NUM_ZOO),     intent(in) :: zoo
       type(bacteria), dimension(NUM_BACT),       intent(in) :: bact
       type(generic_COBALT_type),                 intent(inout) :: cobalt
+      logical,                                   intent(in), optional :: post_vertdiff
       !> local variables
-      integer :: n
+      integer :: n,i,j,k
       logical :: used  
-            
+      logical :: is_post_vertdiff
+
+      ! Set default value
+      is_post_vertdiff = .false.
+
+      ! Check if post_vertdiff is present
+      if (present(post_vertdiff)) then
+        is_post_vertdiff = post_vertdiff
+      endif
+      
+      !
+      ! Determine the case (default to .false. if post_vertdiff is not present)
+      select case (is_post_vertdiff)
+        case (.true.)
+        ! Logic for "post_vertdiff" case     
+!
+!---------------------------------------------------------------------
+! Save water column vertical integrals
+!---------------------------------------------------------------------
+!
+         !Calculate layer integrals
+         ! First get prognostics tracer fields via their pointers 
+         call g_tracer_get_pointer(tracer_list,'alk'    ,'field',cobalt%p_alk    )
+         call g_tracer_get_pointer(tracer_list,'cadet_arag','field',cobalt%p_cadet_arag)
+         call g_tracer_get_pointer(tracer_list,'cadet_calc','field',cobalt%p_cadet_calc)
+         call g_tracer_get_pointer(tracer_list,'dic'    ,'field',cobalt%p_dic    )
+         call g_tracer_get_pointer(tracer_list,'fed'    ,'field',cobalt%p_fed    )
+         call g_tracer_get_pointer(tracer_list,'fedi'   ,'field',cobalt%p_fedi   )
+         call g_tracer_get_pointer(tracer_list,'felg'   ,'field',cobalt%p_felg   )
+         call g_tracer_get_pointer(tracer_list,'femd'   ,'field',cobalt%p_femd   )
+         call g_tracer_get_pointer(tracer_list,'fesm'   ,'field',cobalt%p_fesm )
+         call g_tracer_get_pointer(tracer_list,'fedet'  ,'field',cobalt%p_fedet  )
+         call g_tracer_get_pointer(tracer_list,'ldon'   ,'field',cobalt%p_ldon   )
+         call g_tracer_get_pointer(tracer_list,'ldop'   ,'field',cobalt%p_ldop   )
+         call g_tracer_get_pointer(tracer_list,'nbact'  ,'field',cobalt%p_nbact  )
+         call g_tracer_get_pointer(tracer_list,'ndet'   ,'field',cobalt%p_ndet   )
+         call g_tracer_get_pointer(tracer_list,'ndi'    ,'field',cobalt%p_ndi    )
+         call g_tracer_get_pointer(tracer_list,'nlg'    ,'field',cobalt%p_nlg    )
+         call g_tracer_get_pointer(tracer_list,'nmd'    ,'field',cobalt%p_nmd    )
+         call g_tracer_get_pointer(tracer_list,'nsm' ,'field',cobalt%p_nsm ) 
+         call g_tracer_get_pointer(tracer_list,'nh4'    ,'field',cobalt%p_nh4    )
+         call g_tracer_get_pointer(tracer_list,'no3'    ,'field',cobalt%p_no3    )
+         call g_tracer_get_pointer(tracer_list,'o2'     ,'field',cobalt%p_o2     )
+         call g_tracer_get_pointer(tracer_list,'pdi'    ,'field',cobalt%p_pdi    )
+         call g_tracer_get_pointer(tracer_list,'plg'    ,'field',cobalt%p_plg    )
+         call g_tracer_get_pointer(tracer_list,'pmd'    ,'field',cobalt%p_pmd    )
+         call g_tracer_get_pointer(tracer_list,'psm'    ,'field',cobalt%p_psm    )
+         call g_tracer_get_pointer(tracer_list,'pdet'   ,'field',cobalt%p_pdet   )
+         call g_tracer_get_pointer(tracer_list,'po4'    ,'field',cobalt%p_po4    )
+         call g_tracer_get_pointer(tracer_list,'srdon'   ,'field',cobalt%p_srdon   )
+         call g_tracer_get_pointer(tracer_list,'srdop'   ,'field',cobalt%p_srdop   )
+         call g_tracer_get_pointer(tracer_list,'sldon'   ,'field',cobalt%p_sldon   )
+         call g_tracer_get_pointer(tracer_list,'sldop'   ,'field',cobalt%p_sldop   )
+         call g_tracer_get_pointer(tracer_list,'sidet'  ,'field',cobalt%p_sidet  )
+         call g_tracer_get_pointer(tracer_list,'silg'   ,'field',cobalt%p_silg   )
+         call g_tracer_get_pointer(tracer_list,'simd'   ,'field',cobalt%p_simd   )
+         call g_tracer_get_pointer(tracer_list,'sio4'   ,'field',cobalt%p_sio4   )
+         call g_tracer_get_pointer(tracer_list,'nsmz'   ,'field',cobalt%p_nsmz   )
+         call g_tracer_get_pointer(tracer_list,'nmdz'   ,'field',cobalt%p_nmdz   )
+         call g_tracer_get_pointer(tracer_list,'nlgz'   ,'field',cobalt%p_nlgz   )
+         ! Not sure if we also have to update the following?
+         !call g_tracer_get_pointer(tracer_list,'lith'   ,'field',cobalt%p_lith   )
+         !call g_tracer_get_pointer(tracer_list,'lithdet','field',cobalt%p_lithdet)
+
+         ! The carbon layer integral (organic + inorganic).  Note that this can be calculated with or without a constant
+         ! background level of recalcitrant dissolved organic carbon by setting cobalt%doc_background.  This is included
+         ! at a level of 40 micromoles kg-1 by default.
+         cobalt%tot_layer_int_c(:,:,:) = (cobalt%p_dic(:,:,:,tau) + cobalt%doc_background + cobalt%p_cadet_arag(:,:,:,tau) +&
+             cobalt%p_cadet_calc(:,:,:,tau) + cobalt%c_2_n * (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + &
+             cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + cobalt%p_ldon(:,:,:,tau) + &
+             cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_nsmz(:,:,:,tau) + &
+             cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau))) * rho_dzt(:,:,:)
+
+         ! dissolved organic component also includes an optional background doc
+         cobalt%tot_layer_int_doc(:,:,:) = (cobalt%c_2_n * (cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) + &
+             cobalt%p_srdon(:,:,:,tau)) + cobalt%doc_background) * rho_dzt(:,:,:)
+
+         cobalt%tot_layer_int_poc(:,:,:) = (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + &
+             cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_nsmz(:,:,:,tau) + &
+             cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau))*cobalt%c_2_n*rho_dzt(:,:,:)
+
+         cobalt%tot_layer_int_dic(:,:,:) = cobalt%p_dic(:,:,:,tau)*rho_dzt(:,:,:)
+
+         cobalt%tot_layer_int_fe(:,:,:) = (cobalt%p_fed(:,:,:,tau) + cobalt%p_fedi(:,:,:,tau) + cobalt%p_felg(:,:,:,tau) + &
+             cobalt%p_femd(:,:,:,tau) + cobalt%p_fesm(:,:,:,tau) + cobalt%p_fedet(:,:,:,tau)) * rho_dzt(:,:,:)
+
+         cobalt%tot_layer_int_n(:,:,:) = (cobalt%p_no3(:,:,:,tau) + cobalt%p_nh4(:,:,:,tau) + cobalt%p_ndi(:,:,:,tau) + &
+             cobalt%p_nlg(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + &
+             cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) +  cobalt%p_ndet(:,:,:,tau) + &
+             cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau)) * rho_dzt(:,:,:)
+
+         cobalt%tot_layer_int_p(:,:,:) = (cobalt%p_po4(:,:,:,tau) + cobalt%p_pdi(:,:,:,tau) + cobalt%p_plg(:,:,:,tau) + &
+             cobalt%p_pmd(:,:,:,tau) + cobalt%p_psm(:,:,:,tau) + cobalt%p_ldop(:,:,:,tau) + cobalt%p_sldop(:,:,:,tau) + &
+             cobalt%p_srdop(:,:,:,tau) + cobalt%p_pdet(:,:,:,tau) + bact(1)%q_p_2_n*cobalt%p_nbact(:,:,:,tau) + &
+             zoo(1)%q_p_2_n*cobalt%p_nsmz(:,:,:,tau) + zoo(2)%q_p_2_n*cobalt%p_nmdz(:,:,:,tau) + &
+             zoo(3)%q_p_2_n*cobalt%p_nlgz(:,:,:,tau))*rho_dzt(:,:,:)
+
+         cobalt%tot_layer_int_si(:,:,:) = (cobalt%p_sio4(:,:,:,tau) + cobalt%p_silg(:,:,:,tau) + &
+             cobalt%p_simd(:,:,:,tau) + cobalt%p_sidet(:,:,:,tau)) * rho_dzt(:,:,:)
+
+         cobalt%tot_layer_int_o2(:,:,:) = cobalt%p_o2(:,:,:,tau)*rho_dzt(:,:,:)
+
+         cobalt%tot_layer_int_alk(:,:,:) = cobalt%p_alk(:,:,:,tau)*rho_dzt(:,:,:)
+
+         do j = jsc, jec ; do i = isc, iec !{
+           cobalt%wc_vert_int_c(i,j) = 0.0
+           cobalt%wc_vert_int_dic(i,j) = 0.0
+           cobalt%wc_vert_int_doc(i,j) = 0.0
+           cobalt%wc_vert_int_poc(i,j) = 0.0
+           cobalt%wc_vert_int_n(i,j) = 0.0
+           cobalt%wc_vert_int_p(i,j) = 0.0
+           cobalt%wc_vert_int_fe(i,j) = 0.0
+           cobalt%wc_vert_int_si(i,j) = 0.0
+           cobalt%wc_vert_int_o2(i,j) = 0.0
+           cobalt%wc_vert_int_alk(i,j) = 0.0
+         enddo; enddo !} i,j
+
+         do j = jsc, jec ; do i = isc, iec ; do k = 1, nk  !{
+           ! Tracers ("tot_layer_int" variables already multiplied by "rho_dzt", so just sum over k to get moles m-2)
+           cobalt%wc_vert_int_c(i,j) = cobalt%wc_vert_int_c(i,j) + &
+               cobalt%tot_layer_int_c(i,j,k)*grid_tmask(i,j,k)
+           cobalt%wc_vert_int_dic(i,j) = cobalt%wc_vert_int_dic(i,j) + &
+               cobalt%tot_layer_int_dic(i,j,k)*grid_tmask(i,j,k)
+           cobalt%wc_vert_int_doc(i,j) = cobalt%wc_vert_int_doc(i,j) + &
+               cobalt%tot_layer_int_doc(i,j,k)*grid_tmask(i,j,k)
+           cobalt%wc_vert_int_poc(i,j) = cobalt%wc_vert_int_poc(i,j) + &
+               cobalt%tot_layer_int_poc(i,j,k)*grid_tmask(i,j,k)
+           cobalt%wc_vert_int_n(i,j) = cobalt%wc_vert_int_n(i,j) + &
+               cobalt%tot_layer_int_n(i,j,k)*grid_tmask(i,j,k)
+           cobalt%wc_vert_int_p(i,j) = cobalt%wc_vert_int_p(i,j) + &
+               cobalt%tot_layer_int_p(i,j,k)*grid_tmask(i,j,k)
+           cobalt%wc_vert_int_fe(i,j) = cobalt%wc_vert_int_fe(i,j) + & 
+               cobalt%tot_layer_int_fe(i,j,k)*grid_tmask(i,j,k)
+           cobalt%wc_vert_int_si(i,j) = cobalt%wc_vert_int_si(i,j) + &
+               cobalt%tot_layer_int_si(i,j,k)*grid_tmask(i,j,k)
+           cobalt%wc_vert_int_o2(i,j) = cobalt%wc_vert_int_o2(i,j) + &
+               cobalt%tot_layer_int_o2(i,j,k)*grid_tmask(i,j,k)
+           cobalt%wc_vert_int_alk(i,j) = cobalt%wc_vert_int_alk(i,j) + & 
+               cobalt%tot_layer_int_alk(i,j,k)*grid_tmask(i,j,k)
+         enddo; enddo; enddo  !} i,j,k  
+
+         ! send layer integral diag
+         used = g_send_data(cobalt%id_tot_layer_int_c, cobalt%tot_layer_int_c,&
+         model_time, rmask = grid_tmask,&
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_tot_layer_int_fe,cobalt%tot_layer_int_fe,&
+         model_time, rmask = grid_tmask,&
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_tot_layer_int_n,cobalt%tot_layer_int_n,&
+         model_time, rmask = grid_tmask,&
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_tot_layer_int_p,cobalt%tot_layer_int_p,&
+         model_time, rmask = grid_tmask,& 
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_tot_layer_int_si,cobalt%tot_layer_int_si,&
+         model_time, rmask = grid_tmask,&
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_tot_layer_int_o2,cobalt%tot_layer_int_o2,&
+         model_time, rmask = grid_tmask,&
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+         used = g_send_data(cobalt%id_tot_layer_int_alk,cobalt%tot_layer_int_alk,&
+         model_time, rmask = grid_tmask,&
+         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+
+         ! send water column integral diag
+         used = g_send_data(cobalt%id_wc_vert_int_c,    cobalt%wc_vert_int_c,         &
+         model_time, rmask = grid_tmask(:,:,1),&
+         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_wc_vert_int_dic,    cobalt%wc_vert_int_dic,         &
+         model_time, rmask = grid_tmask(:,:,1),&
+         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_wc_vert_int_doc,    cobalt%wc_vert_int_doc,         &
+         model_time, rmask = grid_tmask(:,:,1),&
+         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_wc_vert_int_poc,    cobalt%wc_vert_int_poc,         &
+         model_time, rmask = grid_tmask(:,:,1),&
+         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_wc_vert_int_n,    cobalt%wc_vert_int_n,         &
+         model_time, rmask = grid_tmask(:,:,1),&
+         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_wc_vert_int_p,    cobalt%wc_vert_int_p,         &
+         model_time, rmask = grid_tmask(:,:,1),&
+         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_wc_vert_int_fe,    cobalt%wc_vert_int_fe,         &
+         model_time, rmask = grid_tmask(:,:,1),&
+         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_wc_vert_int_si,    cobalt%wc_vert_int_si,         &
+         model_time, rmask = grid_tmask(:,:,1),&
+         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_wc_vert_int_o2,    cobalt%wc_vert_int_o2,         &
+         model_time, rmask = grid_tmask(:,:,1),&
+         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+         used = g_send_data(cobalt%id_wc_vert_int_alk,    cobalt%wc_vert_int_alk,         &
+         model_time, rmask = grid_tmask(:,:,1),&
+         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+
+        case (.false.)
+        ! Logic for "update_from_source" case
 !
 !---------------------------------------------------------------------
 !
@@ -418,27 +619,27 @@ module COBALT_send_diag
         used = g_send_data(cobalt%id_jnamx, cobalt%jnamx*rho_dzt,       &
         model_time, rmask = grid_tmask,&
         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-        used = g_send_data(cobalt%id_tot_layer_int_c, cobalt%tot_layer_int_c,&
-        model_time, rmask = grid_tmask,&
-        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-        used = g_send_data(cobalt%id_tot_layer_int_fe,cobalt%tot_layer_int_fe,&
-        model_time, rmask = grid_tmask,&
-        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-        used = g_send_data(cobalt%id_tot_layer_int_n,cobalt%tot_layer_int_n,&
-        model_time, rmask = grid_tmask,&
-        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-        used = g_send_data(cobalt%id_tot_layer_int_p,cobalt%tot_layer_int_p,&
-        model_time, rmask = grid_tmask,&
-        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-        used = g_send_data(cobalt%id_tot_layer_int_si,cobalt%tot_layer_int_si,&
-        model_time, rmask = grid_tmask,&
-        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-        used = g_send_data(cobalt%id_tot_layer_int_o2,cobalt%tot_layer_int_o2,&
-        model_time, rmask = grid_tmask,&
-        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-        used = g_send_data(cobalt%id_tot_layer_int_alk,cobalt%tot_layer_int_alk,&
-        model_time, rmask = grid_tmask,&
-        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+!        used = g_send_data(cobalt%id_tot_layer_int_c, cobalt%tot_layer_int_c,&
+!        model_time, rmask = grid_tmask,&
+!        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+!        used = g_send_data(cobalt%id_tot_layer_int_fe,cobalt%tot_layer_int_fe,&
+!        model_time, rmask = grid_tmask,&
+!        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+!        used = g_send_data(cobalt%id_tot_layer_int_n,cobalt%tot_layer_int_n,&
+!        model_time, rmask = grid_tmask,&
+!        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+!        used = g_send_data(cobalt%id_tot_layer_int_p,cobalt%tot_layer_int_p,&
+!        model_time, rmask = grid_tmask,&
+!        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+!        used = g_send_data(cobalt%id_tot_layer_int_si,cobalt%tot_layer_int_si,&
+!        model_time, rmask = grid_tmask,&
+!        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+!        used = g_send_data(cobalt%id_tot_layer_int_o2,cobalt%tot_layer_int_o2,&
+!        model_time, rmask = grid_tmask,&
+!        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+!        used = g_send_data(cobalt%id_tot_layer_int_alk,cobalt%tot_layer_int_alk,&
+!        model_time, rmask = grid_tmask,&
+!        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
         used = g_send_data(cobalt%id_total_filter_feeding,cobalt%total_filter_feeding,&
         model_time, rmask = grid_tmask,&
         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -487,6 +688,30 @@ module COBALT_send_diag
    !     used = g_send_data(cobalt%id_fsidet_btm,   cobalt%fsidet_btm,             &
    !     model_time, rmask = grid_tmask(:,:,1),&
    !     is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_alk,    -cobalt%b_alk,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_dic,    -cobalt%b_dic,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_fed,    -cobalt%b_fed,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_nh4,    -cobalt%b_nh4,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_no3,    -cobalt%b_no3,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_o2,    -cobalt%b_o2,                &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_po4,    -cobalt%b_po4,              &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+       used = g_send_data(cobalt%id_b_sio4,    -cobalt%b_sio4,            &
+       model_time, rmask = grid_tmask(:,:,1),&
+       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_ffetot_btm,   cobalt%ffetot_btm,             &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -1101,36 +1326,36 @@ module COBALT_send_diag
 ! Save water column vertical integrals
 !---------------------------------------------------------------------
 !
-       used = g_send_data(cobalt%id_wc_vert_int_c,    cobalt%wc_vert_int_c,         &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_dic,    cobalt%wc_vert_int_dic,         &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_doc,    cobalt%wc_vert_int_doc,         &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_poc,    cobalt%wc_vert_int_poc,         &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_n,    cobalt%wc_vert_int_n,         &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_p,    cobalt%wc_vert_int_p,         &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_fe,    cobalt%wc_vert_int_fe,         &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_si,    cobalt%wc_vert_int_si,         &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_o2,    cobalt%wc_vert_int_o2,         &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-       used = g_send_data(cobalt%id_wc_vert_int_alk,    cobalt%wc_vert_int_alk,         &
-       model_time, rmask = grid_tmask(:,:,1),&
-       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+!       used = g_send_data(cobalt%id_wc_vert_int_c,    cobalt%wc_vert_int_c,         &
+!       model_time, rmask = grid_tmask(:,:,1),&
+!       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+!       used = g_send_data(cobalt%id_wc_vert_int_dic,    cobalt%wc_vert_int_dic,         &
+!       model_time, rmask = grid_tmask(:,:,1),&
+!       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+!       used = g_send_data(cobalt%id_wc_vert_int_doc,    cobalt%wc_vert_int_doc,         &
+!       model_time, rmask = grid_tmask(:,:,1),&
+!       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+!       used = g_send_data(cobalt%id_wc_vert_int_poc,    cobalt%wc_vert_int_poc,         &
+!       model_time, rmask = grid_tmask(:,:,1),&
+!       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+!       used = g_send_data(cobalt%id_wc_vert_int_n,    cobalt%wc_vert_int_n,         &
+!       model_time, rmask = grid_tmask(:,:,1),&
+!       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+!       used = g_send_data(cobalt%id_wc_vert_int_p,    cobalt%wc_vert_int_p,         &
+!       model_time, rmask = grid_tmask(:,:,1),&
+!       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+!       used = g_send_data(cobalt%id_wc_vert_int_fe,    cobalt%wc_vert_int_fe,         &
+!       model_time, rmask = grid_tmask(:,:,1),&
+!       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+!       used = g_send_data(cobalt%id_wc_vert_int_si,    cobalt%wc_vert_int_si,         &
+!       model_time, rmask = grid_tmask(:,:,1),&
+!       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+!       used = g_send_data(cobalt%id_wc_vert_int_o2,    cobalt%wc_vert_int_o2,         &
+!       model_time, rmask = grid_tmask(:,:,1),&
+!       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+!       used = g_send_data(cobalt%id_wc_vert_int_alk,    cobalt%wc_vert_int_alk,         &
+!       model_time, rmask = grid_tmask(:,:,1),&
+!       is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
        used = g_send_data(cobalt%id_wc_vert_int_npp,    cobalt%wc_vert_int_npp,         &
        model_time, rmask = grid_tmask(:,:,1),&
        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -2340,6 +2565,8 @@ module COBALT_send_diag
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
 !==============================================================================================================
+
+      end select
 
     end subroutine cobalt_send_diagnostics   
 

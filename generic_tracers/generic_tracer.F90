@@ -537,10 +537,12 @@ contains
   !  </IN>
   ! </SUBROUTINE>
 
-  subroutine generic_tracer_update_from_bottom(dt, tau, model_time)
+  subroutine generic_tracer_update_from_bottom(dt, tau, model_time, Temp, rho_dzt, dzt, ilb, jlb)
     real,    intent(in) :: dt
     integer, intent(in) ::tau
     type(time_type),                intent(in) :: model_time
+    real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,rho_dzt,dzt
+    integer, intent(in) :: ilb, jlb
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_update_from_bottom'
 
@@ -562,7 +564,8 @@ contains
 
 !    if(do_generic_miniBLING)  call generic_miniBLING_update_from_bottom(tracer_list,dt, tau)
 
-    if(do_generic_COBALT)  call generic_COBALT_update_from_bottom(tracer_list,dt, tau, model_time)
+    if(do_generic_COBALT)  call generic_COBALT_update_from_bottom(tracer_list,dt, tau, model_time, &
+                                 Temp, rho_dzt, dzt, ilb, jlb)
 
     return
 

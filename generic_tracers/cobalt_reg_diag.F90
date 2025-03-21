@@ -1703,6 +1703,38 @@ module COBALT_reg_diag
     cobalt%id_fp_burial = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
+    vardesc_temp = vardesc("b_alk","Benthic alk flux into ocean",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_b_alk = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+        init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("b_dic","Benthic dic flux into ocean",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_b_dic = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+        init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("b_fed","Benthic fed flux into ocean",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_b_fed = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+        init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("b_nh4","Benthic nh4 flux into ocean",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_b_nh4 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+        init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("b_no3","Benthic no3 flux into ocean",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_b_no3 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+        init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("b_o2","Benthic o2 flux into ocean",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_b_o2 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+        init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("b_po4","Benthic po4 flux into ocean",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_b_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+        init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("b_sio4","Benthic sio4 flux into ocean",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_b_sio4 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+        init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
     !
     ! Surface Diagnostics
     !

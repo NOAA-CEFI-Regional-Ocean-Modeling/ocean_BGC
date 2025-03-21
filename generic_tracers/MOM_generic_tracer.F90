@@ -859,7 +859,8 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
   ! Update bottom fields after vertical processes
 
   ! Second arg is tau which is always 1 for MOM6
-  call generic_tracer_update_from_bottom(US%T_to_s*dt, 1, get_diag_time_end(CS%diag))
+  call generic_tracer_update_from_bottom(US%T_to_s*dt, 1, get_diag_time_end(CS%diag), &
+          US%C_to_degC*tv%T, rho_dzt, dzt, G%isd, G%jsd)
 
   !Output diagnostics via diag_manager for all generic tracers and their fluxes
   call g_tracer_send_diag(CS%g_tracer_list, get_diag_time_end(CS%diag), tau=1)
