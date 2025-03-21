@@ -1,249 +1,15 @@
 module generic_CBED
 
-  use mpp_mod,           only: mpp_clock_end
-  use time_manager_mod,  only: time_type
-
   use g_tracer_utils, only : g_tracer_type, g_tracer_get_common
   use g_tracer_utils, only : g_tracer_set_values, g_tracer_get_values
-  use g_tracer_utils, only : g_tracer_get_pointer, g_send_data
-  use cobalt_types 
+  use g_tracer_utils, only : g_tracer_get_pointer
+  use cobalt_types
 
 implicit none ; private
 
-public generic_CBED_sediments_update_from_bottom
 public generic_CBED_sediments_update_from_source
 
 contains
-
-  ! subroutine generic_CBED_sediments_update_from_bottom is intended to be modified to become the CBED bottom layer model
-  subroutine generic_CBED_sediments_update_from_bottom(tracer_list, cobalt, phyto, dt, tau, model_time)
-    type(g_tracer_type), pointer :: tracer_list
-    type(generic_COBALT_type),    intent(inout) :: cobalt
-    type(phytoplankton), dimension(NUM_PHYTO), intent(inout) :: phyto
-    real,               intent(in) :: dt
-    integer,            intent(in) :: tau
-    type(time_type),    intent(in) :: model_time
-    integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau
-    logical :: used
-    real, dimension(:,:,:),pointer :: grid_tmask
-    real, dimension(:,:,:),pointer :: temp_field
-
-    call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,grid_tmask=grid_tmask)
-
-    !
-    ! The bottom reservoirs of aragonite and calcite are immediately redistributed to the
-    ! water column as a bottom flux (btf) where they impact the alkalinity and DIC
-    !
-    call g_tracer_get_values(tracer_list,'cadet_arag','btm_reservoir',cobalt%fcadet_arag_btm,isd,jsd)
-    cobalt%fcadet_arag_btm = cobalt%fcadet_arag_btm/dt
-    call g_tracer_get_pointer(tracer_list,'cadet_arag_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fcadet_arag_btm(:,:)
-    call g_tracer_set_values(tracer_list,'cadet_arag','btm_reservoir',0.0)
-    used = g_send_data(cobalt%id_fcadet_arag_btm,cobalt%fcadet_arag_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'cadet_calc','btm_reservoir',cobalt%fcadet_calc_btm,isd,jsd)
-    cobalt%fcadet_calc_btm = cobalt%fcadet_calc_btm/dt
-    call g_tracer_get_pointer(tracer_list,'cadet_calc_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fcadet_calc_btm(:,:)
-    call g_tracer_set_values(tracer_list,'cadet_calc','btm_reservoir',0.0)
-    used = g_send_data(cobalt%id_fcadet_calc_btm, cobalt%fcadet_calc_btm, &
-    model_time, rmask = grid_tmask(:,:,1), &
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-    !
-    ! Iron is buried, but can re-enter the water column in association with
-    ! organic matter degradation (see ffe_sed in update_from_source)
-    !
-    call g_tracer_get_values(tracer_list,'fedet','btm_reservoir',cobalt%ffedet_btm,isd,jsd)
-    cobalt%ffedet_btm = cobalt%ffedet_btm/dt
-    ! uncomment for "no mass change check"
-    call g_tracer_get_pointer(tracer_list,'fedet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%ffedet_btm(:,:)
-    call g_tracer_set_values(tracer_list,'fedet','btm_reservoir',0.0)
-    used = g_send_data(cobalt%id_ffedet_btm, cobalt%ffedet_btm, &
-    model_time, rmask = grid_tmask(:,:,1), &
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-    !
-    ! Lithogenic material is buried
-    !
-    call g_tracer_get_values(tracer_list,'lithdet','btm_reservoir',cobalt%flithdet_btm,isd,jsd)
-    cobalt%flithdet_btm = cobalt%flithdet_btm /dt
-    call g_tracer_get_pointer(tracer_list,'lithdet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%flithdet_btm(:,:)
-    call g_tracer_set_values(tracer_list,'lithdet','btm_reservoir',0.0)
-    used = g_send_data(cobalt%id_flithdet_btm, cobalt%flithdet_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-    !
-    ! N, P, and Si detritus that hits the bottom is re-entered as a bottom source of
-    ! nh4, po4, and SiO4 respectively
-    !
-    call g_tracer_get_values(tracer_list,'ndet','btm_reservoir',cobalt%fndet_btm,isd,jsd)
-    cobalt%fndet_btm = cobalt%fndet_btm/dt
-    call g_tracer_get_pointer(tracer_list,'ndet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fndet_btm(:,:)
-    call g_tracer_set_values(tracer_list,'ndet','btm_reservoir',0.0)
-    used = g_send_data(cobalt%id_fndet_btm,cobalt%fndet_btm,          &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'pdet','btm_reservoir',cobalt%fpdet_btm,isd,jsd)
-    cobalt%fpdet_btm = cobalt%fpdet_btm/dt
-    call g_tracer_get_pointer(tracer_list,'pdet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fpdet_btm(:,:)
-    call g_tracer_set_values(tracer_list,'pdet','btm_reservoir',0.0)
-    used = g_send_data(cobalt%id_fpdet_btm,cobalt%fpdet_btm,          &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'sidet','btm_reservoir',cobalt%fsidet_btm,isd,jsd)
-    cobalt%fsidet_btm = cobalt%fsidet_btm/dt
-    call g_tracer_get_pointer(tracer_list,'sidet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fsidet_btm(:,:)
-    call g_tracer_set_values(tracer_list,'sidet','btm_reservoir',0.0)
-    used = g_send_data(cobalt%id_fsidet_btm,    cobalt%fsidet_btm,          &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    !
-    ! Handling sinking phytoplankton: Nitrogen, don't need P because n2p is static
-    !
-    call g_tracer_get_values(tracer_list,'ndi','btm_reservoir',phyto(DIAZO)%fn_btm,isd,jsd)
-    phyto(DIAZO)%fn_btm = phyto(DIAZO)%fn_btm/dt
-    call g_tracer_get_pointer(tracer_list,'ndi_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(DIAZO)%fn_btm(:,:)
-    call g_tracer_set_values(tracer_list,'ndi','btm_reservoir',0.0)
-    used = g_send_data(phyto(DIAZO)%id_fn_btm,phyto(DIAZO)%fn_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'nlg','btm_reservoir',phyto(LARGE)%fn_btm,isd,jsd)
-    phyto(LARGE)%fn_btm = phyto(LARGE)%fn_btm/dt
-    call g_tracer_get_pointer(tracer_list,'nlg_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(LARGE)%fn_btm(:,:)
-    call g_tracer_set_values(tracer_list,'nlg','btm_reservoir',0.0)
-    used = g_send_data(phyto(LARGE)%id_fn_btm,phyto(LARGE)%fn_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'nmd','btm_reservoir',phyto(MEDIUM)%fn_btm,isd,jsd)
-    phyto(MEDIUM)%fn_btm = phyto(MEDIUM)%fn_btm/dt
-    call g_tracer_get_pointer(tracer_list,'nmd_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(MEDIUM)%fn_btm(:,:)
-    call g_tracer_set_values(tracer_list,'nmd','btm_reservoir',0.0)
-    used = g_send_data(phyto(MEDIUM)%id_fn_btm,phyto(MEDIUM)%fn_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'nsm','btm_reservoir',phyto(SMALL)%fn_btm,isd,jsd)
-    phyto(SMALL)%fn_btm = phyto(SMALL)%fn_btm/dt
-    call g_tracer_get_pointer(tracer_list,'nsm_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(SMALL)%fn_btm(:,:)
-    call g_tracer_set_values(tracer_list,'nsm','btm_reservoir',0.0)
-    used = g_send_data(phyto(SMALL)%id_fn_btm,phyto(SMALL)%fn_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-    !
-    ! Sinking phytoplankton: Iron
-    !
-    !> Iron flux to the sediment is removed, and flux from the sediment is
-    !! handled separately later using a relationship based on Dale et al., 2015. 
-    call g_tracer_get_values(tracer_list,'fedi','btm_reservoir',phyto(DIAZO)%ffe_btm,isd,jsd)
-    phyto(DIAZO)%ffe_btm = phyto(DIAZO)%ffe_btm/dt
-    call g_tracer_get_pointer(tracer_list,'fedi_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(DIAZO)%ffe_btm(:,:)
-    call g_tracer_set_values(tracer_list,'fedi','btm_reservoir',0.0)
-    used = g_send_data(phyto(DIAZO)%id_ffe_btm,phyto(DIAZO)%ffe_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'felg','btm_reservoir',phyto(LARGE)%ffe_btm,isd,jsd)
-    phyto(LARGE)%ffe_btm = phyto(LARGE)%ffe_btm/dt
-    call g_tracer_get_pointer(tracer_list,'felg_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(LARGE)%ffe_btm(:,:)
-    call g_tracer_set_values(tracer_list,'felg','btm_reservoir',0.0)
-    used = g_send_data(phyto(LARGE)%id_ffe_btm,phyto(LARGE)%ffe_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'femd','btm_reservoir',phyto(MEDIUM)%ffe_btm,isd,jsd)
-    phyto(MEDIUM)%ffe_btm = phyto(MEDIUM)%ffe_btm/dt
-    call g_tracer_get_pointer(tracer_list,'femd_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(MEDIUM)%ffe_btm(:,:)
-    call g_tracer_set_values(tracer_list,'femd','btm_reservoir',0.0)
-    used = g_send_data(phyto(MEDIUM)%id_ffe_btm,phyto(MEDIUM)%ffe_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'fesm','btm_reservoir',phyto(SMALL)%ffe_btm,isd,jsd)
-    phyto(SMALL)%ffe_btm = phyto(SMALL)%ffe_btm/dt
-    call g_tracer_get_pointer(tracer_list,'fesm_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(SMALL)%ffe_btm(:,:)
-    call g_tracer_set_values(tracer_list,'fesm','btm_reservoir',0.0)
-    used = g_send_data(phyto(SMALL)%id_ffe_btm,phyto(SMALL)%ffe_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-    !
-    ! Sinking phytoplankton: Phosphorus
-    !
-    call g_tracer_get_values(tracer_list,'pdi','btm_reservoir',phyto(DIAZO)%fp_btm,isd,jsd)
-    phyto(DIAZO)%fp_btm = phyto(DIAZO)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'pdi_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(DIAZO)%fp_btm(:,:)
-    call g_tracer_set_values(tracer_list,'pdi','btm_reservoir',0.0)
-    used = g_send_data(phyto(DIAZO)%id_fp_btm,phyto(DIAZO)%fp_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'plg','btm_reservoir',phyto(LARGE)%fp_btm,isd,jsd)
-    phyto(LARGE)%fp_btm = phyto(LARGE)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'plg_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(LARGE)%fp_btm(:,:)
-    call g_tracer_set_values(tracer_list,'plg','btm_reservoir',0.0)
-    used = g_send_data(phyto(LARGE)%id_fp_btm,phyto(LARGE)%fp_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'pmd','btm_reservoir',phyto(MEDIUM)%fp_btm,isd,jsd)
-    phyto(MEDIUM)%fp_btm = phyto(MEDIUM)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'pmd_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(MEDIUM)%fp_btm(:,:)
-    call g_tracer_set_values(tracer_list,'pmd','btm_reservoir',0.0)
-    used = g_send_data(phyto(MEDIUM)%id_fp_btm,phyto(MEDIUM)%fp_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'psm','btm_reservoir',phyto(SMALL)%fp_btm,isd,jsd)
-    phyto(SMALL)%fp_btm = phyto(SMALL)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'psm_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(SMALL)%fp_btm(:,:)
-    call g_tracer_set_values(tracer_list,'psm','btm_reservoir',0.0)
-    used = g_send_data(phyto(SMALL)%id_fp_btm,phyto(SMALL)%fp_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-    !
-    ! Handle phytoplankton sinking: silicate
-    !
-    call g_tracer_get_values(tracer_list,'silg','btm_reservoir',phyto(LARGE)%fsi_btm,isd,jsd)
-    phyto(LARGE)%fsi_btm = phyto(LARGE)%fsi_btm/dt
-    call g_tracer_get_pointer(tracer_list,'silg_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(LARGE)%fsi_btm(:,:)
-    call g_tracer_set_values(tracer_list,'silg','btm_reservoir',0.0)
-    used = g_send_data(phyto(LARGE)%id_fsi_btm,phyto(LARGE)%fsi_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-    call g_tracer_get_values(tracer_list,'simd','btm_reservoir',phyto(MEDIUM)%fsi_btm,isd,jsd)
-    phyto(MEDIUM)%fsi_btm = phyto(MEDIUM)%fsi_btm/dt
-    call g_tracer_get_pointer(tracer_list,'simd_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(MEDIUM)%fsi_btm(:,:)
-    call g_tracer_set_values(tracer_list,'simd','btm_reservoir',0.0)
-    used = g_send_data(phyto(MEDIUM)%id_fsi_btm,phyto(MEDIUM)%fsi_btm, &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-
-  end subroutine generic_CBED_sediments_update_from_bottom
 
   subroutine generic_CBED_sediments_update_from_source(tracer_list, cobalt, phyto, ilb, jlb, mask_coast, &
            grid_tmask, grid_dat, grid_kmt, isc,iec, jsc,jec, isd, jsd, nk, r_dt, dt, frunoff, rho_dzt, dzt, internal_heat)
@@ -266,25 +32,10 @@ contains
     integer, dimension(isc:iec,jsc:jec) :: k_bot
     real,    dimension(isc:iec,jsc:jec) :: rho_dzt_bot
 
-    ! Nutrient inputs associated with icebergs/frozen runoff.  This is currently entered as a surface flux.  The
-    ! parameters "jfe_iceberg_ratio", "jno3_iceberg_ratio" and "jpo4_iceberg_ratio" are the ratios of nutrient input
-    ! per kg of runoff.  For iron, values can be set within the broad ranges discussed in Laufkotter et al. (2018).
-    ! These inputs are currently entered at the ocean surface, but they have defined within a 3D array to allow
-    ! eventual consideration of depth-dependent inputs.
-    do j = jsc, jec ; do i = isc, iec !{
-       ! CAS: Is this check relevant for MOM6?
-       if (grid_kmt(i,j) .gt. 0) then !{
-          cobalt%jfe_iceberg(i,j,1) = cobalt%jfe_iceberg_ratio*max(frunoff(i,j),0.0)/rho_dzt(i,j,1)
-          cobalt%jno3_iceberg(i,j,1) = cobalt%jno3_iceberg_ratio*max(frunoff(i,j),0.0)/rho_dzt(i,j,1)
-          cobalt%jpo4_iceberg(i,j,1) = cobalt%jpo4_iceberg_ratio*max(frunoff(i,j),0.0)/rho_dzt(i,j,1)
-       endif !}
-    enddo; enddo  !} i,j
-
     ! Calculate the bottom conditions and the fluxes to the bottom for diagnostics and benthic flux calculations.
     ! MOM4/5 used the bottom grid cell, but MOM6 often has a number of vanishingly thin layers overlying the bottom.
     ! Grid scale noise in these layers can occur, particularly for quantities with large bottom fluxes.  COBALT thus
     ! uses conditions over a specified bottom layer thickness (cobalt%bottom_thickness, default = 1m) for bottom calcs.
-
 
     do j = jsc, jec; do i = isc, iec  !{
        if (grid_kmt(i,j) .gt. 0) then !{
@@ -580,7 +331,6 @@ contains
        cobalt%f_cased(i,j,k) = 0.0
     enddo; enddo ; enddo  !} i,j,k
 
-
     call g_tracer_set_values(tracer_list,'alk',  'btf', cobalt%b_alk ,isd,jsd)
     call g_tracer_set_values(tracer_list,'dic',  'btf', cobalt%b_dic ,isd,jsd)
     call g_tracer_set_values(tracer_list,'fed',  'btf', cobalt%b_fed ,isd,jsd)
@@ -589,7 +339,7 @@ contains
     call g_tracer_set_values(tracer_list,'o2',   'btf', cobalt%b_o2  ,isd,jsd)
     call g_tracer_set_values(tracer_list,'po4',  'btf', cobalt%b_po4 ,isd,jsd)
     call g_tracer_set_values(tracer_list,'sio4', 'btf', cobalt%b_sio4,isd,jsd)
-!
+
   end subroutine generic_CBED_sediments_update_from_source
 
 end module generic_CBED
