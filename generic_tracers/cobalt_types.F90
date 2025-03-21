@@ -23,7 +23,6 @@ module cobalt_types
 ! Namelist Options
 
   character(len=10), public ::  co2_calc = 'mocsy'           !< carbonate formalation options. Default is 'mocsy'
-  logical, public :: do_CBED             = .false.           !< If true, then simulate sedimentary processes from generic_CBED module
   logical, public :: do_14c             = .false.            !< If true, then simulate radiocarbon 
   logical, public :: do_nh3_atm_ocean_exchange = .false.     ! If true, then do NH3 air-sea exchange 
   !
