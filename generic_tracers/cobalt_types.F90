@@ -26,7 +26,7 @@ module cobalt_types
   logical, public :: do_14c             = .false.            !< If true, then simulate radiocarbon 
   logical, public :: do_nh3_atm_ocean_exchange = .false.     ! If true, then do NH3 air-sea exchange 
   !
-  logical, public :: do_vertfill_pre = .false.             !< Returns tracer arrays with sensible values
+  logical, public :: do_vertfill_pre = .false.
   logical, public :: debug           = .false.             !< not use   
   real, public    :: imbalance_tolerance=1.0e-10           !< the tolerance for non-conservation in C,N,P,Sc,Fe
 
@@ -413,6 +413,7 @@ module cobalt_types
                                                !    as is the case with MOM6  THERMO_SPANS_COUPLING option
           do_fnso4red_sed,  &     ! Simulate O2 deficit and alkalinity flux from implied sedimentary sulfate reduction
           cased_steady,     &     ! steady state approximation for cased
+          recalculate_carbon, &   ! true means C system is resolved for diagnostic
           tracer_debug
      real  ::          &
           min_thickness       ! minimum thickness of a layer that will be checked for source/sink imbalances
@@ -568,7 +569,6 @@ module cobalt_types
           f_sio4,&
           co3_sol_arag,&
           co3_sol_calc,&
-          rho_test,&
           f_chl,&
           f_nh3,&
           f_co3_ion,&
@@ -724,8 +724,8 @@ module cobalt_types
           total_filter_feeding,&
           nmd_diatoms,&
           nlg_diatoms,&
-          q_si_2_n_md_diatoms,&
-          q_si_2_n_lg_diatoms,&
+          nmd_misc,&
+          nlg_misc,&
           zt, &
           c14_2_n,&
           f_di14c,&
@@ -805,8 +805,6 @@ module cobalt_types
           fsitot_100, &
           ffetot_100, &
           btm_temp,     &
-          btm_temp_old, &
-          btm_o2_old,   &
           btm_o2,       &
           btm_no3,      &
           btm_alk,       &
@@ -816,13 +814,9 @@ module cobalt_types
           rho_dzt_kmt_diag, &
           rho_dzt_bot_diag, &
           btm_htotal,   &
-          btm_htotal_old, &
           btm_co3_ion,  &
-          btm_co3_ion_old, &
           btm_co3_sol_arag, &
-          btm_co3_sol_arag_old, &
           btm_co3_sol_calc, &
-          btm_co3_sol_calc_old, &
           btm_omega_calc, &
           btm_omega_arag, &
           cased_2d,     &
@@ -951,7 +945,6 @@ module cobalt_types
      integer               ::          &
           id_co3_sol_arag  = -1,       &
           id_co3_sol_calc  = -1,       &
-          id_rho_test      = -1,       &
           id_dep_dry_fed   = -1,       &
           id_dep_dry_nh4   = -1,       &
           id_dep_dry_no3   = -1,       &
@@ -967,7 +960,6 @@ module cobalt_types
           id_irr_aclm      = -1,       &
           id_irr_aclm_z    = -1,       &
           id_jfed          = -1,       &
-          id_jfedc         = -1,       & 
           id_jprod_ndet    = -1,       &
           id_jprod_pdet    = -1,       &
           id_jprod_sldon   = -1,       &
@@ -1013,15 +1005,13 @@ module cobalt_types
           id_irr_mix       = -1,       &
           id_irr_aclm_inst = -1,       &
           id_jalk          = -1,       &
-          id_jalkc         = -1,       &  
           id_jalk_plus_btm = -1,       &
           id_jdic          = -1,       &
-          id_jdicc         = -1,       &  
-          id_jno3c         = -1,       &  
-          id_jpo4c         = -1,       &  
-          id_jsio4c        = -1,       &  
           id_jdic_plus_btm = -1,       &
           id_jnh4          = -1,       &
+          id_jno3          = -1,       &
+          id_jpo4          = -1,       &
+          id_jsio4         = -1,       &
           id_jndet         = -1,       &
           id_jnh4_plus_btm = -1,       &
           id_jno3denit_wc  = -1,       &
@@ -1095,8 +1085,6 @@ module cobalt_types
           id_sfc_irr_aclm   = -1,       &
           id_sfc_temp      = -1,       &
           id_btm_temp      = -1,       &
-          id_btm_temp_old  = -1,       &
-          id_btm_o2_old    = -1,       &
           id_btm_o2        = -1,       &
           id_btm_no3       = -1,       &
           id_btm_alk       = -1,       &
@@ -1106,13 +1094,9 @@ module cobalt_types
           id_rho_dzt_kmt_diag = -1,    &
           id_rho_dzt_bot_diag = -1,    &
           id_btm_htotal    = -1,       &
-          id_btm_htotal_old    = -1,   &
           id_btm_co3_sol_arag = -1,    &
-          id_btm_co3_sol_arag_old = -1,&
           id_btm_co3_sol_calc = -1,    &
-          id_btm_co3_sol_calc_old = -1,&
           id_btm_co3_ion      = -1,    &
-          id_btm_co3_ion_old  = -1,    &
           id_btm_omega_calc   = -1,    &
           id_btm_omega_arag   = -1,    &
           id_b_dic            = -1,    &
@@ -1177,12 +1161,12 @@ module cobalt_types
           id_total_filter_feeding = -1,&
           id_nlg_diatoms = -1,         &
           id_nmd_diatoms = -1,         &
+          id_nlg_misc = -1,         &
+          id_nmd_misc = -1,         &
           id_jprod_allphytos_100 = -1, &
           id_jprod_allphytos_200 = -1, &
           id_jprod_diat_100 = -1,      &
           id_mld_aclm          = -1,      &
-          id_q_si_2_n_lg_diatoms = -1, &
-          id_q_si_2_n_md_diatoms = -1, &
           id_hp_jingest_n_100 = -1,    &
           id_hp_jremin_n_100 = -1,     &
           id_hp_jprod_ndet_100 = -1,   &
