@@ -7,22 +7,20 @@ on:
     branches: [ "dev/cefi" ]
   pull_request:
     branches: [ "dev/cefi" ]
+  workflow_dispatch:    
 
 env:
   BRANCH_NAME: main 
 
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  run-obgc_1d-ci:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     # define container
-    #container:
-    #   image: clouden90/1d_mom6_cobalt:base
-    #   options: --user root
     container:
-        image: quay.io/singularity/singularity:v4.1.0
-        options: --privileged    
+       image: clouden90/1d_mom6_cobalt:base
+       options: --user root   
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -40,73 +38,35 @@ jobs:
 
       # git clone CEFI-regional-MOM6 and replace ocean_BGC
       - name: git clone CEFI-regional-MOM6 
+        working-directory: ../
         run: |
-          which singularity
-          cd ..
+          pwd
+          ls -l -h
           git clone -b $BRANCH_NAME https://github.com/NOAA-GFDL/CEFI-regional-MOM6.git --recursive
           rm -rf CEFI-regional-MOM6/src/ocean_BGC
           cp -r ocean_BGC CEFI-regional-MOM6/src
           cd CEFI-regional-MOM6/src/ocean_BGC && git branch
 
-      - name: Download model input dataset
+      - name: Download 1D modelinput dataset
         working-directory: ../CEFI-regional-MOM6/exps
         run: |
           echo "Download dataset..."
           wget -q ftp://ftp.gfdl.noaa.gov/pub/Yi-cheng.Teng/1d_ci_datasets.tar.gz && tar -zxvf 1d_ci_datasets.tar.gz && rm -rf 1d_ci_datasets.tar.gz
           ls -l -h
           
-      - name: Build 1D mom6sis2-cobalt Image
-        working-directory: ../CEFI-regional-MOM6/ci/singularity
-        run: |
-          echo "image build ..."
-          singularity build 1d_mom6_cobalt.sif ./build_1d_mom6_cobalt.def
-
       - name: Build mom6sis2-cobalt
         working-directory: ../CEFI-regional-MOM6/builds
         run: |
           echo "build mom6sis2..."
-          singularity exec --bind /__w:/__w ../ci/singularity/1d_mom6_cobalt.sif bash linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2_yaml
+          ./linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2
           ls -l -h build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
 
-#      - name: Create COBALT_input and COBALT_override to test MOM-style parameter input and override
-#        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
-#        run: |
-#          echo "add cobalt_input_nml ..."
-#          cat <<EOL >> ./input.nml_48hr
-#          &cobalt_input_nml
-#                  parameter_filename = 'COBALT_input','COBALT_override'
-#           /
-#          EOL
-#          cat input.nml_48hr
-#          cat <<EOL >> ./input.nml_24hr
-#          &cobalt_input_nml
-#                  parameter_filename = 'COBALT_input','COBALT_override'
-#           /
-#          EOL
-#          cat input.nml_24hr        
-#          cat <<EOL >> ./input.nml_24hr_rst
-#          &cobalt_input_nml
-#                  parameter_filename = 'COBALT_input','COBALT_override'
-#           /
-#          EOL
-#          sed -i 's/use_modern_diag=.true./use_modern_diag=.false./' ./input.nml_24hr_rst
-#          cat input.nml_24hr_rst
-#          echo "touch COBALT_input ..."
-#          [[ -f COBALT_input ]] && rm COBALT_input
-#          echo "remin_ramp_scale = 100.0" > COBALT_input
-#          cat COBALT_input
-#          echo "touch COBALT_override ..."
-#          [[ -f COBALT_override ]] && rm COBALT_override
-#          echo "#override remin_ramp_scale = 50.0" > COBALT_override
-#          cat COBALT_override
-        
-      - name: Run 1D toy case
+      - name: Run 1D BATS case
         working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
         run: |
-          echo "Start 1D toy case ..."
+          echo "Start 1D BATS case ..."
           pwd
-          singularity exec --bind /__w:/__w ../../ci/singularity/1d_mom6_cobalt.sif ./driver.sh
-          #singularity exec --bind /__w:/__w ../../ci/singularity/1d_mom6_cobalt.sif ../../builds/build/docker-linux-gnu/ocean_ice/debug/MOM6SIS2
+          ./driver.sh
           cat ./RESTART_48hrs/ocean.stats
 
       - name: Check with ref 
