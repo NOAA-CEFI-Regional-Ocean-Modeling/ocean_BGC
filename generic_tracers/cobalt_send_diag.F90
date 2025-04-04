@@ -126,7 +126,7 @@ module COBALT_send_diag
           ! tracer values at the end of the time step.  If this is set to .False., variables are saved in
           ! update_from_source and apply to conditions prior to mixing and sinking.
           ! To do: Move nh3 exchange calculations here as well?
-          if (cobalt%recalculate_carbon == .True.) then
+          if (cobalt%recalculate_carbon) then
             k=1
             do j = jsc, jec ; do i = isc, iec  !{
               cobalt%htotallo(i,j) = cobalt%htotal_scale_lo * cobalt%f_htotal(i,j,k)
