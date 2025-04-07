@@ -5196,11 +5196,6 @@ contains
                     cobalt%p_simd(i,j,k,tau) + cobalt%p_sidet(i,j,k,tau))*grid_tmask(i,j,k)
     enddo; enddo ; enddo  !} i,j,k
 
-    if (cobalt%id_no3_in_source .gt. 0)                &
-         used = g_send_data(cobalt%id_no3_in_source,         cobalt%f_no3,          &
-         model_time, rmask = grid_tmask,&
-         is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-
     call mpp_clock_end(id_clock_source_sink_loop1)
     !
     !-----------------------------------------------------------------------
@@ -5768,13 +5763,13 @@ contains
     do j = jsc, jec ; do i = isc, iec  !{
       if (grid_kmt(i,j) .gt. 0) then !{
         cobalt%o2min(i,j)=cobalt%p_o2(i,j,1,tau)
-        cobalt%z_o2min(i,j)=cobalt%zt(i,j,1)
-        cobalt%z_sat_arag(i,j)=missing_value1
-        cobalt%z_sat_calc(i,j)=missing_value1
-        cobalt%mask_z_sat_arag(i,j) = .FALSE.
-        cobalt%mask_z_sat_calc(i,j) = .FALSE.
-        if (cobalt%omega_arag(i,j,1) .le. 1.0) cobalt%z_sat_arag(i,j)=0.0
-        if (cobalt%omega_calc(i,j,1) .le. 1.0) cobalt%z_sat_calc(i,j)=0.0
+        cobalt%zo2min(i,j)=cobalt%zt(i,j,1)
+        cobalt%zsatarag(i,j)=missing_value1
+        cobalt%zsatcalc(i,j)=missing_value1
+        cobalt%mask_zsatarag(i,j) = .FALSE.
+        cobalt%mask_zsatcalc(i,j) = .FALSE.
+        if (cobalt%omega_arag(i,j,1) .le. 1.0) cobalt%zsatarag(i,j)=0.0
+        if (cobalt%omega_calc(i,j,1) .le. 1.0) cobalt%zsatcalc(i,j)=0.0
       endif !}
     enddo ; enddo  !} i,j,k
     do j = jsc, jec ; do i = isc, iec  !{
@@ -5783,7 +5778,7 @@ contains
          if (k .le. grid_kmt(i,j) .and. first) then !{
            if (cobalt%p_o2(i,j,k,tau) .lt. cobalt%p_o2(i,j,k-1,tau)) then
              cobalt%o2min(i,j)=cobalt%p_o2(i,j,k,tau)
-             cobalt%z_o2min(i,j)=cobalt%zt(i,j,k)
+             cobalt%zo2min(i,j)=cobalt%zt(i,j,k)
            else
              first = .false.
            endif !}
@@ -5793,13 +5788,13 @@ contains
 
     do k = 2, nk ; do j = jsc, jec ; do i = isc, iec  !{
       if (k .le. grid_kmt(i,j)) then !{
-        if (cobalt%omega_arag(i,j,k) .le. 1.0 .and. cobalt%z_sat_arag(i,j) .lt. 0.0) then
-          cobalt%z_sat_arag(i,j)=cobalt%zt(i,j,k)
-          cobalt%mask_z_sat_arag(i,j) = .TRUE.
+        if (cobalt%omega_arag(i,j,k) .le. 1.0 .and. cobalt%zsatarag(i,j) .lt. 0.0) then
+          cobalt%zsatarag(i,j)=cobalt%zt(i,j,k)
+          cobalt%mask_zsatarag(i,j) = .TRUE.
         endif
-        if (cobalt%omega_calc(i,j,k) .le. 1.0 .and. cobalt%z_sat_calc(i,j) .lt. 0.0) then
-          cobalt%z_sat_calc(i,j)=cobalt%zt(i,j,k)
-          cobalt%mask_z_sat_calc(i,j) = .TRUE.
+        if (cobalt%omega_calc(i,j,k) .le. 1.0 .and. cobalt%zsatcalc(i,j) .lt. 0.0) then
+          cobalt%zsatcalc(i,j)=cobalt%zt(i,j,k)
+          cobalt%mask_zsatcalc(i,j) = .TRUE.
         endif
       endif !}
     enddo; enddo ; enddo  !} i,j,k
@@ -6852,7 +6847,6 @@ contains
        allocate(phyto(n)%alpha(isd:ied,jsd:jed,nk))        ; phyto(n)%alpha          = 0.0
        allocate(phyto(n)%bresp(isd:ied,jsd:jed,nk))        ; phyto(n)%bresp          = 0.0
        allocate(phyto(n)%def_fe(isd:ied,jsd:jed,nk))       ; phyto(n)%def_fe         = 0.0
-       allocate(phyto(n)%def_p(isd:ied,jsd:jed,nk))        ; phyto(n)%def_p          = 0.0
        allocate(phyto(n)%f_fe(isd:ied,jsd:jed,nk))         ; phyto(n)%f_fe           = 0.0
        allocate(phyto(n)%f_n(isd:ied,jsd:jed,nk))          ; phyto(n)%f_n            = 0.0
        allocate(phyto(n)%f_p(isd:ied,jsd:jed,nk))          ; phyto(n)%f_p            = 0.0
@@ -7334,11 +7328,11 @@ contains
    allocate(cobalt%rho_dzt_kmt_diag(isd:ied,jsd:jed))      ; cobalt%rho_dzt_kmt_diag = 0.0
 
    allocate(cobalt%o2min(isd:ied, jsd:jed))                ; cobalt%o2min=0.0
-   allocate(cobalt%z_o2min(isd:ied, jsd:jed))              ; cobalt%z_o2min=0.0
-   allocate(cobalt%z_sat_arag(isd:ied, jsd:jed))           ; cobalt%z_sat_arag=0.0
-   allocate(cobalt%z_sat_calc(isd:ied, jsd:jed))           ; cobalt%z_sat_calc=0.0
-   allocate(cobalt%mask_z_sat_arag(isd:ied, jsd:jed))      ; cobalt%mask_z_sat_arag = .FALSE.
-   allocate(cobalt%mask_z_sat_calc(isd:ied, jsd:jed))      ; cobalt%mask_z_sat_calc = .FALSE.
+   allocate(cobalt%zo2min(isd:ied, jsd:jed))               ; cobalt%zo2min=0.0
+   allocate(cobalt%zsatarag(isd:ied, jsd:jed))             ; cobalt%zsatarag=0.0
+   allocate(cobalt%zsatcalc(isd:ied, jsd:jed))             ; cobalt%zsatcalc=0.0
+   allocate(cobalt%mask_zsatarag(isd:ied, jsd:jed))        ; cobalt%mask_zsatarag = .FALSE.
+   allocate(cobalt%mask_zsatcalc(isd:ied, jsd:jed))        ; cobalt%mask_zsatcalc = .FALSE.
    if (do_14c) then                                        !<<RADIOCARBON
       allocate(cobalt%c14_2_n(isd:ied, jsd:jed, 1:nk));        cobalt%c14_2_n=0.0
       allocate(cobalt%f_di14c(isd:ied, jsd:jed, 1:nk));        cobalt%f_di14c=0.0
@@ -7401,7 +7395,6 @@ contains
        deallocate(phyto(n)%alpha)
        deallocate(phyto(n)%bresp)
        deallocate(phyto(n)%def_fe)
-       deallocate(phyto(n)%def_p)
        deallocate(phyto(n)%f_fe)
        deallocate(phyto(n)%f_n)
        deallocate(phyto(n)%f_p)
@@ -7788,11 +7781,11 @@ contains
     deallocate(cobalt%rho_dzt_kmt_diag)
     deallocate(cobalt%cased_2d)
     deallocate(cobalt%o2min)
-    deallocate(cobalt%z_o2min)
-    deallocate(cobalt%z_sat_arag)
-    deallocate(cobalt%z_sat_calc)
-    deallocate(cobalt%mask_z_sat_arag)
-    deallocate(cobalt%mask_z_sat_calc)
+    deallocate(cobalt%zo2min)
+    deallocate(cobalt%zsatarag)
+    deallocate(cobalt%zsatcalc)
+    deallocate(cobalt%mask_zsatarag)
+    deallocate(cobalt%mask_zsatcalc)
 !==============================================================================================================
 ! JGJ 2016/08/08 CMIP6 OcnBgchem
     deallocate(cobalt%f_alk_int_100)
