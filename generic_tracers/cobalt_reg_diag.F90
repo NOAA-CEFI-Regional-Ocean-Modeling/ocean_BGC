@@ -4145,6 +4145,49 @@ module COBALT_reg_diag
          cmor_standard_name="integral_wrt_depth_of_tendency_of_sea_water_alkalinity_expressed_as_mole_equivalent_due_to_biological_processes", &
          cmor_long_name="Rate of Change of Biological Alkalinity due to Biological Activity")
 
+    !DMS diagnostics
+
+     vardesc_temp = vardesc("dmsp_zeu","Euphotic layer depth for DMSP",'h','1','s','m','f')
+     cobalt%id_dmsp_zeu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+     
+     vardesc_temp = vardesc("dmsp_zeu_mld","Ratio of euphotic to mixed layer depth for DMSP",'h','1','s','m','f')
+     cobalt%id_dmsp_zeu_mld = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+     
+     vardesc_temp = vardesc("dmspos_mix","Surface concentration of DMSP using Mixed Model",'h','1','s','mol m-3','f')
+     cobalt%id_dmspos_mix     = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)        
+
+     vardesc_temp = vardesc("dmspos_strat","Surface concentration of DMSP using Stratified Model",'h','1','s','mol m-3','f')
+     cobalt%id_dmspos_strat   = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)       
+
+     vardesc_temp = vardesc("dmspos","Surface concentration of DMSP",'h','1','s','mol m-3','f')
+     cobalt%id_dmspos   = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)              
+
+     vardesc_temp = vardesc("irr_aclm_sfc_dayint","Surface 24h int. irrad. over photacclim. time scale",'h','1','s','W m-2','f')
+     cobalt%id_irr_aclm_sfc_dayint = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+     
+     vardesc_temp = vardesc("irr_sfc_dms","Surface 24h int. irrad. over photacclim. time scale in units for DMS calculation",'h','1','s','mol photons m-2 d-1','f')
+     cobalt%id_irr_sfc_dms = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+     vardesc_temp = vardesc("dmsos_mix","Surface concentration of DMS using Mixed Model",'h','1','s','mol m-3','f')
+     cobalt%id_dmsos_mix     = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)        
+
+     vardesc_temp = vardesc("dmsos_strat","Surface concentration of DMS using Stratified Model",'h','1','s','mol m-3','f')
+     cobalt%id_dmsos_strat     = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+     init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)        
+
+     vardesc_temp = vardesc("dmsos","Surface concentration of DMS",'h','1','s','mol m-3','f')
+     cobalt%id_dmsos     = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)            
+
+    
 !==============================================================================================================
 
   end subroutine cobalt_reg_diagnostics

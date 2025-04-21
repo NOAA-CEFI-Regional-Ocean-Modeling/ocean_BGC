@@ -18,7 +18,7 @@ module cobalt_types
 
   !The following variables for using this module
   ! are overwritten by generic_tracer_nml namelist
-  logical, public :: do_nh3_diag                             !< logic for setting NH3 diagnostic tracer field 
+  logical, public :: do_nh3_diag                             !< logic for setting NH3 diagnostic tracer field
 
 ! Namelist Options
 
@@ -39,6 +39,8 @@ module cobalt_types
                                             !! 2-update with no temperature dependence
                                             !! 3-update with temperature dependence
 
+  logical, public :: do_dms_diag = .false.  !< turn on dms diagnostics
+  
   ! parameters      
   integer, parameter, public :: NUM_PHYTO = 4 !< total number of phytoplankton groups
   integer, parameter, public :: NUM_ZOO = 3   !< total number of zooplankton groups
@@ -414,6 +416,12 @@ module cobalt_types
           cased_steady,     &                  ! steady state approximation for cased
           tracer_debug
 
+
+     !dms parameters
+     real  :: dms_alpha, dms_beta, dms_gamma
+     real  :: dmsp_strat_const, dmsp_strat_chl, dmsp_strat_chl2, dmsp_strat_sst, dmsp_strat_sst2
+     real  :: dmsp_mix_const, dmsp_mix_chl, dmsp_mix_zeu_over_mld
+     
      real  ::          &
           atm_co2_flux,     &
           c_2_n,            &
@@ -537,6 +545,19 @@ module cobalt_types
      logical, dimension(:,:), ALLOCATABLE ::  &
           mask_z_sat_arag,&
           mask_z_sat_calc
+
+     !DMS diagnostics
+     real, dimension(:,:), allocatable :: &
+          dmsp_zeu,&
+          dmsp_zeu_mld,&
+          dmspos_mix,&
+          dmspos_strat,&
+          dmspos,&
+          dmsos_mix,&
+          dmsos_strat,&
+          dmsos,&
+          irr_aclm_sfc_dayint,&    
+          irr_sfc_dms             
 
      real, dimension(:,:,:), ALLOCATABLE ::  &
           f_alk,&				! Other prognostic variables
@@ -1429,7 +1450,18 @@ module cobalt_types
           id_fbddtdip           = -1, &
           id_fbddtdife          = -1, &
           id_fbddtdisi          = -1, &
-          id_fbddtalk           = -1
+          id_fbddtalk           = -1, &
+          id_dmsp_zeu           = -1, &          
+          id_dmsp_zeu_mld       = -1, &          
+          id_dmspos_mix         = -1, &
+          id_dmspos_strat       = -1, &          
+          id_dmspos             = -1, &          
+          id_dmsos_mix          = -1, &
+          id_dmsos_strat        = -1, &          
+          id_dmsos              = -1, &          
+          id_irr_aclm_sfc_dayint= -1, &          
+          id_irr_sfc_dms        = -1
+          
 
 !==============================================================================================================
   end type generic_COBALT_type

@@ -180,7 +180,7 @@ module generic_COBALT
                                              !! in generic_COBALT_nml.
 
   namelist /generic_COBALT_nml/ co2_calc, do_14c, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
-     do_vertfill_pre,imbalance_tolerance,as_param_cobalt
+     do_vertfill_pre,imbalance_tolerance,as_param_cobalt,do_dms_diag
   
   !
   ! Array allocations and flux calculations assume that phyto(1) is the
@@ -774,7 +774,7 @@ contains
       cobalt%case2_depth = 0.0       ! m
       cobalt%case2_salt = 0.0        ! PSU
       cobalt%case2_opac_add = 0.0    ! m-1
-    endif
+   endif
     call get_param(param_file, "generic_COBALT", "min_daylength", cobalt%min_daylength, &
                    "minimum daylength for calculating the daytime irradiance", units="hours", default= 6.0)
     call get_param(param_file, "generic_COBALT", "refuge_conc", cobalt%refuge_conc, &
@@ -1624,16 +1624,55 @@ contains
                    "maximum o2 concentration for anammox to occur", units="mol O2 kg-1", default=4.0e-6)
     call get_param(param_file, "generic_COBALT", "k_no3_amx", cobalt%k_no3_amx, &
                    "nitrate half-saturation for anammox", units="mol NO3 kg-1", default= 1.0e-6)
+
+    
+    !
+    !--------
+    !DMS diag
+    !--------
+    !
+
+    call get_param(param_file, "generic_COBALT", "dms_alpha",  cobalt%dms_alpha, &
+                  "alpha parameter for DMS (Gali)", units="N/A", default=-1.237)
+    call get_param(param_file, "generic_COBALT", "dms_beta",  cobalt%dms_beta, &
+                  "beta parameter for DMS (Gali)", units="N/A", default=0.578)
+    call get_param(param_file, "generic_COBALT", "dms_gamma",  cobalt%dms_gamma, &
+                  "gamma parameter for DMS (Gali)", units="N/A", default=0.0180)
+
+
+    call get_param(param_file, "generic_COBALT", "dmsp_strat_const",  cobalt%dmsp_strat_const, &
+                  "const for dmsp stratifified Gali (2015) parameterization", units="N/A", default=1.7)
+    call get_param(param_file, "generic_COBALT", "dmsp_strat_chl",  cobalt%dmsp_strat_chl, &
+                  "coefficient for chl in dmsp stratifified Gali (2015) parameterization", units="N/A", default=1.14)
+    call get_param(param_file, "generic_COBALT", "dmsp_strat_chl2",  cobalt%dmsp_strat_chl2, &
+                  "coefficient for chl**2 in dmsp stratifified Gali (2015) parameterization", units="N/A", default=0.44)
+    call get_param(param_file, "generic_COBALT", "dmsp_strat_sst", cobalt%dmsp_strat_sst, &
+                  "coefficient for sst in dmsp stratifified Gali (2015) parameterization", units="N/A", default=0.063)
+    call get_param(param_file, "generic_COBALT", "dmsp_strat_sst2",  cobalt%dmsp_strat_sst2, &
+                  "coefficient for sst**2 in dmsp stratifified Gali (2015) parameterization", units="N/A", default=-0.0024)
+
+    call get_param(param_file, "generic_COBALT", "dmsp_mix_const",  cobalt%dmsp_mix_const, &
+                  "const for dmsp mixed Gali (2015) parameterization", units="N/A", default=1.74)
+    call get_param(param_file, "generic_COBALT", "dmsp_mix_chl",  cobalt%dmsp_mix_chl, &
+                  "coefficient for chl in dmsp mixed Gali (2015) parameterization", units="N/A", default=0.81)
+    call get_param(param_file, "generic_COBALT", "dmsp_mix_zeu_over_mld",  cobalt%dmsp_mix_zeu_over_mld, &
+                  "coefficient for zeu_over_mld in dmsp mixed Gali (2015) parameterization", units="N/A", default=0.6)
+    
+    
     !
     !-----------------------------------------------------------------------
     ! Miscellaneous
     !-----------------------------------------------------------------------
     !
     ! Unused?
+
     call get_param(param_file, "generic_COBALT", "tracer_debug",  cobalt%tracer_debug, &
                   "flag for tracer debug operations", default=.false.)
+    
 
     call g_tracer_end_param_list(package_name)
+
+    
   end subroutine user_add_params
 
   subroutine user_add_tracers(tracer_list)
@@ -2848,6 +2887,12 @@ contains
     integer :: yearday
     real :: rev_angle, dec_angle, temp_arg
 
+    !<for dms
+    real :: log10chl,log10zeu,log10dmsp_mix,log10dmsp_strat, log10dmsp
+    real :: log10dms_mix,log10dms_strat,log10dms
+    !>
+
+    
     logical ::  phos_nh3_override
     logical ::  pha_all_same = .true.
 
@@ -3457,7 +3502,7 @@ contains
             endif
           enddo
 
-          ! Calculate the chlorophyll.  Coversions give mg Chl (1000 kg)-1 ~ mg Chl m-3 
+          ! Calculate the chlorophyll.  Conversions give mg Chl (1000 kg)-1 ~ mg Chl m-3 
           phyto(n)%chl(i,j,k) = cobalt%c_2_n*12.0e6*phyto(n)%theta(i,j,k)*phyto(n)%f_n(i,j,k)
           cobalt%f_chl(i,j,k) = cobalt%f_chl(i,j,k)+phyto(n)%chl(i,j,k)
 
@@ -3472,7 +3517,7 @@ contains
 
     !
     ! Calculate the time averaged growth rate (generally over 24 hours)
-    ! This is used later for phytoplankton stress calculations that can 
+    ! This is used later for phytoplankton stress calculations that can o
     ! control sinking and aggregation.  First loop provides average growth
     ! in the mixed layer.  The second averages over all depths.
     !
@@ -5605,7 +5650,79 @@ contains
          endif
     enddo; enddo ; enddo  !} i,j,k
 
+    !
+    !----------------
+    ! DMS diagnostics
+    !----------------
+    !
+    
+    if (do_dms_diag) then
 
+       if (mpp_root_pe().eq.mpp_pe()) print*,'dms diag'
+
+       cobalt%dmsp_zeu(:,:)             = 0.
+       cobalt%dmsp_zeu_mld(:,:)         = 0.
+       cobalt%dmspos_mix(:,:)           = 0.
+       cobalt%dmspos_strat(:,:)         = 0.
+       cobalt%dmspos(:,:)               = 0.
+       cobalt%irr_aclm_sfc_dayint(:,:)  = 0.
+       cobalt%irr_sfc_dms(:,:)          = 0.
+       cobalt%dmsos_mix(:,:)            = 0.
+       cobalt%dmsos_strat(:,:)          = 0.
+       cobalt%dmsos(:,:)                = 0.
+
+       do j = jsc, jec ; do i = isc, iec  !{       
+
+          if (cobalt%f_chl(i,j,1) > 1e-12 ) then                     ! ! ESM4 (1995-2014) chlos min = 1.2814043e-07
+
+             log10chl = log10(cobalt%f_chl(i,j,1))
+
+             ! ! Euphotic layer depth model      (Morel et al. 2007)
+             log10zeu = 1.524 - (0.436 * log10chl) - (0.0145 * (log10chl**2)) + (0.0186 * (log10chl**3))
+             cobalt%dmsp_zeu(i, j) = (10.0 ** log10zeu) * grid_tmask(i,j,1)
+             cobalt%dmsp_zeu_mld(i, j) = cobalt%dmsp_zeu(i, j) / (cobalt%mld_aclm(i,j)+epsln)   ! also need to be * grid_tmask(i,j,1)?
+
+             ! ! Mixed water column model        (Gali et al. 2015)
+             log10dmsp_mix = cobalt%dmsp_mix_const + cobalt%dmsp_mix_chl*log10chl + cobalt%dmsp_mix_zeu_over_mld*log10(max(epsln,cobalt%dmsp_zeu_mld(i,j)))
+             cobalt%dmspos_mix(i, j) = ((10.0 ** log10dmsp_mix) / 1e9) * grid_tmask(i,j,1)     ! convert from nmol m-3 to mol m-3 (mol L-1)
+
+             ! ! Stratified water column model   (Gali et al. 2015)
+             log10dmsp_strat = cobalt%dmsp_strat_const + cobalt%dmsp_strat_chl*log10chl + 2.*cobalt%dmsp_strat_chl2*log10chl + cobalt%dmsp_strat_sst*Temp(i,j,1) + cobalt%dmsp_strat_sst2*Temp(i,j,1)**2
+             cobalt%dmspos_strat(i, j) = ((10.0 ** log10dmsp_strat) / 1e9) * grid_tmask(i,j,1)     ! convert from nmol m-3 to mol m-3 (mol L-1) 
+
+             ! ! Condition for selecting mixed or stratified model 
+             if (cobalt%dmsp_zeu_mld(i, j) .le. 1.0) then          ! ! if Zeu:MLD < 1.0 (i.e. MLD > Zeu)   -->    use mixed model
+                cobalt%dmspos(i, j) = cobalt%dmspos_mix(i, j)
+                log10dmsp = log10dmsp_mix 
+             else                                                  ! ! if Zeu:MLD > 1.0 (i.e. MLD < Zeu)   -->    use strat model
+                cobalt%dmspos(i, j) = cobalt%dmspos_strat(i, j)
+                log10dmsp = log10dmsp_strat
+             end if
+
+             ! ! Undo daylength adjustment to get 24h integrated irr
+             cobalt%irr_aclm_sfc_dayint(i,j) = cobalt%f_irr_aclm_sfc(i,j,1) * (max(cobalt%daylength(i,j),cobalt%min_daylength) / 24.0) * grid_tmask(i,j,1)
+
+             ! ! Unit conversion: W m-2 to mol photons m-2 d-1
+             cobalt%irr_sfc_dms(i,j) = (((cobalt%irr_aclm_sfc_dayint(i,j) * (2.77e18 / 6.022e17)) / 1e6) * 86400) * grid_tmask(i,j,1)
+
+             ! ! DMS regression model            (Gali et al. 2018)
+             log10dms_mix = cobalt%dms_alpha + (cobalt%dms_beta * log10dmsp_mix) + (cobalt%dms_gamma * cobalt%irr_sfc_dms(i,j))
+             cobalt%dmsos_mix(i, j) = ((10.0 ** log10dms_mix) / 1e9) * grid_tmask(i,j,1)
+
+             log10dms_strat = cobalt%dms_alpha + (cobalt%dms_beta * log10dmsp_strat) + (cobalt%dms_gamma * cobalt%irr_sfc_dms(i,j))
+             cobalt%dmsos_strat(i, j) = ((10.0 ** log10dms_strat) / 1e9) * grid_tmask(i,j,1)
+
+             log10dms = cobalt%dms_alpha + (cobalt%dms_beta * log10dmsp) + (cobalt%dms_gamma * cobalt%irr_sfc_dms(i,j))
+             cobalt%dmsos(i, j) = ((10.0 ** log10dms) / 1e9) * grid_tmask(i,j,1)
+          end if
+
+       enddo; enddo  !} i,j,k
+    end if
+
+       
+
+    if (mpp_root_pe().eq.mpp_pe()) write(*,*) 'dms',minval(cobalt%dmsos),maxval(cobalt%dmsos)
+    
     !
     !
     !-----------------------------------------------------------------------
@@ -7051,7 +7168,7 @@ contains
     allocate(cobalt%co3_sol_calc(isd:ied, jsd:jed, 1:nk)) ; cobalt%co3_sol_calc=0.0
     allocate(cobalt%rho_test(isd:ied, jsd:jed, 1:nk)) ; cobalt%rho_test=0.0
     allocate(cobalt%f_chl(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_chl=0.0
-    if (do_nh3_diag) allocate(cobalt%f_nh3(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_nh3=0.0
+    if (do_nh3_diag) allocate(cobalt%f_nh3(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_nh3=0.0    
     allocate(cobalt%f_co3_ion(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_co3_ion=0.0
     allocate(cobalt%f_htotal(isd:ied, jsd:jed, 1:nk))     ; cobalt%f_htotal=0.0
     allocate(cobalt%f_irr_aclm(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_irr_aclm=0.0
@@ -7448,6 +7565,17 @@ contains
       allocate(cobalt%deltap_o2(isd:ied, jsd:jed));            cobalt%deltap_o2=0.0
       allocate(cobalt%mld_aclm(isd:ied, jsd:jed));             cobalt%mld_aclm=0.0
 
+      !DMS diagnostics
+      allocate(cobalt%dmsp_zeu(isd:ied, jsd:jed))           ; cobalt%dmsp_zeu=0.0
+      allocate(cobalt%dmsp_zeu_mld(isd:ied, jsd:jed))       ; cobalt%dmsp_zeu_mld=0.0
+      allocate(cobalt%dmspos_mix(isd:ied, jsd:jed))         ; cobalt%dmspos_mix=0.0
+      allocate(cobalt%dmspos_strat(isd:ied, jsd:jed))       ; cobalt%dmspos_strat=0.0
+      allocate(cobalt%dmspos(isd:ied, jsd:jed))             ; cobalt%dmspos=0.0
+      allocate(cobalt%dmsos_mix(isd:ied, jsd:jed))          ; cobalt%dmsos_mix=0.0
+      allocate(cobalt%dmsos_strat(isd:ied, jsd:jed))        ; cobalt%dmsos_strat=0.0
+      allocate(cobalt%dmsos(isd:ied, jsd:jed))              ; cobalt%dmsos=0.0
+      allocate(cobalt%irr_aclm_sfc_dayint(isd:ied, jsd:jed))  ; cobalt%irr_aclm_sfc_dayint=0.0
+      allocate(cobalt%irr_sfc_dms(isd:ied, jsd:jed))        ; cobalt%irr_sfc_dms=0.0            
 
   end subroutine user_allocate_arrays
 
@@ -7991,6 +8119,17 @@ contains
       deallocate(cobalt%deltap_o2)
       deallocate(cobalt%mld_aclm)
 
+      deallocate(cobalt%dmsp_zeu)
+      deallocate(cobalt%dmsp_zeu_mld)
+      deallocate(cobalt%dmspos_mix)
+      deallocate(cobalt%dmspos_strat)
+      deallocate(cobalt%dmspos)
+      deallocate(cobalt%dmsos_mix)
+      deallocate(cobalt%dmsos_strat)
+      deallocate(cobalt%dmsos)
+      deallocate(cobalt%irr_aclm_sfc_dayint)
+      deallocate(cobalt%irr_sfc_dms)
+      
   end subroutine user_deallocate_arrays
 
 
