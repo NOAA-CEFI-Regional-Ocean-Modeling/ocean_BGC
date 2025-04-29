@@ -1448,6 +1448,23 @@ contains
     call get_param(param_file, "generic_COBALT", "caco3_sat_max", cobalt%caco3_sat_max, &
                   "cap for positive scaling of caco3 detritus prod with saturation state", units="none", default= 10.0)
 
+    ! << Fei Da, 202504: flag to include neritic CaCO3 burial and enhanced CaCO3 dissolution
+    ! If the logical flag "do_ner_ca_bur" is set to true, neritic CaCO3 burial in shallow water (≤150 m) is activated.
+    ! Burial rates are based on O'Mara & Dunne (2019) and affect alkalinity and DIC at a 2:1 ratio.
+    ! The burial flux is vertically distributed evenly over the top 150 m of the water column.
+    ! The spatial pattern is prescribed, while the magnitude is temporally constant.
+    ! If the logical flag "do_resp_ca_diss" is set to true, respiration-driven CaCO3 dissolution 
+    ! due to localized undersaturation around sinking particles is activated.
+    ! This is parameterized as a fixed ratio of organic matter remineralization, targeting enhanced 
+    ! CaCO3 dissolution in the upper ocean (e.g., ≤300 m; Kwon et al., 2024).
+    ! The ratio is chosen to yield a global CaCO3 flux of ~0.75 Pg-C yr-1 at 300 m, consistent with 
+    ! Sulpis et al. (2021), who estimated 0.9 ± 0.15 Pg-C yr-1.    
+    call get_param(param_file, "generic_COBALT", "do_ner_ca_bur", cobalt%do_ner_ca_bur, &
+            "logical flag to include neritic CaCO3 burial", default=.false.) 
+    call get_param(param_file, "generic_COBALT", "do_resp_ca_diss", cobalt%do_resp_ca_diss, &
+            "logical flag to include CaCO3 dissolution due to undersaturation around sinking particles", default=.false.)
+    ! >>
+
     ! << Fei Da, 202504: respiration-driven CaCO3 dissolution ratios from param file
     call get_param(param_file, "generic_COBALT", "resp_ca_2_n_arag", cobalt%resp_ca_2_n_arag, &
                    "ratio of aragonite dissolution to organic matter remineralization (respiration-driven)", &
@@ -4585,7 +4602,7 @@ contains
     ! << Neritic CaCO3 burial
     ! Fei Da 202504: Enable neritic CaCO3 burial in shallow regions (depth <= 150m)
     ! Read 'neritic_cased_burial' from netCDF file (O'Mara & Dunne, 2019) to apply spatial pattern
-    if (do_ner_ca_bur) then
+    if (cobalt%do_ner_ca_bur) then
         allocate(neritic_cased_burial(isd:ied,jsd:jed))
         ! 'neritic_cased_burial' is the 2-D burial field saved in netCDF
         call data_override('OCN', 'neritic_cased_burial', neritic_cased_burial(isc:iec,jsc:jec), model_time,override=neritic_override)
@@ -4741,7 +4758,7 @@ contains
     ! Fei Da, 202504: Add CaCO3 dissolution enhancement associated with organic matter (OM) decomposition
     ! 
     ! This routine applies a fixed ratio between POC remineralization and additional CaCO3 dissolution
-    if (do_resp_ca_diss) then
+    if (cobalt%do_resp_ca_diss) then
         do k=1,nk ; do j=jsc,jec ; do i=isc,iec  !{
            cobalt%jdiss_cadet_arag(i,j,k) = cobalt%jdiss_cadet_arag(i,j,k) + &
                                             cobalt%resp_ca_2_n_arag * cobalt%jremin_ndet(i,j,k) * cobalt%c_2_n
@@ -5632,7 +5649,7 @@ contains
        cobalt%jalk(i,j,k) = 2.0 * (cobalt%jdiss_cadet_arag(i,j,k) +        &
           cobalt%jdiss_cadet_calc(i,j,k) - cobalt%jprod_cadet_arag(i,j,k) - &
           cobalt%jprod_cadet_calc(i,j,k) - cobalt%jprod_cadet_neritic(i,j,k)) + &
-          phyto(DIAZO)%juptake_no3(i,j,k)  + phyto(LARGE)%juptake_no3(i,j,k) + &
+          phyto(DIAZO)%juptake_no3(i,j,k) + phyto(LARGE)%juptake_no3(i,j,k) + &
           phyto(MEDIUM)%juptake_no3(i,j,k) + phyto(SMALL)%juptake_no3(i,j,k) + &
           (cobalt%jo2resp_wc(i,j,k)-cobalt%juptake_nh4nitrif(i,j,k)*cobalt%o2_2_nitrif)/cobalt%o2_2_nh4 + &
           cobalt%alk_2_n_denit*cobalt%jno3denit_wc(i,j,k) - &
@@ -6458,7 +6475,7 @@ contains
 
     ! << Fei Da, 202504: Add diagnostic for neritic CaCO3 burial
     ! Calculate the vertically integrated neritic CaCO3 burial within the top 150m
-    if (do_ner_ca_bur) then
+    if (cobalt%do_ner_ca_bur) then
        do j = jsc, jec ; do i = isc, iec !{
           rho_dzt_150(i,j) = rho_dzt(i,j,1)
           cobalt%jprod_cadet_neritic_150(i,j) = cobalt%jprod_cadet_neritic(i,j,1) * rho_dzt(i,j,1)

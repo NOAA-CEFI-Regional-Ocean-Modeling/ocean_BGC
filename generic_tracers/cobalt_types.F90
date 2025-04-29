@@ -38,10 +38,6 @@ module cobalt_types
                                             !! 1-default COBALT
                                             !! 2-update with no temperature dependence
                                             !! 3-update with temperature dependence
-  ! << Fei Da, 202504: add namelist options for neritic CaCO3 burial and enhanced CaCO3 dissolution
-  logical, public :: do_ner_ca_bur = .false.    !< If true, then turn on neritic CaCO3 burial
-  logical, public :: do_resp_ca_diss = .false.  !< If true, then turn on enhanced respiration-driven CaCO3 dissolution
-  ! >>    
   ! parameters      
   integer, parameter, public :: NUM_PHYTO = 4 !< total number of phytoplankton groups
   integer, parameter, public :: NUM_ZOO = 3   !< total number of zooplankton groups
@@ -415,7 +411,11 @@ module cobalt_types
           do_fnso4red_sed,  &     ! Simulate O2 deficit and alkalinity flux from implied sedimentary sulfate reduction
           cased_steady,     &     ! steady state approximation for cased
           recalculate_carbon, &   ! true means C system is resolved for diagnostic
-          tracer_debug
+          tracer_debug, &
+          ! << Fei Da, 202504: options for neritic CaCO3 burial and enhanced CaCO3 dissolution
+          do_ner_ca_bur, &        ! Apply neritic CaCO3 burial from O'Mara & Dunne (2019)
+          do_resp_ca_diss         ! Apply enhanced CaCO3 dissolution
+          ! >>
      real  ::          &
           min_thickness       ! minimum thickness of a layer that will be checked for source/sink imbalances
 
