@@ -1648,7 +1648,7 @@ contains
     call get_param(param_file, "generic_COBALT", "o2_min_nit", cobalt%o2_min_nit, &
                    "Minimum oxygen level for nitrification", units="mol O2 kg-1", default=0.01e-6)
     call get_param(param_file, "generic_COBALT", "nitrif_b", cobalt%nitrif_b, &
-                   "Ammonium exponent for nitrification", units="unitless", default=2)
+                   "Ammonium exponent for nitrification", units="unitless", default=2.0)
     ! Anammox parameterization developed for ESM4.5.  This relatively new process is turned off in the default CEFI
     ! configuration by setting the rate constant to 0.  To activate, set this constant to 0.07 day-1.  Translated to
     ! sec-1 by the model
