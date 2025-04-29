@@ -1634,9 +1634,9 @@ contains
     ! Nitrification as in Paulot et al., 2020 (https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019MS002026)
     ! Note: Values and functional form to be updated for ESM4.5 following the data compilation of Tang et al.,
     ! (https://essd.copernicus.org/articles/15/5039/2023/essd-15-5039-2023.html)
-	!
-	! Units for gamma_nitrif is dependent on the value of nitrif_b.
-	! E.g., when nitrif_b = 1, then the units for gamma_nitrif become sec-1 only.
+    !
+    ! Units for gamma_nitrif is dependent on the value of nitrif_b.
+    ! E.g., when nitrif_b = 1, then the units for gamma_nitrif become sec-1 only.
     call get_param(param_file, "generic_COBALT", "gamma_nitrif", cobalt%gamma_nitrif, "nitrification rate constant", &
                    units="(moles kg)-1 sec-1", default= 3.5e6/(30.0*sperd))
     call get_param(param_file, "generic_COBALT", "knh3_nitrif", cobalt%k_nh3_nitrif, "nitrification half-saturation", &
@@ -3743,7 +3743,7 @@ contains
              cobalt%juptake_nh4nitrif(i,j,k) = cobalt%gamma_nitrif * &
                   cobalt%f_nh3(i,j,k)/(cobalt%f_nh3(i,j,k)+cobalt%k_nh3_nitrif) *  &
                   (1.-cobalt%f_irr_aclm(i,j,k)/(cobalt%irr_inhibit+cobalt%f_irr_aclm(i,j,k))) * &
-                  cobalt%f_o2(i,j,k)/(cobalt%k_o2_nit+cobalt%f_o2(i,j,k)) * cobalt%f_nh4(i,j,k)**nitrif_b
+                  cobalt%f_o2(i,j,k)/(cobalt%k_o2_nit+cobalt%f_o2(i,j,k)) * cobalt%f_nh4(i,j,k)**cobalt%nitrif_b
 
              if (scheme_nitrif .eq. 3) then
                 cobalt%juptake_nh4nitrif(i,j,k) = cobalt%juptake_nh4nitrif(i,j,k)*cobalt%expkT(i,j,k)
