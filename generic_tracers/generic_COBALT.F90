@@ -1448,6 +1448,15 @@ contains
     call get_param(param_file, "generic_COBALT", "caco3_sat_max", cobalt%caco3_sat_max, &
                   "cap for positive scaling of caco3 detritus prod with saturation state", units="none", default= 10.0)
 
+    ! << Fei Da, 202504: respiration-driven CaCO3 dissolution ratios from param file
+    call get_param(param_file, "generic_COBALT", "resp_ca_2_n_arag", cobalt%resp_ca_2_n_arag, &
+                   "ratio of aragonite dissolution to organic matter remineralization (respiration-driven)", &
+                   units="mol dissolved arag mol org. C-1", default = 0.0, scale = c2n)
+    call get_param(param_file, "generic_COBALT", "resp_ca_2_n_calc", cobalt%resp_ca_2_n_calc, &
+                   "ratio of calcite dissolution to organic matter remineralization (respiration-driven)", &
+                   units="mol dissolved calc mol org. C-1", default = 0.0, scale = c2n)
+    ! >>          
+
     ! Organic matter remineralization: Oxygen and temperature dependence follows Laufkotter et al. (2017).
     call get_param(param_file, "generic_COBALT", "k_o2", cobalt%k_o2, "O2 half-saturation for remineralization", &
                    units="mol O2 kg-1", default= 8.0e-6)
@@ -2925,6 +2934,11 @@ contains
     integer, dimension(:,:), Allocatable :: k_bot, kblt
     real, dimension(:), Allocatable   :: tmp_irr_band
     real, dimension(:,:), Allocatable :: rho_dzt_100,rho_dzt_200,rho_dzt_bot,sfc_irrad
+    ! << Fei Da, 202504: variables used for neritic CaCO3 burial
+    integer :: k_150
+    real, dimension(:,:), Allocatable :: rho_dzt_150
+    real, dimension(:,:,:), Allocatable :: depth_ratio_150
+    ! >> 
     real,dimension(1:NUM_ZOO,1:NUM_PREY) :: ipa_matrix,pa_matrix,ingest_matrix
     real,dimension(1:NUM_PREY) :: hp_ipa_vec,hp_pa_vec,hp_ingest_vec
     real,dimension(1:NUM_PREY) :: prey_vec,prey_p2n_vec,prey_fe2n_vec,prey_si2n_vec
@@ -2945,6 +2959,11 @@ contains
 
     logical ::  phos_nh3_override
     logical ::  pha_all_same = .true.
+
+    ! << Fei Da, 202504: variables used for neritic CaCO3 burial
+    logical ::  neritic_override = .true.
+    real, dimension(:,:),   Allocatable :: neritic_cased_burial
+    ! >>
 
     real, dimension(:,:,:), Allocatable :: ztop, zmid, zbot
     real, dimension(:,:,:), Allocatable :: pre_totn, net_srcn, post_totn
@@ -4563,6 +4582,48 @@ contains
                        min(cobalt%caco3_sat_max, max(0.0, cobalt%omega_calc(i,j,k) - 1.0)) + epsln
     enddo; enddo ; enddo !} i,j,k
 
+    ! << Neritic CaCO3 burial
+    ! Fei Da 202504: Enable neritic CaCO3 burial in shallow regions (depth <= 150m)
+    ! Read 'neritic_cased_burial' from netCDF file (O'Mara & Dunne, 2019) to apply spatial pattern
+    if (do_ner_ca_bur) then
+        allocate(neritic_cased_burial(isd:ied,jsd:jed))
+        ! 'neritic_cased_burial' is the 2-D burial field saved in netCDF
+        call data_override('OCN', 'neritic_cased_burial', neritic_cased_burial(isc:iec,jsc:jec), model_time,override=neritic_override)
+        ! Set up vertical redistribution based on local depth structure
+        ! Calculate number of layers covering the top 150m and depth ratios across these layers        
+        allocate(rho_dzt_150(isc:iec,jsc:jec))
+        allocate(depth_ratio_150(isc:iec,jsc:jec,1:nk)); depth_ratio_150 = 0.0
+
+        do j = jsc, jec ; do i = isc, iec ; !{
+           k_150 = 1
+           rho_dzt_150(i,j) = rho_dzt(i,j,1)
+           ! Sum the thickness of vertical layers from the surface down to 150m depth
+           do k = 2, grid_kmt(i,j)  !{
+              if (rho_dzt_150(i,j) .lt. cobalt%Rho_0 * 150.0) then
+                 k_150 = k
+                 rho_dzt_150(i,j) = rho_dzt_150(i,j) + rho_dzt(i,j,k)
+              endif
+           enddo  !} k
+           ! Calculate the fractional thickness (depth ratio) of each layer, and distribute neritic burial into the 3-D field accordingly
+           if (rho_dzt_150(i,j) /= 0.0) then
+              depth_ratio_150(i,j,1:k_150) = rho_dzt(i,j,1:k_150) / rho_dzt_150(i,j)
+              cobalt%jprod_cadet_neritic(i,j,1:k_150) = neritic_cased_burial(i,j) * depth_ratio_150(i,j,1:k_150) / rho_dzt(i,j,1:k_150)
+              if (k_150 .lt. nk) then
+                 cobalt%jprod_cadet_neritic(i,j,k_150+1:nk) = 0.0
+              endif
+           else
+              cobalt%jprod_cadet_neritic(i,j,1:nk) = 0.0
+           endif
+        enddo ; enddo  !} i,j 
+    else
+        ! No neritic burial: set jprod_cadet_neritic to zero to maintain consistency in carbon and alkalinity budgets
+        cobalt%jprod_cadet_neritic = 0.0
+    endif
+    ! deallocate local variables used for neritic burial calculation
+    if (allocated(neritic_cased_burial)) deallocate(neritic_cased_burial)
+    if (allocated(depth_ratio_150)) deallocate(depth_ratio_150)
+    ! Neritic CaCO3 burial >>
+
     !
     ! 4.2: Lithogenic detritus production
     !
@@ -4675,6 +4736,20 @@ contains
          (cobalt%f_ndet(i,j,k) + epsln) * cobalt%remin_eff_fedet*cobalt%f_fedet(i,j,k)
        cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jremin_fedet(i,j,k)
     enddo; enddo; enddo  !} i,j,k
+
+    ! << Enhanced CaCO3 dissolution driven by localized undersaturation around sinking particles
+    ! Fei Da, 202504: Add CaCO3 dissolution enhancement associated with organic matter (OM) decomposition
+    ! 
+    ! This routine applies a fixed ratio between POC remineralization and additional CaCO3 dissolution
+    if (do_resp_ca_diss) then
+        do k=1,nk ; do j=jsc,jec ; do i=isc,iec  !{
+           cobalt%jdiss_cadet_arag(i,j,k) = cobalt%jdiss_cadet_arag(i,j,k) + &
+                                            cobalt%resp_ca_2_n_arag * cobalt%jremin_ndet(i,j,k) * cobalt%c_2_n
+           cobalt%jdiss_cadet_calc(i,j,k) = cobalt%jdiss_cadet_calc(i,j,k) + &
+                                            cobalt%resp_ca_2_n_calc * cobalt%jremin_ndet(i,j,k) * cobalt%c_2_n
+        enddo; enddo; enddo  !} i,j,k
+    endif     
+    ! >> 
 
     ! 
     ! 4.5: Iron scavenging onto detritus
@@ -5169,7 +5244,10 @@ contains
                     cobalt%p_nlgz(i,j,k,tau))*grid_tmask(i,j,k)
          net_srcn(i,j,k) = (phyto(DIAZO)%juptake_n2(i,j,k) - cobalt%jno3denit_wc(i,j,k) - &
                     cobalt%jnamx(i,j,k) + cobalt%jno3_iceberg(i,j,k))*dt*grid_tmask(i,j,k)
-         net_srcc(i,j,k) = 0.0
+         ! << Fei Da, 202504: Apply neritic CaCO3 burial contribution to net carbon source/sink term
+         ! This term is zero when neritic burial is turned off (default: jprod_cadet_neritic = 0.0)
+         net_srcc(i,j,k) = (-1) * cobalt%jprod_cadet_neritic(i,j,k) *dt*grid_tmask(i,j,k)
+         ! >>         
          pre_totc(i,j,k) = (cobalt%p_dic(i,j,k,tau) + &
                     cobalt%p_cadet_arag(i,j,k,tau) + cobalt%p_cadet_calc(i,j,k,tau) + &
                     cobalt%c_2_n*(cobalt%p_ndi(i,j,k,tau) + cobalt%p_nlg(i,j,k,tau) + &
@@ -5549,11 +5627,13 @@ contains
        !      to isolate the change in alkalinity due to aerobic organic
        !      matter remineralization
        !
+       ! << Fei Da, 202504: Apply neritic CaCO3 burial contribution
+       ! This term is zero when neritic burial is turned off (default: jprod_cadet_neritic = 0.0) >>       
        cobalt%jalk(i,j,k) = 2.0 * (cobalt%jdiss_cadet_arag(i,j,k) +        &
           cobalt%jdiss_cadet_calc(i,j,k) - cobalt%jprod_cadet_arag(i,j,k) - &
-          cobalt%jprod_cadet_calc(i,j,k)) + phyto(DIAZO)%juptake_no3(i,j,k) + &
-          phyto(LARGE)%juptake_no3(i,j,k) + phyto(MEDIUM)%juptake_no3(i,j,k) + &
-          phyto(SMALL)%juptake_no3(i,j,k) + &
+          cobalt%jprod_cadet_calc(i,j,k) - cobalt%jprod_cadet_neritic(i,j,k)) + &
+          phyto(DIAZO)%juptake_no3(i,j,k)  + phyto(LARGE)%juptake_no3(i,j,k) + &
+          phyto(MEDIUM)%juptake_no3(i,j,k) + phyto(SMALL)%juptake_no3(i,j,k) + &
           (cobalt%jo2resp_wc(i,j,k)-cobalt%juptake_nh4nitrif(i,j,k)*cobalt%o2_2_nitrif)/cobalt%o2_2_nh4 + &
           cobalt%alk_2_n_denit*cobalt%jno3denit_wc(i,j,k) - &
           cobalt%alk_2_nh4_amx*cobalt%juptake_nh4amx(i,j,k) - &
@@ -5573,7 +5653,8 @@ contains
           phyto(MEDIUM)%juptake_nh4(i,j,k) - phyto(SMALL)%juptake_nh4(i,j,k) - &
           phyto(DIAZO)%juptake_n2(i,j,k)) + &
           cobalt%jdiss_cadet_arag(i,j,k) + cobalt%jdiss_cadet_calc(i,j,k) - &
-          cobalt%jprod_cadet_arag(i,j,k) - cobalt%jprod_cadet_calc(i,j,k))
+          cobalt%jprod_cadet_arag(i,j,k) - cobalt%jprod_cadet_calc(i,j,k) - &
+          cobalt%jprod_cadet_neritic(i,j,k))
 
        cobalt%p_dic(i,j,k,tau) = cobalt%p_dic(i,j,k,tau) + cobalt%jdic(i,j,k) * dt * grid_tmask(i,j,k)
     enddo; enddo ; enddo !} i,j,k
@@ -6375,6 +6456,32 @@ contains
     enddo ; enddo  !} i,j
     deallocate(rho_dzt_200)
 
+    ! << Fei Da, 202504: Add diagnostic for neritic CaCO3 burial
+    ! Calculate the vertically integrated neritic CaCO3 burial within the top 150m
+    if (do_ner_ca_bur) then
+       do j = jsc, jec ; do i = isc, iec !{
+          rho_dzt_150(i,j) = rho_dzt(i,j,1)
+          cobalt%jprod_cadet_neritic_150(i,j) = cobalt%jprod_cadet_neritic(i,j,1) * rho_dzt(i,j,1)
+       enddo; enddo !} i,j
+
+       do j = jsc, jec ; do i = isc, iec ; !{
+          k_150 = 1
+          do k = 2, grid_kmt(i,j)  !{
+             if (rho_dzt_150(i,j) .lt. cobalt%Rho_0 * 150.0) then
+                k_150 = k
+                rho_dzt_150(i,j) = rho_dzt_150(i,j) + rho_dzt(i,j,k)
+                cobalt%jprod_cadet_neritic_150(i,j) = cobalt%jprod_cadet_neritic_150(i,j) + &
+                                                      cobalt%jprod_cadet_neritic(i,j,k) * rho_dzt(i,j,k)
+             endif
+          enddo  !} k
+       enddo ; enddo  !} i,j 
+    else
+       ! No neritic burial: set integral to zero
+       cobalt%jprod_cadet_neritic_150 = 0.0
+    endif
+    if (allocated(rho_dzt_150)) deallocate(rho_dzt_150)
+    ! Add diagnostic for neritic CaCO3 burial >>
+
     call g_tracer_get_values(tracer_list,'alk','runoff_tracer_flux',cobalt%runoff_flux_alk,isd,jsd)
     call g_tracer_get_values(tracer_list,'dic','runoff_tracer_flux',cobalt%runoff_flux_dic,isd,jsd)
     if (do_14c) then  !{
@@ -7081,6 +7188,10 @@ contains
     allocate(cobalt%jprod_lithdet(isd:ied, jsd:jed, 1:nk)); cobalt%jprod_lithdet=0.0
     allocate(cobalt%jprod_cadet_arag(isd:ied, jsd:jed, 1:nk)); cobalt%jprod_cadet_arag=0.0
     allocate(cobalt%jprod_cadet_calc(isd:ied, jsd:jed, 1:nk)); cobalt%jprod_cadet_calc=0.0
+    ! << Fei Da, 202504: Always allocate 3-D neritic CaCO3 burial production field
+    ! Needed for DIC and alkalinity budgets even if burial is disabled (set to zero if do_ner_ca_bur = .false.)
+    allocate(cobalt%jprod_cadet_neritic(isd:ied, jsd:jed, 1:nk)); cobalt%jprod_cadet_neritic=0.0
+    ! >>  
     allocate(cobalt%jprod_nh4(isd:ied, jsd:jed, 1:nk))    ; cobalt%jprod_nh4=0.0
     allocate(cobalt%jprod_nh4_plus_btm(isd:ied, jsd:jed, 1:nk))    ; cobalt%jprod_nh4_plus_btm=0.0
     allocate(cobalt%jprod_po4(isd:ied, jsd:jed, 1:nk))    ; cobalt%jprod_po4=0.0
@@ -7288,6 +7399,9 @@ contains
    allocate(cobalt%jprod_sidet_100(isd:ied,jsd:jed))        ; cobalt%jprod_sidet_100 = 0.0
    allocate(cobalt%jprod_cadet_calc_100(isd:ied,jsd:jed))   ; cobalt%jprod_cadet_calc_100 = 0.0
    allocate(cobalt%jprod_cadet_arag_100(isd:ied,jsd:jed))   ; cobalt%jprod_cadet_arag_100 = 0.0
+   ! << Fei Da, 202504: Allocate 2-D diagnostic for integrated neritic CaCO3 burial (0–150m)
+   allocate(cobalt%jprod_cadet_neritic_150(isd:ied,jsd:jed)); cobalt%jprod_cadet_neritic_150 = 0.0
+   ! >>
    allocate(cobalt%jremin_ndet_100(isd:ied,jsd:jed))        ; cobalt%jremin_ndet_100 = 0.0
    allocate(cobalt%jprod_mesozoo_200(isd:ied,jsd:jed))      ; cobalt%jprod_mesozoo_200 = 0.0
    allocate(cobalt%daylength(isd:ied,jsd:jed))              ; cobalt%daylength = 0.0
@@ -7624,6 +7738,9 @@ contains
     deallocate(cobalt%jprod_lithdet)
     deallocate(cobalt%jprod_cadet_arag)
     deallocate(cobalt%jprod_cadet_calc)
+    ! << Fei Da, 202504: deallocate variables for neritic CaCO3 burial 
+    deallocate(cobalt%jprod_cadet_neritic)
+    ! >>     
     deallocate(cobalt%jprod_nh4)
     deallocate(cobalt%jprod_nh4_plus_btm)
     deallocate(cobalt%jprod_po4)
@@ -7745,6 +7862,9 @@ contains
     deallocate(cobalt%jprod_sidet_100)
     deallocate(cobalt%jprod_cadet_arag_100)
     deallocate(cobalt%jprod_cadet_calc_100)
+    ! << Fei Da, 202504: deallocate variables for neritic CaCO3 burial
+    deallocate(cobalt%jprod_cadet_neritic_150)
+    ! >>
     deallocate(cobalt%jprod_mesozoo_200)
     deallocate(cobalt%daylength)
     deallocate(cobalt%jremin_ndet_100)

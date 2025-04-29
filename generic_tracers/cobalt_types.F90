@@ -38,7 +38,10 @@ module cobalt_types
                                             !! 1-default COBALT
                                             !! 2-update with no temperature dependence
                                             !! 3-update with temperature dependence
-
+  ! << Fei Da, 202504: add namelist options for neritic CaCO3 burial and enhanced CaCO3 dissolution
+  logical, public :: do_ner_ca_bur = .false.    !< If true, then turn on neritic CaCO3 burial
+  logical, public :: do_resp_ca_diss = .false.  !< If true, then turn on enhanced respiration-driven CaCO3 dissolution
+  ! >>    
   ! parameters      
   integer, parameter, public :: NUM_PHYTO = 4 !< total number of phytoplankton groups
   integer, parameter, public :: NUM_ZOO = 3   !< total number of zooplankton groups
@@ -421,6 +424,10 @@ module cobalt_types
           c_2_n,            &
           ca_2_n_arag,      &
           ca_2_n_calc,      &
+          ! << Fei Da, 202504: enhanced CaCO3 dissolution due to local undersaturation around sinking particles
+          resp_ca_2_n_arag, &
+          resp_ca_2_n_calc, &
+          ! >>
           caco3_sat_max,    &
           doc_background,   &
           fe_2_n_upt_fac,   &
@@ -660,6 +667,8 @@ module cobalt_types
           jprod_lithdet,&
           jprod_cadet_arag,&
           jprod_cadet_calc,&
+! << Fei Da, 202504: Add neritic CaCO3 burial >>
+          jprod_cadet_neritic,&
           jprod_nh4,&
           jprod_nh4_plus_btm,&
           jprod_po4,&
@@ -784,6 +793,8 @@ module cobalt_types
           jprod_sidet_100,&
           jprod_cadet_calc_100,&
           jprod_cadet_arag_100,&
+! << Fei Da, 202504: Add neritic CaCO3 burial >>
+          jprod_cadet_neritic_150,&
           jprod_mesozoo_200, &
           jremin_ndet_100, &
           f_ndet_100, &
@@ -973,6 +984,8 @@ module cobalt_types
           id_jprod_lithdet = -1,       &
           id_jprod_cadet_arag = -1,    &
           id_jprod_cadet_calc = -1,    &
+! << Fei Da, 202504: Add neritic CaCO3 burial >>
+          id_jprod_cadet_neritic = -1, &
           id_jprod_po4     = -1,       &
           id_jprod_nh4     = -1,       &
           id_jprod_nh4_plus_btm = -1,  &
@@ -1170,6 +1183,8 @@ module cobalt_types
           id_jprod_sidet_100 = -1,     &
           id_jprod_cadet_calc_100 = -1, &
           id_jprod_cadet_arag_100 = -1, &
+! << Fei Da, 202504: Add neritic CaCO3 burial >>
+          id_jprod_cadet_neritic_150 = -1, &
           id_jprod_mesozoo_200 = -1,   &
           id_daylength         = -1,   &
           id_jremin_ndet_100 = -1,     &

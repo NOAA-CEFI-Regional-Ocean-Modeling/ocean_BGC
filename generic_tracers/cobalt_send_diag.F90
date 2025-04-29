@@ -1371,6 +1371,10 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask(:,:,:), is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jprod_cadet_calc, cobalt%jprod_cadet_calc, &
             model_time, rmask = grid_tmask(:,:,:), is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          ! << Fei Da, 202504: Add neritic CaCO3 burial
+          used = g_send_data(cobalt%id_jprod_cadet_neritic, cobalt%jprod_cadet_neritic, &
+            model_time, rmask = grid_tmask(:,:,:), is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          ! >>
           used = g_send_data(cobalt%id_jprod_ndet, cobalt%jprod_ndet, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jprod_pdet, cobalt%jprod_pdet, &
@@ -1727,7 +1731,12 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_jprod_cadet_arag_100, cobalt%jprod_cadet_arag_100, &
             model_time, rmask = grid_tmask(:,:,1),  is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_jremin_ndet_100, cobalt%jremin_ndet_100, &
+            model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec) 
+          !
+          ! << Fei Da, 202504: neritic CaCO3 burial 150m flux integrals
+          used = g_send_data(cobalt%id_jprod_cadet_neritic_150, cobalt%jprod_cadet_neritic_150, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          ! >>
           !
           ! Water column flux integrals
           !
