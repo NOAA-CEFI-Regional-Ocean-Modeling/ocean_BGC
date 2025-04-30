@@ -3,7 +3,7 @@
 !<----------------------------------------------------------------
 module COBALT_send_diag
 
-  use cobalt_types 
+  use cobalt_types
 
   use time_manager_mod,  only: time_type
 
@@ -14,9 +14,9 @@ module COBALT_send_diag
 
   contains
 
-    !> subroutine that handles send_diag calls for COBALT phyto, zoo, and bact      
+    !> subroutine that handles send_diag calls for COBALT phyto, zoo, and bact
     subroutine cobalt_send_diagnostics(model_time,grid_tmask,Temp,rho_dzt,dzt,&
-                                 isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt)         
+                                 isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt)
       type(time_type),                           intent(in) :: model_time
       real, dimension(:,:,:),                    pointer :: grid_tmask
       real, dimension(isc:,jsc:,:),                    intent(in) :: Temp
@@ -26,7 +26,7 @@ module COBALT_send_diag
       integer,                                   intent(in) :: iec
       integer,                                   intent(in) :: jsc
       integer,                                   intent(in) :: jec
-      integer,                                   intent(in) :: nk 
+      integer,                                   intent(in) :: nk
       integer,                                   intent(in) :: tau
       type(phytoplankton), dimension(NUM_PHYTO), intent(in) :: phyto
       type(zooplankton), dimension(NUM_ZOO),     intent(in) :: zoo
@@ -34,8 +34,8 @@ module COBALT_send_diag
       type(generic_COBALT_type),                 intent(inout) :: cobalt
       !> local variables
       integer :: n
-      logical :: used  
-            
+      logical :: used
+
 !
 !---------------------------------------------------------------------
 !
@@ -87,7 +87,7 @@ module COBALT_send_diag
             used = g_send_data(phyto(n)%id_juptake_po4, phyto(n)%juptake_po4*rho_dzt,   &
             model_time, rmask = grid_tmask,&
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
- 
+
             used = g_send_data(phyto(n)%id_jprod_n, phyto(n)%jprod_n*rho_dzt,   &
             model_time, rmask = grid_tmask,&
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -145,7 +145,7 @@ module COBALT_send_diag
             used = g_send_data(phyto(n)%id_juptake_sio4, phyto(n)%juptake_sio4*rho_dzt,   &
             model_time, rmask = grid_tmask,&
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-      enddo 
+      enddo
 
       used = g_send_data(phyto(DIAZO)%id_juptake_n2, phyto(DIAZO)%juptake_n2*rho_dzt,   &
       model_time, rmask = grid_tmask,&
@@ -2380,9 +2380,17 @@ module COBALT_send_diag
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
-        
+        used = g_send_data(cobalt%id_frac_mixed_dmsp,  cobalt%frac_mixed_dmsp,   &
+        model_time, rmask = grid_tmask(:,:,1),&
+        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+
+        used = g_send_data(cobalt%id_chl_dmsp,  cobalt%f_chl_dmsp(:,:,1),   &
+        model_time, rmask = grid_tmask(:,:,1),&
+        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+
+
 !==============================================================================================================
 
-    end subroutine cobalt_send_diagnostics   
+    end subroutine cobalt_send_diagnostics
 
-end module COBALT_send_diag   
+end module COBALT_send_diag
