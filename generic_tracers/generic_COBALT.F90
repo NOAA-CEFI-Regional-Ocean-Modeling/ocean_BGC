@@ -2491,13 +2491,6 @@ contains
             init_value = 1.e-10           )
     end if
 
-    call g_tracer_add(tracer_list,package_name,&
-      name       = 'chl_dmsp',           &
-      longname   = 'Chl for dmsp', &
-      units      = 'mg/m3',         &
-      prog       = .false.,         &
-      init_value = 1.e-10              )
-
   end subroutine user_add_tracers
 
 
@@ -3172,8 +3165,6 @@ contains
     call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_sfc','field',cobalt%f_irr_aclm_sfc ,isd,jsd)
-
-    call g_tracer_get_values(tracer_list,'chl_dmsp','field',cobalt%f_chl_dmsp ,isd,jsd)
 
     ! zero out cumulative COBALT-wide production diagnostics
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec
@@ -5691,13 +5682,11 @@ contains
 
           !f_chl is in ug/kg - Gali mg/m3
 
-         cobalt%f_chl_dmsp(i,j,1) = (cobalt%f_chl_dmsp(i,j,1) + (cobalt%f_chl(i,j,1)* cobalt%Rho_0*1e-3 - cobalt%f_chl_dmsp(i,j,1)) * dt/86400.) * grid_tmask(i,j,1)
-
-         cobalt%f_chl_dmsp(i,j,1) = max(min(cobalt%f_chl_dmsp(i,j,1), &
+         cobalt%chl_dmsp(i,j) = max(min(cobalt%f_chl(i,j,1)*cobalt%Rho_0*1e-3, &
                                           cobalt%dmsp_max_chl),                     &
                                           cobalt%dmsp_min_chl)                         !Chl is mg/m3
 
-          log10chl = log10(cobalt%f_chl_dmsp(i,j,1))
+          log10chl = log10(cobalt%chl_dmsp(i,j))
 
           ! ! Euphotic layer depth model      (Morel et al. 2007 [https://doi.org/10.1016/j.rse.2007.03.012], eqn 10, )
           ! Gali uses  1 % penetration depth of 490 nm radiation
@@ -5742,8 +5731,6 @@ contains
 
        enddo; enddo  !} i,j,k
     end if
-
-    call g_tracer_set_values(tracer_list,'chl_dmsp' ,'field',cobalt%f_chl_dmsp ,isd,jsd)
 
     !
     !
@@ -7599,7 +7586,7 @@ contains
       allocate(cobalt%irr_aclm_sfc_dayint(isd:ied, jsd:jed)); cobalt%irr_aclm_sfc_dayint=0.0
       allocate(cobalt%irr_sfc_dms(isd:ied, jsd:jed))        ; cobalt%irr_sfc_dms=0.0
       allocate(cobalt%frac_mixed_dmsp(isd:ied, jsd:jed))    ; cobalt%frac_mixed_dmsp=0.0
-      allocate(cobalt%f_chl_dmsp(isd:ied, jsd:jed,1:nk))    ; cobalt%f_chl_dmsp=0.0
+      allocate(cobalt%chl_dmsp(isd:ied, jsd:jed))           ; cobalt%chl_dmsp=0.0
 
   end subroutine user_allocate_arrays
 
@@ -8154,7 +8141,7 @@ contains
       deallocate(cobalt%irr_aclm_sfc_dayint)
       deallocate(cobalt%irr_sfc_dms)
       deallocate(cobalt%frac_mixed_dmsp)
-      deallocate(cobalt%f_chl_dmsp)
+      deallocate(cobalt%chl_dmsp)
 
   end subroutine user_deallocate_arrays
 

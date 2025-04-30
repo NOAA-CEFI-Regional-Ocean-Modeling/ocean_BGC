@@ -2384,7 +2384,7 @@ module COBALT_send_diag
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
-        used = g_send_data(cobalt%id_chl_dmsp,  cobalt%f_chl_dmsp(:,:,1),   &
+        used = g_send_data(cobalt%id_chl_dmsp,  cobalt%chl_dmsp,   &
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 

@@ -422,7 +422,7 @@ module cobalt_types
      real  :: dmsp_strat_const, dmsp_strat_chl, dmsp_strat_chl2, dmsp_strat_sst, dmsp_strat_sst2
      real  :: dmsp_mix_const, dmsp_mix_chl, dmsp_mix_zeu_over_mld
      real  :: dmsp_min_chl, dmsp_max_chl
-     
+
      real  ::          &
           atm_co2_flux,     &
           c_2_n,            &
@@ -559,10 +559,8 @@ module cobalt_types
           dmsos,&
           irr_aclm_sfc_dayint,&
           irr_sfc_dms, &
-          frac_mixed_dmsp
-
-     real, dimension(:,:,:), ALLOCATABLE ::  f_chl_dmsp
-
+          frac_mixed_dmsp, &
+          chl_dmsp
 
      real, dimension(:,:,:), ALLOCATABLE ::  &
           f_alk,&				! Other prognostic variables
