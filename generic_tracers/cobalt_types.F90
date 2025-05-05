@@ -410,6 +410,7 @@ module cobalt_types
                                                !    when update_from_source is not called every coupling timesteps
                                                !    as is the case with MOM6  THERMO_SPANS_COUPLING option
           do_fnso4red_sed,  &     ! Simulate O2 deficit and alkalinity flux from implied sedimentary sulfate reduction
+          do_fastsinking,   &     ! Enable fast-sinking N and P detritus from higher trophic level predators
           cased_steady,     &     ! steady state approximation for cased
           recalculate_carbon, &   ! true means C system is resolved for diagnostic
           tracer_debug

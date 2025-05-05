@@ -379,6 +379,8 @@ contains
     ! of 5 d-1 in the surface ocean (Clegg and Whitfield, 1992; Dunne, 1999).  Alternatively, 100 m d-1
     ! is more in line with the deep water synthesis of Berelson (2002; Particle settling rates increase
     ! with depth in the ocean, DSR-II, 49, 237-252).
+    ! Fast-sinking detritus is disabled by default. A sinking speed of 1000 m d-1 is consistent with the observed
+    ! sinking speeds of fish fecal pellets (Saba and Steinberg 2012, Saba et al. 2021).
     !
     call get_param(param_file, "generic_COBALT", "wsink",  cobalt%wsink, "wsink", units="m day-1", &
                    default= 100.0, scale = I_sperd ) ! s-1
@@ -1949,7 +1951,9 @@ contains
          btm_reservoir = .true.,   &
          flux_param = (/ 1.0e-3 /) )
     !
-    !    Ndet_fast (Fast sinking detrital/particulate Nitrogen)
+    !    Ndet_fast (Fast sinking detrital/particulate nitrogen)
+    !      ndet_fast, pdet_fast, and associated btf tracers carried by
+    !      the model even if fast-sinking detritus is turned off (e.g., if "do_fastsinking = .false.")
     !
     call g_tracer_add(tracer_list,package_name,&
          name       = 'ndet_fast',       &
@@ -4447,9 +4451,15 @@ contains
        enddo !} m
 
        ! Production of detritus and dissolved organic material from higher predator egestion
-	   ! Assume all the egestion from higher predators will sink quickly and go to fast-sinking detritus
-       cobalt%jprod_ndet_fast(i,j,k) = cobalt%jprod_ndet_fast(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
-       cobalt%jprod_pdet_fast(i,j,k) = cobalt%jprod_pdet_fast(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
+       if (cobalt%do_fastsinking) then
+          ! Assume all the egestion from higher predators will sink quickly and go to fast-sinking detritus
+          cobalt%jprod_ndet_fast(i,j,k) = cobalt%jprod_ndet_fast(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
+          cobalt%jprod_pdet_fast(i,j,k) = cobalt%jprod_pdet_fast(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
+       else
+          ! Just add the HP ndet to the cumulative total. Calculate from phi_det and hp_jingest.
+          cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
+          cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
+       endif
 
        ! Silica and iron detritus from HP does not sink quickly - just gets added to the bulk total
        cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_fe(i,j,k)
