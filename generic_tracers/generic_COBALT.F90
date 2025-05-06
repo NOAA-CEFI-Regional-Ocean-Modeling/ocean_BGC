@@ -769,6 +769,8 @@ contains
     ! creates a photosynthetically active fraction of 0.83*0.57 = 0.47, consistent with Baker and Frouin (1987)
     call get_param(param_file, "generic_COBALT", "par_adj", cobalt%par_adj, &
                    "photosynthetically active fraction of shortwave radiation", units="none", default= 0.83)
+    call get_param(param_file, "generic_COBALT", "photoaclm_opt", cobalt%photoaclm_opt, &
+                   "Option for photoacclimation settings, 0 only averages irradiance", units="none", default= 0)
     call get_param(param_file, "generic_COBALT", "gamma_irr_aclm", cobalt%gamma_irr_aclm, &
                    "time scale for determining the photoacclimation irradiance", units="day-1", &
                    default=1.0, scale=I_sperd)
@@ -2471,6 +2473,30 @@ contains
          units      = 'sec-1',         &
          prog       = .false.              )
 
+    call g_tracer_add(tracer_list,package_name,&
+         name       = 'pcmlim_aclm_nsm',    &
+         longname   = 'Nut*Temp Lim memory, small phytoplankton', &
+         units      = 'dimensionless',         &
+         prog       = .false.              )
+
+     call g_tracer_add(tracer_list,package_name,&
+         name       = 'pcmlim_aclm_nmd',    &
+         longname   = 'Nut*Temp Lim memory, medium phytoplankton', &
+         units      = 'dimensionless',         &
+         prog       = .false.              )
+
+     call g_tracer_add(tracer_list,package_name,&
+         name       = 'pcmlim_aclm_nlg',    &
+         longname   = 'Nut*Temp Lim memory for photosynthesis, large phytoplankton', &
+         units      = 'dimensionless',         &
+         prog       = .false.              )
+
+     call g_tracer_add(tracer_list,package_name,&
+         name       = 'pcmlim_aclm_ndi',    &
+         longname   = 'Nut*Temp Lim memory for photosynthesis, diazotroph', &
+         units      = 'dimensionless',         &
+         prog       = .false.              )
+
     if (do_nh3_atm_ocean_exchange .or. scheme_nitrif.eq.2 .or. scheme_nitrif.eq.3) then
        call g_tracer_add(tracer_list,package_name,&
             name       = 'nh3',         &
@@ -2916,7 +2942,7 @@ contains
     integer :: nb
     real :: r_dt
     real :: feprime_temp
-    real :: P_C_m, k_po4_adjust
+    real :: k_po4_adjust
     real :: TK, PRESS, PKSPA, PKSPC
     real :: tmp_hblt, tmp_irrad, tmp_irrad_ML,tmp_opacity,tmp_mu_ML
     real :: frac_sfc_irrad_aclm, irrad_aclm_thresh
@@ -2938,7 +2964,7 @@ contains
     real :: rho_mld_ref,rho_k,dK,dKm1,afac,deltaRhoAtK,deltaRhoAtKm1,deltaRhoFlag
     real :: alpha_temp, alpha_step
     real :: P_C_max_temp, P_C_max_step, bresp_temp
-    real :: theta_temp, theta_step, irrlim_temp, P_C_m_temp
+    real :: theta_temp, theta_step, irrlim_temp, P_C_m_aclm, P_C_m
     real :: mu_temp, mu_opt
     integer :: yearday
     real :: rev_angle, dec_angle, temp_arg
@@ -3170,6 +3196,10 @@ contains
     call g_tracer_get_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LARGE)%f_mu_mem,isd,jsd)
     call g_tracer_get_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MEDIUM)%f_mu_mem,isd,jsd)
     call g_tracer_get_values(tracer_list,'mu_mem_nsm' ,'field',phyto(SMALL)%f_mu_mem,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pcmlim_aclm_ndi' ,'field',phyto(DIAZO)%f_pcmlim_aclm,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pcmlim_aclm_nlg' ,'field',phyto(LARGE)%f_pcmlim_aclm,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pcmlim_aclm_nmd' ,'field',phyto(MEDIUM)%f_pcmlim_aclm,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pcmlim_aclm_nsm' ,'field',phyto(SMALL)%f_pcmlim_aclm,isd,jsd)
     !
     ! zooplankton fields
     !
@@ -3413,6 +3443,9 @@ contains
        tmp_hblt = 0.0        ! tracks depth of the top of the current layer for mld calcs
        tmp_irrad_aclm = 0.0  ! integrates the irradiance in the surface photoacclimation layer
        tmp_zaclm = 0.0       ! tracks depth of top of the curent layer photoacclimation layer calcs
+       do n = 1,NUM_PHYTO
+         phyto(n)%tmp_pcmlim_aclm_ML = 0.0  ! Tracks the temp*nutrient limitation of light-saturated photosynthesis
+       enddo
        ! Define the irradiance threshold for a "deep" mixed layer for photoacclimation
        irrad_aclm_thresh = frac_sfc_irrad_aclm*cobalt%f_irr_aclm_sfc(i,j,1)
        do k = 1, nk !{
@@ -3438,6 +3471,10 @@ contains
           cobalt%irr_inst(i,j,k) = tmp_irrad * grid_tmask(i,j,k)
           cobalt%irr_aclm_inst(i,j,k) = tmp_irrad*24.0/max(cobalt%daylength(i,j),cobalt%min_daylength)* &
                                         grid_tmask(i,j,k)
+          do n = 1,NUM_PHYTO
+            phyto(n)%pcmlim_aclm_inst(i,j,k) = phyto(n)%liebig_lim(i,j,k)*exp(cobalt%kappa_eppley*Temp(i,j,k))
+          enddo
+
           ! Issue: evaluate what it would take to remove this variable 
           cobalt%irr_mix(i,j,k) = tmp_irrad * grid_tmask(i,j,k)
 
@@ -3454,6 +3491,11 @@ contains
              tmp_irrad_ML = tmp_irrad_ML + cobalt%irr_inst(i,j,k) * dzt(i,j,k)
              tmp_hblt = tmp_hblt + dzt(i,j,k)
 
+             ! integrate the limitation on light limited growth in the mixed layer
+             do n = 1,NUM_PHYTO
+                phyto(n)%tmp_pcmlim_aclm_ML = phyto(n)%tmp_pcmlim_aclm_ML+phyto(n)%pcmlim_aclm_inst(i,j,k)*dzt(i,j,k)
+             enddo
+
              if (cobalt%f_irr_aclm_z(i,j,k) .ge. irrad_aclm_thresh) then
                 tmp_irrad_aclm = tmp_irrad_aclm + cobalt%irr_inst(i,j,k) * dzt(i,j,k)
                 tmp_zaclm = tmp_zaclm + dzt(i,j,k)
@@ -3466,6 +3508,12 @@ contains
        ! light level over the photoacclimation layer: (tmp_irrad_aclm/tmp_zaclm)*24/daylength
        cobalt%irr_aclm_inst(i,j,1:kblt(i,j)) = tmp_irrad_aclm/max(1.0e-6,tmp_zaclm)*24.0/ &
                                                max(cobalt%daylength(i,j),cobalt%min_daylength)
+
+       ! calculate the average limitation on light saturated photosynthesis in the mixed layer
+       do n = 1,NUM_PHYTO
+         phyto(n)%pcmlim_aclm_inst(i,j,1:kblt(i,j)) = phyto(n)%tmp_pcmlim_aclm_ML / max(1.0e-6,tmp_hblt)
+       enddo
+
        ! Issue: what would it take to remove irr_mix? 
        cobalt%irr_mix(i,j,1:kblt(i,j)) = tmp_irrad_ML / max(1.0e-6,tmp_hblt)
     enddo;  enddo !} i,j
@@ -3475,9 +3523,17 @@ contains
     ! Calculate the final photoacclimation irradiance using the standard relaxation
     ! scheme (I_aclm(t+1) = I_aclm(t) + (I*(24/daylength)-I_aclm(t))*gamma*dt).
     !
+    ! Do the same for the limitation on light saturated photosynthesis in the mixed layer
+    !
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
          cobalt%f_irr_aclm(i,j,k) = (cobalt%f_irr_aclm(i,j,k) + (cobalt%irr_aclm_inst(i,j,k) - &
            cobalt%f_irr_aclm(i,j,k)) * min(1.0,cobalt%gamma_irr_aclm * dt)) * grid_tmask(i,j,k)
+
+         do n = 1,NUM_PHYTO
+           phyto(n)%f_pcmlim_aclm(i,j,k) = (phyto(n)%f_pcmlim_aclm(i,j,k) + (phyto(n)%pcmlim_aclm_inst(i,j,k) - &
+             phyto(n)%f_pcmlim_aclm(i,j,k)) * min(1.0,cobalt%gamma_irr_aclm * dt)) * grid_tmask(i,j,k)
+         enddo
+
     enddo; enddo ; enddo !} i,j,k
 
 
@@ -3528,25 +3584,32 @@ contains
           ! Loop through the ecotypes to find the most competitive.  This is essentially a Geider growth
           ! rate calculation for each ecotype using the acclimation irradiance.  
           mu_opt = -999.0 ! arbitrarily low value
+          ! option to do older photoacclimation approach where irradiance was time-filtered but not the nutrient and
+          ! temperature limitations.  This option can lead to significant diurnal chlorophyll variability in high
+          ! light, low nutrient regions
+          if (cobalt%photoaclm_opt.eq.0) then
+            phyto(n)%f_pcmlim_aclm(i,j,k) = phyto(n)%liebig_lim(i,j,k)*cobalt%expkT(i,j,k)
+          endif 
           do m = 1,cobalt%numlightadapt
             ! since we test the low and high, divide by m-1 so first step is the low and last is the high
             alpha_step = (phyto(n)%alpha_ll - phyto(n)%alpha_hl)/(real(cobalt%numlightadapt,8)-1.0)
             alpha_temp = phyto(n)%alpha_hl + (real(m,8)-1.0)*alpha_step
             P_C_max_step = (phyto(n)%P_C_max_hl - phyto(n)%P_C_max_ll)/(real(cobalt%numlightadapt,8)-1.0)
             P_C_max_temp = phyto(n)%P_C_max_hl - (real(m,8)-1.0)*P_C_max_step
-            P_C_m_temp = max(phyto(n)%liebig_lim(i,j,k)*P_C_max_temp*cobalt%expkT(i,j,k),epsln)
-            theta_temp = max(phyto(n)%thetamax/(1.0 + phyto(n)%thetamax*alpha_temp*cobalt%f_irr_aclm(i,j,k)*0.5/P_C_m_temp), &
+            P_C_m_aclm = max(P_C_max_temp*phyto(n)%f_pcmlim_aclm(i,j,k),epsln)
+            theta_temp = max(phyto(n)%thetamax/(1.0 + phyto(n)%thetamax*alpha_temp*cobalt%f_irr_aclm(i,j,k)*0.5/P_C_m_aclm), &
                              cobalt%thetamin)
-            irrlim_temp = 1.0-exp(-alpha_temp*cobalt%f_irr_aclm(i,j,k)*theta_temp/P_C_m_temp)
-            mu_temp = P_C_m_temp/(1.0 + cobalt%zeta)*irrlim_temp - bresp_temp*P_C_max_temp
+            irrlim_temp = 1.0-exp(-alpha_temp*cobalt%f_irr_aclm(i,j,k)*theta_temp/P_C_m_aclm)
+            mu_temp = P_C_m_aclm/(1.0 + cobalt%zeta)*irrlim_temp - bresp_temp*P_C_max_temp
             ! test to see if the latest ecotype is better than the current optimum.  If so, replace the
             ! current best values.
             if (mu_temp.ge.mu_opt) then
               mu_opt = mu_temp
-              phyto(n)%irrlim(i,j,k) = 1.0-exp(-alpha_temp*cobalt%irr_inst(i,j,k)*theta_temp/P_C_m_temp)
+              P_C_m = max(P_C_max_temp*phyto(n)%liebig_lim(i,j,k)*cobalt%expkT(i,j,k),epsln)
+              phyto(n)%irrlim(i,j,k) = 1.0-exp(-alpha_temp*cobalt%irr_inst(i,j,k)*theta_temp/P_C_m)
               phyto(n)%theta(i,j,k) = theta_temp
               phyto(n)%bresp(i,j,k) =  bresp_temp*P_C_max_temp
-              phyto(n)%mu(i,j,k) = P_C_m_temp/(1.0 + cobalt%zeta)*phyto(n)%irrlim(i,j,k) - phyto(n)%bresp(i,j,k)
+              phyto(n)%mu(i,j,k) = P_C_m/(1.0 + cobalt%zeta)*phyto(n)%irrlim(i,j,k) - phyto(n)%bresp(i,j,k)
               phyto(n)%P_C_max(i,j,k) = P_C_max_temp
               phyto(n)%alpha(i,j,k) = alpha_temp
             endif
@@ -5678,6 +5741,10 @@ contains
     call g_tracer_set_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LARGE)%f_mu_mem ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MEDIUM)%f_mu_mem ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_nsm' ,'field',phyto(SMALL)%f_mu_mem ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'pcmlim_aclm_ndi' ,'field',phyto(DIAZO)%f_pcmlim_aclm ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'pcmlim_aclm_nlg' ,'field',phyto(LARGE)%f_pcmlim_aclm ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'pcmlim_aclm_nmd' ,'field',phyto(MEDIUM)%f_pcmlim_aclm ,isd,jsd)
+    call g_tracer_set_values(tracer_list,'pcmlim_aclm_nsm' ,'field',phyto(SMALL)%f_pcmlim_aclm ,isd,jsd)
 
     ! CAS calculate totals after source/sinks have been applied
     ! Imbalance in one timestep is converted from moles kg-1 to units of mmoles m-3 day-1 and compared 
@@ -6891,6 +6958,8 @@ contains
        allocate(phyto(n)%chl(isd:ied,jsd:jed,nk))          ; phyto(n)%chl            = 0.0
        allocate(phyto(n)%f_mu_mem(isd:ied,jsd:jed,nk))     ; phyto(n)%f_mu_mem       = 0.0
        allocate(phyto(n)%mu_mix(isd:ied,jsd:jed,nk))       ; phyto(n)%mu_mix         = 0.0
+       allocate(phyto(n)%f_pcmlim_aclm(isd:ied,jsd:jed,nk)) ; phyto(n)%f_pcmlim_aclm = 0.0
+       allocate(phyto(n)%pcmlim_aclm_inst(isd:ied,jsd:jed,nk)) ; phyto(n)%pcmlim_aclm_inst = 0.0
        allocate(phyto(n)%stress_fac(isd:ied,jsd:jed,nk))   ; phyto(n)%stress_fac     = 0.0
        allocate(phyto(n)%nh4lim(isd:ied,jsd:jed,nk))       ; phyto(n)%nh4lim         = 0.0
        allocate(phyto(n)%no3lim(isd:ied,jsd:jed,nk))       ; phyto(n)%no3lim         = 0.0
@@ -7438,6 +7507,8 @@ contains
        deallocate(phyto(n)%chl)
        deallocate(phyto(n)%f_mu_mem)
        deallocate(phyto(n)%mu_mix)
+       deallocate(phyto(n)%f_pcmlim_aclm)
+       deallocate(phyto(n)%pcmlim_aclm_inst)
        deallocate(phyto(n)%stress_fac)
        deallocate(phyto(n)%juptake_fe_100)
        deallocate(phyto(n)%juptake_po4_100)

@@ -98,6 +98,7 @@ module cobalt_types
      real ::  vir               !< Viral lysis loss coefficient (s-1 (mole N kg)-1)
      real ::  mort              !< mortality loss coefficient (s-1)
      real ::  exu               !< Maximum ingestion rate (dimensionless (fraction of NPP))
+     real ::  tmp_pcmlim_aclm_ML !< Variable for storing depth average nutrient*temperature limitation in mixed layer
      real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_100      !<
      real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_new_100  !<
      real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_n2_100   !<
@@ -163,6 +164,8 @@ module cobalt_types
      real, ALLOCATABLE, dimension(:,:,:)  ::  mu             !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  f_mu_mem       !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  mu_mix         !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  f_pcmlim_aclm  !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  pcmlim_aclm_inst !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  nh4lim         !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  no3lim         !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  po4lim         !<
@@ -214,6 +217,8 @@ module cobalt_types
      integer ::  id_liebig_lim   = -1
      integer ::  id_mu           = -1
      integer ::  id_f_mu_mem     = -1
+     integer ::  id_f_pcmlim_aclm = -1
+     integer ::  id_pcmlim_aclm_inst = -1
      integer ::  id_mu_mix       = -1
      integer ::  id_nh4lim       = -1
      integer ::  id_no3lim       = -1
@@ -247,6 +252,7 @@ module cobalt_types
      integer ::  id_sfc_irrlim       = -1
      integer ::  id_sfc_theta        = -1
      integer ::  id_sfc_mu           = -1
+     integer ::  id_sfc_pcmlim_aclm  = -1
      integer ::  id_fn_btm           = -1
      integer ::  id_fp_btm           = -1
      integer ::  id_ffe_btm          = -1
@@ -936,6 +942,7 @@ module cobalt_types
           deltap_o2
 
      integer :: numlightadapt
+     integer :: photoaclm_opt
      character(len=fm_string_len)          :: file
      character(len=fm_string_len) :: ice_restart_file
      character(len=fm_string_len) :: ocean_restart_file,IC_file
