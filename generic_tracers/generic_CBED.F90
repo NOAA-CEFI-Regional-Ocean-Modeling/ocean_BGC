@@ -1,20 +1,125 @@
 module generic_CBED
 
-  use g_tracer_utils, only : g_tracer_type, g_tracer_get_common
-  use g_tracer_utils, only : g_tracer_set_values, g_tracer_get_values
-  use g_tracer_utils, only : g_tracer_get_pointer
-  use cobalt_types
+use g_tracer_utils, only : g_tracer_type, g_tracer_get_common, g_tracer_get_domain
+use g_tracer_utils, only : g_tracer_set_values, g_tracer_get_values
+use g_tracer_utils, only : g_tracer_get_pointer
+use g_tracer_utils, only : register_diag_field=>g_register_diag_field, g_send_data
+use cobalt_types,   only : generic_COBALT_type, phytoplankton, missing_value1, sperd, spery, epsln
+use cobalt_types,   only : SMALL, MEDIUM, LARGE, DIAZO, NUM_PHYTO
+use time_manager_mod,  only: time_type
+use field_manager_mod, only: fm_string_len, fm_path_name_len
+use mpp_domains_mod,  only : domain2D
+use fms2_io_mod, only: FmsNetcdfDomainFile_t, open_file, close_file, read_restart, write_restart
+use fms2_io_mod, only: register_restart_field
+use fms_mod, only: error_mesg, NOTE, WARNING, FATAL
 
-implicit none ; private
+implicit none; private
+
+character(len=fm_string_len), parameter :: mod_name       = 'generic_CBED'
+character(len=fm_string_len), parameter :: package_name   = 'generic_cbed'
 
 public generic_CBED_sediments_update_from_source
+public generic_CBED_init, generic_CBED_end
+public generic_CBED_reg_diagnostics, generic_CBED_send_diagnostics
+
+integer, parameter :: nk_cbed = 10 ! Number of benthic layers
+
+type generic_CBED_type
+  real, dimension(:,:,:), allocatable :: f_tr1  ! tracer 1 concentration field
+  integer :: id_tr1                             ! tracer 1 diagnostics id
+end type generic_CBED_type
+
+type(generic_CBED_type) :: cbed
 
 contains
 
-  subroutine generic_CBED_sediments_update_from_source(tracer_list, cobalt, phyto, ilb, jlb, mask_coast, &
+  subroutine generic_CBED_init(isc,iec,jsc,jec,isd,ied,jsd,jed,nk)
+    integer,     intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk
+    !Locals
+    type(domain2D), pointer :: domain
+    type(FmsNetcdfDomainFile_t) :: fileobj ! netCDF file object returned by call to fms2_open_file
+    character(len=64)           :: restart_file
+    logical                     :: file_open_success ! result returned by call to fms2_open_file
+
+    !Allocate and initialize CBED arrays for tracer concentrations and other workarrays
+    allocate(cbed%f_tr1(isd:ied,jsd:jed,nk_cbed));cbed%f_tr1=0.0
+
+    !Resgister restarts
+    restart_file = 'INPUT/generic_CBED.res.nc'
+    call g_tracer_get_domain(domain)
+    file_open_success=open_file(fileobj, trim(restart_file),"read", domain, is_restart=.true.)
+    if (file_open_success) then
+       call register_restart_field(fileobj, "cbed_tr1", cbed%f_tr1)
+       call read_restart(fileobj)
+    endif
+
+  end subroutine generic_CBED_init
+
+  subroutine generic_CBED_reg_diagnostics(axes,init_time)
+    USE diag_manager_mod, ONLY: register_diag_field, diag_axis_init
+        integer,         intent(in) :: axes(3)
+    type(time_type), intent(in) :: init_time
+    ! local
+    integer :: k, id_layer
+    real :: cbed_layers(1:nk_cbed)
+
+
+    !Niki: I am unsure of the diag axis thingy, ask Yi-Cheng
+    !Define cbed layer axis, the x,y axes are the same as MOM6 since the horizontal grids are the same
+    do k=1,nk_cbed; cbed_layers(k) = k; enddo
+    id_layer = diag_axis_init('cbedlayer', cbed_layers, 'None', 'z', long_name='Benthos Layer', direction=-1)
+
+
+    cbed%id_tr1 = register_diag_field(package_name, 'cbed_tr1_conc', (/axes(1),axes(2),id_layer/), init_time,&
+                                      'cbed tracer1 concentration', 'unknown units', missing_value = missing_value1)
+
+  end subroutine generic_CBED_reg_diagnostics
+
+  subroutine generic_CBED_send_diagnostics(model_time,grid_tmask, isc,iec,jsc,jec, isd,ied,jsd,jed,nk)
+    USE diag_manager_mod, ONLY: send_data
+    type(time_type),          intent(in) :: model_time
+    real, dimension(:,:,:),    pointer   :: grid_tmask
+    integer,                  intent(in) :: isc,iec,jsc,jec, isd,ied,jsd,jed,nk
+    ! local
+    logical :: used
+    integer :: k
+    real,dimension(isd:ied,jsd:jed,nk_cbed)    :: cbed_tmask
+    !Make a cbed mask. Note: it seems grid_tmask(:,:,k) does not depend on k
+    do k=1,nk_cbed ; cbed_tmask(:,:,k) = grid_tmask(:,:,nk) ; enddo
+
+    used = send_data(cbed%id_tr1, cbed%f_tr1, model_time, rmask = cbed_tmask,&
+                       is_in=isc, js_in=jsc,ie_in=iec, je_in=jec, ks_in=1, ke_in=nk_cbed)
+
+  end subroutine generic_CBED_send_diagnostics
+
+  subroutine generic_CBED_end()
+    !Locals
+    type(FmsNetcdfDomainFile_t) :: fileobj ! netCDF file object returned by call to fms2_open_file
+    character(len=64)           :: restart_file
+    logical                     :: file_open_success ! result returned by call to fms2_open_file
+    type(domain2D),pointer :: domain
+
+    !Resgister restarts
+    call g_tracer_get_domain(domain)
+    restart_file = 'INPUT/generic_CBED.res.nc'
+    file_open_success=open_file(fileobj, trim(restart_file),"write", domain, is_restart=.true.)
+    if (file_open_success) then
+       call register_restart_field(fileobj, "cbed_tr1", cbed%f_tr1)
+       call write_restart(fileobj)
+    else
+       call error_mesg( 'generic_CBED_end', 'Cannot open restarts for write.', FATAL )
+    endif
+
+    !Deallocate arrays
+    deallocate(cbed%f_tr1)
+
+  end subroutine generic_CBED_end
+
+
+  subroutine generic_CBED_sediments_update_from_source(cobalt_tracer_list, cobalt, phyto, ilb, jlb, mask_coast, &
            grid_tmask, grid_dat, grid_kmt, isc,iec, jsc,jec, isd, jsd, nk, r_dt, dt, frunoff, rho_dzt, dzt, internal_heat)
 
-    type(g_tracer_type),          pointer       :: tracer_list
+    type(g_tracer_type),          pointer       :: cobalt_tracer_list
     type(generic_COBALT_type),    intent(inout) :: cobalt
     type(phytoplankton), dimension(NUM_PHYTO), intent(inout) :: phyto
     integer,                      intent(in)    :: ilb, jlb
@@ -31,6 +136,16 @@ contains
     real :: fpoc_btm, drho_dzt, log10_fpoc_btm
     integer, dimension(isc:iec,jsc:jec) :: k_bot
     real,    dimension(isc:iec,jsc:jec) :: rho_dzt_bot
+
+    !Test that we can change the value of concentration field of a CBED tracer
+    do k=1,nk_cbed
+      cbed%f_tr1(:,:,k) = cbed%f_tr1(:,:,k) + 0.01 * k !fictitious dubious dynamics for testing purposes
+    enddo
+
+    !!==================================================================================================================
+    !!The rest of this subrouine that follows is a copy of the COBALT code.
+    !!It must be replaced by CBED calculations for 'btf' fluxes which are "set" for COBALT at the end of this subroutine.
+    !!==================================================================================================================
 
     ! Calculate the bottom conditions and the fluxes to the bottom for diagnostics and benthic flux calculations.
     ! MOM4/5 used the bottom grid cell, but MOM6 often has a number of vanishingly thin layers overlying the bottom.
@@ -66,10 +181,10 @@ contains
             if (rho_dzt_bot(i,j).lt.(cobalt%Rho_0*cobalt%bottom_thickness)) then
               k_bot(i,j) = k
               rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
-              cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%f_o2(i,j,k)*rho_dzt(i,j,k) 
-              cobalt%btm_no3(i,j) = cobalt%btm_no3(i,j) + cobalt%f_no3(i,j,k)*rho_dzt(i,j,k) 
-              cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k) 
-              cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k) 
+              cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%f_o2(i,j,k)*rho_dzt(i,j,k)
+              cobalt%btm_no3(i,j) = cobalt%btm_no3(i,j) + cobalt%f_no3(i,j,k)*rho_dzt(i,j,k)
+              cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k)
+              cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k)
             endif
           enddo
           ! Subtract off overshoot
@@ -87,7 +202,7 @@ contains
           cobalt%btm_omega_calc(i,j)=cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
 
           ! Calculate the processing of organic matter in the sediment.  The fate of organic matter is partitioned
-          ! between burial (i.e., removal from the system), aerobic remineralization, remineralization via 
+          ! between burial (i.e., removal from the system), aerobic remineralization, remineralization via
           ! denitrification, and remineralization via sulfate reduction.  Note that the latter pathway is effectively
           ! a "catch all" for any other anaerobic pathway and the sulfate cycle is not explicitly modeled.
           k = grid_kmt(i,j)
@@ -101,7 +216,7 @@ contains
              !
              ! As described in Dunne et al., (2007) this relationship was generally developed for deeper ocean areas
              ! and its validity in shallow areas is unclear.  Past experiments suggest that it may overestimate burial
-             ! in shallow areas, resulting in large nutrient losses that are inconsistent with observations.  The 
+             ! in shallow areas, resulting in large nutrient losses that are inconsistent with observations.  The
              ! parameter "z_burial" thus provides a depth scale (an effective "half-saturation") for ramping up burial
              ! from 0 to its full value.
              !
@@ -115,23 +230,23 @@ contains
              cobalt%fp_burial(i,j) = cobalt%frac_burial(i,j)*cobalt%fptot_btm(i,j)
 
              ! Denitrification follows Middelburg et al., 1996. Denitrification in marine sediments: a modeling study
-             ! Global Biogeochemical Cycles 10(4).  pp. 661-673.  https://doi.org/10.1029/96GB02562. COBALT uses the  
+             ! Global Biogeochemical Cycles 10(4).  pp. 661-673.  https://doi.org/10.1029/96GB02562. COBALT uses the
              ! carbon flux-based relationship based on Middelburg's first extraction of his metamodel (the first
              ! equation in Section 3.4 of the paper).  This relationship requires a flux to the benthos in micromoles C
              ! cm-2 day-1.  This means that fpoc_btm defined for the burial calculation above must be multiplied by:
-             ! 
+             !
              ! 1e3 micromoles/millimole*1e-4 cm2/m2 = 0.1
-             ! 
+             !
              ! to get the proper units.  The Middelburg relationship yields a rate at which arriving particulate organic
              ! carbon is denitrified in micromoles C cm-2 day-1.  This is converted to a rate at which arriving
              ! particulate organic nitrogen denitrified in moles N m-2 sec-1 by dividing by:
-             ! 
+             !
              ! c_2_n*sperd*1e6 micromoles/mole*1e-4 cm2/m2 = c_2_n*sperd*100
              !
              ! The nitrate demand associated with this denitrification (fno3denit_sed) is obtained by multiplying the
              ! resulting value by the moles of NO3 required to denitrify each mole of organic N (n_2_n_denit).
              !
-             ! A number of limiters are applied to support global application.  First, the C flux used in the  
+             ! A number of limiters are applied to support global application.  First, the C flux used in the
              ! Middelburg relationship is capped at 43.0 micromoles C cm-2 day-1 to avoid anomalous extrapolation.
              ! Second, denitrification is slowed when bottom nitrate is low by a) scaling rates with a nitrate
              ! half-saturation constant with (k_no3_denit), b) preventing the exhaustion of bottom nitrate over
@@ -153,7 +268,7 @@ contains
              ! *within the sediment*, resulting in an oxygen demand at the sediment-water interface.  These
              ! include direct aerobic remineralization and sulfate reduction/HS- oxidation (see stoichiometry
              ! for details).  Note that the partitioning between these two pathways is not calculated, just the
-             ! combined effect. 
+             ! combined effect.
              !
              ! fnso4_sed (moles N m-2 sec-1) accounts for organic material that only undergoes sulfate reduction in
              ! the sediment, but not HS- oxidation.  This results in HS- released from the sediment.  The latent O2
@@ -222,7 +337,7 @@ contains
               cobalt%jfe_coast(i,j,k) = cobalt%fe_coast*dzt(i,j,k)*mask_coast(i,j)*grid_tmask(i,j,k)* &
                 cobalt%ffe_sed_max*tanh( ( (cobalt%f_ndet(i,j,k)*cobalt%wsink+ &
                 phyto(SMALL)%f_n(i,j,k)*phyto(SMALL)%vmove(i,j,k)+ &
-                phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k)+ & 
+                phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k)+ &
                 phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%vmove(i,j,k)+ &
                 phyto(DIAZO)%f_n(i,j,k)*phyto(DIAZO)%vmove(i,j,k))*cobalt%c_2_n*sperd*1.0e3 )/ &
                 max(cobalt%f_o2(i,j,k)*1.0e6,epsln) )/rho_dzt(i,j,k)
@@ -331,14 +446,14 @@ contains
        cobalt%f_cased(i,j,k) = 0.0
     enddo; enddo ; enddo  !} i,j,k
 
-    call g_tracer_set_values(tracer_list,'alk',  'btf', cobalt%b_alk ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'dic',  'btf', cobalt%b_dic ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'fed',  'btf', cobalt%b_fed ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'nh4',  'btf', cobalt%b_nh4 ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'no3',  'btf', cobalt%b_no3 ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'o2',   'btf', cobalt%b_o2  ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'po4',  'btf', cobalt%b_po4 ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'sio4', 'btf', cobalt%b_sio4,isd,jsd)
+    call g_tracer_set_values(cobalt_tracer_list,'alk',  'btf', cobalt%b_alk ,isd,jsd)
+    call g_tracer_set_values(cobalt_tracer_list,'dic',  'btf', cobalt%b_dic ,isd,jsd)
+    call g_tracer_set_values(cobalt_tracer_list,'fed',  'btf', cobalt%b_fed ,isd,jsd)
+    call g_tracer_set_values(cobalt_tracer_list,'nh4',  'btf', cobalt%b_nh4 ,isd,jsd)
+    call g_tracer_set_values(cobalt_tracer_list,'no3',  'btf', cobalt%b_no3 ,isd,jsd)
+    call g_tracer_set_values(cobalt_tracer_list,'o2',   'btf', cobalt%b_o2  ,isd,jsd)
+    call g_tracer_set_values(cobalt_tracer_list,'po4',  'btf', cobalt%b_po4 ,isd,jsd)
+    call g_tracer_set_values(cobalt_tracer_list,'sio4', 'btf', cobalt%b_sio4,isd,jsd)
 
   end subroutine generic_CBED_sediments_update_from_source
 

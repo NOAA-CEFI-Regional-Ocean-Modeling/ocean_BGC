@@ -28,6 +28,7 @@ use g_tracer_utils,   only: g_tracer_get_next,g_tracer_type,g_tracer_is_prog,g_t
 use g_tracer_utils,   only: g_tracer_send_diag,g_tracer_get_values
 use g_tracer_utils,   only: g_tracer_get_pointer,g_tracer_get_alias,g_tracer_set_csdiag
 use g_tracer_utils,   only: g_tracer_get_obc_segment_props
+use g_tracer_utils,   only: g_tracer_set_domain
 
 use MOM_ALE_sponge, only : set_up_ALE_sponge_field, ALE_sponge_CS
 use MOM_ALE_sponge, only : ALE_sponge_CS, initialize_ALE_sponge
@@ -484,6 +485,8 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
   enddo ; enddo
   call g_tracer_set_common(G%isc,G%iec,G%jsc,G%jec,G%isd,G%ied,G%jsd,G%jed,&
                            GV%ke,1,CS%diag%axesTL%handles,grid_tmask,grid_kmt,day)
+  !save ocean domain for use in i/o not handled by MOM6
+  call g_tracer_set_domain(domain=G%Domain%mpp_domain)
 
   call get_param(param_file, "initialize_sponges_file", "DO_SPONGE_GENERIC_TRACER", do_use_gt_sponge, &
                  "If true, then some generic tracers may be nudged.", default=.false.)

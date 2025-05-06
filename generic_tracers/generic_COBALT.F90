@@ -337,10 +337,12 @@ contains
     type(g_diag_type), pointer :: diag_list
     integer        :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau, axes(3), axesTi(3)
     type(time_type):: init_time
+
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes=axes,init_time=init_time)
     !
-    call cobalt_reg_diagnostics(diag_list,axes,init_time,phyto,zoo,bact,cobalt)    
-  end subroutine generic_COBALT_register_diag  
+    call cobalt_reg_diagnostics(diag_list,axes,init_time,phyto,zoo,bact,cobalt)
+    if(do_CBED) call generic_CBED_reg_diagnostics(axes,init_time)
+  end subroutine generic_COBALT_register_diag
 
   !
   !   This is an internal sub, not a public interface.
@@ -7018,7 +7020,11 @@ contains
 
   subroutine generic_COBALT_end
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_end'
+
+    if(do_CBED) call generic_CBED_end
+
     call user_deallocate_arrays
+
   end subroutine generic_COBALT_end
 
   !
@@ -7029,6 +7035,9 @@ contains
     integer :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,n
 
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau)
+
+    if(do_CBED) call generic_CBED_init(isc,iec,jsc,jec,isd,ied,jsd,jed,nk) !This call is here because we have access to domain indices here,
+                                                                           !otherwise, inside generic_COBALT_init would have been a natural choice.
 
     !Allocate all the private arrays.
 
