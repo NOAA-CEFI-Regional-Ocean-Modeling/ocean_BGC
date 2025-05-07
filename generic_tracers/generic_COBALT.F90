@@ -2826,6 +2826,7 @@ contains
     ! send_diag for integeral outputs
     call cobalt_send_diagnostics(tracer_list,model_time,grid_tmask,Temp,rho_dzt,dzt, &
          isc,iec,jsc,jec,nk,tau,phyto,zoo,bact,cobalt,post_vertdiff=.true.)
+    if(do_CBED) call generic_CBED_send_diagnostics(model_time,grid_tmask, isc,iec,jsc,jec, isd,ied,jsd,jed,nk)
 
   end subroutine generic_COBALT_update_from_bottom
 
