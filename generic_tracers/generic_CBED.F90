@@ -8,9 +8,9 @@ use cobalt_types,   only : generic_COBALT_type, phytoplankton, missing_value1, s
 use cobalt_types,   only : SMALL, MEDIUM, LARGE, DIAZO, NUM_PHYTO
 use time_manager_mod,  only: time_type
 use field_manager_mod, only: fm_string_len, fm_path_name_len
-use mpp_domains_mod,  only : domain2D
+use mpp_domains_mod,  only : domain2D,mpp_define_io_domain
 use fms2_io_mod, only: FmsNetcdfDomainFile_t, open_file, close_file, read_restart, write_restart
-use fms2_io_mod, only: register_restart_field
+use fms2_io_mod, only: register_restart_field, register_axis
 use fms_mod, only: error_mesg, NOTE, WARNING, FATAL
 
 implicit none; private
@@ -44,14 +44,6 @@ contains
     !Allocate and initialize CBED arrays for tracer concentrations and other workarrays
     allocate(cbed%f_tr1(isd:ied,jsd:jed,nk_cbed));cbed%f_tr1=0.0
 
-    !Resgister restarts
-    restart_file = 'INPUT/generic_CBED.res.nc'
-    call g_tracer_get_domain(domain)
-    file_open_success=open_file(fileobj, trim(restart_file),"read", domain, is_restart=.true.)
-    if (file_open_success) then
-       call register_restart_field(fileobj, "cbed_tr1", cbed%f_tr1)
-       call read_restart(fileobj)
-    endif
 
   end subroutine generic_CBED_init
 
@@ -59,16 +51,37 @@ contains
     USE diag_manager_mod, ONLY: register_diag_field, diag_axis_init
         integer,         intent(in) :: axes(3)
     type(time_type), intent(in) :: init_time
-    ! local
+    !Locals
     integer :: k, id_layer
     real :: cbed_layers(1:nk_cbed)
 
+    !!BEGIN read_restart code block
+    !Niki: This code block does not seem to belong here and should be in the _init routine instead. 
+    !      But the problem with that is due to MOM6 code flow, when generic_CBED_init is called 
+    !      the MOM "domain" is not yet created/updated and we cannot access it, which is needed for reading the restart here.
+    type(domain2D), pointer :: domain
+    type(FmsNetcdfDomainFile_t) :: fileobj ! netCDF file object returned by call to fms2_open_file
+    character(len=64)           :: restart_file
+    logical                     :: file_open_success ! result returned by call to fms2_open_file
+    !Resgister restarts
+    restart_file = 'INPUT/generic_CBED.res.nc'
+    call g_tracer_get_domain(domain)
+    file_open_success=open_file(fileobj, trim(restart_file),"read", domain, is_restart=.true.)
+    if (file_open_success) then
+      call register_axis(fileobj,'x','x')
+      call register_axis(fileobj,'y','y')
+      call register_axis(fileobj,'lev',nk_cbed)
+     ! register the restart variables
+      call register_restart_field(fileobj, "cbed_tr1", cbed%f_tr1, (/"x ","y ","lev "/))
+      call read_restart(fileobj)
+    endif
+    !!END read_restart code block
 
+    !!Register diagnostics
     !Niki: I am unsure of the diag axis thingy, ask Yi-Cheng
     !Define cbed layer axis, the x,y axes are the same as MOM6 since the horizontal grids are the same
     do k=1,nk_cbed; cbed_layers(k) = k; enddo
     id_layer = diag_axis_init('cbedlayer', cbed_layers, 'None', 'z', long_name='Benthos Layer', direction=-1)
-
 
     cbed%id_tr1 = register_diag_field(package_name, 'cbed_tr1_conc', (/axes(1),axes(2),id_layer/), init_time,&
                                       'cbed tracer1 concentration', 'unknown units', missing_value = missing_value1)
@@ -101,10 +114,14 @@ contains
 
     !Resgister restarts
     call g_tracer_get_domain(domain)
-    restart_file = 'INPUT/generic_CBED.res.nc'
-    file_open_success=open_file(fileobj, trim(restart_file),"write", domain, is_restart=.true.)
+    restart_file = 'RESTART/generic_CBED.res.nc'
+    file_open_success=open_file(fileobj, trim(restart_file),"overwrite", domain, is_restart=.true.)
     if (file_open_success) then
-       call register_restart_field(fileobj, "cbed_tr1", cbed%f_tr1)
+       call register_axis(fileobj,'x','x')
+       call register_axis(fileobj,'y','y')
+       call register_axis(fileobj,'lev',nk_cbed)
+      ! register the restart variables
+       call register_restart_field(fileobj, "cbed_tr1", cbed%f_tr1, (/"x ","y ","lev "/))
        call write_restart(fileobj)
     else
        call error_mesg( 'generic_CBED_end', 'Cannot open restarts for write.', FATAL )

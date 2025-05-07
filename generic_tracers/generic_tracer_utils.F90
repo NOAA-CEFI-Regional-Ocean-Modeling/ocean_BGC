@@ -1663,11 +1663,6 @@ contains
 
   end subroutine g_tracer_coupler_accumulate
 
-  subroutine g_tracer_set_csdiag(diag_CS)
-    type(g_diag_ctrl),  target,intent(in) :: diag_CS
-    g_tracer_com%diag_CS = diag_CS 
-  end subroutine g_tracer_set_csdiag
-
   ! <SUBROUTINE NAME="g_tracer_set_common">
   !  <OVERVIEW>
   !   Set common values and arrays for ALL generic tracers to share
@@ -1788,7 +1783,7 @@ contains
 
   !Setter and getter for the ocean_domain property
   subroutine g_tracer_set_domain(domain)
-    type(domain2D), intent(in) :: domain
+    type(domain2D), target, intent(in) :: domain
     g_tracer_com%ocean_domain=domain
   end subroutine g_tracer_set_domain
 
@@ -1797,6 +1792,11 @@ contains
     domain => g_tracer_com%ocean_domain
   end subroutine g_tracer_get_domain
 
+  subroutine g_tracer_set_csdiag(diag_CS)
+   type(g_diag_ctrl),  target,intent(in) :: diag_CS
+   g_tracer_com%diag_CS = diag_CS 
+  end subroutine g_tracer_set_csdiag
+ 
   subroutine g_tracer_get_diagCS(diag_CS)
     type(g_diag_ctrl),        pointer :: diag_CS
     
