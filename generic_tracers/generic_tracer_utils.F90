@@ -24,6 +24,7 @@ module g_tracer_utils
   use atmos_ocean_fluxes_mod, only: aof_set_coupler_flux
   use mpp_mod,           only: mpp_error, NOTE, WARNING, FATAL
   use mpp_mod,           only: mpp_pe, mpp_root_pe, mpp_sync
+  use mpp_domains_mod,  only : domain2D
   use time_manager_mod, only : time_type
 
   use field_manager_mod, only: fm_string_len, fm_path_name_len, fm_new_list, fm_change_list, fm_get_value
@@ -317,8 +318,8 @@ module g_tracer_utils
      type(g_diag_ctrl) :: diag_CS
      !Domain extents
      integer :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk
-
-     !Number of time levels 
+     type(domain2D) :: ocean_domain
+     !Number of time levels
      integer :: ntau
 
      !Diagnostic axes 
@@ -360,6 +361,8 @@ module g_tracer_utils
   public :: g_tracer_get_pointer
   public :: g_tracer_get_common
   public :: g_tracer_set_common
+  public :: g_tracer_get_domain
+  public :: g_tracer_set_domain
   public :: g_tracer_set_csdiag
   public :: g_tracer_set_files
   public :: g_tracer_coupler_set
@@ -1660,11 +1663,6 @@ contains
 
   end subroutine g_tracer_coupler_accumulate
 
-  subroutine g_tracer_set_csdiag(diag_CS)
-    type(g_diag_ctrl),  target,intent(in) :: diag_CS
-    g_tracer_com%diag_CS = diag_CS 
-  end subroutine g_tracer_set_csdiag
-
   ! <SUBROUTINE NAME="g_tracer_set_common">
   !  <OVERVIEW>
   !   Set common values and arrays for ALL generic tracers to share
@@ -1783,6 +1781,22 @@ contains
 
   end subroutine g_tracer_get_common
 
+  !Setter and getter for the ocean_domain property
+  subroutine g_tracer_set_domain(domain)
+    type(domain2D), target, intent(in) :: domain
+    g_tracer_com%ocean_domain=domain
+  end subroutine g_tracer_set_domain
+
+  subroutine g_tracer_get_domain(domain)
+    type(domain2D), pointer   :: domain
+    domain => g_tracer_com%ocean_domain
+  end subroutine g_tracer_get_domain
+
+  subroutine g_tracer_set_csdiag(diag_CS)
+   type(g_diag_ctrl),  target,intent(in) :: diag_CS
+   g_tracer_com%diag_CS = diag_CS 
+  end subroutine g_tracer_set_csdiag
+ 
   subroutine g_tracer_get_diagCS(diag_CS)
     type(g_diag_ctrl),        pointer :: diag_CS
     
