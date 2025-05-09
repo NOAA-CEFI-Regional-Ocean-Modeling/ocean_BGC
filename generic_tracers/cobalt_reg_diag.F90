@@ -1508,9 +1508,9 @@ module COBALT_reg_diag
     cobalt%id_jprod_cadet_calc = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-     ! << Fei Da, 202504: Add neritic CaCO3 burial
-    vardesc_temp = vardesc("jprod_cadet_neritic","Neritic CaCO3 production/burial",'h','L','s','mol kg-1 s-1','f')
-    cobalt%id_jprod_cadet_neritic = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+     ! << Add neritic CaCO3 burial effect on dissolved inorganic carbon (DIC)
+    vardesc_temp = vardesc("jdic_caco3_nerbur","Impact of neritic CaCO3 burial on DIC",'h','L','s','mol kg-1 s-1','f')
+    cobalt%id_jdic_caco3_nerbur = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
     ! >>
 
@@ -2790,9 +2790,9 @@ module COBALT_reg_diag
     cobalt%id_jprod_cadet_arag_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    ! << Fei Da, 202504: Add neritic CaCO3 burial
-    vardesc_temp = vardesc("jprod_cadet_neritic_150","Neritic CaCO3 production/burial integral in upper 150m",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_jprod_cadet_neritic_150 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    ! << Add neritic CaCO3 burial
+    vardesc_temp = vardesc("jdic_caco3_nerbur_150","Neritic CaCO3 burial integral in upper 150m",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_jdic_caco3_nerbur_150 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
     ! >>
 
