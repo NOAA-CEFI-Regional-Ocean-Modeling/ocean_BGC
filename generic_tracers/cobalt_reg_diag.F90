@@ -1931,47 +1931,47 @@ module COBALT_reg_diag
     !      To accomodate axesTi with the least amount of code modification we can set and check for an input array of size 1.
 
     vardesc_temp = vardesc("fcadet_arag","CaCO3 sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fcadet_arag = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_fcadet_arag = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fcadet_calc","CaCO3 sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fcadet_calc = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_fcadet_calc = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("ffedet","fedet sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_ffedet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_ffedet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("flithdet","lithdet sinking flux",'h','1','s','g m-2 s-1','f')
-    cobalt%id_flithdet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_flithdet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fndet","ndet sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fndet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_fndet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fpdet","pdet sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fpdet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_fpdet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fsidet","sidet sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fsidet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_fsidet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("ffetot","total Fe sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_ffetot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_ffetot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fntot","total N sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fntot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_fntot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fptot","total P sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fptot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_fptot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fsitot","total Si sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fsitot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+    cobalt%id_fsitot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !

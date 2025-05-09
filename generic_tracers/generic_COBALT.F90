@@ -4625,18 +4625,15 @@ contains
            rho_dzt_150(i,j) = rho_dzt(i,j,1)
            ! Sum the thickness of vertical layers from the surface down to 150m depth
            do k = 2, grid_kmt(i,j)  !{
-              if (rho_dzt_150(i,j) .lt. cobalt%Rho_0 * 150.0) then
-                 k_150 = k
-                 rho_dzt_150(i,j) = rho_dzt_150(i,j) + rho_dzt(i,j,k)
-              endif
+              if (rho_dzt_150(i,j) .ge. cobalt%Rho_0 * 150.0) exit
+              k_150 = k
+              rho_dzt_150(i,j) = rho_dzt_150(i,j) + rho_dzt(i,j,k)
            enddo  !} k
            ! Calculate the fractional thickness (depth ratio) of each layer, and distribute neritic burial into the 3-D field accordingly
            if (rho_dzt_150(i,j) /= 0.0) then
               thickness_ratio_150(i,j,1:k_150) = rho_dzt(i,j,1:k_150) / rho_dzt_150(i,j)
               cobalt%jdic_caco3_nerbur(i,j,1:k_150) = neritic_cased_burial(i,j) * thickness_ratio_150(i,j,1:k_150) / rho_dzt(i,j,1:k_150)
-              if (k_150 .lt. nk) then
-                 cobalt%jdic_caco3_nerbur(i,j,k_150+1:nk) = 0.0
-              endif
+              if (k_150 .lt. nk) cobalt%jdic_caco3_nerbur(i,j,k_150+1:nk) = 0.0
            else
               cobalt%jdic_caco3_nerbur(i,j,1:nk) = 0.0
            endif
@@ -5272,7 +5269,7 @@ contains
                     cobalt%jnamx(i,j,k) + cobalt%jno3_iceberg(i,j,k))*dt*grid_tmask(i,j,k)
          ! << Apply neritic CaCO3 burial contribution to net carbon source/sink term
          ! This term is zero when neritic burial is turned off (default: jdic_caco3_nerbur = 0.0)
-         net_srcc(i,j,k) = (-1) * cobalt%jdic_caco3_nerbur(i,j,k) *dt*grid_tmask(i,j,k)
+         net_srcc(i,j,k) = -cobalt%jdic_caco3_nerbur(i,j,k) *dt*grid_tmask(i,j,k)
          ! >>         
          pre_totc(i,j,k) = (cobalt%p_dic(i,j,k,tau) + &
                     cobalt%p_cadet_arag(i,j,k,tau) + cobalt%p_cadet_calc(i,j,k,tau) + &
@@ -6486,19 +6483,16 @@ contains
     ! Calculate the vertically integrated neritic CaCO3 burial within the top 150m
     if (cobalt%do_ner_ca_bur) then
        do j = jsc, jec ; do i = isc, iec !{
+          k_150 = 1
           rho_dzt_150(i,j) = rho_dzt(i,j,1)
           cobalt%jdic_caco3_nerbur_150(i,j) = cobalt%jdic_caco3_nerbur(i,j,1) * rho_dzt(i,j,1)
-       enddo; enddo !} i,j
 
-       do j = jsc, jec ; do i = isc, iec ; !{
-          k_150 = 1
           do k = 2, grid_kmt(i,j)  !{
-             if (rho_dzt_150(i,j) .lt. cobalt%Rho_0 * 150.0) then
-                k_150 = k
-                rho_dzt_150(i,j) = rho_dzt_150(i,j) + rho_dzt(i,j,k)
-                cobalt%jdic_caco3_nerbur_150(i,j) = cobalt%jdic_caco3_nerbur_150(i,j) + &
-                                                      cobalt%jdic_caco3_nerbur(i,j,k) * rho_dzt(i,j,k)
-             endif
+             if (rho_dzt_150(i,j) .ge. cobalt%Rho_0 * 150.0) exit
+             k_150 = k
+             rho_dzt_150(i,j) = rho_dzt_150(i,j) + rho_dzt(i,j,k)
+             cobalt%jdic_caco3_nerbur_150(i,j) = cobalt%jdic_caco3_nerbur_150(i,j) + &
+                                                 cobalt%jdic_caco3_nerbur(i,j,k) * rho_dzt(i,j,k)
           enddo  !} k
        enddo ; enddo  !} i,j 
     else
