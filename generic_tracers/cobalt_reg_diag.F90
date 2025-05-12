@@ -895,7 +895,7 @@ module COBALT_reg_diag
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("nlg_misc","large phytoplankton nitrogen from misc non-diatoms",&
-                           'h','L','s','mol kg-1','f') 
+                           'h','L','s','mol kg-1','f')
     cobalt%id_nlg_diatoms = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
@@ -2342,7 +2342,7 @@ module COBALT_reg_diag
     vardesc_temp = vardesc("grid_kmt_diag","The k-index of the bottom grid cell",'h','1','s','none','f')
     cobalt%id_grid_kmt_diag = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-    
+
     vardesc_temp = vardesc("rho_dzt_kmt_diag","The thickness of the bottom grid cell",'h','1','s','kg m-2','f')
     cobalt%id_rho_dzt_kmt_diag = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
@@ -4684,12 +4684,12 @@ module COBALT_reg_diag
 
     !DMS diagnostics
 
-     vardesc_temp = vardesc("dmsp_zeu","Euphotic layer depth for DMSP",'h','1','s','m','f')
-     cobalt%id_dmsp_zeu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+     vardesc_temp = vardesc("weight_dmsp_strat","Weight dmsp stratified model",'h','1','s','unitless','f')
+     cobalt%id_weight_dmsp_strat = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
           init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-     vardesc_temp = vardesc("dmsp_zeu_mld","Ratio of euphotic to mixed layer depth for DMSP",'h','1','s','m','f')
-     cobalt%id_dmsp_zeu_mld = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+     vardesc_temp = vardesc("dmsp_zeu","Euphotic layer depth for DMSP",'h','1','s','m','f')
+     cobalt%id_dmsp_zeu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
           init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
      vardesc_temp = vardesc("dmspos_mix","Surface concentration of DMSP using Mixed Model",'h','1','s','mol m-3','f')
@@ -4722,9 +4722,6 @@ module COBALT_reg_diag
 
      vardesc_temp = vardesc("dmsos","Surface concentration of DMS",'h','1','s','mol m-3','f')
      cobalt%id_dmsos     = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
-          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-     vardesc_temp = vardesc("frac_mixed_dmsp","Fraction using dmsp (mix) model",'h','1','s','unitless','f')
-     cobalt%id_frac_mixed_dmsp  = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
           init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
      vardesc_temp = vardesc("chl_dmsp_sfc","Chl used for DMSp calculation",'h','1','s','mg/m3','f')

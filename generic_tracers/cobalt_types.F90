@@ -27,7 +27,7 @@ module cobalt_types
   logical, public :: do_nh3_atm_ocean_exchange = .false.     ! If true, then do NH3 air-sea exchange
   !
   logical, public :: do_vertfill_pre = .false.
-  logical, public :: debug           = .false.             !< not use   
+  logical, public :: debug           = .false.             !< not use
   real, public    :: imbalance_tolerance=1.0e-10           !< the tolerance for non-conservation in C,N,P,Sc,Fe
 
   integer, public :: scheme_no3_nh4_lim = 2 !< Nitrate and ammonia limitation scheme options
@@ -38,8 +38,6 @@ module cobalt_types
                                             !! 1-default COBALT
                                             !! 2-update with no temperature dependence
                                             !! 3-update with temperature dependence
-
-  logical, public :: do_dms_diag = .false.  !< turn on dms diagnostics
 
   ! parameters
   integer, parameter, public :: NUM_PHYTO = 4 !< total number of phytoplankton groups
@@ -426,10 +424,12 @@ module cobalt_types
 
 
      !dms parameters
-     real  :: dms_alpha, dms_beta, dms_gamma
-     real  :: dmsp_strat_const, dmsp_strat_chl, dmsp_strat_chl2, dmsp_strat_sst, dmsp_strat_sst2
-     real  :: dmsp_mix_const, dmsp_mix_chl, dmsp_mix_zeu_over_mld
-     real  :: dmsp_min_chl, dmsp_max_chl
+     real    :: dms_alpha, dms_beta, dms_gamma
+     real    :: dmsp_strat_const, dmsp_strat_chl, dmsp_strat_chl2, dmsp_strat_sst, dmsp_strat_sst2
+     real    :: dmsp_mix_const, dmsp_mix_chl, dmsp_mix_zeu_over_mld
+     real    :: dmsp_min_chl, dmsp_max_chl
+     logical :: do_dms_diag
+     real    :: dmsp_zeu_over_mld_scale
 
      real  ::          &
           atm_co2_flux,     &
@@ -557,8 +557,8 @@ module cobalt_types
 
      !DMS diagnostics
      real, dimension(:,:), allocatable :: &
+          weight_dmsp_strat,&
           dmsp_zeu,&
-          dmsp_zeu_mld,&
           dmspos_mix,&
           dmspos_strat,&
           dmspos,&
@@ -567,7 +567,6 @@ module cobalt_types
           dmsos,&
           irr_aclm_sfc_dayint,&
           irr_sfc_dms, &
-          frac_mixed_dmsp, &
           chl_dmsp
 
      real, dimension(:,:,:), ALLOCATABLE ::  &
@@ -1241,7 +1240,7 @@ module cobalt_types
           id_f_po4_int_100  = -1, &
           id_f_sio4_int_100 = -1, &
           id_jo2_plus_btm   = -1, &
-          id_jo2            = -1, & 
+          id_jo2            = -1, &
           id_jalk_100       = -1, &
           id_jdic_100       = -1, &
           id_jdin_100       = -1, &
@@ -1448,8 +1447,8 @@ module cobalt_types
           id_fbddtdife          = -1, &
           id_fbddtdisi          = -1, &
           id_fbddtalk           = -1, &
+          id_weight_dmsp_strat  = -1, &
           id_dmsp_zeu           = -1, &
-          id_dmsp_zeu_mld       = -1, &
           id_dmspos_mix         = -1, &
           id_dmspos_strat       = -1, &
           id_dmspos             = -1, &
@@ -1458,7 +1457,6 @@ module cobalt_types
           id_dmsos              = -1, &
           id_irr_aclm_sfc_dayint= -1, &
           id_irr_sfc_dms        = -1, &
-          id_frac_mixed_dmsp    = -1, &
           id_chl_dmsp           = -1
 
 
