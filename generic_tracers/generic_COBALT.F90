@@ -1636,9 +1636,9 @@ contains
     ! (https://essd.copernicus.org/articles/15/5039/2023/essd-15-5039-2023.html)
     !
     ! Units for gamma_nitrif is dependent on the value of nitrif_b.
-    ! E.g., when nitrif_b = 1, then the units for gamma_nitrif become sec-1 only.
+    ! E.g., when nitrif_b = 2, the units for gamma_nitrif are mol N kg-1 day-1, but when nitrif_b = 1, they are day-1 only.
     call get_param(param_file, "generic_COBALT", "gamma_nitrif", cobalt%gamma_nitrif, "nitrification rate constant", &
-                   units="(moles kg)-1 sec-1", default= 3.5e6/(30.0*sperd))
+                   units="day-1 (mol N kg-1)-(nitrif_b-1)", default= 3.5e6/(30.0*sperd))
     call get_param(param_file, "generic_COBALT", "knh3_nitrif", cobalt%k_nh3_nitrif, "nitrification half-saturation", &
                    units="mol kg-1", default=3.1e-9)
     call get_param(param_file, "generic_COBALT", "irr_inhibit", cobalt%irr_inhibit, &
