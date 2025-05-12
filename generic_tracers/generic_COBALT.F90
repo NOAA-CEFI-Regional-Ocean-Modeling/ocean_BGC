@@ -1679,15 +1679,15 @@ contains
                   "gamma parameter for DMS (Gali)", units="N/A", default=0.0180)
 
     call get_param(param_file, "generic_COBALT", "dmsp_strat_const",  cobalt%dmsp_strat_const, &
-                  "const for dmsp stratifified Gali (2015) parameterization", units="N/A", default=1.7)
+                  "const for dmsp stratified Gali (2015) parameterization", units="N/A", default=1.7)
     call get_param(param_file, "generic_COBALT", "dmsp_strat_chl",  cobalt%dmsp_strat_chl, &
-                  "coefficient for chl in dmsp stratifified Gali (2015) parameterization", units="N/A", default=1.14)
+                  "coefficient for chl in dmsp stratified Gali (2015) parameterization", units="N/A", default=1.14)
     call get_param(param_file, "generic_COBALT", "dmsp_strat_chl2",  cobalt%dmsp_strat_chl2, &
-                  "coefficient for chl**2 in dmsp stratifified Gali (2015) parameterization", units="N/A", default=0.44)
+                  "coefficient for chl**2 in dmsp stratified Gali (2015) parameterization", units="N/A", default=0.44)
     call get_param(param_file, "generic_COBALT", "dmsp_strat_sst", cobalt%dmsp_strat_sst, &
-                  "coefficient for sst in dmsp stratifified Gali (2015) parameterization", units="N/A", default=0.063)
+                  "coefficient for sst in dmsp stratified Gali (2015) parameterization", units="N/A", default=0.063)
     call get_param(param_file, "generic_COBALT", "dmsp_strat_sst2",  cobalt%dmsp_strat_sst2, &
-                  "coefficient for sst**2 in dmsp stratifified Gali (2015) parameterization", units="N/A", default=-0.0024)
+                  "coefficient for sst**2 in dmsp stratified Gali (2015) parameterization", units="N/A", default=-0.0024)
 
     call get_param(param_file, "generic_COBALT", "dmsp_mix_const",  cobalt%dmsp_mix_const, &
                   "const for dmsp mixed Gali (2015) parameterization", units="N/A", default=1.74)
