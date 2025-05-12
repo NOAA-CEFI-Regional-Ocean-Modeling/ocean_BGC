@@ -385,9 +385,13 @@ contains
     call get_param(param_file, "generic_COBALT", "wsink",  cobalt%wsink, "wsink", units="m day-1", &
                    default= 100.0, scale = I_sperd ) ! s-1
 
+    ! Flag to enable fast-sinking detritus
+    call get_param(param_file, "generic_COBALT", "do_fastsinking", cobalt%do_fastsinking, &
+            "logical flag to enable fast-sinking N and P detritus from higher predators", default=.false.)
+
     call get_param(param_file, "generic_COBALT", "wsink_fast",  cobalt%wsink_fast, "wsink_fast", units="m day-1", &
                    default= 1000.0, scale = I_sperd ) ! s-1
-				   
+
     call get_param(param_file, "generic_COBALT", "ice_restart_file"   , cobalt%ice_restart_file   ,  &
             "ice_restart_file", default="ice_cobalt.res.nc")
     call get_param(param_file, "generic_COBALT", "ocean_restart_file" , cobalt%ocean_restart_file ,  &
