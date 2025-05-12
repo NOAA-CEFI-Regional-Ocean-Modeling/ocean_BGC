@@ -1636,8 +1636,11 @@ contains
     ! Nitrification as in Paulot et al., 2020 (https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019MS002026)
     ! Note: Values and functional form to be updated for ESM4.5 following the data compilation of Tang et al.,
     ! (https://essd.copernicus.org/articles/15/5039/2023/essd-15-5039-2023.html)
+    !
+    ! Units for gamma_nitrif is dependent on the value of nitrif_b.
+    ! E.g., when nitrif_b = 2, the units for gamma_nitrif are mol N kg-1 day-1, but when nitrif_b = 1, they are day-1 only.
     call get_param(param_file, "generic_COBALT", "gamma_nitrif", cobalt%gamma_nitrif, "nitrification rate constant", &
-                   units="(moles kg)-1 sec-1", default= 3.5e6/(30.0*sperd))
+                   units="day-1 (mol N kg-1)-(nitrif_b-1)", default= 3.5e6/(30.0*sperd))
     call get_param(param_file, "generic_COBALT", "knh3_nitrif", cobalt%k_nh3_nitrif, "nitrification half-saturation", &
                    units="mol kg-1", default=3.1e-9)
     call get_param(param_file, "generic_COBALT", "irr_inhibit", cobalt%irr_inhibit, &
@@ -1646,6 +1649,8 @@ contains
                    "oxygen half-saturation constant for nitrification", units="mol O2 kg-1", default= 3.9e-6)
     call get_param(param_file, "generic_COBALT", "o2_min_nit", cobalt%o2_min_nit, &
                    "Minimum oxygen level for nitrification", units="mol O2 kg-1", default=0.01e-6)
+    call get_param(param_file, "generic_COBALT", "nitrif_b", cobalt%nitrif_b, &
+                   "Ammonium exponent for nitrification", units="unitless", default=2.0)
     ! Anammox parameterization developed for ESM4.5.  This relatively new process is turned off in the default CEFI
     ! configuration by setting the rate constant to 0.  To activate, set this constant to 0.07 day-1.  Translated to
     ! sec-1 by the model
@@ -3802,7 +3807,7 @@ contains
              cobalt%juptake_nh4nitrif(i,j,k) = cobalt%gamma_nitrif * &
                   cobalt%f_nh3(i,j,k)/(cobalt%f_nh3(i,j,k)+cobalt%k_nh3_nitrif) *  &
                   (1.-cobalt%f_irr_aclm(i,j,k)/(cobalt%irr_inhibit+cobalt%f_irr_aclm(i,j,k))) * &
-                  cobalt%f_o2(i,j,k)/(cobalt%k_o2_nit+cobalt%f_o2(i,j,k)) * cobalt%f_nh4(i,j,k)**2
+                  cobalt%f_o2(i,j,k)/(cobalt%k_o2_nit+cobalt%f_o2(i,j,k)) * cobalt%f_nh4(i,j,k)**cobalt%nitrif_b
 
              if (scheme_nitrif .eq. 3) then
                 cobalt%juptake_nh4nitrif(i,j,k) = cobalt%juptake_nh4nitrif(i,j,k)*cobalt%expkT(i,j,k)
