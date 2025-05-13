@@ -72,7 +72,7 @@ contains
       call register_axis(fileobj,'y','y')
       call register_axis(fileobj,'lev',nk_cbed)
      ! register the restart variables
-      call register_restart_field(fileobj, "cbed_tr1", cbed%f_tr1, (/"x ","y ","lev "/))
+      call register_restart_field(fileobj, "cbed_tr1", cbed%f_tr1, (/"x","y","lev"/))
       call read_restart(fileobj)
     endif
     !!END read_restart code block
@@ -121,8 +121,9 @@ contains
        call register_axis(fileobj,'y','y')
        call register_axis(fileobj,'lev',nk_cbed)
       ! register the restart variables
-       call register_restart_field(fileobj, "cbed_tr1", cbed%f_tr1, (/"x ","y ","lev "/))
+       call register_restart_field(fileobj, "cbed_tr1", cbed%f_tr1, (/"x","y","lev"/))
        call write_restart(fileobj)
+       call close_file(fileobj)
     else
        call error_mesg( 'generic_CBED_end', 'Cannot open restarts for write.', FATAL )
     endif
@@ -155,10 +156,11 @@ contains
     real,    dimension(isc:iec,jsc:jec) :: rho_dzt_bot
 
     !Test that we can change the value of concentration field of a CBED tracer
-    do k=1,nk_cbed
-      cbed%f_tr1(:,:,k) = cbed%f_tr1(:,:,k) + 0.01 * k !fictitious dubious dynamics for testing purposes
-    enddo
-
+    do j = jsc, jec; do i = isc, iec  !{
+      do k=1,nk_cbed
+        if (grid_kmt(i,j) .gt. 0) cbed%f_tr1(i,j,k) = cbed%f_tr1(i,j,k) + 0.01 * k !fictitious dubious dynamics for testing purposes
+      enddo
+    enddo;enddo
     !!==================================================================================================================
     !!The rest of this subrouine that follows is a copy of the COBALT code.
     !!It must be replaced by CBED calculations for 'btf' fluxes which are "set" for COBALT at the end of this subroutine.
