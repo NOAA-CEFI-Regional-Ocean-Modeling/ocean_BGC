@@ -447,6 +447,7 @@ module cobalt_types
           gamma_ndet,       &
           gamma_nitrif,     &
           k_nh3_nitrif,     &
+          nitrif_b,         &
           gamma_sidet,      &
           gamma_srdon,      &
           gamma_srdop,      &
