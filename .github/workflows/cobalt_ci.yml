@@ -50,8 +50,8 @@ jobs:
       - name: Copy 1D modelinput dataset
         working-directory: ../CEFI-regional-MOM6/exps
         run: |
-          ln -fs /opt/datasets ./datasets/
-          ls -l -h ./datasets/
+          ln -fs /opt/datasets ./
+          ls -l -h ./datasets
           
       - name: Build mom6sis2-cobalt
         working-directory: ../CEFI-regional-MOM6/builds
