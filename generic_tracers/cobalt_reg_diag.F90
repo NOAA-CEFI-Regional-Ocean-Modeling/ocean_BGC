@@ -1953,8 +1953,10 @@ module COBALT_reg_diag
 
     !
     ! 3D sinking information
-    ! CAS: Note that passing 1D axesTi acts as a flag to save the tracers on the grid interface
-    !      as per the note from Niki in the Bling code where saving on interfaces was developed:
+    !
+    ! These were historically saved at the tracer points.  The sinking algorithm, however, uses an upwind scheme that
+    ! applies the fluxes at the grid interfaces.  We have thus added an option to save the fluxes at the interfaces
+    !
     ! Niki: The register_diag_field interface needs to be extended to take the MOM6 axes_grp as argument
     !      instead of this integer array axes_grp%handle
     !      Currently the actual MOM6 diag axes is chosen to be T or Tl based on the size of the axes argument, 2 or 3.
@@ -1962,48 +1964,96 @@ module COBALT_reg_diag
     !      This is not correct since axesTi and axesTl are both of size 3, likewise there are many axes of size 2.
     !      To accomodate axesTi with the least amount of code modification we can set and check for an input array of size 1.
 
-    vardesc_temp = vardesc("fcadet_arag","CaCO3 sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fcadet_arag = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("fcadet_arag","CaCO3 sinking flux (@tracer points)",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_fcadet_arag_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("fcadet_calc","CaCO3 sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fcadet_calc = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("fcadet_calc","CaCO3 sinking flux (@tracer points)",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_fcadet_calc_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("ffedet","fedet sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_ffedet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("ffedet","fedet sinking flux (@tracer points)",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_ffedet_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("flithdet","lithdet sinking flux",'h','1','s','g m-2 s-1','f')
-    cobalt%id_flithdet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("flithdet","lithdet sinking flux (@tracer points)",'h','1','s','g m-2 s-1','f')
+    cobalt%id_flithdet_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("fndet","ndet sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fndet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("fndet","ndet sinking flux (@tracer points)",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_fndet_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("fpdet","pdet sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fpdet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("fpdet","pdet sinking flux (@tracer points)",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_fpdet_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("fsidet","sidet sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fsidet = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("fsidet","sidet sinking flux (@tracer points)",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_fsidet_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("ffetot","total Fe sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_ffetot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("ffetot","total Fe sinking flux (@tracer points)",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_ffetot_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("fntot","total N sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fntot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("fntot","total N sinking flux (@tracer points)",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_fntot_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("fptot","total P sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fptot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("fptot","total P sinking flux (@tracer points)",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_fptot_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("fsitot","total Si sinking flux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_fsitot = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+    vardesc_temp = vardesc("fsitot","total Si sinking flux (@tracer points)",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_fsitot_tp = register_diag_field(package_name, vardesc_temp%name, axesTi(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    !
+    ! Option to save at interfaces: sinking is parameterized using an upwind scheme applied at the interfaces, so
+    ! these should yield flux metrics that are more consistent with the numerics.
+    !
+    vardesc_temp = vardesc("fcadet_arag_i","CaCO3 sinking flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_fcadet_arag_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("fcadet_calc_i","CaCO3 sinking flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_fcadet_calc_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("ffedet_i","fedet sinking flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_ffedet_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("flithdet_i","lithdet sinking flux (@interfaces)",'h','i','s','g m-2 s-1','f')
+    cobalt%id_flithdet_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("fndet_i","ndet sinking flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_fndet_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("fpdet_i","pdet sinking flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_fpdet_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("fsidet_i","sidet sinking flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_fsidet_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("ffetot_i","total Fe sinking flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_ffetot_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("fntot_i","total N sinking flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_fntot_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("fptot_i","total P sinking flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_fptot_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("fsitot_i","total Si sinking flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_fsitot_i = register_diag_field(package_name, vardesc_temp%name, axesTi(1:1),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !
@@ -3637,72 +3687,124 @@ module COBALT_reg_diag
          cmor_standard_name="tendency_of_mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water_due_to_biological_production", &
          cmor_long_name="Aragonite Production")
 
-! CHECK3:
-! 2017/08/04 jgj: CMOR requires positive down, area:areacello, volume:volcello
+    ! As with the native COBALT diagnostics, these fluxes were historically saved at the tracer points.  We have added
+    ! an option to save them at the interfaces to be more consistent with the upwind numerics.
     vardesc_temp = vardesc("expc_raw","Sinking Particulate Organic Carbon Flux",'h','L','s','mol m-2 s-1','f')
-    cobalt%id_expc = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
+    cobalt%id_expc_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expc", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_particulate_organic_matter_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Sinking Particulate Organic Carbon Flux")
 
     vardesc_temp = vardesc("expn_raw","Sinking Particulate Organic Nitrogen Flux",'h','L','s','mol m-2 s-1','f')
-    cobalt%id_expn = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
+    cobalt%id_expn_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expn", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_particulate_organic_nitrogen_in_sea_water", &
          cmor_long_name="Sinking Particulate Organic Nitrogen Flux")
 
     vardesc_temp = vardesc("expp_raw","Sinking Particulate Organic Phosphorus Flux",'h','L','s','mol m-2 s-1','f')
-    cobalt%id_expp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
+    cobalt%id_expp_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expp", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_particulate_organic_phosphorus_in_sea_water", &
          cmor_long_name="Sinking Particulate Organic Phosphorus Flux")
 
     vardesc_temp = vardesc("expfe_raw","Sinking Particulate Iron Flux",'h','L','s','mol m-2 s-1','f')
-    cobalt%id_expfe = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
+    cobalt%id_expfe_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expfe", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_particulate_iron_in_sea_water", &
          cmor_long_name="Sinking Particulate Iron Flux")
 
     vardesc_temp = vardesc("expsi_raw","Sinking Particulate Silicon Flux",'h','L','s','mol m-2 s-1','f')
-    cobalt%id_expsi = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
+    cobalt%id_expsi_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expsi", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_particulate_silicon_in_sea_water", &
          cmor_long_name="Sinking Particulate Silicon Flux")
 
     vardesc_temp = vardesc("expcalc_raw","Sinking Calcite Flux",'h','L','s','mol m-2 s-1','f')
-    cobalt%id_expcalc = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
+    cobalt%id_expcalc_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expcalc", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_calcite_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Sinking Calcite Flux")
 
     vardesc_temp = vardesc("exparag_raw","Sinking Aragonite Flux",'h','L','s','mol m-2 s-1','f')
-    cobalt%id_exparag = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
+    cobalt%id_exparag_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="exparag", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_aragonite_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Sinking Aragonite Flux")
 
-    vardesc_temp = vardesc("remoc_raw","Remineralization of Organic Carbon",'h','L','s','mol m-3 s-1','f')
+    !
+    ! Option to save at interfaces
+    !
+    vardesc_temp = vardesc("expc_raw_i","Sinking Particulate Organic Carbon Flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_expc_i = register_diag_field(package_name, vardesc_temp%name, axes(1:1), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expc_i", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_particulate_organic_matter_expressed_as_carbon_in_sea_water", &
+         cmor_long_name="Sinking Particulate Organic Carbon Flux")
+
+    vardesc_temp = vardesc("expn_raw_i","Sinking Particulate Organic Nitrogen Flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_expn_i = register_diag_field(package_name, vardesc_temp%name, axes(1:1), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expn_i", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_particulate_organic_nitrogen_in_sea_water", &
+         cmor_long_name="Sinking Particulate Organic Nitrogen Flux")
+         
+    vardesc_temp = vardesc("expp_raw_i","Sinking Particulate Organic Phosphorus Flux (@interfaces)",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_expp_i = register_diag_field(package_name, vardesc_temp%name, axes(1:1), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expp_i", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_particulate_organic_phosphorus_in_sea_water", &
+         cmor_long_name="Sinking Particulate Organic Phosphorus Flux")
+         
+    vardesc_temp = vardesc("expfe_raw_i","Sinking Particulate Iron Flux (@interfaces)",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_expfe_i = register_diag_field(package_name, vardesc_temp%name, axes(1:1), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expfe_i", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_particulate_iron_in_sea_water", &
+         cmor_long_name="Sinking Particulate Iron Flux")
+
+    vardesc_temp = vardesc("expsi_raw_i","Sinking Particulate Silicon Flux (@interfaces)",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_expsi_i = register_diag_field(package_name, vardesc_temp%name, axes(1:1), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expsi_i", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_particulate_silicon_in_sea_water", &
+         cmor_long_name="Sinking Particulate Silicon Flux")
+
+    vardesc_temp = vardesc("expcalc_raw_i","Sinking Calcite Flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_expcalc_i = register_diag_field(package_name, vardesc_temp%name, axes(1:1), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expcalc_i", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_calcite_expressed_as_carbon_in_sea_water", &
+         cmor_long_name="Sinking Calcite Flux")
+
+    vardesc_temp = vardesc("exparag_raw_i","Sinking Aragonite Flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
+    cobalt%id_exparag_i = register_diag_field(package_name, vardesc_temp%name, axes(1:1), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="exparag_i", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_aragonite_expressed_as_carbon_in_sea_water", &
+         cmor_long_name="Sinking Aragonite Flux")
+
+    vardesc_temp = vardesc("remoc_raw","Remineralization of Organic Carbon",'h','i','s','mol m-3 s-1','f')
     cobalt%id_remoc = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="remoc", cmor_units="mol m-3 s-1",                          &
          cmor_standard_name="tendency_of_mole_concentration_of_particulate_organic matter_expressed_as_carbon_in_sea_water_due_to_remineralization", &
          cmor_long_name="Remineralization of Organic Carbon")
 
-    vardesc_temp = vardesc("dcalc_raw","Calcite Dissolution",'h','L','s','mol m-3 s-1','f')
+    vardesc_temp = vardesc("dcalc_raw","Calcite Dissolution",'h','i','s','mol m-3 s-1','f')
     cobalt%id_dcalc = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="dcalc", cmor_units="mol m-3 s-1",                          &
          cmor_standard_name="tendency_of_mole_concentration_of_calcite_expressed_as_carbon_in_sea_water_due_to_dissolution", &
          cmor_long_name="Calcite Dissolution")
 
-    vardesc_temp = vardesc("darag_raw","Aragonite Dissolution",'h','L','s','mol m-3 s-1','f')
+    vardesc_temp = vardesc("darag_raw","Aragonite Dissolution",'h','i','s','mol m-3 s-1','f')
     cobalt%id_darag = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="darag", cmor_units="mol m-3 s-1",                          &
