@@ -141,6 +141,7 @@ contains
     nh3_kw(:,:) = iob_fluxes%bc(ind_nh3_flux)%field(ind_kw)%values(is:ie,js:je)
 
     do i = is,ie; do j=js,je
+      if(ocean_mask(i,j)) then
        !Input sst is in Kelvin. To avoid mistakes convert sst to C
        sstc = ocean_sst(i,j)-273.15
        pka_nh3(i,j)   = calc_pka_nh3(sstc,salt_surf(i,j))
@@ -153,6 +154,7 @@ contains
            /saltout_correction(101325./(1.e-3*rdgas*wtmair*(sstc+273.15)*nh3_alpha(i,j)),vb_nh3,salt_surf(i,j)) !mol/m3/atm  
        nh3_csurf(i,j) = nh4_surf(i,j)/(1.+10**(pka_nh3(i,j)-max(min(ph_surf(i,j),11.),3.))) !in mol/m3
        nh3_sc_no(i,j) = schmidt_w(sstc,salt_surf(i,j),vb_nh3)
+      endif
     enddo;enddo
 
     ocean_sfc_fields%bc(ind_nh3_flux)%field(ind_sc_no)%values(is:ie,js:je) = nh3_sc_no
@@ -190,11 +192,13 @@ contains
     if (id_dms_kw>0) sent = send_data(id_dms_kw, dms_kw, ocean_time, mask=ocean_mask)
 
     do i = is,ie; do j=js,je
+      if(ocean_mask(i,j)) then
        !Note that COBALT uses sst in C. For consistency. To avoid mistakes, I am converting sst to C
        dms_alpha(i,j) = 0.537023e3*exp(3500*(1/ocean_sst(i,j)-1/298.15)) !M/atm
        dms_alpha(i,j) = dms_alpha(i,j)&
        /saltout_correction(101325./(1.e-3*rdgas*wtmair*ocean_sst(i,j)*dms_alpha(i,j)),vb_dms,salt_surf(i,j)) !mol/m3/atm 
        dms_sc_no(i,j) = schmidt_dms(ocean_sst(i,j)-273.15)
+      endif
     enddo;enddo
 
     ocean_sfc_fields%bc(ind_dms_flux)%field(ind_sc_no)%values(is:ie,js:je) = dms_sc_no
