@@ -12,17 +12,18 @@ module generic_coupler_fluxes
   implicit none ; private
   real, parameter :: WTMDMS = 62.13e-3
   real, parameter :: vb_nh3 = 25, vb_dms = 77
-  
+
   integer :: id_nh3_sc_no=-1, id_nh3_csurf=-1, id_nh3_alpha=-1, id_nh3_kw=-1
   integer :: id_dms_sc_no=-1, id_dms_csurf=-1, id_dms_alpha=-1, id_dms_kw=-1
   integer :: id_phos=-1, id_sos=-1, id_pka_nh3=-1, id_nh4_csurf=-1, id_tos=-1
 
-  integer :: ind_nh3_flux = 0 
+  integer :: ind_nh3_flux = 0
   integer :: ind_dms_flux = 0
-  
+
   public generic_coupler_fluxes_init
   public generic_coupler_fluxes_set_iob
-  
+  public calc_nh3_flux_property
+  public calc_pka_nh3, schmidt_w
 contains
 
   subroutine generic_coupler_fluxes_init(ocean_time, axt, is,ie,js,je, do_nh3, do_dms)
@@ -46,7 +47,7 @@ contains
                                  'K', missing_value=1.e10)
 
   end subroutine generic_coupler_fluxes_init
-    
+
   subroutine generic_coupler_fluxes_init_nh3(ocean_time, axt, is,ie,js,je)
     type(time_type),          intent(in) :: ocean_time
     integer, dimension(2),    intent(in) :: axt
@@ -54,7 +55,7 @@ contains
 
     !set ocean/atm fluxes for nh3
     ind_nh3_flux = aof_set_coupler_flux('nh3_flux',      &
-         flux_type         = 'air_sea_gas_flux_generic', &  
+         flux_type         = 'air_sea_gas_flux_generic', &
          implementation    = 'johnson',                  &
          mol_wt            = WTMN,                       &
          param             = (/ 17., vb_nh3 /),             &
@@ -82,7 +83,7 @@ contains
 
     !set ocean/atm fluxes for dms
     ind_dms_flux = aof_set_coupler_flux('dms_flux',      &
-         flux_type         = 'air_sea_gas_flux_generic', &  
+         flux_type         = 'air_sea_gas_flux_generic', &
          implementation    = 'johnson',                  &
          mol_wt            = WTMDMS,                       &
          param             = (/ WTMDMS*1e3, vb_dms /),             &
@@ -99,10 +100,10 @@ contains
     id_dms_kw = register_diag_field('ocean_model', 'dms_kw',axt, ocean_time, 'DMS Gas Exchange piston velocity',&
                                        'm/sec', missing_value=1.e10)
 
-  end subroutine generic_coupler_fluxes_init_dms  
+  end subroutine generic_coupler_fluxes_init_dms
 
   subroutine generic_coupler_fluxes_set_iob(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
-                                            do_nh3, do_dms, dms_surf,nh4_surf,ph_surf,salt_surf,& 
+                                            do_nh3, do_dms, dms_surf,nh4_surf,ph_surf,salt_surf,&
                                             ocean_sfc_fields,iob_fluxes)
     type(time_type),          intent(in)    :: ocean_time
     integer,                  intent(in)    :: is, ie, js, je
@@ -111,18 +112,18 @@ contains
     logical,                  intent(in)    :: do_nh3, do_dms   !< is there nh3 and/or dms exchange
     real, dimension(is:,js:), intent(in)    :: dms_surf,nh4_surf,ph_surf,salt_surf !< surface concentrations
     type(coupler_2d_bc_type), intent(inout) :: ocean_sfc_fields !< ocean_public_type%fields
-    type(coupler_2d_bc_type), intent(in)    :: iob_fluxes       !< ice_ocean_boundary_type%fluxes  
+    type(coupler_2d_bc_type), intent(in)    :: iob_fluxes       !< ice_ocean_boundary_type%fluxes
 
     if(do_nh3) call generic_coupler_fluxes_set_iob_nh3(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
-                                                        nh4_surf,ph_surf,salt_surf,& 
+                                                        nh4_surf,ph_surf,salt_surf,&
                                                         ocean_sfc_fields,iob_fluxes)
     if(do_dms) call generic_coupler_fluxes_set_iob_dms(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
-                                                        dms_surf,ph_surf,salt_surf,& 
+                                                        dms_surf,ph_surf,salt_surf,&
                                                         ocean_sfc_fields,iob_fluxes)
   end subroutine generic_coupler_fluxes_set_iob
-  
+
   subroutine generic_coupler_fluxes_set_iob_nh3(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
-                                                 nh4_surf,ph_surf,salt_surf,& 
+                                                 nh4_surf,ph_surf,salt_surf,&
                                                  ocean_sfc_fields,iob_fluxes)
     type(time_type),          intent(in)    :: ocean_time
     integer,                  intent(in)    :: is, ie, js, je
@@ -151,7 +152,7 @@ contains
        nh3_alpha(i,j) = 5.76e1*exp(13.79*tr-5.39*ltr)*997.
 
        nh3_alpha(i,j) = nh3_alpha(i,j)&
-           /saltout_correction(101325./(1.e-3*rdgas*wtmair*(sstc+273.15)*nh3_alpha(i,j)),vb_nh3,salt_surf(i,j)) !mol/m3/atm  
+           /saltout_correction(101325./(1.e-3*rdgas*wtmair*(sstc+273.15)*nh3_alpha(i,j)),vb_nh3,salt_surf(i,j)) !mol/m3/atm
        nh3_csurf(i,j) = nh4_surf(i,j)/(1.+10**(pka_nh3(i,j)-max(min(ph_surf(i,j),11.),3.))) !in mol/m3
        nh3_sc_no(i,j) = schmidt_w(sstc,salt_surf(i,j),vb_nh3)
       endif
@@ -160,13 +161,13 @@ contains
     ocean_sfc_fields%bc(ind_nh3_flux)%field(ind_sc_no)%values(is:ie,js:je) = nh3_sc_no
     ocean_sfc_fields%bc(ind_nh3_flux)%field(ind_csurf)%values(is:ie,js:je) = nh3_csurf
     ocean_sfc_fields%bc(ind_nh3_flux)%field(ind_alpha)%values(is:ie,js:je) = nh3_alpha
-    
+
     if (id_nh3_sc_no>0) sent = send_data(id_nh3_sc_no, nh3_sc_no, ocean_time, mask=ocean_mask)
     if (id_nh3_csurf>0) sent = send_data(id_nh3_csurf, nh3_csurf, ocean_time, mask=ocean_mask)
-    if (id_nh4_csurf>0) sent = send_data(id_nh4_csurf, nh4_surf, ocean_time, mask=ocean_mask)            
+    if (id_nh4_csurf>0) sent = send_data(id_nh4_csurf, nh4_surf, ocean_time, mask=ocean_mask)
     if (id_sos>0) sent = send_data(id_sos, salt_surf, ocean_time, mask=ocean_mask)
     if (id_tos>0) sent = send_data(id_tos, ocean_sst, ocean_time, mask=ocean_mask)
-    if (id_phos>0) sent = send_data(id_phos, ph_surf, ocean_time, mask=ocean_mask)                        
+    if (id_phos>0) sent = send_data(id_phos, ph_surf, ocean_time, mask=ocean_mask)
     if (id_nh3_alpha>0) sent = send_data(id_nh3_alpha, nh3_alpha, ocean_time, mask=ocean_mask)
     if (id_pka_nh3>0)   sent = send_data(id_pka_nh3,   pka_nh3, ocean_time, mask=ocean_mask)
     if (id_nh3_kw>0) sent = send_data(id_nh3_kw, nh3_kw, ocean_time, mask=ocean_mask)
@@ -174,7 +175,7 @@ contains
   end subroutine generic_coupler_fluxes_set_iob_nh3
 
   subroutine generic_coupler_fluxes_set_iob_dms(ocean_time, is, ie, js, je, ocean_sst, ocean_mask,&
-       dms_surf,ph_surf,salt_surf,& 
+       dms_surf,ph_surf,salt_surf,&
        ocean_sfc_fields,iob_fluxes)
     type(time_type),          intent(in)    :: ocean_time
     integer,                  intent(in)    :: is, ie, js, je
@@ -196,7 +197,7 @@ contains
        !Note that COBALT uses sst in C. For consistency. To avoid mistakes, I am converting sst to C
        dms_alpha(i,j) = 0.537023e3*exp(3500*(1/ocean_sst(i,j)-1/298.15)) !M/atm
        dms_alpha(i,j) = dms_alpha(i,j)&
-       /saltout_correction(101325./(1.e-3*rdgas*wtmair*ocean_sst(i,j)*dms_alpha(i,j)),vb_dms,salt_surf(i,j)) !mol/m3/atm 
+       /saltout_correction(101325./(1.e-3*rdgas*wtmair*ocean_sst(i,j)*dms_alpha(i,j)),vb_dms,salt_surf(i,j)) !mol/m3/atm
        dms_sc_no(i,j) = schmidt_dms(ocean_sst(i,j)-273.15)
       endif
     enddo;enddo
@@ -210,8 +211,34 @@ contains
     if (id_dms_alpha>0) sent = send_data(id_dms_alpha, dms_alpha, ocean_time, mask=ocean_mask)
 
   end subroutine generic_coupler_fluxes_set_iob_dms
-  
-!f1p
+
+  subroutine calc_nh3_flux_property(tc,salt,f_nh4,pH,rho_0,nh3_alpha,nh3_csurf,pnh3_csurf,pKa_nh3)
+
+    real, intent(in)  :: tc,salt,f_nh4,pH,rho_0
+    real, intent(out) :: nh3_alpha, nh3_csurf, pnh3_csurf
+    real, intent(out), optional :: pKa_nh3
+
+    real :: tr, ltr
+
+    !henry's constant is from Mark Jacobson's book "Fundamental of Atmospheric Modeling".
+    !I used this expression to be consistent with the cloud chemistry module
+    !the units are in mol/kg/atm. However it's probably in mol/kg(pure water)/atm
+    !the density of pure water is ~997 kg/m3 (25C). alpha will then be scaled by the density of seawater, which for some reason I don't quite understand is always set to 1035.
+    !to be consistent, I am scaling the Jacobson's number by 997/1035. This decreases the solubility of NH3 by less than 4%. For references, Sander's estimate is alpha(298.15)=0.59*101.63=59.96 mol/kg(pure water)/atm, about 4% greater than Jacobson's.
+
+    pka_nh3        = calc_pka_nh3(tc,salt)
+    tr             = 298.15/(tc+273.15)-1.
+    ltr            = -tr+log(298.15/(tc+273.15))
+
+    nh3_alpha      = 5.76e1*exp(13.79*tr-5.39*ltr)*997.
+
+    nh3_alpha      = nh3_alpha/saltout_correction(101325./(1.e-3*rdgas*wtmair*(tc+273.15)*nh3_alpha),vb_nh3,salt)* 1./rho_0 !mol/kg/atm
+
+    nh3_csurf      = f_nh4/(1.+10**(pka_nh3-pH))
+    pnh3_csurf     = nh3_csurf/nh3_alpha*1.e6 !in uatm
+
+  end subroutine calc_nh3_flux_property
+
  function calc_pka_nh3(tc,salt) result(pka)
     !temperature, salinity
     real, intent(in) :: tc,salt
@@ -230,7 +257,7 @@ contains
     real, parameter :: a8=-0.0229021
     real, parameter :: a9=-5.521278e-7
     real, parameter :: a10=1.95413e-4
-    
+
     tk=tc+273.15;
     pka     = 9.244605-2729.33*(1/298.15-1./tk)  &
             + (a1+a2/tk+a3*tk**2.)*salt**0.5       &
@@ -243,28 +270,28 @@ contains
 !salting out correction for solubility (Johnson 2010, Ocean Science)
   function saltout_correction(kh,vb,salt) result(C)
     real, intent(in) :: Kh,vb,salt
-    real*8 :: T,log_kh,theta2    
+    real*8 :: T,log_kh,theta2
     real :: theta,C
     log_kh = log(kh)
     theta = (7.3353282561828962e-04 + (3.3961477466551352e-05*log_kh) + (-2.4088830102075734e-06*(log_kh)**2) + (1.5711393120941302e-07*(log_kh)**3))*log(vb)
-    C = 10**(theta*salt)    
+    C = 10**(theta*salt)
   end function saltout_correction
 
   !schmidt number in water
   function schmidt_w(t,s,vb,rho) result(sc)
-    !schmidt number of the gas in the water                                                    
+    !schmidt number of the gas in the water
     real, intent(in) :: t,s,vb
     real, intent(in), optional :: rho
     real             :: sc
 
-    sc=2.*v_sw(t,s,rho)/(d_hm(t,s,vb)+d_wc(t,s,vb))    
+    sc=2.*v_sw(t,s,rho)/(d_hm(t,s,vb)+d_wc(t,s,vb))
   end function schmidt_w
 
   function schmidt_dms(sstc) result(S)
     !Wanninkhof (2014)
     real             :: S
-    real, intent(in) :: sstc    
-    S = 2855.7 + (-177.63 + (6.0438 + (-0.11645 + 0.00094743 * sstc ) * sstc ) * sstc ) * sstc 
+    real, intent(in) :: sstc
+    S = 2855.7 + (-177.63 + (6.0438 + (-0.11645 + 0.00094743 * sstc ) * sstc ) * sstc ) * sstc
   end function schmidt_dms
 
   function v_sw(t,s,rho) result(v)
@@ -281,8 +308,8 @@ contains
   end function  v_sw
 
   function p_sw(t,s) result(p)
-    !density of sea water 
-    !millero and poisson (1981)                                                               
+    !density of sea water
+    !millero and poisson (1981)
     real, intent(in) :: t,s
     real             :: p, a, b, c
     a = 0.824493-(4.0899e-3*t)+(7.6438e-5*(t**2))-(8.2467e-7*(t**3))+(5.3875e-9*(t**4))
@@ -305,17 +332,17 @@ contains
   function d_hm(t,s,vb) result(d)
     real, intent(in) :: t,s,vb
     real             :: d, epsilonstar
-    ! hayduk 1982                                                                              
+    ! hayduk 1982
     epsilonstar = (9.58/vb)-1.12
     d=1.25e-8*(vb**(-0.19)-0.292)*((t+273.15)**(1.52))*((n_sw(t,s))**epsilonstar)
   end function d_hm
 
   function n_sw(t,s) result(n)
-    !dynamic viscosity                                   
-    !laliberte 2007                                      
+    !dynamic viscosity
+    !laliberte 2007
     real :: n
     real, intent(in) :: t,s !temperature (c) and salinity
-    !salt in the order nacl,kcl,cacl2,mgcl2,mgso4      
+    !salt in the order nacl,kcl,cacl2,mgcl2,mgso4
     real, parameter :: mass_fraction(5) = (/ 0.798,0.022,0.033,0.047,0.1 /)
     real, parameter :: v1(5) = (/ 16.22 , 6.4883, 32.028, 24.032, 72.269/)
     real, parameter :: v2(5) = (/ 1.3229 , 1.3175, 0.78792, 2.2694, 2.2238/)
