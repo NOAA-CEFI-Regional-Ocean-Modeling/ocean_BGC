@@ -2487,13 +2487,13 @@ contains
 
      call g_tracer_add(tracer_list,package_name,&
          name       = 'pcmlim_aclm_nlg',    &
-         longname   = 'Nut*Temp Lim memory for photosynthesis, large phytoplankton', &
+         longname   = 'Nut*Temp Lim memory, large phytoplankton', &
          units      = 'dimensionless',         &
          prog       = .false.              )
 
      call g_tracer_add(tracer_list,package_name,&
          name       = 'pcmlim_aclm_ndi',    &
-         longname   = 'Nut*Temp Lim memory for photosynthesis, diazotroph', &
+         longname   = 'Nut*Temp Lim memory, diazotroph', &
          units      = 'dimensionless',         &
          prog       = .false.              )
 
@@ -3444,7 +3444,8 @@ contains
        tmp_irrad_aclm = 0.0  ! integrates the irradiance in the surface photoacclimation layer
        tmp_zaclm = 0.0       ! tracks depth of top of the curent layer photoacclimation layer calcs
        do n = 1,NUM_PHYTO
-         phyto(n)%tmp_pcmlim_aclm_ML = 0.0  ! Tracks the temp*nutrient limitation of light-saturated photosynthesis
+         ! Tracks the temp*nutrient limitation of light-saturated photosynthesis in the mixed layer 
+         phyto(n)%tmp_pcmlim_aclm_ML = 0.0
        enddo
        ! Define the irradiance threshold for a "deep" mixed layer for photoacclimation
        irrad_aclm_thresh = frac_sfc_irrad_aclm*cobalt%f_irr_aclm_sfc(i,j,1)
@@ -3584,12 +3585,6 @@ contains
           ! Loop through the ecotypes to find the most competitive.  This is essentially a Geider growth
           ! rate calculation for each ecotype using the acclimation irradiance.  
           mu_opt = -999.0 ! arbitrarily low value
-          ! option to do older photoacclimation approach where irradiance was time-filtered but not the nutrient and
-          ! temperature limitations.  This option can lead to significant diurnal chlorophyll variability in high
-          ! light, low nutrient regions
-          if (cobalt%photoaclm_opt.eq.0) then
-            phyto(n)%f_pcmlim_aclm(i,j,k) = phyto(n)%liebig_lim(i,j,k)*cobalt%expkT(i,j,k)
-          endif 
           do m = 1,cobalt%numlightadapt
             ! since we test the low and high, divide by m-1 so first step is the low and last is the high
             alpha_step = (phyto(n)%alpha_ll - phyto(n)%alpha_hl)/(real(cobalt%numlightadapt,8)-1.0)
@@ -3597,6 +3592,12 @@ contains
             P_C_max_step = (phyto(n)%P_C_max_hl - phyto(n)%P_C_max_ll)/(real(cobalt%numlightadapt,8)-1.0)
             P_C_max_temp = phyto(n)%P_C_max_hl - (real(m,8)-1.0)*P_C_max_step
             P_C_m_aclm = max(P_C_max_temp*phyto(n)%f_pcmlim_aclm(i,j,k),epsln)
+            ! option to do older photoacclimation approach where irradiance was time-filtered but not the nutrient and
+            ! temperature limitations.  This option can lead to significant diurnal chlorophyll variability in high
+            ! light, low nutrient regions
+            if (cobalt%photoaclm_opt.eq.0) then 
+              P_C_m_aclm =max(phyto(n)%liebig_lim(i,j,k)*P_C_max_temp*cobalt%expkT(i,j,k),epsln)
+            endif
             theta_temp = max(phyto(n)%thetamax/(1.0 + phyto(n)%thetamax*alpha_temp*cobalt%f_irr_aclm(i,j,k)*0.5/P_C_m_aclm), &
                              cobalt%thetamin)
             irrlim_temp = 1.0-exp(-alpha_temp*cobalt%f_irr_aclm(i,j,k)*theta_temp/P_C_m_aclm)
