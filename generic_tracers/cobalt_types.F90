@@ -418,7 +418,11 @@ module cobalt_types
           do_fnso4red_sed,  &     ! Simulate O2 deficit and alkalinity flux from implied sedimentary sulfate reduction
           cased_steady,     &     ! steady state approximation for cased
           recalculate_carbon, &   ! true means C system is resolved for diagnostic
-          tracer_debug
+          tracer_debug, &
+          ! << Options for neritic CaCO3 burial and enhanced CaCO3 dissolution
+          do_ner_ca_bur, &        ! Apply neritic CaCO3 burial from O'Mara & Dunne (2019)
+          do_resp_ca_diss         ! Apply enhanced CaCO3 dissolution
+          ! >>
      real  ::          &
           min_thickness       ! minimum thickness of a layer that will be checked for source/sink imbalances
 
@@ -436,6 +440,10 @@ module cobalt_types
           c_2_n,            &
           ca_2_n_arag,      &
           ca_2_n_calc,      &
+          ! << Enhanced CaCO3 dissolution due to local undersaturation around sinking particles
+          resp_ca_2_n_arag, &
+          resp_ca_2_n_calc, &
+          ! >>
           caco3_sat_max,    &
           doc_background,   &
           fe_2_n_upt_fac,   &
@@ -462,6 +470,7 @@ module cobalt_types
           gamma_ndet,       &
           gamma_nitrif,     &
           k_nh3_nitrif,     &
+          nitrif_b,         &
           gamma_sidet,      &
           gamma_srdon,      &
           gamma_srdop,      &
@@ -689,6 +698,8 @@ module cobalt_types
           jprod_lithdet,&
           jprod_cadet_arag,&
           jprod_cadet_calc,&
+! << Add neritic CaCO3 burial >>
+          jdic_caco3_nerbur,&
           jprod_nh4,&
           jprod_nh4_plus_btm,&
           jprod_po4,&
@@ -813,6 +824,8 @@ module cobalt_types
           jprod_sidet_100,&
           jprod_cadet_calc_100,&
           jprod_cadet_arag_100,&
+! << Add neritic CaCO3 burial >>
+          jdic_caco3_nerbur_150,&
           jprod_mesozoo_200, &
           jremin_ndet_100, &
           f_ndet_100, &
@@ -1003,6 +1016,8 @@ module cobalt_types
           id_jprod_lithdet = -1,       &
           id_jprod_cadet_arag = -1,    &
           id_jprod_cadet_calc = -1,    &
+! << Add neritic CaCO3 burial >>
+          id_jdic_caco3_nerbur = -1, &
           id_jprod_po4     = -1,       &
           id_jprod_nh4     = -1,       &
           id_jprod_nh4_plus_btm = -1,  &
@@ -1053,17 +1068,28 @@ module cobalt_types
           id_co2_alpha     = -1,       &
           id_nh3_csurf     = -1,       &
           id_nh3_alpha     = -1,       &
-          id_fcadet_arag   = -1,       &
-          id_fcadet_calc   = -1,       &
-          id_ffedet        = -1,       &
-          id_fndet         = -1,       &
-          id_fpdet         = -1,       &
-          id_fsidet        = -1,       &
-          id_fntot         = -1,       &
-          id_fptot         = -1,       &
-          id_fsitot        = -1,       &
-          id_ffetot        = -1,       &
-          id_flithdet      = -1,       &
+          id_fcadet_arag_tp = -1,      &
+          id_fcadet_calc_tp = -1,      &
+          id_ffedet_tp     = -1,       &
+          id_fndet_tp      = -1,       &
+          id_fpdet_tp      = -1,       &
+          id_fsidet_tp     = -1,       &
+          id_fntot_tp      = -1,       &
+          id_fptot_tp      = -1,       &
+          id_fsitot_tp     = -1,       &
+          id_ffetot_tp     = -1,       &
+          id_flithdet_tp   = -1,       &
+          id_fcadet_arag_i = -1,       &
+          id_fcadet_calc_i = -1,       &
+          id_ffedet_i      = -1,       &
+          id_fndet_i       = -1,       &
+          id_fpdet_i       = -1,       &
+          id_fsidet_i      = -1,       &
+          id_fntot_i       = -1,       &
+          id_fptot_i       = -1,       &
+          id_fsitot_i      = -1,       &
+          id_ffetot_i      = -1,       &
+          id_flithdet_i    = -1,       &
           id_fcadet_arag_btm = -1,     &
           id_fcadet_calc_btm = -1,     &
           id_ffedet_btm    = -1,       &
@@ -1200,6 +1226,8 @@ module cobalt_types
           id_jprod_sidet_100 = -1,     &
           id_jprod_cadet_calc_100 = -1, &
           id_jprod_cadet_arag_100 = -1, &
+! << Add neritic CaCO3 burial >>
+          id_jdic_caco3_nerbur_150 = -1, &
           id_jprod_mesozoo_200 = -1,   &
           id_daylength         = -1,   &
           id_jremin_ndet_100 = -1,     &
@@ -1306,13 +1334,20 @@ module cobalt_types
           id_pbsi           = -1, &
           id_parag          = -1, &
           id_pcalc          = -1, &
-          id_expc           = -1, &
-          id_expn           = -1, &
-          id_expp           = -1, &
-          id_expfe          = -1, &
-          id_expsi          = -1, &
-          id_expcalc        = -1, &
-          id_exparag        = -1, &
+          id_expc_tp        = -1, &
+          id_expn_tp        = -1, &
+          id_expp_tp        = -1, &
+          id_expfe_tp       = -1, &
+          id_expsi_tp       = -1, &
+          id_expcalc_tp     = -1, &
+          id_exparag_tp     = -1, &
+          id_expc_i         = -1, &
+          id_expn_i         = -1, &
+          id_expp_i         = -1, &
+          id_expfe_i        = -1, &
+          id_expsi_i        = -1, &
+          id_expcalc_i      = -1, &
+          id_exparag_i      = -1, &
           id_remoc          = -1, &
           id_dcalc          = -1, &
           id_darag          = -1, &
