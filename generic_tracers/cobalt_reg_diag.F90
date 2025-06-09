@@ -201,6 +201,38 @@ module COBALT_reg_diag
     phyto(SMALL)%id_f_mu_mem = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
+    vardesc_temp = vardesc("pcmlim_aclm_Di","Diaz. Phyto. acclimation nut*temp lim",'h','L','s','none','f')
+    phyto(DIAZO)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("pcmlim_aclm_Lg","Large Phyto. acclimation nut*temp lim",'h','L','s','none','f')
+    phyto(LARGE)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("pcmlim_aclm_Md","Medium Phyto. acclimation nut*temp lim",'h','L','s','none','f')
+    phyto(MEDIUM)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("pcmlim_aclm_Sm","Small Phyto. acclimation nut*temp lim" ,'h','L','s','none','f')
+    phyto(SMALL)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("pcmlim_aclm_inst_Di","Diaz. Phyto. instantaneous nut*temp lim",'h','L','s','none','f')
+    phyto(DIAZO)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("pcmlim_aclm_inst_Lg","Large Phyto. instantaneous nut*temp lim",'h','L','s','none','f')
+    phyto(LARGE)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("pcmlim_aclm_inst_Md","Medium Phyto. instantaneous nut*temp lim",'h','L','s','none','f')
+    phyto(MEDIUM)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("pcmlim_aclm_inst_Sm","Small Phyto. instantaneous nut*temp lim" ,'h','L','s','none','f')
+    phyto(SMALL)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
     vardesc_temp = vardesc("vmove_Di","Diaz. Phyto. movement",'h','L','s','m s-1','f')
     phyto(DIAZO)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
@@ -1727,13 +1759,13 @@ module COBALT_reg_diag
     cobalt%id_irr_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("irr_aclm_z","Acclimation irradiance with vertical structure preserved in mixed layer",'h','L','s','W m-2','f')
-    cobalt%id_irr_aclm_z = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("irr_aclm","Acclimation irradiance",'h','L','s','W m-2','f')
-    cobalt%id_irr_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+    !vardesc_temp = vardesc("irr_aclm_z","Acclimation irradiance with vertical structure preserved in mixed layer",'h','L','s','W m-2','f')
+    !cobalt%id_irr_aclm_z = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    !     init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+    !
+    !vardesc_temp = vardesc("irr_aclm","Acclimation irradiance",'h','L','s','W m-2','f')
+    !cobalt%id_irr_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    !     init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !
     ! Nitrification/Denitrification/Anammox diagnostics
@@ -2523,7 +2555,23 @@ module COBALT_reg_diag
     phyto(DIAZO)%id_sfc_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-   vardesc_temp = vardesc("sfc_mu_smp","Surface small phyto. Chl:C",'h','1','s','sec-1','f')
+    vardesc_temp = vardesc("sfc_pcmlim_aclm_smp","Surface small phyto. Temp*Nut Lim",'h','1','s','none','f')
+    phyto(SMALL)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("sfc_pcmlim_aclm_mdp","Surface medium phyto. Temp*Nut Lim",'h','1','s','none','f')
+    phyto(MEDIUM)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("sfc_pcmlim_aclm_lgp","Surface large phyto. Temp*Nut Lim",'h','1','s','none','f')
+    phyto(LARGE)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("sfc_pcmlim_aclm_di","Surface diazotroph Temp*Nut Lim",'h','1','s','none','f')
+    phyto(DIAZO)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("sfc_mu_smp","Surface small phyto. Chl:C",'h','1','s','sec-1','f')
     phyto(SMALL)%id_sfc_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 

@@ -1349,6 +1349,10 @@ module COBALT_send_diag
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
             used = g_send_data(phyto(n)%id_mu_mix, phyto(n)%mu_mix, &
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+            used = g_send_data(phyto(n)%id_f_pcmlim_aclm, phyto(n)%f_pcmlim_aclm, &
+              model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+            used = g_send_data(phyto(n)%id_pcmlim_aclm_inst, phyto(n)%pcmlim_aclm_inst, &
+              model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
             used = g_send_data(phyto(n)%id_stress_fac, phyto(n)%stress_fac, &
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
             ! Applied at lower interface
@@ -1664,6 +1668,8 @@ module COBALT_send_diag
             used = g_send_data(phyto(n)%id_sfc_irrlim, phyto(n)%irrlim(:,:,1), &
               model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
             used = g_send_data(phyto(n)%id_sfc_theta, phyto(n)%theta(:,:,1), &
+              model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+            used = g_send_data(phyto(n)%id_sfc_pcmlim_aclm, phyto(n)%f_pcmlim_aclm(:,:,1), &
               model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
             used = g_send_data(phyto(n)%id_sfc_mu, phyto(n)%mu(:,:,1), &
               model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
