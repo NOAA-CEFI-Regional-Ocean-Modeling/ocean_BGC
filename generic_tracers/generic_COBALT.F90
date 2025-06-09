@@ -120,7 +120,7 @@
 ! </REFERENCE>
 ! <DEVELOPER_NOTES>
 ! </DEVELOPER_NOTES>
-! </INFO>schmidt_w
+! </INFO>
 !----------------------------------------------------------------
 
 module generic_COBALT
@@ -3130,11 +3130,12 @@ contains
 
        do j = jsc, jec ; do i = isc, iec
 
-          call calc_nh3_flux_property(temp(i,j,1),salt(i,j,1),cobalt%f_nh4(i,j,1), &
-                                      phos_nh3_exchange(i,j),                              &
-                                      cobalt%Rho_0,                                        &
-                                      cobalt%nh3_alpha(i,j), cobalt%nh3_csurf(i,j), cobalt%pnh3_csurf(i,j), &
-                                      pka_nh3(i,j))
+          call calc_nh3_flux_property(temp(i,j,1),salt(i,j,1),cobalt%f_nh4(i,j,1),  &
+                                      phos_nh3_exchange(i,j),                       &
+                                      cobalt%Rho_0,                                 &
+                                      cobalt%nh3_alpha(i,j), cobalt%nh3_csurf(i,j), &
+                                      pnh3_csurf = cobalt%pnh3_csurf(i,j),          &
+                                      pka_nh3 = pka_nh3(i,j))
 
        enddo; enddo ; !
 
@@ -6719,10 +6720,11 @@ contains
 
           do j = jsc, jec ; do i = isc, iec
 
-             call calc_nh3_flux_property(SST(i,j),SSS(i,j),nh4_field(i,j,1,tau), &
+             call calc_nh3_flux_property(SST(i,j),SSS(i,j),                           &
+                                         nh4_field(i,j,1,tau),                        &
                                          phos_nh3_exchange(i,j),                      &
                                          cobalt%Rho_0,                                &
-                                         nh3_alpha(i,j), nh3_csurf(i,j), cobalt%pnh3_csurf(i,j))
+                                         nh3_alpha(i,j), nh3_csurf(i,j))
 
           enddo; enddo ; !
 
