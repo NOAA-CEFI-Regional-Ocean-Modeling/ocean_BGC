@@ -1964,15 +1964,28 @@ contains
     !      ndet_fast, pdet_fast, and associated btf tracers carried by
     !      the model even if fast-sinking detritus is turned off (e.g., if "do_fastsinking = .false.")
     !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'ndet_fast',       &
-         longname   = 'Fast sinking Detrital Nitrogen', &
-         flux_runoff= .false.,           &
-         units      = 'mol/kg',          &
-         prog       = .true.,            &
-         sink_rate  = cobalt%wsink_fast, &
-         btm_reservoir = .true.,   &
-         flux_param = (/ 1.0e-3 /) )
+    if(cobalt%do_fastsinking) then
+        call g_tracer_add(tracer_list,package_name,         &
+            name       = 'ndet_fast',                      &
+            longname   = 'Fast sinking Detrital Nitrogen', &
+            flux_runoff= .false.,                          &
+            units      = 'mol/kg',                         &
+            prog       = .true.,                           &
+            sink_rate  = cobalt%wsink_fast,                &
+            btm_reservoir = .true.,                        &
+            flux_param = (/ 1.0e-3 /) )
+    else
+        call g_tracer_add(tracer_list,package_name,         &
+            name       = 'ndet_fast',                      &
+            longname   = 'Fast sinking Detrital Nitrogen', &
+            flux_runoff= .false.,                          &
+            units      = 'mol/kg',                         &
+            prog       = .true.,                           &
+            sink_rate  = cobalt%wsink_fast,                &
+            btm_reservoir = .true.,                        &
+            flux_param = (/ 1.0e-3 /),                     &
+            init_value = 0.0                               )
+    endif
     !
     !    NDi (assumed to be facultative N2-fixers, with a variable N:P ratio
     !
@@ -2105,15 +2118,28 @@ contains
     !
     !    Pdet_fast (Fast sinking detrital/particulate Phosphorus)
     !
-    call g_tracer_add(tracer_list,package_name,         &
-         name       = 'pdet_fast',                      &
-         longname   = 'Fast sinking Detrital Phosphorus', &
-         flux_runoff= .false.,                          &
-         units      = 'mol/kg',                         &
-         prog       = .true.,                           &
-         sink_rate  = cobalt%wsink_fast,                &
-         btm_reservoir = .true.,                        &
-         flux_param = (/ 1.0e-3 /) )
+    if(cobalt%do_fastsinking) then
+        call g_tracer_add(tracer_list,package_name,         &
+            name       = 'pdet_fast',                      &
+            longname   = 'Fast sinking Detrital Phosphorus', &
+            flux_runoff= .false.,                          &
+            units      = 'mol/kg',                         &
+            prog       = .true.,                           &
+            sink_rate  = cobalt%wsink_fast,                &
+            btm_reservoir = .true.,                        &
+            flux_param = (/ 1.0e-3 /) )
+    else
+        call g_tracer_add(tracer_list,package_name,         &
+            name       = 'pdet_fast',                      &
+            longname   = 'Fast sinking Detrital Phosphorus', &
+            flux_runoff= .false.,                          &
+            units      = 'mol/kg',                         &
+            prog       = .true.,                           &
+            sink_rate  = cobalt%wsink_fast,                &
+            btm_reservoir = .true.,                        &
+            flux_param = (/ 1.0e-3 /),                     &
+            init_value = 0.0                               )
+    endif
     !
     !       PO4
     !
@@ -2348,23 +2374,39 @@ contains
          longname   = 'Fe flux to Sediments',   &
          units      = 'mol m-2 s-1',            &
          prog       = .false.                   )
-    !
-    !
-    !      ndet_fast_btf (Fast sinking N flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'ndet_fast_btf',            &
-         longname   = 'Fast sinking N flux to Sediments', &
-         units      = 'mol m-2 s-1',         &
-         prog       = .false.                )
-    !
-    !      pdet_fast_btf (Fast sinking P flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'pdet_fast_btf',            &
-         longname   = 'Fast sinking P flux to Sediments', &
-         units      = 'mol m-2 s-1',         &
-         prog       = .false.                )
+
+    if(cobalt%do_fastsinking) then
+	    !
+	    !  ndet_fast_btf (Fast sinking N flux to sediments)
+            !
+        call g_tracer_add(tracer_list,package_name,&
+            name       = 'ndet_fast_btf',            &
+            longname   = 'Fast sinking N flux to Sediments', &
+            units      = 'mol m-2 s-1',         &
+            prog       = .false.                )
+	    !
+	    !  pdet_fast_btf (Fast sinking P flux to sediments)
+            !
+        call g_tracer_add(tracer_list,package_name,&
+            name       = 'pdet_fast_btf',            &
+            longname   = 'Fast sinking P flux to Sediments', &
+            units      = 'mol m-2 s-1',         &
+            prog       = .false.                )
+	else
+	    !  set initial values to zero
+        call g_tracer_add(tracer_list,package_name,&
+            name       = 'ndet_fast_btf',            &
+            longname   = 'Fast sinking N flux to Sediments', &
+            units      = 'mol m-2 s-1',         &
+            prog       = .false.,               &
+            init_value = 0.0                    )
+        call g_tracer_add(tracer_list,package_name,&
+            name       = 'pdet_fast_btf',            &
+            longname   = 'Fast sinking P flux to Sediments', &
+            units      = 'mol m-2 s-1',         &
+            prog       = .false.,               &
+            init_value = 0.0                    )
+	endif
 	!
     !  add bottom flux for nsm_btf
     !
