@@ -158,7 +158,7 @@ module generic_COBALT
 
   use FMS_co2calc_mod, only : FMS_co2calc, CO2_dope_vector
 
-  use generic_coupler_fluxes, only :  calc_nh3_flux_property, calc_pka_nh3, schmidt_w
+  use ocean_atm_chemical_fluxes_utils, only :  get_nh3_ocean_atm_flux_property, calc_pka_nh3, schmidt_w_nh3
 
   implicit none ; private
 
@@ -3156,12 +3156,12 @@ contains
 
        do j = jsc, jec ; do i = isc, iec
 
-          call calc_nh3_flux_property(temp(i,j,1),salt(i,j,1),cobalt%f_nh4(i,j,1),  &
-                                      phos_nh3_exchange(i,j),                       &
-                                      cobalt%Rho_0,                                 &
-                                      cobalt%nh3_alpha(i,j), cobalt%nh3_csurf(i,j), &
-                                      pnh3_csurf = cobalt%pnh3_csurf(i,j),          &
-                                      pka_nh3 = pka_nh3(i,j))
+          call get_nh3_ocean_atm_flux_property(temp(i,j,1),salt(i,j,1),cobalt%f_nh4(i,j,1),  &
+                                     phos_nh3_exchange(i,j),                       &
+                                     cobalt%Rho_0,                                 &
+                                     cobalt%nh3_alpha(i,j), cobalt%nh3_csurf(i,j), &
+                                     pnh3_csurf = cobalt%pnh3_csurf(i,j),          &
+                                     pka_nh3 = pka_nh3(i,j))
 
        enddo; enddo ; !
 
@@ -6689,7 +6689,7 @@ contains
     allocate(co2_csurf(isd:ied, jsd:jed)); co2_csurf=0.0
     allocate(co2_sc_no(isd:ied, jsd:jed)); co2_sc_no=0.0
     allocate(nh3_alpha(isd:ied, jsd:jed)); nh3_alpha=0.0
-    allocate(nh3_csurf(isd:ied, jsd:jed)); nh3_csurf=0.0
+    allocate(nh3_csurf(isd:ied, jsd:jed)); nh3_csurf=0.0    
     allocate(nh3_sc_no(isd:ied, jsd:jed)); nh3_sc_no=0.0
     !for nh3 ph emission override
     allocate(phos_nh3_exchange(isd:ied, jsd:jed)); phos_nh3_exchange=0.0
@@ -6785,11 +6785,11 @@ contains
 
           do j = jsc, jec ; do i = isc, iec
 
-             call calc_nh3_flux_property(SST(i,j),SSS(i,j),                           &
-                                         nh4_field(i,j,1,tau),                        &
-                                         phos_nh3_exchange(i,j),                      &
-                                         cobalt%Rho_0,                                &
-                                         nh3_alpha(i,j), nh3_csurf(i,j))
+             call get_nh3_ocean_atm_flux_property(SST(i,j),SSS(i,j),                           &
+                                                  nh4_field(i,j,1,tau),                        &
+                                                  phos_nh3_exchange(i,j),                      &
+                                                  cobalt%Rho_0,                                &
+                                                  nh3_alpha(i,j), nh3_csurf(i,j))
 
           enddo; enddo ; !
 
@@ -6806,7 +6806,6 @@ contains
 
     call g_tracer_get_values(tracer_list,'o2','alpha', o2_alpha ,isd,jsd)
     call g_tracer_get_values(tracer_list,'o2','csurf', o2_csurf ,isd,jsd)
-
 
     do j=jsc,jec ; do i=isc,iec
        !This calculation needs an input of SST and SSS
@@ -6931,8 +6930,9 @@ contains
 
        do j=jsc,jec ; do i=isc,iec
        !nh3
-       !f1p
-          nh3_sc_no(i,j) = schmidt_w(sst(i,j),sss(i,j),vb_nh3)*grid_tmask(i,j,1)
+          !f1p
+          !This calculation could be moved to get_nh3_ocean_atm_flux_property
+          nh3_sc_no(i,j) = schmidt_w_nh3(SST(i,j),SSS(i,j))*grid_tmask(i,j,1)
           nh3_csurf(i,j) = nh3_csurf(i,j)*cobalt%Rho_0
           nh3_alpha(i,j) = nh3_alpha(i,j)*cobalt%Rho_0
        end do;end do
