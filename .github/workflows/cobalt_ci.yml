@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     # define container
     container:
-       image: clouden90/1d_mom6_cobalt:base
+       image: clouden90/1d_mom6_cobalt:withdata
        options: --user root   
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -47,12 +47,11 @@ jobs:
           cp -r ocean_BGC CEFI-regional-MOM6/src
           cd CEFI-regional-MOM6/src/ocean_BGC && git branch
 
-      - name: Download 1D modelinput dataset
+      - name: Copy 1D modelinput dataset
         working-directory: ../CEFI-regional-MOM6/exps
         run: |
-          echo "Download dataset..."
-          wget -q ftp://ftp.gfdl.noaa.gov/pub/Yi-cheng.Teng/1d_ci_datasets.tar.gz && tar -zxvf 1d_ci_datasets.tar.gz && rm -rf 1d_ci_datasets.tar.gz
-          ls -l -h
+          ln -fs /opt/datasets ./
+          ls -l -h ./datasets
           
       - name: Build mom6sis2-cobalt
         working-directory: ../CEFI-regional-MOM6/builds

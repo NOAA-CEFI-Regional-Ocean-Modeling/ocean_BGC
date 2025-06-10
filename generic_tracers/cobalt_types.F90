@@ -38,7 +38,6 @@ module cobalt_types
                                             !! 1-default COBALT
                                             !! 2-update with no temperature dependence
                                             !! 3-update with temperature dependence
-
   ! parameters      
   integer, parameter, public :: NUM_PHYTO = 4 !< total number of phytoplankton groups
   integer, parameter, public :: NUM_ZOO = 3   !< total number of zooplankton groups
@@ -98,6 +97,7 @@ module cobalt_types
      real ::  vir               !< Viral lysis loss coefficient (s-1 (mole N kg)-1)
      real ::  mort              !< mortality loss coefficient (s-1)
      real ::  exu               !< Maximum ingestion rate (dimensionless (fraction of NPP))
+     real ::  tmp_pcmlim_aclm_ML !< Variable for storing depth average nutrient*temperature limitation in mixed layer
      real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_100      !<
      real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_new_100  !<
      real, ALLOCATABLE, dimension(:,:)  ::  jprod_n_n2_100   !<
@@ -163,6 +163,8 @@ module cobalt_types
      real, ALLOCATABLE, dimension(:,:,:)  ::  mu             !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  f_mu_mem       !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  mu_mix         !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  f_pcmlim_aclm  !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  pcmlim_aclm_inst !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  nh4lim         !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  no3lim         !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  po4lim         !<
@@ -214,6 +216,8 @@ module cobalt_types
      integer ::  id_liebig_lim   = -1
      integer ::  id_mu           = -1
      integer ::  id_f_mu_mem     = -1
+     integer ::  id_f_pcmlim_aclm = -1
+     integer ::  id_pcmlim_aclm_inst = -1
      integer ::  id_mu_mix       = -1
      integer ::  id_nh4lim       = -1
      integer ::  id_no3lim       = -1
@@ -247,6 +251,7 @@ module cobalt_types
      integer ::  id_sfc_irrlim       = -1
      integer ::  id_sfc_theta        = -1
      integer ::  id_sfc_mu           = -1
+     integer ::  id_sfc_pcmlim_aclm  = -1
      integer ::  id_fn_btm           = -1
      integer ::  id_fp_btm           = -1
      integer ::  id_ffe_btm          = -1
@@ -413,7 +418,11 @@ module cobalt_types
           do_fastsinking,   &     ! Enable fast-sinking N and P detritus from higher trophic level predators
           cased_steady,     &     ! steady state approximation for cased
           recalculate_carbon, &   ! true means C system is resolved for diagnostic
-          tracer_debug
+          tracer_debug, &
+          ! << Options for neritic CaCO3 burial and enhanced CaCO3 dissolution
+          do_ner_ca_bur, &        ! Apply neritic CaCO3 burial from O'Mara & Dunne (2019)
+          do_resp_ca_diss         ! Apply enhanced CaCO3 dissolution
+          ! >>
      real  ::          &
           min_thickness       ! minimum thickness of a layer that will be checked for source/sink imbalances
 
@@ -422,6 +431,10 @@ module cobalt_types
           c_2_n,            &
           ca_2_n_arag,      &
           ca_2_n_calc,      &
+          ! << Enhanced CaCO3 dissolution due to local undersaturation around sinking particles
+          resp_ca_2_n_arag, &
+          resp_ca_2_n_calc, &
+          ! >>
           caco3_sat_max,    &
           doc_background,   &
           fe_2_n_upt_fac,   &
@@ -551,7 +564,6 @@ module cobalt_types
           f_dic,&
           f_fed,&
           f_fedet,&
-          f_fedet_fast,&
           f_ldon,&
           f_ldop,&
           f_lith,&
@@ -585,7 +597,6 @@ module cobalt_types
           f_cadet_arag_btf,&
           f_cadet_calc_btf,&
           f_fedet_btf, &
-          f_fedet_fast_btf, &
           f_lithdet_btf, &
           f_ndet_btf,&
           f_ndet_fast_btf,&
@@ -669,12 +680,13 @@ module cobalt_types
           jprod_srdop,&
           jprod_fed,&
           jprod_fedet,&
-          jprod_fedet_fast,&
           jprod_sidet,&
           jprod_sio4, &
           jprod_lithdet,&
           jprod_cadet_arag,&
           jprod_cadet_calc,&
+! << Add neritic CaCO3 burial >>
+          jdic_caco3_nerbur,&
           jprod_nh4,&
           jprod_nh4_plus_btm,&
           jprod_po4,&
@@ -696,7 +708,6 @@ module cobalt_types
           jremin_pdet,&
           jremin_pdet_fast,&
           jremin_fedet,&
-          jremin_fedet_fast,&
           jfe_ads,&
           jfe_coast,&
           jfe_iceberg,&
@@ -768,7 +779,6 @@ module cobalt_types
           fcadet_arag_btm,&
           fcadet_calc_btm,&
           ffedet_btm,&
-          ffedet_fast_btm,&
           flithdet_btm,&
           fpdet_btm,&
           fpdet_fast_btm,&
@@ -805,6 +815,8 @@ module cobalt_types
           jprod_sidet_100,&
           jprod_cadet_calc_100,&
           jprod_cadet_arag_100,&
+! << Add neritic CaCO3 burial >>
+          jdic_caco3_nerbur_150,&
           jprod_mesozoo_200, &
           jremin_ndet_100, &
           jremin_ndet_fast_100, &
@@ -822,7 +834,6 @@ module cobalt_types
           fcadet_calc_100, &
           fcadet_arag_100, &
           ffedet_100, &
-          ffedet_fast_100, &
           flithdet_100, &
           fntot_100, &
           fptot_100, &
@@ -900,7 +911,6 @@ module cobalt_types
           p_do14c,&
           p_fed,&
           p_fedet,&
-          p_fedet_fast,&
           p_fedi,&
           p_felg,&
           p_femd,&
@@ -965,6 +975,7 @@ module cobalt_types
           deltap_o2
 
      integer :: numlightadapt
+     integer :: photoaclm_opt
      character(len=fm_string_len)          :: file
      character(len=fm_string_len) :: ice_restart_file
      character(len=fm_string_len) :: ocean_restart_file,IC_file
@@ -999,12 +1010,13 @@ module cobalt_types
           id_jprod_srdop   = -1,       &
           id_jprod_fed     = -1,       &
           id_jprod_fedet   = -1,       &
-          id_jprod_fedet_fast = -1,       &
           id_jprod_sidet   = -1,       &
           id_jprod_sio4    = -1,       &
           id_jprod_lithdet = -1,       &
           id_jprod_cadet_arag = -1,    &
           id_jprod_cadet_calc = -1,    &
+! << Add neritic CaCO3 burial >>
+          id_jdic_caco3_nerbur = -1, &
           id_jprod_po4     = -1,       &
           id_jprod_nh4     = -1,       &
           id_jprod_nh4_plus_btm = -1,  &
@@ -1020,7 +1032,6 @@ module cobalt_types
           id_jremin_pdet   = -1,       &
           id_jremin_pdet_fast = -1,       &
           id_jremin_fedet  = -1,       &
-          id_jremin_fedet_fast = -1,       &
           id_jfe_ads       = -1,       &
           id_jfe_coast     = -1,       &
           id_jfe_iceberg   = -1,       &
@@ -1059,29 +1070,40 @@ module cobalt_types
           id_co2_alpha     = -1,       &
           id_nh3_csurf     = -1,       &
           id_nh3_alpha     = -1,       &
-          id_fcadet_arag   = -1,       &
-          id_fcadet_calc   = -1,       &
-          id_ffedet        = -1,       &
-          id_ffedet_fast   = -1,       &
-          id_fndet         = -1,       &
-          id_fndet_fast    = -1,       &
-          id_fpdet         = -1,       &
-          id_fpdet_fast    = -1,       &
-          id_fsidet        = -1,       &
-          id_fntot         = -1,       &
-          id_fptot         = -1,       &
-          id_fsitot        = -1,       &
-          id_ffetot        = -1,       &
-          id_flithdet      = -1,       &
+          id_fcadet_arag_tp = -1,      &
+          id_fcadet_calc_tp = -1,      &
+          id_ffedet_tp     = -1,       &
+          id_fndet_tp      = -1,       &
+          id_fndet_fast_tp = -1,       &
+          id_fpdet_tp      = -1,       &
+          id_fpdet_fast_tp = -1,       &
+          id_fsidet_tp     = -1,       &
+          id_fntot_tp      = -1,       &
+          id_fptot_tp      = -1,       &
+          id_fsitot_tp     = -1,       &
+          id_ffetot_tp     = -1,       &
+          id_flithdet_tp   = -1,       &
+          id_fcadet_arag_i = -1,       &
+          id_fcadet_calc_i = -1,       &
+          id_ffedet_i      = -1,       &
+          id_fndet_i       = -1,       &
+          id_fndet_fast_i  = -1,       &
+          id_fpdet_i       = -1,       &
+          id_fpdet_fast_i  = -1,       &
+          id_fsidet_i      = -1,       &
+          id_fntot_i       = -1,       &
+          id_fptot_i       = -1,       &
+          id_fsitot_i      = -1,       &
+          id_ffetot_i      = -1,       &
+          id_flithdet_i    = -1,       &
           id_fcadet_arag_btm = -1,     &
           id_fcadet_calc_btm = -1,     &
           id_ffedet_btm    = -1,       &
-          id_ffedet_fast_btm    = -1,       &
           id_flithdet_btm  = -1,       &
           id_fndet_btm     = -1,       &
-          id_fndet_fast_btm     = -1,       &
+          id_fndet_fast_btm = -1,       &
           id_fpdet_btm     = -1,       &
-          id_fpdet_fast_btm     = -1,       &
+          id_fpdet_fast_btm = -1,       &
           id_fsidet_btm    = -1,       &
           id_fntot_btm     = -1,       &
           id_fptot_btm     = -1,       &
@@ -1212,6 +1234,8 @@ module cobalt_types
           id_jprod_sidet_100 = -1,     &
           id_jprod_cadet_calc_100 = -1, &
           id_jprod_cadet_arag_100 = -1, &
+! << Add neritic CaCO3 burial >>
+          id_jdic_caco3_nerbur_150 = -1, &
           id_jprod_mesozoo_200 = -1,   &
           id_daylength         = -1,   &
           id_jremin_ndet_100 = -1,     &
@@ -1227,7 +1251,6 @@ module cobalt_types
           id_fpdet_100 = -1,           &
           id_fpdet_fast_100 = -1,           &
           id_ffedet_100 = -1,          &
-          id_ffedet_fast_100 = -1,          &
           id_fcadet_calc_100 = -1,     &
           id_fcadet_arag_100 = -1,     &
           id_flithdet_100 = -1,        &
@@ -1323,13 +1346,20 @@ module cobalt_types
           id_pbsi           = -1, &
           id_parag          = -1, &
           id_pcalc          = -1, &
-          id_expc           = -1, &
-          id_expn           = -1, &
-          id_expp           = -1, &
-          id_expfe          = -1, &
-          id_expsi          = -1, &
-          id_expcalc        = -1, &
-          id_exparag        = -1, &
+          id_expc_tp        = -1, &
+          id_expn_tp        = -1, &
+          id_expp_tp        = -1, &
+          id_expfe_tp       = -1, &
+          id_expsi_tp       = -1, &
+          id_expcalc_tp     = -1, &
+          id_exparag_tp     = -1, &
+          id_expc_i         = -1, &
+          id_expn_i         = -1, &
+          id_expp_i         = -1, &
+          id_expfe_i        = -1, &
+          id_expsi_i        = -1, &
+          id_expcalc_i      = -1, &
+          id_exparag_i      = -1, &
           id_remoc          = -1, &
           id_dcalc          = -1, &
           id_darag          = -1, &
