@@ -3151,7 +3151,7 @@ contains
 
     if (do_nh3_atm_ocean_exchange) then
        !to override pH used for ocean nh3 exchange
-       phos_nh3_exchange(isc:iec,jsc:jec) = log10(min(max(1e-11,cobalt%f_htotal(isc:iec,jsc:jec,1)),1e-3))
+       phos_nh3_exchange(isc:iec,jsc:jec) = -log10(min(max(1e-11,cobalt%f_htotal(isc:iec,jsc:jec,1)),1e-3))
        call data_override('OCN', 'phos_nh3_exchange', phos_nh3_exchange(isc:iec,jsc:jec), model_time)
 
        do j = jsc, jec ; do i = isc, iec
@@ -6780,7 +6780,7 @@ contains
 
        if (do_nh3_atm_ocean_exchange) then
 
-          phos_nh3_exchange(isc:iec,jsc:jec) = log10(min(max(1e-11,htotal_field(isc:iec,jsc:jec,1)),1e-3))
+          phos_nh3_exchange(isc:iec,jsc:jec) = -log10(min(max(1e-11,htotal_field(isc:iec,jsc:jec,1)),1e-3))
           call data_override('OCN', 'phos_nh3_exchange', phos_nh3_exchange(isc:iec,jsc:jec), model_time)
 
           do j = jsc, jec ; do i = isc, iec
