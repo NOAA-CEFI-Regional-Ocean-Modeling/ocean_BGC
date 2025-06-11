@@ -158,7 +158,7 @@ module generic_COBALT
 
   use FMS_co2calc_mod, only : FMS_co2calc, CO2_dope_vector
 
-  use ocean_atm_chemical_fluxes_utils, only :  get_nh3_ocean_atm_flux_property, calc_pka_nh3, schmidt_w_nh3
+  use ocean_atm_chemical_fluxes_utils, only :  get_nh3_ocean_atm_flux_property, calc_pka_nh3, schmidt_w_nh3, vb_nh3
 
   implicit none ; private
 

@@ -8,11 +8,10 @@ module ocean_atm_chemical_fluxes_utils
 
   implicit none ; private
 
-  real, parameter              :: vb_nh3 = 25, vb_dms = 77
+  real, parameter, public   :: vb_nh3 = 25., vb_dms = 77.
   
   public get_nh3_ocean_atm_flux_property, get_dms_ocean_atm_flux_property
   public calc_pka_nh3, schmidt_w_nh3, schmidt_w_dms
-  public :: vb_nh3, vb_dms
   
 contains
 
