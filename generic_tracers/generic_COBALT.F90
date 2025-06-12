@@ -2536,15 +2536,6 @@ contains
          units      = 'dimensionless',         &
          prog       = .false.              )
 
-    if (do_nh3_atm_ocean_exchange .or. scheme_nitrif.eq.2 .or. scheme_nitrif.eq.3) then
-       call g_tracer_add(tracer_list,package_name,&
-            name       = 'nh3',         &
-            longname   = 'NH3', &
-            units      = 'mol/kg',     &
-            prog       = .false.,       &
-            init_value = 1.e-10           )
-    end if
-
   end subroutine user_add_tracers
 
 
@@ -5842,7 +5833,6 @@ contains
     !
     call g_tracer_set_values(tracer_list,'cased',  'field',cobalt%f_cased    ,isd,jsd)
     call g_tracer_set_values(tracer_list,'chl',    'field',cobalt%f_chl      ,isd,jsd)
-    if (do_nh3_diag) call g_tracer_set_values(tracer_list,'nh3',    'field',cobalt%f_nh3      ,isd,jsd)
     call g_tracer_set_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm' ,'field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm_z' ,'field',cobalt%f_irr_aclm_z ,isd,jsd)
@@ -7190,7 +7180,7 @@ contains
     allocate(cobalt%co3_sol_arag(isd:ied, jsd:jed, 1:nk)) ; cobalt%co3_sol_arag=0.0
     allocate(cobalt%co3_sol_calc(isd:ied, jsd:jed, 1:nk)) ; cobalt%co3_sol_calc=0.0
     allocate(cobalt%f_chl(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_chl=0.0
-    if (do_nh3_diag) allocate(cobalt%f_nh3(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_nh3=0.0
+    allocate(cobalt%f_nh3(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_nh3=0.0    
     allocate(cobalt%f_co3_ion(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_co3_ion=0.0
     allocate(cobalt%f_htotal(isd:ied, jsd:jed, 1:nk))     ; cobalt%f_htotal=0.0
     allocate(cobalt%f_irr_aclm(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_irr_aclm=0.0
@@ -7743,7 +7733,7 @@ contains
     deallocate(cobalt%co3_sol_arag)
     deallocate(cobalt%co3_sol_calc)
     deallocate(cobalt%f_chl)
-    if (allocated(cobalt%f_nh3)) deallocate(cobalt%f_nh3)
+    deallocate(cobalt%f_nh3)
     deallocate(cobalt%f_co3_ion)
     deallocate(cobalt%f_htotal)
     deallocate(cobalt%f_irr_aclm)
