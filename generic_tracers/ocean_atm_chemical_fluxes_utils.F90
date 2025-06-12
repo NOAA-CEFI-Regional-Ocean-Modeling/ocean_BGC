@@ -4,7 +4,7 @@ module ocean_atm_chemical_fluxes_utils
   !These properties can be accessed via get_XXX_ocean_atm_flux_property, where XXX can be NH3 or DMS
   !author: Fabien.Paulot@noaa.gov  
   
-  use constants_mod,     only : WTMN, WTMAIR,rdgas
+  use constants_mod,     only : WTMAIR,rdgas
 
   implicit none ; private
 
@@ -25,7 +25,7 @@ contains
     dms_alpha = 0.537023e3*exp(3500.*(1./(tc+273.15)-1./298.15)) !M/atm
     dms_alpha = dms_alpha/saltout_correction(101325./(1.e-3*rdgas*wtmair*tc*dms_alpha),vb_dms,salt)*1./rho_0 !mol/m3/atm
 !    dms_sco_no = schmidt_dms(sstc)
-    dms_csurf  = f_dms    
+    dms_csurf  = f_dms     !if we ever want to modulate f_dms
     
   end subroutine get_dms_ocean_atm_flux_property
 
