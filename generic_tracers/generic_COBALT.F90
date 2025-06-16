@@ -4933,9 +4933,11 @@ contains
     if (cobalt%do_resp_ca_diss) then
         do k=1,nk ; do j=jsc,jec ; do i=isc,iec  !{
            cobalt%jdiss_cadet_arag(i,j,k) = cobalt%jdiss_cadet_arag(i,j,k) + &
-                                            cobalt%resp_ca_2_n_arag * cobalt%jremin_ndet(i,j,k)
+                                            cobalt%resp_ca_2_n_arag * cobalt%f_cadet_arag(i,j,k) * &
+                                            cobalt%jremin_ndet(i,j,k)
            cobalt%jdiss_cadet_calc(i,j,k) = cobalt%jdiss_cadet_calc(i,j,k) + &
-                                            cobalt%resp_ca_2_n_calc * cobalt%jremin_ndet(i,j,k)
+                                            cobalt%resp_ca_2_n_calc * cobalt%f_cadet_calc(i,j,k) * &
+                                            cobalt%jremin_ndet(i,j,k)
         enddo; enddo; enddo  !} i,j,k
     endif     
     ! >> 
