@@ -46,8 +46,8 @@
 !  Temperature dependence has been added to the decay of dissolved organic material to
 !  improve seasonal dynamics.
 !
-!  COBALTv3 now includes 40 prognostic state variables:
-!
+!  COBALTv3 now includes 42 prognostic state variables:
+!  
 !       alk: alkalinity
 !       cadet_arag: calcium carbonate detritus (aragonite)
 !       cadet_calc: calcium carbonate detritus (calcite)
@@ -64,6 +64,7 @@
 !       lithdet: lithogenic detritus
 !       nbact: bacteria
 !       ndet: nitrogen detritus
+!       ndet_fast: fast-sinking nitrogen detritus
 !       ndi: diazotroph nitrogen
 !       nlg: large, coastal or chain-forming, phytoplankton nitrogen
 !       nmd: medium phytoplankton nitrogen
@@ -72,10 +73,11 @@
 !       no3: nitrate
 !       o2: oxygen
 !       pdet: phosphorous detritus
-!       pdi: diazotroph phosphorus
-!       plg: large phytoplankton phosphorus
-!       pmd: medium phytoplankton phosphorus
-!       psm: small phytoplankton phosphorus
+!       pdet_fast: fast-sinking phosphorous detritus
+!       pdi: diazotroph phosphorus 
+!       plg: large phytoplankton phosphorus 
+!       pmd: medium phytoplankton phosphorus 
+!       psm: small phytoplankton phosphorus 
 !       po4: phosphate
 !       srdon: semi-refractory dissolved organic nitrogen
 !       srdop: semi-refractory dissolved organic phosphorous
@@ -377,9 +379,18 @@ contains
     ! of 5 d-1 in the surface ocean (Clegg and Whitfield, 1992; Dunne, 1999).  Alternatively, 100 m d-1
     ! is more in line with the deep water synthesis of Berelson (2002; Particle settling rates increase
     ! with depth in the ocean, DSR-II, 49, 237-252).
+    ! Fast-sinking detritus is disabled by default. A sinking speed of 1000 m d-1 is consistent with the observed
+    ! sinking speeds of fish fecal pellets (Saba and Steinberg 2012, Saba et al. 2021).
     !
     call get_param(param_file, "generic_COBALT", "wsink",  cobalt%wsink, "wsink", units="m day-1", &
                    default= 100.0, scale = I_sperd ) ! s-1
+
+    ! Flag to enable fast-sinking detritus
+    call get_param(param_file, "generic_COBALT", "do_fastsinking", cobalt%do_fastsinking, &
+            "logical flag to enable fast-sinking N and P detritus from higher predators", default=.false.)
+
+    call get_param(param_file, "generic_COBALT", "wsink_fast",  cobalt%wsink_fast, "wsink_fast", units="m day-1", &
+                   default= 1000.0, scale = I_sperd ) ! s-1
 
     call get_param(param_file, "generic_COBALT", "ice_restart_file"   , cobalt%ice_restart_file   ,  &
             "ice_restart_file", default="ice_cobalt.res.nc")
@@ -1498,8 +1509,9 @@ contains
     ! gamma_ndet is set to produce a Martin-curve like remineralization length scale at temperatures ~10 deg. C
     call get_param(param_file, "generic_COBALT", "gamma_ndet", cobalt%gamma_ndet, &
                    "Remineralization rate for unprotected organic matter", units="s-1", default=cobalt%wsink/350.0)
-
-    ! mineral ballasting after Klaas and Archer (2002) and Dunne et al. (2007) (see p. 3)
+    call get_param(param_file, "generic_COBALT", "gamma_ndet_fast", cobalt%gamma_ndet_fast, &
+                   "Remineralization rate for fast-sinking unprotected organic matter", units="s-1", default=cobalt%wsink_fast/3500.0)
+    ! mineral ballasting after Klaas and Archer (2002) and Dunne et al. (2007) (see p. 3) 
     ! conversion is 0.070 g C (g Ca)-1 to moles N (mole Ca)-1; Similar conversions below, but lith remains per gram
     call get_param(param_file, "generic_COBALT", "rpcaco3", cobalt%rpcaco3, "Organic matter protection from CaCO3", &
                    units="mol N mol Ca-1", default= 0.070/12.0*16.0/106.0*100.0)
@@ -2026,12 +2038,26 @@ contains
     !
     call g_tracer_add(tracer_list,package_name,&
          name       = 'ndet',      &
-         longname   = 'ndet',      &
+         longname   = 'Detrital Nitrogen', &
          flux_runoff= .true.,      &
          units      = 'mol/kg',    &
          prog       = .true.,      &
          sink_rate  = cobalt%wsink,&
          btm_reservoir = .true.,   &
+         flux_param = (/ 1.0e-3 /) )
+    !
+    !    Ndet_fast (Fast sinking detrital/particulate nitrogen)
+    !      ndet_fast, pdet_fast, and associated btf tracers carried by
+    !      the model even if fast-sinking detritus is turned off (e.g., if "do_fastsinking = .false.")
+    !
+    call g_tracer_add(tracer_list,package_name,         &
+         name       = 'ndet_fast',                      &
+         longname   = 'Fast sinking Detrital Nitrogen', &
+         flux_runoff= .false.,                          &
+         units      = 'mol/kg',                         &
+         prog       = .true.,                           &
+         sink_rate  = cobalt%wsink_fast,                &
+         btm_reservoir = .true.,                        &
          flux_param = (/ 1.0e-3 /) )
     !
     !    NDi (assumed to be facultative N2-fixers, with a variable N:P ratio
@@ -2160,6 +2186,18 @@ contains
          units      = 'mol/kg',                         &
          prog       = .true.,                           &
          sink_rate  = cobalt%wsink,                     &
+         btm_reservoir = .true.,                        &
+         flux_param = (/ 1.0e-3 /) )
+    !
+    !    Pdet_fast (Fast sinking detrital/particulate Phosphorus)
+    !
+    call g_tracer_add(tracer_list,package_name,         &
+         name       = 'pdet_fast',                      &
+         longname   = 'Fast sinking Detrital Phosphorus', &
+         flux_runoff= .false.,                          &
+         units      = 'mol/kg',                         &
+         prog       = .true.,                           &
+         sink_rate  = cobalt%wsink_fast,                &
          btm_reservoir = .true.,                        &
          flux_param = (/ 1.0e-3 /) )
     !
@@ -2397,6 +2435,22 @@ contains
          units      = 'mol m-2 s-1',            &
          prog       = .false.                   )
     !
+    !  ndet_fast_btf (Fast sinking N flux to sediments)
+    !
+    call g_tracer_add(tracer_list,package_name,&
+         name       = 'ndet_fast_btf',            &
+         longname   = 'Fast sinking N flux to Sediments', &
+         units      = 'mol m-2 s-1',         &
+         prog       = .false.                )
+    !
+    !  pdet_fast_btf (Fast sinking P flux to sediments)
+    !
+    call g_tracer_add(tracer_list,package_name,&
+         name       = 'pdet_fast_btf',            &
+         longname   = 'Fast sinking P flux to Sediments', &
+         units      = 'mol m-2 s-1',         &
+         prog       = .false.                )
+    !
     !  add bottom flux for nsm_btf
     !
     call g_tracer_add(tracer_list,package_name, &
@@ -2586,15 +2640,6 @@ contains
          units      = 'dimensionless',         &
          prog       = .false.              )
 
-    if (do_nh3_atm_ocean_exchange .or. scheme_nitrif.eq.2 .or. scheme_nitrif.eq.3) then
-       call g_tracer_add(tracer_list,package_name,&
-            name       = 'nh3',         &
-            longname   = 'NH3', &
-            units      = 'mol/kg',     &
-            prog       = .false.,       &
-            init_value = 1.e-10           )
-    end if
-
   end subroutine user_add_tracers
 
 
@@ -2705,7 +2750,6 @@ contains
     !
     call g_tracer_get_values(tracer_list,'fedet','btm_reservoir',cobalt%ffedet_btm,isd,jsd)
     cobalt%ffedet_btm = cobalt%ffedet_btm/dt
-    ! uncomment for "no mass change check"
     call g_tracer_get_pointer(tracer_list,'fedet_btf','field',temp_field)
     temp_field(:,:,1) = cobalt%ffedet_btm(:,:)
     call g_tracer_set_values(tracer_list,'fedet','btm_reservoir',0.0)
@@ -2736,6 +2780,16 @@ contains
     model_time, rmask = grid_tmask(:,:,1),&
     is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
+	call g_tracer_get_values(tracer_list,'ndet_fast','btm_reservoir',cobalt%fndet_fast_btm,isd,jsd)
+	cobalt%fndet_fast_btm = cobalt%fndet_fast_btm/dt
+	call g_tracer_get_pointer(tracer_list,'ndet_fast_btf','field',temp_field)
+	temp_field(:,:,1) = cobalt%fndet_fast_btm(:,:)
+	call g_tracer_set_values(tracer_list,'ndet_fast','btm_reservoir',0.0)
+	if (cobalt%id_fndet_fast_btm .gt. 0)           &
+	used = g_send_data(cobalt%id_fndet_fast_btm,cobalt%fndet_fast_btm,          &
+	model_time, rmask = grid_tmask(:,:,1),&
+	is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+
     call g_tracer_get_values(tracer_list,'pdet','btm_reservoir',cobalt%fpdet_btm,isd,jsd)
     cobalt%fpdet_btm = cobalt%fpdet_btm/dt
     call g_tracer_get_pointer(tracer_list,'pdet_btf','field',temp_field)
@@ -2744,6 +2798,16 @@ contains
     used = g_send_data(cobalt%id_fpdet_btm,cobalt%fpdet_btm,          &
     model_time, rmask = grid_tmask(:,:,1),&
     is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+
+	call g_tracer_get_values(tracer_list,'pdet_fast','btm_reservoir',cobalt%fpdet_fast_btm,isd,jsd)
+	cobalt%fpdet_fast_btm = cobalt%fpdet_fast_btm/dt
+	call g_tracer_get_pointer(tracer_list,'pdet_fast_btf','field',temp_field)
+	temp_field(:,:,1) = cobalt%fpdet_fast_btm(:,:)
+	call g_tracer_set_values(tracer_list,'pdet_fast','btm_reservoir',0.0)
+	if (cobalt%id_fpdet_fast_btm .gt. 0)           &
+	used = g_send_data(cobalt%id_fpdet_fast_btm,cobalt%fpdet_fast_btm,          &
+	model_time, rmask = grid_tmask(:,:,1),&
+	is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
     call g_tracer_get_values(tracer_list,'sidet','btm_reservoir',cobalt%fsidet_btm,isd,jsd)
     cobalt%fsidet_btm = cobalt%fsidet_btm/dt
@@ -2893,7 +2957,9 @@ contains
 
     ! Re-calculate aggregated flux diagnostics here
     call g_tracer_get_values(tracer_list,'ndet_btf','field',cobalt%f_ndet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'ndet_fast_btf','field',cobalt%f_ndet_fast_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'pdet_btf','field',cobalt%f_pdet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pdet_fast_btf','field',cobalt%f_pdet_fast_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'sidet_btf','field',cobalt%f_sidet_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'ndi_btf','field',cobalt%f_ndi_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'nlg_btf','field',cobalt%f_nlg_btf,isd,jsd)
@@ -2913,9 +2979,9 @@ contains
 
     do j = jsc, jec; do i = isc, iec  !{
        if (grid_kmt(i,j) .gt. 0) then !{
-          cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j,1) + cobalt%f_ndi_btf(i,j,1) + &
+          cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j,1) + cobalt%f_ndet_fast_btf(i,j,1) + cobalt%f_ndi_btf(i,j,1) + &
             cobalt%f_nsm_btf(i,j,1) + cobalt%f_nmd_btf(i,j,1) + cobalt%f_nlg_btf(i,j,1)
-          cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j,1) + cobalt%f_pdi_btf(i,j,1) + &
+          cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j,1) + cobalt%f_pdet_fast_btf(i,j,1) + cobalt%f_pdi_btf(i,j,1) + &
             cobalt%f_psm_btf(i,j,1) + cobalt%f_pmd_btf(i,j,1) + cobalt%f_plg_btf(i,j,1)
           cobalt%ffetot_btm(i,j) = cobalt%f_fedet_btf(i,j,1) + cobalt%f_fedi_btf(i,j,1) + &
             cobalt%f_fesm_btf(i,j,1) + cobalt%f_femd_btf(i,j,1) + cobalt%f_felg_btf(i,j,1)
@@ -3270,10 +3336,12 @@ contains
     call g_tracer_get_values(tracer_list,'lith'   ,'field',cobalt%f_lith     ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'lithdet','field',cobalt%f_lithdet  ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'ndet'   ,'field',cobalt%f_ndet     ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'ndet_fast','field',cobalt%f_ndet_fast ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'nh4'    ,'field',cobalt%f_nh4      ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'no3'    ,'field',cobalt%f_no3      ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'o2'     ,'field',cobalt%f_o2       ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'pdet'   ,'field',cobalt%f_pdet     ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'pdet_fast','field',cobalt%f_pdet_fast ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'po4'    ,'field',cobalt%f_po4      ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'srdon'   ,'field',cobalt%f_srdon   ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'srdop'   ,'field',cobalt%f_srdop   ,isd,jsd,positive=.true.)
@@ -3325,7 +3393,9 @@ contains
     call g_tracer_get_values(tracer_list,'cadet_calc_btf','field',cobalt%f_cadet_calc_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'lithdet_btf','field',cobalt%f_lithdet_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'ndet_btf','field',cobalt%f_ndet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'ndet_fast_btf','field',cobalt%f_ndet_fast_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'pdet_btf','field',cobalt%f_pdet_btf,isd,jsd)
+    call g_tracer_get_values(tracer_list,'pdet_fast_btf','field',cobalt%f_pdet_fast_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'sidet_btf','field',cobalt%f_sidet_btf,isd,jsd)
     ! add phytoplankton because they now sink
     call g_tracer_get_values(tracer_list,'ndi_btf','field',cobalt%f_ndi_btf,isd,jsd)
@@ -3342,7 +3412,6 @@ contains
     call g_tracer_get_values(tracer_list,'psm_btf','field',cobalt%f_psm_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'silg_btf','field',cobalt%f_silg_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'simd_btf','field',cobalt%f_simd_btf,isd,jsd)
-    ! uncomment for "no mass change" test
     call g_tracer_get_values(tracer_list,'fedet_btf','field',cobalt%f_fedet_btf,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
@@ -3353,7 +3422,9 @@ contains
        cobalt%jprod_fed(i,j,k) = 0.0
        cobalt%jprod_fedet(i,j,k) = 0.0
        cobalt%jprod_ndet(i,j,k) = 0.0
+       cobalt%jprod_ndet_fast(i,j,k) = 0.0
        cobalt%jprod_pdet(i,j,k) = 0.0
+       cobalt%jprod_pdet_fast(i,j,k) = 0.0
        cobalt%jprod_sldon(i,j,k) = 0.0
        cobalt%jprod_ldon(i,j,k) = 0.0
        cobalt%jprod_srdon(i,j,k) = 0.0
@@ -3366,6 +3437,7 @@ contains
        cobalt%jprod_nh4(i,j,k) = 0.0
        cobalt%jno3denit_wc(i,j,k) = 0.0
        cobalt%jremin_ndet(i,j,k) = 0.0
+       cobalt%jremin_ndet_fast(i,j,k) = 0.0
        cobalt%jo2resp_wc(i,j,k) = 0.0
     enddo;  enddo ;  enddo !} i,j,k
 !
@@ -4119,22 +4191,25 @@ contains
        prey_vec(6) = max(zoo(1)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(7) = max(zoo(2)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(8) = max(zoo(3)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
-       prey_vec(9) = max(cobalt%f_ndet(i,j,k) - cobalt%refuge_conc,0.0)
+       prey_vec(9) = max(cobalt%f_ndet(i,j,k) + cobalt%f_ndet_fast(i,j,k) - cobalt%refuge_conc,0.0)
 
        ! Set dynamic prey stoichiometric ratios inside k,j,i loop
        prey_p2n_vec(1) = phyto(DIAZO)%q_p_2_n(i,j,k)
        prey_p2n_vec(2) = phyto(LARGE)%q_p_2_n(i,j,k)
        prey_p2n_vec(3) = phyto(MEDIUM)%q_p_2_n(i,j,k)
        prey_p2n_vec(4) = phyto(SMALL)%q_p_2_n(i,j,k)
-       prey_p2n_vec(9)  = cobalt%f_pdet(i,j,k)/(cobalt%f_ndet(i,j,k)+epsln)
+       prey_p2n_vec(9) = (cobalt%f_pdet(i,j,k) + cobalt%f_pdet_fast(i,j,k))/ &
+	                     (cobalt%f_ndet(i,j,k) + cobalt%f_ndet_fast(i,j,k) + epsln)
        prey_fe2n_vec(1) = phyto(DIAZO)%q_fe_2_n(i,j,k)
        prey_fe2n_vec(2) = phyto(LARGE)%q_fe_2_n(i,j,k)
        prey_fe2n_vec(3) = phyto(MEDIUM)%q_fe_2_n(i,j,k)
        prey_fe2n_vec(4) = phyto(SMALL)%q_fe_2_n(i,j,k)
-       prey_fe2n_vec(9) = cobalt%f_fedet(i,j,k)/(cobalt%f_ndet(i,j,k)+epsln)
+       prey_fe2n_vec(9) = cobalt%f_fedet(i,j,k)/ &
+	                      (cobalt%f_ndet(i,j,k) + cobalt%f_ndet_fast(i,j,k) + epsln)
        prey_si2n_vec(2) = phyto(LARGE)%q_si_2_n(i,j,k)
        prey_si2n_vec(3) = phyto(MEDIUM)%q_si_2_n(i,j,k)
-       prey_si2n_vec(9) = cobalt%f_sidet(i,j,k)/(cobalt%f_ndet(i,j,k)+epsln)
+       prey_si2n_vec(9) = cobalt%f_sidet(i,j,k) / &
+	                      (cobalt%f_ndet(i,j,k) + cobalt%f_ndet_fast(i,j,k) + epsln)
 
        !
        ! Calculate zooplankton ingestion
@@ -4531,7 +4606,7 @@ contains
            zoo(m)%jprod_srdop(i,j,k) = zoo(m)%phi_srdop*zoo(m)%jingest_p(i,j,k)
            zoo(m)%jprod_fedet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_fe(i,j,k)
            zoo(m)%jprod_sidet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_sio2(i,j,k)
-
+		   
            ! augment cumulative production variables for detritus and dissolved organics
            cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + zoo(m)%jprod_ndet(i,j,k)
            cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + zoo(m)%jprod_pdet(i,j,k)
@@ -4546,9 +4621,17 @@ contains
        enddo !} m
 
        ! Production of detritus and dissolved organic material from higher predator egestion
-       ! (just added to cumulative total. It is easy to calculate from phi_det and hp_jingest)
-       cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
-       cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
+       if (cobalt%do_fastsinking) then
+          ! Assume all the egestion from higher predators will sink quickly and go to fast-sinking detritus
+          cobalt%jprod_ndet_fast(i,j,k) = cobalt%jprod_ndet_fast(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
+          cobalt%jprod_pdet_fast(i,j,k) = cobalt%jprod_pdet_fast(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
+       else
+          ! Just add the HP ndet to the cumulative total. Calculate from phi_det and hp_jingest.
+          cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
+          cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
+       endif
+
+       ! Silica and iron detritus from HP does not sink quickly - just gets added to the bulk total
        cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_fe(i,j,k)
        cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_sio2(i,j,k)
 
@@ -4860,9 +4943,13 @@ contains
                ( cobalt%k_o2 + cobalt%f_o2(i,j,k) )*max( 0.0, cobalt%f_ndet(i,j,k) - &
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
+	      ! Adding in the remineralization from fast sinking detritus
+	      cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet_fast * cobalt%expkreminT(i,j,k) * &
+		        cobalt%f_ndet_fast(i,j,k) * (cobalt%f_o2(i,j,k) / (cobalt%k_o2 + cobalt%f_o2(i,j,k)))
           ! Augment total nh4 production and o2 consumption
-          cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + cobalt%jremin_ndet(i,j,k)
-          cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + cobalt%jremin_ndet(i,j,k)*cobalt%o2_2_nh4
+          cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + cobalt%jremin_ndet(i,j,k) + cobalt%jremin_ndet_fast(i,j,k)
+          cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + &
+		        (cobalt%jremin_ndet(i,j,k) + cobalt%jremin_ndet_fast(i,j,k)) * cobalt%o2_2_nh4
 
        ! Calculate remineralization under anaerobic conditions
        else !}{
@@ -4872,23 +4959,33 @@ contains
                max(0.0, cobalt%f_ndet(i,j,k) - &
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
+          ! Adding in the remineralization from fast sinking detritus
+          cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet_fast * cobalt%f_ndet_fast(i,j,k) * &
+               (cobalt%o2_min / (cobalt%k_o2 + cobalt%o2_min)) * &
+               (cobalt%f_no3(i,j,k) / (cobalt%k_no3_denit + cobalt%f_no3(i,j,k))) 
           ! Augment total nh4 production and no3 consumption
-          cobalt%jno3denit_wc(i,j,k) = cobalt%jno3denit_wc(i,j,k) + cobalt%jremin_ndet(i,j,k) * cobalt%n_2_n_denit
-          cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + cobalt%jremin_ndet(i,j,k)
+          cobalt%jno3denit_wc(i,j,k) = cobalt%jno3denit_wc(i,j,k) + &
+		       (cobalt%jremin_ndet(i,j,k) + cobalt%jremin_ndet_fast(i,j,k)) * cobalt%n_2_n_denit
+          cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + cobalt%jremin_ndet(i,j,k) + cobalt%jremin_ndet_fast(i,j,k)
        endif !}
 
        ! P is assumed to be remineralized in direct proportion to N, resulting in PO4 release
-       cobalt%jremin_pdet(i,j,k) = cobalt%jremin_ndet(i,j,k)/(cobalt%f_ndet(i,j,k) + epsln)*cobalt%f_pdet(i,j,k)
-       cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + cobalt%jremin_pdet(i,j,k)
+       cobalt%jremin_pdet(i,j,k) = cobalt%jremin_ndet(i,j,k) / &
+	       (cobalt%f_ndet(i,j,k) + epsln) * cobalt%f_pdet(i,j,k)
+       cobalt%jremin_pdet_fast(i,j,k) = cobalt%jremin_ndet_fast(i,j,k) / &
+           (cobalt%f_ndet_fast(i,j,k) + epsln) * cobalt%f_pdet_fast(i,j,k)
+
+       cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + cobalt%jremin_pdet(i,j,k) + cobalt%jremin_pdet_fast(i,j,k)
 
        ! Fe is assumed to be remineralized in proportion to N, but the proportionality is dictated by a
        ! remineralization efficiency (remin_eff_fedet) which has been coarsely tuned to the ferrocline depth.
        ! In addition, it was noted in COBALTv2 (see Stock et al., 2020) that the proportionality between organic matter
        ! and iron remineralization can lead to iron minima in low oxygen zones where organic remineralization is low.
        ! Since low O2 is actually conducive to solubilizing iron, O2 inhibition of iron remineralization was removed.
-       cobalt%jremin_fedet(i,j,k) = cobalt%jremin_ndet(i,j,k)* &
+       cobalt%jremin_fedet(i,j,k) = (cobalt%jremin_ndet(i,j,k) + cobalt%jremin_ndet_fast(i,j,k)) * &
          (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))/max(cobalt%f_o2(i,j,k),cobalt%o2_min) / &
-         (cobalt%f_ndet(i,j,k) + epsln) * cobalt%remin_eff_fedet*cobalt%f_fedet(i,j,k)
+         (cobalt%f_ndet(i,j,k) + cobalt%f_ndet_fast(i,j,k) + epsln) * cobalt%remin_eff_fedet*cobalt%f_fedet(i,j,k)
+		 
        cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jremin_fedet(i,j,k)
     enddo; enddo; enddo  !} i,j,k
 
@@ -4971,12 +5068,12 @@ contains
                               2.921*fe_salt)
 
        ! Calculate the iron adsorption to detrital particles
-       if (cobalt%feprime(i,j,k).lt.cobalt%fe_sol(i,j,k)) then
+       if (cobalt%feprime(i,j,k) .lt. cobalt%fe_sol(i,j,k)) then
          cobalt%jfe_ads(i,j,k) = cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
-                                 cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet(i,j,k)
+                                 cobalt%beta_fescav*cobalt%feprime(i,j,k)*(cobalt%f_ndet(i,j,k)+cobalt%f_ndet_fast(i,j,k))
        else
          cobalt%jfe_ads(i,j,k) = cobalt%fast_fescav_fac*(cobalt%alpha_fescav*cobalt%feprime(i,j,k) + &
-                                 cobalt%beta_fescav*cobalt%feprime(i,j,k)*cobalt%f_ndet(i,j,k))
+                                 cobalt%beta_fescav*cobalt%feprime(i,j,k)*(cobalt%f_ndet(i,j,k)+cobalt%f_ndet_fast(i,j,k)))
        endif
        ! Add a limiter so you don't scavenge more than half the available iron in a single time step.
        cobalt%jfe_ads(i,j,k) = min(cobalt%jfe_ads(i,j,k),cobalt%f_fed(i,j,k)/(2.0*dt))
@@ -5014,11 +5111,11 @@ contains
 
     do j = jsc, jec; do i = isc, iec  !{
        if (grid_kmt(i,j) .gt. 0) then !{
-
+		   
           ! Add the phytoplankton fluxes to the detritus fluxes to get total flux to benthos
-          cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j,1) + cobalt%f_ndi_btf(i,j,1) + &
+          cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j,1) + cobalt%f_ndet_fast_btf(i,j,1) + cobalt%f_ndi_btf(i,j,1) + &
             cobalt%f_nsm_btf(i,j,1) + cobalt%f_nmd_btf(i,j,1) + cobalt%f_nlg_btf(i,j,1)
-          cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j,1) + cobalt%f_pdi_btf(i,j,1) + &
+          cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j,1) + cobalt%f_pdet_fast_btf(i,j,1) + cobalt%f_pdi_btf(i,j,1) + &
             cobalt%f_psm_btf(i,j,1) + cobalt%f_pmd_btf(i,j,1) + cobalt%f_plg_btf(i,j,1)
           cobalt%ffetot_btm(i,j) = cobalt%f_fedet_btf(i,j,1) + cobalt%f_fedi_btf(i,j,1) + &
             cobalt%f_fesm_btf(i,j,1) + cobalt%f_femd_btf(i,j,1) + cobalt%f_felg_btf(i,j,1)
@@ -5196,6 +5293,7 @@ contains
             else
               cobalt%jfe_coast(i,j,k) = cobalt%fe_coast*dzt(i,j,k)*mask_coast(i,j)*grid_tmask(i,j,k)* &
                 cobalt%ffe_sed_max*tanh( ( (cobalt%f_ndet(i,j,k)*cobalt%wsink+ &
+                cobalt%f_ndet_fast(i,j,k)*cobalt%wsink_fast + &
                 phyto(SMALL)%f_n(i,j,k)*phyto(SMALL)%vmove(i,j,k)+ &
                 phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k)+ &
                 phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%vmove(i,j,k)+ &
@@ -5346,6 +5444,7 @@ contains
     call g_tracer_get_pointer(tracer_list,'lithdet','field',cobalt%p_lithdet)
     call g_tracer_get_pointer(tracer_list,'nbact'  ,'field',cobalt%p_nbact  )
     call g_tracer_get_pointer(tracer_list,'ndet'   ,'field',cobalt%p_ndet   )
+    call g_tracer_get_pointer(tracer_list,'ndet_fast','field',cobalt%p_ndet_fast)
     call g_tracer_get_pointer(tracer_list,'ndi'    ,'field',cobalt%p_ndi    )
     call g_tracer_get_pointer(tracer_list,'nlg'    ,'field',cobalt%p_nlg    )
     call g_tracer_get_pointer(tracer_list,'nmd'    ,'field',cobalt%p_nmd    )
@@ -5358,6 +5457,7 @@ contains
     call g_tracer_get_pointer(tracer_list,'pmd'    ,'field',cobalt%p_pmd    )
     call g_tracer_get_pointer(tracer_list,'psm'    ,'field',cobalt%p_psm    )
     call g_tracer_get_pointer(tracer_list,'pdet'   ,'field',cobalt%p_pdet   )
+    call g_tracer_get_pointer(tracer_list,'pdet_fast','field',cobalt%p_pdet_fast)
     call g_tracer_get_pointer(tracer_list,'po4'    ,'field',cobalt%p_po4    )
     call g_tracer_get_pointer(tracer_list,'srdon'   ,'field',cobalt%p_srdon   )
     call g_tracer_get_pointer(tracer_list,'srdop'   ,'field',cobalt%p_srdop   )
@@ -5394,7 +5494,8 @@ contains
                     cobalt%p_nmd(i,j,k,tau) + &
                     cobalt%p_nsm(i,j,k,tau) + cobalt%p_nbact(i,j,k,tau) + &
                     cobalt%p_ldon(i,j,k,tau) + cobalt%p_sldon(i,j,k,tau) + &
-                    cobalt%p_srdon(i,j,k,tau) +  cobalt%p_ndet(i,j,k,tau) + &
+                    cobalt%p_srdon(i,j,k,tau) + cobalt%p_ndet(i,j,k,tau) + &
+					cobalt%p_ndet_fast(i,j,k,tau) + &
                     cobalt%p_nsmz(i,j,k,tau) + cobalt%p_nmdz(i,j,k,tau) + &
                     cobalt%p_nlgz(i,j,k,tau))*grid_tmask(i,j,k)
          net_srcn(i,j,k) = (phyto(DIAZO)%juptake_n2(i,j,k) - cobalt%jno3denit_wc(i,j,k) - &
@@ -5409,13 +5510,15 @@ contains
                     cobalt%p_nmd(i,j,k,tau) + &
                     cobalt%p_nsm(i,j,k,tau) + cobalt%p_nbact(i,j,k,tau) + &
                     cobalt%p_ldon(i,j,k,tau) + cobalt%p_sldon(i,j,k,tau) + &
-                    cobalt%p_srdon(i,j,k,tau) +  cobalt%p_ndet(i,j,k,tau) + &
+                    cobalt%p_srdon(i,j,k,tau) + cobalt%p_ndet(i,j,k,tau) + &
+					cobalt%p_ndet_fast(i,j,k,tau) + &
                     cobalt%p_nsmz(i,j,k,tau) + cobalt%p_nmdz(i,j,k,tau) + &
                     cobalt%p_nlgz(i,j,k,tau)))*grid_tmask(i,j,k)
          pre_totp(i,j,k) = (cobalt%p_po4(i,j,k,tau) + cobalt%p_pdi(i,j,k,tau) + &
                     cobalt%p_plg(i,j,k,tau) + cobalt%p_pmd(i,j,k,tau) + cobalt%p_psm(i,j,k,tau) + &
                     cobalt%p_ldop(i,j,k,tau) + cobalt%p_sldop(i,j,k,tau) + &
-                    cobalt%p_srdop(i,j,k,tau) +  cobalt%p_pdet(i,j,k,tau) + &
+                    cobalt%p_srdop(i,j,k,tau) + cobalt%p_pdet(i,j,k,tau) + &
+					cobalt%p_pdet_fast(i,j,k,tau) + &
                     cobalt%p_nsmz(i,j,k,tau)*zoo(1)%q_p_2_n + &
                     cobalt%p_nmdz(i,j,k,tau)*zoo(2)%q_p_2_n + &
                     cobalt%p_nlgz(i,j,k,tau)*zoo(3)%q_p_2_n + &
@@ -5685,13 +5788,17 @@ contains
        !
        cobalt%jndet(i,j,k) = cobalt%jprod_ndet(i,j,k) - cobalt%jremin_ndet(i,j,k) - &
                              cobalt%det_jzloss_n(i,j,k) - cobalt%det_jhploss_n(i,j,k)
+       cobalt%jndet_fast(i,j,k) = cobalt%jprod_ndet_fast(i,j,k) - cobalt%jremin_ndet_fast(i,j,k)
        cobalt%p_ndet(i,j,k,tau) = cobalt%p_ndet(i,j,k,tau) + cobalt%jndet(i,j,k)*dt*grid_tmask(i,j,k)
+       cobalt%p_ndet_fast(i,j,k,tau) = cobalt%p_ndet_fast(i,j,k,tau) + cobalt%jndet_fast(i,j,k)*dt*grid_tmask(i,j,k)
        !
        ! Pdet
        !
        cobalt%jpdet(i,j,k) = cobalt%jprod_pdet(i,j,k) - cobalt%jremin_pdet(i,j,k) - &
                              cobalt%det_jzloss_p(i,j,k) - cobalt%det_jhploss_p(i,j,k)
-       cobalt%p_pdet(i,j,k,tau) = cobalt%p_pdet(i,j,k,tau) + cobalt%jpdet(i,j,k)*dt*grid_tmask(i,j,k)
+       cobalt%jpdet_fast(i,j,k) = cobalt%jprod_pdet_fast(i,j,k) - cobalt%jremin_pdet_fast(i,j,k)
+       cobalt%p_pdet(i,j,k,tau) = cobalt%p_pdet(i,j,k,tau) + cobalt%jpdet(i,j,k)*dt*grid_tmask(i,j,k)	   
+       cobalt%p_pdet_fast(i,j,k,tau) = cobalt%p_pdet_fast(i,j,k,tau) + cobalt%jpdet_fast(i,j,k)*dt*grid_tmask(i,j,k)
        !
        ! Sidet
        !
@@ -5829,7 +5936,8 @@ contains
       ! C:P. Therefore, jpop can be used to calculate fpo14c.
 
       do j = jsc, jec ;      do i = isc, iec   !{
-        cobalt%fpo14c(i,j,1) =  (cobalt%jprod_ndet(i,j,1) - (cobalt%jremin_ndet(i,j,1) +          &
+        cobalt%fpo14c(i,j,1) =  (cobalt%jprod_ndet(i,j,1) + cobalt%jprod_ndet_fast(i,j,1) -          &
+                             (cobalt%jremin_ndet(i,j,1) + cobalt%jremin_ndet_fast(i,j,1) +        &
                              cobalt%det_jzloss_n(i,j,1) + cobalt%det_jhploss_n(i,j,1))) *         &
                              cobalt%c14_2_n(i,j,1) * rho_dzt(i,j,1)
         cobalt%j14c_reminp(i,j,1) = (-1) * cobalt%fpo14c(i,j,1) / rho_dzt(i,j,1)
@@ -5840,7 +5948,11 @@ contains
                                (cobalt%jprod_ndet(i,j,k) * cobalt%c14_2_n(i,j,k) - (cobalt%jremin_ndet(i,j,k) + &
                                cobalt%det_jzloss_n(i,j,k) + cobalt%det_jhploss_n(i,j,k)) *                      &
                                cobalt%fpo14c(i,j,k-1) / max(epsln,cobalt%f_ndet(i,j,k-1) * cobalt%Rho_0 *       &
-                               cobalt%wsink)) * rho_dzt(i,j,k))
+                               cobalt%wsink)) +                                                                 &
+                               (cobalt%jprod_ndet_fast(i,j,k) * cobalt%c14_2_n(i,j,k) -                         &
+                               cobalt%jremin_ndet_fast(i,j,k) * cobalt%fpo14c(i,j,k-1) /                        &
+                               max(epsln,cobalt%f_ndet_fast(i,j,k-1) * cobalt%Rho_0 * cobalt%wsink_fast)) *     &
+                               rho_dzt(i,j,k))
 
          cobalt%j14c_reminp(i,j,k) = (cobalt%fpo14c(i,j,k-1) - cobalt%fpo14c(i,j,k)) / rho_dzt(i,j,k)
       enddo; enddo ; enddo !} i,j,k
@@ -5905,7 +6017,6 @@ contains
     !
     call g_tracer_set_values(tracer_list,'cased',  'field',cobalt%f_cased    ,isd,jsd)
     call g_tracer_set_values(tracer_list,'chl',    'field',cobalt%f_chl      ,isd,jsd)
-    if (do_nh3_diag) call g_tracer_set_values(tracer_list,'nh3',    'field',cobalt%f_nh3      ,isd,jsd)
     call g_tracer_set_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm' ,'field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm_z' ,'field',cobalt%f_irr_aclm_z ,isd,jsd)
@@ -5938,7 +6049,8 @@ contains
                     cobalt%p_ndi(i,j,k,tau) + cobalt%p_nlg(i,j,k,tau) + cobalt%p_nmd(i,j,k,tau) + &
                     cobalt%p_nsm(i,j,k,tau) + cobalt%p_nbact(i,j,k,tau) + &
                     cobalt%p_ldon(i,j,k,tau) + cobalt%p_sldon(i,j,k,tau) + &
-                    cobalt%p_srdon(i,j,k,tau) +  cobalt%p_ndet(i,j,k,tau) + &
+                    cobalt%p_srdon(i,j,k,tau) + cobalt%p_ndet(i,j,k,tau) + &
+					cobalt%p_ndet_fast(i,j,k,tau) + &
                     cobalt%p_nsmz(i,j,k,tau) + cobalt%p_nmdz(i,j,k,tau) + &
                     cobalt%p_nlgz(i,j,k,tau))*grid_tmask(i,j,k)
          imbal = (post_totn(i,j,k) - pre_totn(i,j,k) - net_srcn(i,j,k))*86400.0/dt*1.03e6
@@ -5952,7 +6064,8 @@ contains
                     cobalt%c_2_n*(cobalt%p_ndi(i,j,k,tau) + cobalt%p_nlg(i,j,k,tau) + &
                     cobalt%p_nmd(i,j,k,tau) + cobalt%p_nsm(i,j,k,tau) + cobalt%p_nbact(i,j,k,tau) + &
                     cobalt%p_ldon(i,j,k,tau) + cobalt%p_sldon(i,j,k,tau) + &
-                    cobalt%p_srdon(i,j,k,tau) +  cobalt%p_ndet(i,j,k,tau) + &
+                    cobalt%p_srdon(i,j,k,tau) + cobalt%p_ndet(i,j,k,tau) + &
+					cobalt%p_ndet_fast(i,j,k,tau) + &
                     cobalt%p_nsmz(i,j,k,tau) + cobalt%p_nmdz(i,j,k,tau) + &
                     cobalt%p_nlgz(i,j,k,tau)))*grid_tmask(i,j,k)
         imbal = (post_totc(i,j,k) - pre_totc(i,j,k) - net_srcc(i,j,k))*86400.0/dt*1.03e6
@@ -5964,7 +6077,8 @@ contains
          post_totp(i,j,k) = (cobalt%p_po4(i,j,k,tau) + cobalt%p_pdi(i,j,k,tau) + &
                     cobalt%p_plg(i,j,k,tau) + cobalt%p_pmd(i,j,k,tau) + cobalt%p_psm(i,j,k,tau) + &
                     cobalt%p_ldop(i,j,k,tau) + cobalt%p_sldop(i,j,k,tau) + &
-                    cobalt%p_srdop(i,j,k,tau) +  cobalt%p_pdet(i,j,k,tau) + &
+                    cobalt%p_srdop(i,j,k,tau) + cobalt%p_pdet(i,j,k,tau) + &
+					cobalt%p_pdet_fast(i,j,k,tau) + &
                     cobalt%p_nsmz(i,j,k,tau)*zoo(1)%q_p_2_n + &
                     cobalt%p_nmdz(i,j,k,tau)*zoo(2)%q_p_2_n + &
                     cobalt%p_nlgz(i,j,k,tau)*zoo(3)%q_p_2_n + &
@@ -6151,16 +6265,16 @@ contains
     cobalt%tot_layer_int_c(:,:,:) = (cobalt%p_dic(:,:,:,tau) + cobalt%doc_background + cobalt%p_cadet_arag(:,:,:,tau) +&
          cobalt%p_cadet_calc(:,:,:,tau) + cobalt%c_2_n * (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + &
          cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + cobalt%p_ldon(:,:,:,tau) + &
-         cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_nsmz(:,:,:,tau) + &
-         cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau))) * rho_dzt(:,:,:)
+         cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) +  cobalt%p_ndet_fast(:,:,:,tau) + &
+         cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau))) * rho_dzt(:,:,:)
 
     ! dissolved organic component also includes an optional background doc
     cobalt%tot_layer_int_doc(:,:,:) = (cobalt%c_2_n * (cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) + &
          cobalt%p_srdon(:,:,:,tau)) + cobalt%doc_background) * rho_dzt(:,:,:)
 
     cobalt%tot_layer_int_poc(:,:,:) = (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + &
-         cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_nsmz(:,:,:,tau) + &
-         cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau))*cobalt%c_2_n*rho_dzt(:,:,:)
+         cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_ndet_fast(:,:,:,tau) + &
+         cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau))*cobalt%c_2_n*rho_dzt(:,:,:)
 
     cobalt%tot_layer_int_dic(:,:,:) = cobalt%p_dic(:,:,:,tau)*rho_dzt(:,:,:)
 
@@ -6170,11 +6284,13 @@ contains
     cobalt%tot_layer_int_n(:,:,:) = (cobalt%p_no3(:,:,:,tau) + cobalt%p_nh4(:,:,:,tau) + cobalt%p_ndi(:,:,:,tau) + &
          cobalt%p_nlg(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + &
          cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) +  cobalt%p_ndet(:,:,:,tau) + &
-         cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau)) * rho_dzt(:,:,:)
+         cobalt%p_ndet_fast(:,:,:,tau) + cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau)) * &
+		 rho_dzt(:,:,:)
 
     cobalt%tot_layer_int_p(:,:,:) = (cobalt%p_po4(:,:,:,tau) + cobalt%p_pdi(:,:,:,tau) + cobalt%p_plg(:,:,:,tau) + &
          cobalt%p_pmd(:,:,:,tau) + cobalt%p_psm(:,:,:,tau) + cobalt%p_ldop(:,:,:,tau) + cobalt%p_sldop(:,:,:,tau) + &
-         cobalt%p_srdop(:,:,:,tau) + cobalt%p_pdet(:,:,:,tau) + bact(1)%q_p_2_n*cobalt%p_nbact(:,:,:,tau) + &
+         cobalt%p_srdop(:,:,:,tau) + cobalt%p_pdet(:,:,:,tau) + cobalt%p_pdet_fast(:,:,:,tau) + &
+		 bact(1)%q_p_2_n*cobalt%p_nbact(:,:,:,tau) + &
          zoo(1)%q_p_2_n*cobalt%p_nsmz(:,:,:,tau) + zoo(2)%q_p_2_n*cobalt%p_nmdz(:,:,:,tau) + &
          zoo(3)%q_p_2_n*cobalt%p_nlgz(:,:,:,tau))*rho_dzt(:,:,:)
 
@@ -6405,6 +6521,7 @@ contains
        cobalt%jprod_cadet_calc_100(i,j) = cobalt%jprod_cadet_calc(i,j,1) * rho_dzt(i,j,1)
        cobalt%jprod_cadet_arag_100(i,j) = cobalt%jprod_cadet_arag(i,j,1) * rho_dzt(i,j,1)
        cobalt%jremin_ndet_100(i,j) = cobalt%jremin_ndet(i,j,1) * rho_dzt(i,j,1)
+       cobalt%jremin_ndet_fast_100(i,j) = cobalt%jremin_ndet_fast(i,j,1) * rho_dzt(i,j,1)
     enddo; enddo !} i,j
 
     do j = jsc, jec ; do i = isc, iec ; !{
@@ -6490,6 +6607,7 @@ contains
              cobalt%jprod_cadet_calc_100(i,j) = cobalt%jprod_cadet_calc_100(i,j) + cobalt%jprod_cadet_calc(i,j,k) * rho_dzt(i,j,k)
              cobalt%jprod_cadet_arag_100(i,j) = cobalt%jprod_cadet_arag_100(i,j) + cobalt%jprod_cadet_arag(i,j,k) * rho_dzt(i,j,k)
              cobalt%jremin_ndet_100(i,j) = cobalt%jremin_ndet_100(i,j) + cobalt%jremin_ndet(i,j,k) * rho_dzt(i,j,k)
+             cobalt%jremin_ndet_fast_100(i,j) = cobalt%jremin_ndet_fast_100(i,j) + cobalt%jremin_ndet_fast(i,j,k) * rho_dzt(i,j,k)
           endif
        enddo  !} k
 
@@ -6581,6 +6699,8 @@ contains
            cobalt%jprod_cadet_arag_100(i,j) = cobalt%jprod_cadet_arag_100(i,j) + cobalt%jprod_cadet_arag(i,j,k_100)* &
                 drho_dzt
            cobalt%jremin_ndet_100(i,j) = cobalt%jremin_ndet_100(i,j) + cobalt%jremin_ndet(i,j,k_100)* &
+                drho_dzt
+           cobalt%jremin_ndet_fast_100(i,j) = cobalt%jremin_ndet_fast_100(i,j) + cobalt%jremin_ndet_fast(i,j,k_100)* &
                 drho_dzt
        endif
 
@@ -7313,10 +7433,12 @@ contains
     allocate(cobalt%f_lith(isd:ied, jsd:jed, 1:nk))       ; cobalt%f_lith=0.0
     allocate(cobalt%f_lithdet(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_lithdet=0.0
     allocate(cobalt%f_ndet(isd:ied, jsd:jed, 1:nk))       ; cobalt%f_ndet=0.0
+    allocate(cobalt%f_ndet_fast(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_ndet_fast=0.0
     allocate(cobalt%f_nh4(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_nh4=0.0
     allocate(cobalt%f_no3(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_no3=0.0
     allocate(cobalt%f_o2(isd:ied, jsd:jed, 1:nk))         ; cobalt%f_o2=0.0
     allocate(cobalt%f_pdet(isd:ied, jsd:jed, 1:nk))       ; cobalt%f_pdet=0.0
+    allocate(cobalt%f_pdet_fast(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_pdet_fast=0.0
     allocate(cobalt%f_po4(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_po4=0.0
     allocate(cobalt%f_srdon(isd:ied, jsd:jed, 1:nk))      ; cobalt%f_srdon=0.0
     allocate(cobalt%f_srdop(isd:ied, jsd:jed, 1:nk))      ; cobalt%f_srdop=0.0
@@ -7329,7 +7451,7 @@ contains
     allocate(cobalt%co3_sol_arag(isd:ied, jsd:jed, 1:nk)) ; cobalt%co3_sol_arag=0.0
     allocate(cobalt%co3_sol_calc(isd:ied, jsd:jed, 1:nk)) ; cobalt%co3_sol_calc=0.0
     allocate(cobalt%f_chl(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_chl=0.0
-    if (do_nh3_diag) allocate(cobalt%f_nh3(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_nh3=0.0
+    allocate(cobalt%f_nh3(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_nh3=0.0    
     allocate(cobalt%f_co3_ion(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_co3_ion=0.0
     allocate(cobalt%f_htotal(isd:ied, jsd:jed, 1:nk))     ; cobalt%f_htotal=0.0
     allocate(cobalt%f_irr_aclm(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_irr_aclm=0.0
@@ -7341,7 +7463,9 @@ contains
     allocate(cobalt%f_fedet_btf(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_fedet_btf=0.0
     allocate(cobalt%f_lithdet_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_lithdet_btf=0.0
     allocate(cobalt%f_ndet_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_ndet_btf=0.0
+    allocate(cobalt%f_ndet_fast_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_ndet_fast_btf=0.0
     allocate(cobalt%f_pdet_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_pdet_btf=0.0
+    allocate(cobalt%f_pdet_fast_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_pdet_fast_btf=0.0
     allocate(cobalt%f_sidet_btf(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_sidet_btf=0.0
     allocate(cobalt%f_ndi_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_ndi_btf=0.0
     allocate(cobalt%f_nsm_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_nsm_btf=0.0
@@ -7389,6 +7513,7 @@ contains
     allocate(cobalt%jlith(isd:ied, jsd:jed, 1:nk))        ; cobalt%jlith=0.0
     allocate(cobalt%jlithdet(isd:ied, jsd:jed, 1:nk))     ; cobalt%jlithdet=0.0
     allocate(cobalt%jndet(isd:ied, jsd:jed, 1:nk))        ; cobalt%jndet=0.0
+    allocate(cobalt%jndet_fast(isd:ied, jsd:jed, 1:nk))   ; cobalt%jndet_fast=0.0
     allocate(cobalt%jnh4(isd:ied, jsd:jed, 1:nk))         ; cobalt%jnh4=0.0
     allocate(cobalt%jnh4_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jnh4_plus_btm=0.0
     allocate(cobalt%jno3(isd:ied, jsd:jed, 1:nk))         ; cobalt%jno3=0.0
@@ -7396,6 +7521,7 @@ contains
     allocate(cobalt%jo2(isd:ied, jsd:jed, 1:nk))          ; cobalt%jo2=0.0
     allocate(cobalt%jo2_plus_btm(isd:ied, jsd:jed, 1:nk)) ; cobalt%jo2_plus_btm=0.0
     allocate(cobalt%jpdet(isd:ied, jsd:jed, 1:nk))        ; cobalt%jpdet=0.0
+    allocate(cobalt%jpdet_fast(isd:ied, jsd:jed, 1:nk))   ; cobalt%jpdet_fast=0.0
     allocate(cobalt%jpo4(isd:ied, jsd:jed, 1:nk))         ; cobalt%jpo4=0.0
     allocate(cobalt%jpo4_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jpo4_plus_btm=0.0
     allocate(cobalt%jsrdon(isd:ied, jsd:jed, 1:nk))       ; cobalt%jsrdon=0.0
@@ -7410,7 +7536,9 @@ contains
     allocate(cobalt%jprod_fed(isd:ied, jsd:jed, 1:nk))    ; cobalt%jprod_fed=0.0
     allocate(cobalt%jprod_fedet(isd:ied, jsd:jed, 1:nk))  ; cobalt%jprod_fedet=0.0
     allocate(cobalt%jprod_ndet(isd:ied, jsd:jed, 1:nk))   ; cobalt%jprod_ndet=0.0
+    allocate(cobalt%jprod_ndet_fast(isd:ied, jsd:jed, 1:nk)); cobalt%jprod_ndet_fast=0.0
     allocate(cobalt%jprod_pdet(isd:ied, jsd:jed, 1:nk))   ; cobalt%jprod_pdet=0.0
+    allocate(cobalt%jprod_pdet_fast(isd:ied, jsd:jed, 1:nk)); cobalt%jprod_pdet_fast=0.0
     allocate(cobalt%jprod_ldon(isd:ied, jsd:jed, 1:nk))   ; cobalt%jprod_ldon=0.0
     allocate(cobalt%jprod_ldop(isd:ied, jsd:jed, 1:nk))   ; cobalt%jprod_ldop=0.0
     allocate(cobalt%jprod_sldon(isd:ied, jsd:jed, 1:nk))  ; cobalt%jprod_sldon=0.0
@@ -7443,7 +7571,9 @@ contains
     allocate(cobalt%jdiss_cadet_calc_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jdiss_cadet_calc_plus_btm=0.0
     allocate(cobalt%jdiss_sidet(isd:ied, jsd:jed, 1:nk))  ; cobalt%jdiss_sidet=0.0
     allocate(cobalt%jremin_ndet(isd:ied, jsd:jed, 1:nk))  ; cobalt%jremin_ndet=0.0
+    allocate(cobalt%jremin_ndet_fast(isd:ied, jsd:jed, 1:nk)); cobalt%jremin_ndet_fast=0.0
     allocate(cobalt%jremin_pdet(isd:ied, jsd:jed, 1:nk))  ; cobalt%jremin_pdet=0.0
+    allocate(cobalt%jremin_pdet_fast(isd:ied, jsd:jed, 1:nk)); cobalt%jremin_pdet_fast=0.0
     allocate(cobalt%jremin_fedet(isd:ied, jsd:jed, 1:nk)) ; cobalt%jremin_fedet=0.0
     allocate(cobalt%jfe_ads(isd:ied, jsd:jed, 1:nk))      ; cobalt%jfe_ads=0.0
     allocate(cobalt%jfe_coast(isd:ied, jsd:jed, 1:nk))    ; cobalt%jfe_coast=0.0
@@ -7502,7 +7632,9 @@ contains
     allocate(cobalt%ffedet_btm(isd:ied, jsd:jed))         ; cobalt%ffedet_btm=0.0
     allocate(cobalt%flithdet_btm(isd:ied, jsd:jed))       ; cobalt%flithdet_btm=0.0
     allocate(cobalt%fpdet_btm(isd:ied, jsd:jed))          ; cobalt%fpdet_btm=0.0
+    allocate(cobalt%fpdet_fast_btm(isd:ied, jsd:jed))     ; cobalt%fpdet_fast_btm=0.0
     allocate(cobalt%fndet_btm(isd:ied, jsd:jed))          ; cobalt%fndet_btm=0.0
+    allocate(cobalt%fndet_fast_btm(isd:ied, jsd:jed))     ; cobalt%fndet_fast_btm=0.0
     allocate(cobalt%fsidet_btm(isd:ied, jsd:jed))         ; cobalt%fsidet_btm=0.0
     allocate(cobalt%ffetot_btm(isd:ied, jsd:jed))         ; cobalt%ffetot_btm=0.0
     allocate(cobalt%fptot_btm(isd:ied, jsd:jed))          ; cobalt%fptot_btm=0.0
@@ -7637,17 +7769,21 @@ contains
    allocate(cobalt%jdic_caco3_nerbur_150(isd:ied,jsd:jed)); cobalt%jdic_caco3_nerbur_150 = 0.0
    ! >>
    allocate(cobalt%jremin_ndet_100(isd:ied,jsd:jed))        ; cobalt%jremin_ndet_100 = 0.0
+   allocate(cobalt%jremin_ndet_fast_100(isd:ied,jsd:jed))   ; cobalt%jremin_ndet_fast_100 = 0.0
    allocate(cobalt%jprod_mesozoo_200(isd:ied,jsd:jed))      ; cobalt%jprod_mesozoo_200 = 0.0
    allocate(cobalt%daylength(isd:ied,jsd:jed))              ; cobalt%daylength = 0.0
 
    allocate(cobalt%f_ndet_100(isd:ied,jsd:jed))             ; cobalt%f_ndet_100 = 0.0
+   allocate(cobalt%f_ndet_fast_100(isd:ied,jsd:jed))        ; cobalt%f_ndet_fast_100 = 0.0
    allocate(cobalt%f_don_100(isd:ied,jsd:jed))              ; cobalt%f_don_100  = 0.0
    allocate(cobalt%f_silg_100(isd:ied,jsd:jed))             ; cobalt%f_silg_100 = 0.0
    allocate(cobalt%f_simd_100(isd:ied,jsd:jed))             ; cobalt%f_simd_100 = 0.0
    allocate(cobalt%f_mesozoo_200(isd:ied,jsd:jed))          ; cobalt%f_mesozoo_200 = 0.0
 
    allocate(cobalt%fndet_100(isd:ied,jsd:jed))             ; cobalt%fndet_100 = 0.0
+   allocate(cobalt%fndet_fast_100(isd:ied,jsd:jed))        ; cobalt%fndet_fast_100 = 0.0
    allocate(cobalt%fpdet_100(isd:ied,jsd:jed))             ; cobalt%fpdet_100 = 0.0
+   allocate(cobalt%fpdet_fast_100(isd:ied,jsd:jed))        ; cobalt%fpdet_fast_100 = 0.0
    allocate(cobalt%fsidet_100(isd:ied,jsd:jed))            ; cobalt%fsidet_100 = 0.0
    allocate(cobalt%flithdet_100(isd:ied,jsd:jed))          ; cobalt%flithdet_100 = 0.0
    allocate(cobalt%fcadet_calc_100(isd:ied,jsd:jed))       ; cobalt%fcadet_calc_100 = 0.0
@@ -7878,10 +8014,12 @@ contains
     deallocate(cobalt%f_lith)
     deallocate(cobalt%f_lithdet)
     deallocate(cobalt%f_ndet)
+    deallocate(cobalt%f_ndet_fast)
     deallocate(cobalt%f_nh4)
     deallocate(cobalt%f_no3)
     deallocate(cobalt%f_o2)
     deallocate(cobalt%f_pdet)
+    deallocate(cobalt%f_pdet_fast)
     deallocate(cobalt%f_po4)
     deallocate(cobalt%f_srdon)
     deallocate(cobalt%f_srdop)
@@ -7894,7 +8032,7 @@ contains
     deallocate(cobalt%co3_sol_arag)
     deallocate(cobalt%co3_sol_calc)
     deallocate(cobalt%f_chl)
-    if (allocated(cobalt%f_nh3)) deallocate(cobalt%f_nh3)
+    deallocate(cobalt%f_nh3)
     deallocate(cobalt%f_co3_ion)
     deallocate(cobalt%f_htotal)
     deallocate(cobalt%f_irr_aclm)
@@ -7906,7 +8044,9 @@ contains
     deallocate(cobalt%f_fedet_btf)
     deallocate(cobalt%f_lithdet_btf)
     deallocate(cobalt%f_ndet_btf)
+    deallocate(cobalt%f_ndet_fast_btf)
     deallocate(cobalt%f_pdet_btf)
+    deallocate(cobalt%f_pdet_fast_btf)
     deallocate(cobalt%f_sidet_btf)
     deallocate(cobalt%f_ndi_btf)
     deallocate(cobalt%f_nsm_btf)
@@ -7953,6 +8093,7 @@ contains
     deallocate(cobalt%jlith)
     deallocate(cobalt%jlithdet)
     deallocate(cobalt%jndet)
+    deallocate(cobalt%jndet_fast)
     deallocate(cobalt%jnh4)
     deallocate(cobalt%jnh4_plus_btm)
     deallocate(cobalt%jno3)
@@ -7960,6 +8101,7 @@ contains
     deallocate(cobalt%jo2)
     deallocate(cobalt%jo2_plus_btm)
     deallocate(cobalt%jpdet)
+    deallocate(cobalt%jpdet_fast)
     deallocate(cobalt%jpo4)
     deallocate(cobalt%jpo4_plus_btm)
     deallocate(cobalt%jsrdon)
@@ -7972,7 +8114,9 @@ contains
     deallocate(cobalt%jsio4)
     deallocate(cobalt%jsio4_plus_btm)
     deallocate(cobalt%jprod_ndet)
+    deallocate(cobalt%jprod_ndet_fast)
     deallocate(cobalt%jprod_pdet)
+    deallocate(cobalt%jprod_pdet_fast)
     deallocate(cobalt%jprod_ldon)
     deallocate(cobalt%jprod_ldop)
     deallocate(cobalt%jprod_sldop)
@@ -8006,7 +8150,9 @@ contains
     deallocate(cobalt%jdiss_cadet_calc_plus_btm)
     deallocate(cobalt%jdiss_sidet)
     deallocate(cobalt%jremin_ndet)
+    deallocate(cobalt%jremin_ndet_fast)
     deallocate(cobalt%jremin_pdet)
+    deallocate(cobalt%jremin_pdet_fast)
     deallocate(cobalt%jremin_fedet)
     deallocate(cobalt%jfe_ads)
     deallocate(cobalt%jfe_coast)
@@ -8080,7 +8226,9 @@ contains
     deallocate(cobalt%ffedet_btm)
     deallocate(cobalt%flithdet_btm)
     deallocate(cobalt%fpdet_btm)
+    deallocate(cobalt%fpdet_fast_btm)
     deallocate(cobalt%fndet_btm)
+    deallocate(cobalt%fndet_fast_btm)
     deallocate(cobalt%fsidet_btm)
     deallocate(cobalt%ffetot_btm)
     deallocate(cobalt%fptot_btm)
@@ -8116,13 +8264,17 @@ contains
     deallocate(cobalt%jprod_mesozoo_200)
     deallocate(cobalt%daylength)
     deallocate(cobalt%jremin_ndet_100)
+    deallocate(cobalt%jremin_ndet_fast_100)
     deallocate(cobalt%f_ndet_100)
+    deallocate(cobalt%f_ndet_fast_100)
     deallocate(cobalt%f_don_100)
     deallocate(cobalt%f_silg_100)
     deallocate(cobalt%f_simd_100)
     deallocate(cobalt%f_mesozoo_200)
     deallocate(cobalt%fndet_100)
+    deallocate(cobalt%fndet_fast_100)
     deallocate(cobalt%fpdet_100)
+    deallocate(cobalt%fpdet_fast_100)
     deallocate(cobalt%fsidet_100)
     deallocate(cobalt%fcadet_calc_100)
     deallocate(cobalt%fcadet_arag_100)

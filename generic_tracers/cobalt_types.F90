@@ -416,6 +416,7 @@ module cobalt_types
                                                !    when update_from_source is not called every coupling timesteps
                                                !    as is the case with MOM6  THERMO_SPANS_COUPLING option
           do_fnso4red_sed,  &     ! Simulate O2 deficit and alkalinity flux from implied sedimentary sulfate reduction
+          do_fastsinking,   &     ! Enable fast-sinking N and P detritus from higher trophic level predators
           cased_steady,     &     ! steady state approximation for cased
           recalculate_carbon, &   ! true means C system is resolved for diagnostic
           tracer_debug, &
@@ -468,6 +469,7 @@ module cobalt_types
           min_daylength,    &
           gamma_mu_mem,     &
           gamma_ndet,       &
+          gamma_ndet_fast,  &
           gamma_nitrif,     &
           k_nh3_nitrif,     &
           nitrif_b,         &
@@ -532,6 +534,7 @@ module cobalt_types
           lysis_phi_srdop,  &
           lysis_phi_sldop,  &
           wsink,            &
+          wsink_fast,       &
           bottom_thickness, &
           z_sed,            &
           zeta,             &
@@ -590,10 +593,12 @@ module cobalt_types
           f_lith,&
           f_lithdet,&
           f_ndet,&
+          f_ndet_fast,&
           f_nh4,&
           f_no3,&
           f_o2,&
           f_pdet,&
+          f_pdet_fast,&
           f_po4,&
           f_srdon,&
           f_srdop,&
@@ -618,7 +623,9 @@ module cobalt_types
           f_fedet_btf, &
           f_lithdet_btf, &
           f_ndet_btf,&
+          f_ndet_fast_btf,&
           f_pdet_btf,&
+          f_pdet_fast_btf,&
           f_sidet_btf,&
           f_nsm_btf,&
           f_nmd_btf,&
@@ -665,6 +672,7 @@ module cobalt_types
           jlith,&
           jlithdet,&
           jndet,&
+          jndet_fast,&
           jnh4,&
           jnh4_plus_btm,&
           jno3,&
@@ -672,6 +680,7 @@ module cobalt_types
           jo2,&
           jo2_plus_btm,&
           jpdet,&
+          jpdet_fast,&
           jpo4,&
           jpo4_plus_btm,&
           jsrdon,&
@@ -684,7 +693,9 @@ module cobalt_types
           jsio4,&
           jsio4_plus_btm,&
           jprod_ndet,&
+          jprod_ndet_fast,&
           jprod_pdet,&
+          jprod_pdet_fast,&
           jprod_ldon,&
           jprod_ldop,&
           jprod_sldon,&
@@ -717,7 +728,9 @@ module cobalt_types
           jdiss_cadet_calc_plus_btm,&
           jdiss_sidet,&
           jremin_ndet,&
+          jremin_ndet_fast,&
           jremin_pdet,&
+          jremin_pdet_fast,&
           jremin_fedet,&
           jfe_ads,&
           jfe_coast,&
@@ -792,7 +805,9 @@ module cobalt_types
           ffedet_btm,&
           flithdet_btm,&
           fpdet_btm,&
+          fpdet_fast_btm,&
           fndet_btm,&
+          fndet_fast_btm,&
           fsidet_btm,&
           fntot_btm,&
           fptot_btm,&
@@ -828,13 +843,17 @@ module cobalt_types
           jdic_caco3_nerbur_150,&
           jprod_mesozoo_200, &
           jremin_ndet_100, &
+          jremin_ndet_fast_100, &
           f_ndet_100, &
+          f_ndet_fast_100, &
           f_don_100, &
           f_simd_100, &
           f_silg_100, &
           f_mesozoo_200, &
           fndet_100, &
+          fndet_fast_100, &
           fpdet_100, &
+          fpdet_fast_100, &
           fsidet_100, &
           fcadet_calc_100, &
           fcadet_arag_100, &
@@ -930,6 +949,7 @@ module cobalt_types
           p_lithdet,&
           p_nbact,&
           p_ndet,&
+          p_ndet_fast,&
           p_ndi,&
           p_nlg,&
           p_nmd,&
@@ -938,6 +958,7 @@ module cobalt_types
           p_no3,&
           p_o2,&
           p_pdet,&
+          p_pdet_fast,&
           p_po4,&
           p_srdon,&
           p_srdop,&
@@ -1002,7 +1023,9 @@ module cobalt_types
           id_irr_aclm_z    = -1,       &
           id_jfed          = -1,       &
           id_jprod_ndet    = -1,       &
+          id_jprod_ndet_fast = -1,       &
           id_jprod_pdet    = -1,       &
+          id_jprod_pdet_fast = -1,       &
           id_jprod_sldon   = -1,       &
           id_jprod_ldon    = -1,       &
           id_jprod_srdon   = -1,       &
@@ -1029,7 +1052,9 @@ module cobalt_types
           id_jdiss_cadet_calc = -1,    &
           id_jdiss_cadet_calc_plus_btm = -1, &
           id_jremin_ndet   = -1,       &
+          id_jremin_ndet_fast = -1,       &
           id_jremin_pdet   = -1,       &
+          id_jremin_pdet_fast = -1,       &
           id_jremin_fedet  = -1,       &
           id_jfe_ads       = -1,       &
           id_jfe_coast     = -1,       &
@@ -1056,6 +1081,7 @@ module cobalt_types
           id_jpo4          = -1,       &
           id_jsio4         = -1,       &
           id_jndet         = -1,       &
+          id_jndet_fast    = -1,       &
           id_jnh4_plus_btm = -1,       &
           id_jno3denit_wc  = -1,       &
           id_juptake_no3amx = -1,      &
@@ -1072,7 +1098,9 @@ module cobalt_types
           id_fcadet_calc_tp = -1,      &
           id_ffedet_tp     = -1,       &
           id_fndet_tp      = -1,       &
+          id_fndet_fast_tp = -1,       &
           id_fpdet_tp      = -1,       &
+          id_fpdet_fast_tp = -1,       &
           id_fsidet_tp     = -1,       &
           id_fntot_tp      = -1,       &
           id_fptot_tp      = -1,       &
@@ -1083,7 +1111,9 @@ module cobalt_types
           id_fcadet_calc_i = -1,       &
           id_ffedet_i      = -1,       &
           id_fndet_i       = -1,       &
+          id_fndet_fast_i  = -1,       &
           id_fpdet_i       = -1,       &
+          id_fpdet_fast_i  = -1,       &
           id_fsidet_i      = -1,       &
           id_fntot_i       = -1,       &
           id_fptot_i       = -1,       &
@@ -1095,7 +1125,9 @@ module cobalt_types
           id_ffedet_btm    = -1,       &
           id_flithdet_btm  = -1,       &
           id_fndet_btm     = -1,       &
+          id_fndet_fast_btm = -1,       &
           id_fpdet_btm     = -1,       &
+          id_fpdet_fast_btm = -1,       &
           id_fsidet_btm    = -1,       &
           id_fntot_btm     = -1,       &
           id_fptot_btm     = -1,       &
@@ -1231,13 +1263,17 @@ module cobalt_types
           id_jprod_mesozoo_200 = -1,   &
           id_daylength         = -1,   &
           id_jremin_ndet_100 = -1,     &
+          id_jremin_ndet_fast_100 = -1,     &
           id_f_ndet_100 = -1,          &
+          id_f_ndet_fast_100 = -1,          &
           id_f_don_100 = -1,           &
           id_f_silg_100 = -1,          &
           id_f_simd_100 = -1,          &
           id_f_mesozoo_200 = -1,       &
           id_fndet_100 = -1,           &
+          id_fndet_fast_100 = -1,           &
           id_fpdet_100 = -1,           &
+          id_fpdet_fast_100 = -1,           &
           id_ffedet_100 = -1,          &
           id_fcadet_calc_100 = -1,     &
           id_fcadet_arag_100 = -1,     &
