@@ -3763,12 +3763,6 @@ contains
           ! Loop through the ecotypes to find the most competitive.  This is essentially a Geider growth
           ! rate calculation for each ecotype using the acclimation irradiance.
           mu_opt = -999.0 ! arbitrarily low value
-          ! option to do older photoacclimation approach where irradiance was time-filtered but not the nutrient and
-          ! temperature limitations.  This option can lead to significant diurnal chlorophyll variability in high
-          ! light, low nutrient regions
-          if (cobalt%photoaclm_opt.eq.0) then
-            phyto(n)%f_pcmlim_aclm(i,j,k) = phyto(n)%liebig_lim(i,j,k)*cobalt%expkT(i,j,k)
-          endif
           do m = 1,cobalt%numlightadapt
             ! since we test the low and high, divide by m-1 so first step is the low and last is the high
             alpha_step = (phyto(n)%alpha_ll - phyto(n)%alpha_hl)/(real(cobalt%numlightadapt,8)-1.0)
@@ -3816,7 +3810,7 @@ contains
 
     !
     ! Calculate the time averaged growth rate (generally over 24 hours)
-    ! This is used later for phytoplankton stress calculations that can o
+    ! This is used later for phytoplankton stress calculations that can
     ! control sinking and aggregation.  First loop provides average growth
     ! in the mixed layer.  The second averages over all depths.
     !
