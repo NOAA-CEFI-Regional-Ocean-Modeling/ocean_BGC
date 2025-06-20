@@ -4017,8 +4017,15 @@ contains
        ! anaerobic remineralization.
        bact(1)%o2lim(i,j,k) = max(cobalt%f_o2(i,j,k),cobalt%o2_min)/  &
                               (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))
+       ! Note that nitrate availability affects the anaerobic remineralization of dissolved organic material 
+       ! as that of particulate organic material
+       if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then !{
+          bact(1)%no3lim(i,j,k) = 1.0
+       else
+          bact(1)%no3lim(i,j,k) = max(0.0, cobalt%f_no3(i,j,k)/(cobalt%k_no3_denit + cobalt%f_no3(i,j,k)))
+       endif
        bact(1)%juptake_ldon(i,j,k) = vmax_bact*bact(1)%temp_lim(i,j,k)*bact(1)%ldonlim(i,j,k)* &
-               bact(1)%o2lim(i,j,k)*bact(1)%f_n(i,j,k)
+               bact(1)%o2lim(i,j,k)*bact(1)%no3lim(i,j,k)*bact(1)%f_n(i,j,k)
        bact_uptake_ratio = ( cobalt%f_ldop(i,j,k)/max(cobalt%f_ldon(i,j,k),epsln) )
        bact(1)%juptake_ldop(i,j,k) = bact(1)%juptake_ldon(i,j,k)*bact_uptake_ratio
        ! calculate bacteria production if N-limited, adjust down if P-limited
@@ -7378,6 +7385,7 @@ contains
     allocate(bact(1)%o2lim(isd:ied,jsd:jed,nk))            ; bact(1)%o2lim           = 0.0
     allocate(bact(1)%ldonlim(isd:ied,jsd:jed,nk))          ; bact(1)%ldonlim         = 0.0
     allocate(bact(1)%temp_lim(isd:ied,jsd:jed,nk))         ; bact(1)%temp_lim        = 0.0
+    allocate(bact(1)%no3lim(isd:ied,jsd:jed,nk))           ; bact(1)%no3lim          = 0.0
     !
     ! CAS: allocate and initialize array elements for all zooplankton groups
     !
@@ -7966,6 +7974,7 @@ contains
     deallocate(bact(1)%o2lim)
     deallocate(bact(1)%ldonlim)
     deallocate(bact(1)%temp_lim)
+    deallocate(bact(1)%no3lim)
 
     ! zooplankton
     do n = 1, NUM_ZOO
