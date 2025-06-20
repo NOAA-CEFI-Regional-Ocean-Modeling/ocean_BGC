@@ -1445,6 +1445,8 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(bact(1)%id_temp_lim, bact(1)%temp_lim, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+	  used = g_send_data(bact(1)%id_no3lim, bact(1)%no3lim, &
+       	    model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
 
           !
           ! Send zooplankton ingestion, production and limitation diagnostic data
