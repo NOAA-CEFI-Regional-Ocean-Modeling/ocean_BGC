@@ -384,6 +384,7 @@ module cobalt_types
     real, ALLOCATABLE, dimension(:,:,:) ::      ldonlim          !< limitation due to organic substrate
     real, ALLOCATABLE, dimension(:,:,:) ::      o2lim            !< limitation due to oxygen
     real, ALLOCATABLE, dimension(:,:,:) ::      temp_lim         !< Temperature limitation
+    real, ALLOCATABLE, dimension(:,:,:) ::      no3lim           !< limitation due to nitrate
     integer ::  id_jzloss_n         = -1  !< ID associated with diagnostics for losses of n due to consumption by zooplankton
     integer ::  id_jzloss_p         = -1  !< ID associated with diagnostics for losses of p due to consumption by zooplankton
     integer ::  id_jhploss_n        = -1  !< ID associated with diagnostics for losses of n due to consumption by unresolved higher preds
@@ -398,6 +399,7 @@ module cobalt_types
     integer ::  id_temp_lim         = -1  !< ID associated with diagnostics for temperature limitation
     integer ::  id_o2lim            = -1  !< ID associated with diagnostics for limitation due to oxygen
     integer ::  id_ldonlim          = -1  !< ID associated with diagnostics for limitation due to organic substrate
+    integer ::  id_no3lim           = -1  !< ID associated with diagnostics for limitation due to nitrate
     integer ::  id_jprod_n_100      = -1  !< ID associated with diagnostics for bacteria nitrogen prod. integral in upper 100m
     integer ::  id_jzloss_n_100     = -1  !< ID associated with diagnostics for bacteria nitrogen loss to zooplankton integral in upper 100m
     integer ::  id_jvirloss_n_100   = -1  !< ID associated with diagnostics for bacteria nitrogen loss to viruses integral in upper 100m
