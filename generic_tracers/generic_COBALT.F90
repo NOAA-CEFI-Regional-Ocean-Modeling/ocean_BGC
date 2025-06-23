@@ -6822,7 +6822,7 @@ contains
           enddo
           phyto(MEDIUM)%silim_bw_100(i,j) = phyto(MEDIUM)%silim_bw_100(i,j) + phyto(MEDIUM)%silim(i,j,k_100)* &
                 phyto(MEDIUM)%f_n(i,j,k_100)*drho_dzt/(phyto(MEDIUM)%f_n_100(i,j)+epsln)
-          phyto(LARGE)%silim_bw_100(i,j) = phyto(LARGE)%silim_bw_100(i,j) + phyto(n)%silim(i,j,k_100)* &
+          phyto(LARGE)%silim_bw_100(i,j) = phyto(LARGE)%silim_bw_100(i,j) + phyto(LARGE)%silim(i,j,k_100)* &
                 phyto(LARGE)%f_n(i,j,k_100)*drho_dzt/(phyto(LARGE)%f_n_100(i,j)+epsln)
         endif
     enddo; enddo  !} i, j
