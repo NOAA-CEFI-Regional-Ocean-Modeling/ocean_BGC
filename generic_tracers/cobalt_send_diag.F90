@@ -2058,7 +2058,7 @@ module COBALT_send_diag
           field_2d(:,:) = & 
             ( phyto(MEDIUM)%nlim_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%nlim_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
-            ( phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limndiat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
