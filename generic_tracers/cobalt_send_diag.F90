@@ -2071,7 +2071,7 @@ module COBALT_send_diag
           field_2d(:,:) = &
             ( phyto(MEDIUM)%nlim_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%nlim_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
-            ( (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
               (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limnmisc, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -2080,7 +2080,7 @@ module COBALT_send_diag
           field_2d(:,:) = &
             ( phyto(MEDIUM)%irrlim_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%irrlim_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
-            ( phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limirrdiat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -2092,7 +2092,7 @@ module COBALT_send_diag
           field_2d(:,:) = &
             ( phyto(MEDIUM)%irrlim_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%irrlim_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
-            ( (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
               (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limirrmisc, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -2101,7 +2101,7 @@ module COBALT_send_diag
           field_2d(:,:) = &
             ( phyto(MEDIUM)%def_fe_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%def_fe_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
-            ( phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limfediat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -2113,7 +2113,7 @@ module COBALT_send_diag
           field_2d(:,:) = &
             ( phyto(MEDIUM)%def_fe_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%def_fe_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
-            ( (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
               (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limfemisc, field_2d,  &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -2122,7 +2122,7 @@ module COBALT_send_diag
           field_2d(:,:) = &
             ( phyto(MEDIUM)%plim_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%plim_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
-            ( phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limpdiat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -2134,7 +2134,7 @@ module COBALT_send_diag
           field_2d(:,:) = &
             ( phyto(MEDIUM)%plim_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
               phyto(LARGE)%plim_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
-            ( (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
               (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limpmisc, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
