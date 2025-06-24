@@ -108,17 +108,17 @@
 ! <REFERENCE>
 !
 ! Stock et al. (submitted).  Photoacclimation and photoadaptation sensitivity
-! in a global ocean ecosystem model.  JAMES 
+! in a global ocean ecosystem model.  JAMES
 !
 ! Stock et al. (2020). https://doi.org/10.1029/2019MS002043
 ! Stock, Dunne and John (2014). https://doi.org/10.1016/j.pocean.2013.07.001
 ! Dunne et al. (2013). https://doi.org/10.1175/JCLI-D-12-00150.1
 ! Ross et al. (2023) https://doi.org/10.5194/gmd-16-6943-2023
 ! Van Oostende et al. (2018) https://doi.org/10.1016/j.pocean.2018.10.009
-! Laufkotter et al. (2017)  https://doi.org/10.1002/2017GB005643 
+! Laufkotter et al. (2017)  https://doi.org/10.1002/2017GB005643
 ! Paulot et al. (2020)  https://doi.org/10.1029/2019MS002026
 ! Galbraith and Martiny (2015) https://doi.org/10.1073/pnas.1423917112
-! 
+!
 ! </REFERENCE>
 ! <DEVELOPER_NOTES>
 ! </DEVELOPER_NOTES>
@@ -151,7 +151,7 @@ module generic_COBALT
   use g_tracer_utils, only : g_send_data, is_root_pe
   use g_tracer_utils, only : g_tracer_is_prog, g_tracer_vertfill, g_tracer_get_next
 
-  use cobalt_types 
+  use cobalt_types
   use cobalt_send_diag, only : cobalt_send_diagnostics
   use cobalt_reg_diag, only : cobalt_reg_diagnostics
   use cobalt_param_doc, only : get_COBALT_param_file
@@ -177,13 +177,13 @@ module generic_COBALT
   ! are overwritten by generic_tracer_nml namelist
   logical, save :: do_generic_COBALT = .false.       !< Activate the generic_COBALT module if it is set to true.
   character(len=10), save :: as_param_cobalt !< air-sea flux parameter settings for COBALT. Set from
-                                             !! as_param in generic_tracer_nml by generic_tracer.F90, 
+                                             !! as_param in generic_tracer_nml by generic_tracer.F90,
                                              !! but can be replaced by setting as_param_cobalt
                                              !! in generic_COBALT_nml.
 
   namelist /generic_COBALT_nml/ co2_calc, do_14c, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
      do_vertfill_pre,imbalance_tolerance,as_param_cobalt
-  
+
   !
   ! Array allocations and flux calculations assume that phyto(1) is the
   ! only phytoplankton group cabable of nitrogen uptake by N2 fixation while phyto(2:NUM_PHYTO)
@@ -339,8 +339,8 @@ contains
     type(time_type):: init_time
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes=axes,init_time=init_time)
     !
-    call cobalt_reg_diagnostics(diag_list,axes,init_time,phyto,zoo,bact,cobalt)    
-  end subroutine generic_COBALT_register_diag  
+    call cobalt_reg_diagnostics(diag_list,axes,init_time,phyto,zoo,bact,cobalt)
+  end subroutine generic_COBALT_register_diag
 
   !
   !   This is an internal sub, not a public interface.
@@ -356,7 +356,7 @@ contains
     !User also adds the definition of each parameter in generic_COBALT_params type
     !==============================================================
 
-    integer :: stdoutunit 
+    integer :: stdoutunit
 
     !=============
     !Block Starts: g_tracer_add_param
@@ -410,8 +410,8 @@ contains
     call get_param(param_file, "generic_COBALT", "RHO_0", cobalt%Rho_0, "reference density", &
                    units="kg m-3", default=1035.0)
     !------------------------------------------------------------------------------------------------------------------
-    ! Coefficients for O2 saturation based on Garcia and Gordon, 1992.  Oxygen solubility in seawater: Better fitting  
-    ! equations.  Limnol. Oceanogr., 37(6), pp. 1307-1312. 
+    ! Coefficients for O2 saturation based on Garcia and Gordon, 1992.  Oxygen solubility in seawater: Better fitting
+    ! equations.  Limnol. Oceanogr., 37(6), pp. 1307-1312.
     ! https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lo.1992.37.6.1307
     ! Coefficients fit the Benson and Krause data in Table 1 were used.
     !------------------------------------------------------------------------------------------------------------------
@@ -441,7 +441,7 @@ contains
     !     Schmidt number coefficients for calculating air-sea exchanges
     !------------------------------------------------------------------------------------------------------------------
     if (trim(as_param_cobalt) == "W92") then
-        !  Compute the Schmidt number of CO2 in seawater using a modified version of the coefficients presented by 
+        !  Compute the Schmidt number of CO2 in seawater using a modified version of the coefficients presented by
         !  Wanninkhof, 1992a Relationship between wind speed and gas exchanges over the ocean. J. Geophys. Res. Oceans,
         !  97, pp. 7373-7382. https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/92JC00188.  Modifications were
         !  made to ensure the robustness of the Schmidt number relationship from -2-40 deg. C and were communicated to
@@ -473,7 +473,7 @@ contains
         !  Relationship between wind speed and gas exchange over the ocean revisited.  Limnol. Oceanogr: Methods. 12,
         !  pp. 361-362 https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lom.2014.12.351.  Note that these are
         !  technically for seawater at 35 ppt.  Alternatives values for freshwater are available in W14 but would need
-        !  to be implemented 
+        !  to be implemented
         call get_param(param_file, "generic_COBALT", "a1_co2", cobalt%a1_co2, "CO2 Schmidt # regression coefficient", &
                        units="dimensionless", default= 2116.8)
         call get_param(param_file, "generic_COBALT", "a2_co2", cobalt%a2_co2, "CO2 Schmidt # regression coefficient", &
@@ -484,7 +484,7 @@ contains
                        units="deg. C-3", default= -0.092307)
         call get_param(param_file, "generic_COBALT", "a5_co2", cobalt%a5_co2, "CO2 Schmidt # regression coefficient", &
                        units="deg. C-4", default= 0.0007555)
-        !  Compute the Schmidt number of O2 in seawater using the W14 relationships as above 
+        !  Compute the Schmidt number of O2 in seawater using the W14 relationships as above
         call get_param(param_file, "generic_COBALT", "a1_o2", cobalt%a1_o2, "O2 Schmidt # regression coefficient", &
                        units="dimensionless", default= 1920.4)
         call get_param(param_file, "generic_COBALT", "a2_o2", cobalt%a2_o2, "O2 Schmidt # regression coefficient", &
@@ -530,15 +530,15 @@ contains
     !   5NH4+ + 3NO3- --> 4N2 + 9H2O + 2H+
     !   Effect is to decrease alkalinity by 0.4 mole equivalents per mole of NH4 removed
     !
-    ! Sulfate reduction/HS- oxidation in the sediment: 
+    ! Sulfate reduction/HS- oxidation in the sediment:
     ! In the sediment, organic material that is not buried or remineralized via denitrification
     ! is assumed to generate oxygen demand at the sediment-water interface through a combination
     ! of direct aerobic remineralization in the sediment (see above) and sulfate reduction followed
     ! by the oxidation of bisulfide (HS-) in the sediment:
-    !  
+    !
     !   C106H172O38N16 + 59*SO4-- + 75*H+ --> 106*CO2 + 16*NH4+ + 59*HS- + 62*H2O
     !   59*HS- + 118O2 --> 59*SO4-- + 59*H+
-    ! 
+    !
     ! Yielding an overall reaction identical to aerobic remineralization:
     !   C106H172O38N16 + 16*H+ + 118*O2 -> 106*CO2 + 16*NH4+ + 62H2O
     !
@@ -546,13 +546,13 @@ contains
     ! not calculate how much O2 demand is generated by the direct aerobic versus sulfate
     ! reduction/HS- oxidation pathways, just the combined amount.
     !
-    ! In the rare cases when there is no oxygen at the sediment-water interface, organic material is 
+    ! In the rare cases when there is no oxygen at the sediment-water interface, organic material is
     ! assumed to go through the sulfate reduction step in the sediment but not bisulfide oxidation,
-    ! resulting in HS- release from the sediment. If the logical "do_fnso4red_sed" is set to true, the 
+    ! resulting in HS- release from the sediment. If the logical "do_fnso4red_sed" is set to true, the
     ! latent O2 demand from the HS- release is included in the sediment oxygen sink.  This can result in
     ! negative O2 concentrations, which should be interpreted as 0 moles O2 kg-1 plus additional O2 demand
     ! as HS-.  The +1 alkalinity impact of the complete reaction set is also included.
-    ! 
+    !
     call get_param(param_file, "generic_COBALT", "n_2_n_denit", cobalt%n_2_n_denit, &
                    "moles NO3 used per mole org. N remineralized via denitrification", &
                    units="mol N mol N-1",default= 472.0/(5.0*16.0))
@@ -569,7 +569,7 @@ contains
     call get_param(param_file, "generic_COBALT", "o2_2_no3", cobalt%o2_2_no3, &
                    "moles O2 created per mole of NO3-based prim. prod. ", units="mol O2 mol N-1", default=  150.0/16.0)
     call get_param(param_file, "generic_COBALT", "alk_2_n_denit", cobalt%alk_2_n_denit, &
-                   "moles alkalinity created per mole NO3- consumed during denitrification", & 
+                   "moles alkalinity created per mole NO3- consumed during denitrification", &
                    units="mol alk mol N-1 ", default= 552.0/472.0)
     call get_param(param_file, "generic_COBALT", "alk_2_nh4_amx", cobalt%alk_2_nh4_amx, &
                    "moles alkalinity removed per mole NH4+ consumed via anammox", units="mol alk mol N-1", &
@@ -679,7 +679,7 @@ contains
     ! calculation to COBALT's in MOM6 - which tracks irradiance in watts m-2, or Joules m-2 sec-1, confirms unit
     ! consistency:
     !
-    !  growth                alpha                   *    theta      *       Irradiance 
+    !  growth                alpha                   *    theta      *       Irradiance
     !  sec-1 = g C (g Chl)-1 (micromol quanta m-2)-1 * g Chl (g C)-1 * micromol quanta m-2 sec-1     (Geider)
     !  sec-1 =     g C (g Chl)-1 (Joule m-2)-1       * g Chl (g C)-1 *    Joules m-2 sec-1           (COBALT)
     !
@@ -739,7 +739,7 @@ contains
     call get_param(param_file, "generic_COBALT", "numlightadapt", cobalt%numlightadapt, &
                    "number of light adaptation ecotypes", units="number of ecotypes", default= 10)
     ! chlorophyll to carbon
-    call get_param(param_file, "generic_COBALT", "thetamax_Di", phyto(DIAZO)%thetamax, & 
+    call get_param(param_file, "generic_COBALT", "thetamax_Di", phyto(DIAZO)%thetamax, &
                    "maximum chlorophyll to carbon ratio for diazotrophs", units="g chl g C-1", default=0.035)
     call get_param(param_file, "generic_COBALT", "thetamax_Lg", phyto(LARGE)%thetamax, &
                    "maximum chlorophyll to carbon ratio for large phytoplankton", units="g chl g C-1", default=0.07)
@@ -764,9 +764,9 @@ contains
                    "diazotroph basal respiration rate below mixed layer as fraction of max photosynthesis", &
                    units="none", default=0.01)
     call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Lg", phyto(LARGE)%bresp_frac_strat, &
-                   "large phytoplankton basal respiration rate below mixed layer as fraction of max photosynthesis", & 
+                   "large phytoplankton basal respiration rate below mixed layer as fraction of max photosynthesis", &
                    units="none", default=0.01)
-    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Md", phyto(MEDIUM)%bresp_frac_strat, & 
+    call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Md", phyto(MEDIUM)%bresp_frac_strat, &
                    "medium phytoplankton basal respiration rate below mixed layer as fraction of max photosynthesis", &
                    units="none", default=0.01)
     call get_param(param_file, "generic_COBALT", "bresp_frac_strat_Sm", phyto(SMALL)%bresp_frac_strat, &
@@ -813,7 +813,7 @@ contains
       cobalt%case2_depth = 0.0       ! m
       cobalt%case2_salt = 0.0        ! PSU
       cobalt%case2_opac_add = 0.0    ! m-1
-    endif
+   endif
     call get_param(param_file, "generic_COBALT", "min_daylength", cobalt%min_daylength, &
                    "minimum daylength for calculating the daytime irradiance", units="hours", default= 6.0)
     call get_param(param_file, "generic_COBALT", "refuge_conc", cobalt%refuge_conc, &
@@ -837,11 +837,11 @@ contains
                    units="mol C mol N-1", default= 106.0 / 16.0)
     ! P:N ratios are simulated using the emergent negative relationship between phytoplankton N:P and the ambient PO4
     ! concentration identified by Galbraith and Martiny (2015).  The default maximum N:P ratio, which is reached in low
-    ! P environments, is set to 31 (nearly twice the Redfield ratio).  Minimum N:P ratios were truncated to 
+    ! P environments, is set to 31 (nearly twice the Redfield ratio).  Minimum N:P ratios were truncated to
     ! characteristic values for each size class (Finkel et al., 2010).  This allows the phytoplankton to use up excess
     ! N when P is scarce (i.e., P frugality), but limits luxury uptake in PO4-rich regions and the low N:P ratios this
     ! would generate.  Uncertainty in N:P ratios in such high PO4 concentrations is large.  Most of the highest PO4
-    ! concentrations in regional and global applications, furthermore, co-occur with even higher N concentrations. 
+    ! concentrations in regional and global applications, furthermore, co-occur with even higher N concentrations.
     ! River mouths, for example, are often high N:P.  Other observations (Sterner and Elser, 2003, Hall et al., 2005)
     ! suggest that such conditions would prevent low N:P ratios and support the truncation of those values in the
     ! default settings.
@@ -849,7 +849,7 @@ contains
     ! Note that the default slope parameter (0.048) was derived from the binned lognormal mean regression (7.3 permil
     ! per micromole PO4 L-1): 7.3 mole P/(1000 mole C)*0.001*106/16 = 0.048 mole P/mole N (micromol PO4 L-1)-1
     !
-    ! Diazotrophs set to a constant default p2n value of 1:40 
+    ! Diazotrophs set to a constant default p2n value of 1:40
     !
     ! References:
     ! Galbraith and Martiny, 2015 (https://www.pnas.org/doi/full/10.1073/pnas.1423917112)
@@ -902,7 +902,7 @@ contains
                    units="mol P mol N-1", default= 1.0/20.0)
     call get_param(param_file, "generic_COBALT", "q_p_2_n_mdz", zoo(2)%q_p_2_n, "Medium zooplankton P:N", &
                    units="mol P mol N-1", default= 1.0/18.0)
-    call get_param(param_file, "generic_COBALT", "q_p_2_n_lgz", zoo(3)%q_p_2_n, "Large zooplankton P:N", & 
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_lgz", zoo(3)%q_p_2_n, "Large zooplankton P:N", &
                    units="mol P mol N-1", default= 1.0/16.0)
     !
     !-----------------------------------------------------------------------
@@ -913,15 +913,15 @@ contains
     ! group but does not explicitly model attached bacteria.  The bacteria function only as remineralizers of dissolved
     ! organic nitrogen and do not compete with phytoplankton for inorganic nutrients.  Maximum growth rates of ~1 day-1
     ! were chosen to be consistent with observed rates in polar waters (Ducklow, 2000; Rich et al., 1997). The default
-    ! half-saturation follows Fasham et al., (1990).  The maximum gross growth efficiency, which is the fraction of 
+    ! half-saturation follows Fasham et al., (1990).  The maximum gross growth efficiency, which is the fraction of
     ! food ingested that contributes to new biomass, is set to 0.4 following del Giorgio and Cole (2000). Bacterial
     ! stoichiometry is currently static and set to Redfield, though some evidence suggests they may be more P-rich and
-    ! dynamic (Kirchman, 2000).  Rates entered as day-1 and converted to sec-1 for use in the model.  
+    ! dynamic (Kirchman, 2000).  Rates entered as day-1 and converted to sec-1 for use in the model.
     !
     ! References:
     ! Fasham (1990): https://elischolar.library.yale.edu/journal_of_marine_research/1981
     ! Ducklow (2000): Chapter 4 of "Microbial Ecology of the Oceans, 1st ed." (Kirchman ed.)
-    ! Rich et al., (1997): https://doi.org/10.1016/S0967-0645(97)00058-1 
+    ! Rich et al., (1997): https://doi.org/10.1016/S0967-0645(97)00058-1
     ! del Giorgio and Cole (2000): Chapter 10 of "Microbial Ecology of the Oceans, 1st ed." (Kirchman ed.)
     ! Kirchman (2000): Chapter 9 of "Microbial Ecology of the Oceans, 1st ed." (Kirchman ed.)
     !
@@ -945,9 +945,9 @@ contains
     !
     ! The parameters that follow pertain to a range of different phytoplankton mortality processes other than being
     ! consumed by zooplankton.  They include aggregation into sinking detrital particles, virus-driven losses (that
-    ! are also applied to bacteria), cell death (i.e., true phytoplankton mortality) and direct phytoplankton sinking. 
+    ! are also applied to bacteria), cell death (i.e., true phytoplankton mortality) and direct phytoplankton sinking.
     ! This section also includes parameters for the exudation of fixed carbon by phytoplankton.
-    ! 
+    !
     ! Phytoplankton mortality terms differ by whether they are density-dependent (i.e., linear versus quadratic),
     ! temperature-dependent, and whether they vary depending on the condition (or stress) of the phytoplankton. The
     ! level of stress is defined based on the achieved growth rate relative to the maximum growth rate.  By default,
@@ -981,7 +981,7 @@ contains
                    default=0.05, scale = micromol2mol/sperd)
     ! Diazotrophs, which are assumed not to aggregate, are modeled after trichodesmium
     call get_param(param_file, "generic_COBALT", "agg_Di", phyto(DIAZO)%agg, &
-                   "aggregation rate constant for diazotrophs", units="day-1 (micromol N kg-1)-1", & 
+                   "aggregation rate constant for diazotrophs", units="day-1 (micromol N kg-1)-1", &
                    default=0.0 , scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "agg_Lg", phyto(LARGE)%agg, &
                    "aggregation rate constant for large phytoplankton", units="day-1 (micromol N kg-1)-1", &
@@ -1003,12 +1003,12 @@ contains
     ! Murray and Jackson, 1992 (MEPS, DOI:10.3354/meps089103)
     ! Fuhrman, 2000.  Impact of viruses on bacterial processes.  In Microbial Ecology of the Oceans (Kirchman)
     ! Suttle, 2005. (https://www.nature.com/articles/nature04160)
-    !  
+    !
     call get_param(param_file, "generic_COBALT", "vir_Sm", phyto(SMALL)%vir, &
-                   "virus-driven loss rate constant for small phytoplankton @ 0 deg. C", & 
+                   "virus-driven loss rate constant for small phytoplankton @ 0 deg. C", &
                    units="day-1 (micromol N kg-1)-1", default=0.25, scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "vir_Di", phyto(DIAZO)%vir, &
-                   "virus-driven loss rate constant for diazotrophs @ 0 deg. C", & 
+                   "virus-driven loss rate constant for diazotrophs @ 0 deg. C", &
                    units="day-1 (micromol N kg-1)-1", default=0.05, scale = micromol2mol/sperd)
     call get_param(param_file, "generic_COBALT", "vir_Lg", phyto(LARGE)%vir, &
                    "virus-driven loss rate constant for large phytoplankton @ 0 deg. C", &
@@ -1030,7 +1030,7 @@ contains
     !
     call get_param(param_file, "generic_COBALT", "mort_Sm", phyto(SMALL)%mort, &
                    "mortality (cell death) rate constant for small phytoplankton @ 0 deg. C", &
-                   units="day-1", default=0.0, scale=I_sperd) 
+                   units="day-1", default=0.0, scale=I_sperd)
     call get_param(param_file, "generic_COBALT", "mort_Di", phyto(DIAZO)%mort, &
                    "mortality (cell death) rate constant for diazotrophs @ 0 deg. C", &
                    units="day-1", default=0.0, scale=I_sperd)
@@ -1043,7 +1043,7 @@ contains
     !
     ! Phytoplankton loss of organic carbon to exudation is assumed to be a constant fraction of NPP following Baines
     ! and Pace (1991) (https://aslopubs.onlinelibrary.wiley.com/doi/abs/10.4319/lo.1991.36.6.1078)
-    !  
+    !
     call get_param(param_file, "generic_COBALT", "exu_Sm",phyto(SMALL)%exu, &
                    "fraction of small phytoplankton net primary production exuded as dissolved organic material", &
                    units="none", default=0.13)
@@ -1099,7 +1099,7 @@ contains
                    "max ingestion rate for large zooplankton @ 0 deg. C", units="day-1", default= 0.23, scale=I_sperd)
     call get_param(param_file, "generic_COBALT", "ki_smz", zoo(1)%ki, "half-sat for ingestion by small zooplankton", &
                    units="mol N kg-1", default=1.25e-6)
-    call get_param(param_file, "generic_COBALT", "ki_mdz", zoo(2)%ki, "half-sat for ingestion by medium zooplankton", & 
+    call get_param(param_file, "generic_COBALT", "ki_mdz", zoo(2)%ki, "half-sat for ingestion by medium zooplankton", &
                    units="mol N kg-1", default=1.25e-6)
     call get_param(param_file, "generic_COBALT", "ki_lgz", zoo(3)%ki, "half-sat for ingestion by large zooplankton", &
                    units="mol N kg-1", default=1.25e-6)
@@ -1115,7 +1115,7 @@ contains
     ! modulated by density dependent switching between alternative prey types (e.g., herbivory versus carnivory) as
     ! described in Stock et al. (2008).  The innate prey availabilities are informed by typical predator-prey size
     ! ratios (Hansen et al., 1994; Fuchs and Franks, 2010), with the preferred size classes being 1 size below but
-    ! some flexibility around these preferred items.  All innate prey availabilities must fall between 0 and 1. 
+    ! some flexibility around these preferred items.  All innate prey availabilities must fall between 0 and 1.
     !
     ! NOTE: FOR COMPUTATIONAL EFFICIENCY, ONLY THE DEFAULT INTERACTIONS ARE INCLUDED IN THE CODE.  IF YOU ADD A NEW
     !      PREDATOR-PREY LINK, YOU WILL NEED TO ADD IT TO THE SOURCE/SINK CALCULATIONS LATER IN THIS ROUTINE AS WELL.
@@ -1226,7 +1226,7 @@ contains
     ! Fasham et al. (1990): https://elischolar.library.yale.edu/journal_of_marine_research/1981
     ! Gentleman et al. (2003): https://doi.org/10.1016/j.dsr2.2003.07.001
     ! Stock et al. (2008): https://doi.org/10.1016/j.jmarsys.2007.12.004
-    ! 
+    !
     call get_param(param_file, "generic_COBALT", "nswitch_smz", zoo(1)%nswitch, &
                    "prey switching parameter 1 for small zooplankton", units="none", default=2.0)
     call get_param(param_file, "generic_COBALT", "nswitch_mdz", zoo(2)%nswitch, &
@@ -1248,18 +1248,18 @@ contains
     ! (catabolic metabolism), or egested as fecal pellets or dissolved organic material.  The maximum fraction of
     ! ingestion partitioned to growth is set by the gross growth efficiency, which is 0.4 following Hansen et al.,
     ! (1997, https://doi.org/10.4319/lo.1997.42.4.0687) and Straile (1997, https://doi.org/10.4319/lo.1997.42.6.1375).
-    ! This value is approached as grazing rates far exceed basal respiration rates (bresp). The gross growth efficiency 
+    ! This value is approached as grazing rates far exceed basal respiration rates (bresp). The gross growth efficiency
     ! approaches 0 as ingestion approaches basal metabolic rates.  Basal metabolic rates were calibrated to produce
-    ! reasonable mesozooplankton biomass/production in subtropical gyres following Stock and Dunne (2010, 
-    ! https://doi.org/10.1016/j.dsr.2009.10.006).  Values near the lower end of observed range were needed.   
-    ! 
+    ! reasonable mesozooplankton biomass/production in subtropical gyres following Stock and Dunne (2010,
+    ! https://doi.org/10.1016/j.dsr.2009.10.006).  Values near the lower end of observed range were needed.
+    !
     call get_param(param_file, "generic_COBALT", "gge_max_smz", zoo(1)%gge_max, &
                    "maximum gross growth efficiency for small zooplankton", units="none", default=0.4)
     call get_param(param_file, "generic_COBALT", "gge_max_mdz",zoo(2)%gge_max, &
                    "maximum gross growth efficiency for medium zooplankton", units="none", default=0.4)
     call get_param(param_file, "generic_COBALT", "gge_max_lgz",zoo(3)%gge_max, &
                    "maximum gross growth efficiency for large zooplankton", units="none", default=0.4)
-    call get_param(param_file, "generic_COBALT", "bresp_smz", zoo(1)%bresp, & 
+    call get_param(param_file, "generic_COBALT", "bresp_smz", zoo(1)%bresp, &
                    "basal respiration rate for small zooplankton", units="day-1", default=0.8*0.020, scale=I_sperd)
     call get_param(param_file, "generic_COBALT", "bresp_mdz", zoo(2)%bresp, &
                    "basal respiration rate for medium zooplankton", units="day-1", default=0.008,scale=I_sperd)
@@ -1287,13 +1287,13 @@ contains
     !           total             100.0%           100.0%
     !
     ! IF YOU CHOOSE TO ALTER THESE PARAMETERS, BE SURE TO ALTER THEM IN A MANNER THAT ENSURES THAT ALL UNDIGESTED
-    ! MATERIAL IS ACCOUNTED FOR.  IF YOU CHANGE ONE, YOU MAY NEED TO CHANGE OTHERS!  
+    ! MATERIAL IS ACCOUNTED FOR.  IF YOU CHANGE ONE, YOU MAY NEED TO CHANGE OTHERS!
     !
     ! References:
     ! Carlotti et al., 2000. Modeling zooplankton dynamics. Zooplankton Methodology Manual, pp. 571-667.
     ! Nagata, 2000. Chapter 5 of "Microbial Ecology of the Oceans, 1st ed." (Kirchman ed.)
-    ! Stock and Dunne, 2010. (https://doi.org/10.1016/j.dsr.2009.10.006) 
-    ! Abell et al., 2000. (https://elischolar.library.yale.edu/journal_of_marine_research/2349) 
+    ! Stock and Dunne, 2010. (https://doi.org/10.1016/j.dsr.2009.10.006)
+    ! Abell et al., 2000. (https://elischolar.library.yale.edu/journal_of_marine_research/2349)
     ! Wheeler et al., 1997. (https://doi.org/10.1016/S0967-0637(96)00089-1)
     ! Vidal et al., 1999. (https://doi.org/10.4319/lo.1999.44.1.0106)
     !
@@ -1366,7 +1366,7 @@ contains
     !----------------------------------------------------------------------
     !
     ! All mortality from viruses goes to dissolved organic carbon pools.  Partitioning is assumed to be the same as
-    ! zooplankton egestion that is routed to dissolved organic nitrogen pools. 
+    ! zooplankton egestion that is routed to dissolved organic nitrogen pools.
     !
     call get_param(param_file, "generic_COBALT", "phi_ldon_vir",  cobalt%lysis_phi_ldon, &
                    "fraction of viral lysis of N to labile dissolved organic nitrogen", units="none", default=0.625)
@@ -1435,14 +1435,14 @@ contains
     call get_param(param_file, "generic_COBALT", "hp_ipa_det", cobalt%hp_ipa_det, &
                    "innate availability of detritus to higher predator feeding (0-1)", units="none", default=0.0)
     ! The material ingested by higher predators is partitioned between detritus and remineralization.
-    ! Remineralization = 1.0 - hp_phi_det 
+    ! Remineralization = 1.0 - hp_phi_det
     call get_param(param_file, "generic_COBALT", "hp_phi_det", cobalt%hp_phi_det, &
                    "fraction of ingestion by higher predators to detritus", units="none", default=0.35)
 
     ! Radiocarbon
     call get_param(param_file, "generic_COBALT", "half_life_14c", cobalt%half_life_14c, "half_life_14c", units="s", default= 5730.0 )                  ! s
-    call get_param(param_file, "generic_COBALT", "lambda_14c",    cobalt%lambda_14c,    "lambda_14c",    units="-s", & 
-                   default= log(2.0) / (cobalt%half_life_14c), scale = I_spery ) 
+    call get_param(param_file, "generic_COBALT", "lambda_14c",    cobalt%lambda_14c,    "lambda_14c",    units="-s", &
+                   default= log(2.0) / (cobalt%half_life_14c), scale = I_spery )
     !
     !---------------------------------------------------------------------------
     ! Ballast, remineralization and iron scavenging parameters (Section 4 of code)
@@ -1520,7 +1520,7 @@ contains
                    default= 0.065/12.0*16.0/106.0)
     call get_param(param_file, "generic_COBALT", "rpsio2", cobalt%rpsio2, "Organic matter protection from silica", &
                    units="mol N mol Si-1", default= 0.026/12.0*16.0/106.0*60.0)
-    ! From TOPAZ: Calibrated to Data from Betzer et al. (1984) yielding ~50% attenuation between 900-2200m 
+    ! From TOPAZ: Calibrated to Data from Betzer et al. (1984) yielding ~50% attenuation between 900-2200m
     call get_param(param_file, "generic_COBALT", "gamma_cadet_arag", cobalt%gamma_cadet_arag, &
                    "Dissolution rate for aragonite detritus at 0 saturation", units="s-1", default=cobalt%wsink/760.0)
     ! From TOPAZ: Calibrated to get an approximate 67% transfer efficiency between 1000-3800 at Ocean Station P with
@@ -1553,8 +1553,8 @@ contains
     ! Scavenging coefficients -  alpha_fescav allows for a linear scavenging rate for free iron (feprime) used in
     ! COBALTv1, beta_fescav scales the reaction between feprime and ndet and is the default for COBALTv2 and beyond
     ! In either case, values are calibrated to create reasonable levels of iron, iron-limitation and HNLC regions
-    ! (e.g., see Tagliabue et al., 2016). 
-    call get_param(param_file, "generic_COBALT", "alpha_fescav", cobalt%alpha_fescav, & 
+    ! (e.g., see Tagliabue et al., 2016).
+    call get_param(param_file, "generic_COBALT", "alpha_fescav", cobalt%alpha_fescav, &
                    "linear iron scavenging rate constant", units="year-1", default= 0.0, scale = I_spery)
     call get_param(param_file, "generic_COBALT", "beta_fescav", cobalt%beta_fescav, &
                    "iron scavenging rate constant for free iron - detritus interaction", &
@@ -1575,7 +1575,7 @@ contains
     ! kfe_eq_lig = [FeL]/([L]*[Fe']), so large values imply that most is [FeL]
     call get_param(param_file, "generic_COBALT", "kfe_eq_lig_ll", cobalt%kfe_eq_lig_ll, &
                    "low light ligand binding strength", units="(mol lig-1 kg)-1", default= 1.0e12)
-    call get_param(param_file, "generic_COBALT", "kfe_eq_lig_hl", cobalt%kfe_eq_lig_hl, & 
+    call get_param(param_file, "generic_COBALT", "kfe_eq_lig_hl", cobalt%kfe_eq_lig_hl, &
                    "high light ligand binding strength", units="(mol lig-1 kg)-1", default= 1.0e9)
     !
     !-----------------------------------------------------------------------
@@ -1597,7 +1597,7 @@ contains
            "depth scale for ramping up benthic denitrification", units="m", default=10.0)
     call get_param(param_file, "generic_COBALT", "scale_burial", cobalt%scale_burial, &
            "scaling factor for particulate organic burial", units="none", default= 0.0)
-    ! Flag to include impact of sulfate reduction on o2 and alkalinity locally 
+    ! Flag to include impact of sulfate reduction on o2 and alkalinity locally
     call get_param(param_file, "generic_COBALT", "do_fnso4red_sed", cobalt%do_fnso4red_sed, &
             "logical flag to include O2 demand and alk impact of H2S- sediment release", default=.false.)
     !
@@ -1617,7 +1617,7 @@ contains
                    "dissolution length-scale nonlinear exponent for sediment calcite", units="none", default=-2.2185)
     call get_param(param_file, "generic_COBALT", "gamma_cased", cobalt%gamma_cased, &
                    "sediment calcite dissolution rate constant", units="year-1", default=0.03607, scale=I_spery)
-    ! This assumes a dry density of 2.7 g cm-3, a porosity of 0.7 and molecular weight of 100 g CaCO3 mole-1 
+    ! This assumes a dry density of 2.7 g cm-3, a porosity of 0.7 and molecular weight of 100 g CaCO3 mole-1
     call get_param(param_file, "generic_COBALT", "Co_cased", cobalt%Co_cased, &
                    "Calcite concentration for pure calcite sediment", units="mol m-3", default=8.1e3)
     ! Flag that assumes no net calcite loss to sediments
@@ -1659,7 +1659,7 @@ contains
     !
     call get_param(param_file, "generic_COBALT", "gamma_srdon", cobalt%gamma_srdon, &
                    "rate constant for converting semi-refractory DON to labile DON", units="years-1", default=0.1, &
-                   scale=I_spery) 
+                   scale=I_spery)
     call get_param(param_file, "generic_COBALT", "gamma_srdop", cobalt%gamma_srdop, &
                    "rate constant for converting semi-refractory DOP to labile DOP", units="years-1", default=0.25, &
                    scale=I_spery)
@@ -1669,7 +1669,7 @@ contains
                    "rate constant for converting semi-labile DON to labile DON at 0 deg. C", units="day-1", &
                    default=1.0/90.0, scale=I_sperd)
     call get_param(param_file, "generic_COBALT", "gamma_sldop", cobalt%gamma_sldop, &
-                  "rate constant for converting semi-labile DOP to labile DOP at 0 deg. C", units="day-1", & 
+                  "rate constant for converting semi-labile DOP to labile DOP at 0 deg. C", units="day-1", &
                   default=1.0/90.0, scale =I_sperd)
     ! background concentration of refractory DOC used for diagnostics that request and estimate of the total DOC
     call get_param(param_file, "generic_COBALT", "doc_background", cobalt%doc_background, &
@@ -1706,19 +1706,69 @@ contains
                    "maximum o2 concentration for anammox to occur", units="mol O2 kg-1", default=4.0e-6)
     call get_param(param_file, "generic_COBALT", "k_no3_amx", cobalt%k_no3_amx, &
                    "nitrate half-saturation for anammox", units="mol NO3 kg-1", default= 1.0e-6)
+
+
+    !
+    !--------
+    !DMS diag
+    !--------
+    !
+
+    call get_param(param_file, "generic_COBALT", "do_dms_diag",  cobalt%do_dms_diag, &
+                  "Turn on DMS diagnostic", units="N/A", default=.FALSE.)
+
+    call get_param(param_file, "generic_COBALT", "dmsp_zeu_over_mld_scale",  cobalt%dmsp_zeu_over_mld_scale, &
+                  "Ratio of Zeu/MLD above which weight_zeu is 1.", units="unitless", default=1.5)
+
+   cobalt%dmsp_zeu_over_mld_scale = 0.5/log10(cobalt%dmsp_zeu_over_mld_scale)
+
+    call get_param(param_file, "generic_COBALT", "dms_alpha",  cobalt%dms_alpha, &
+                  "alpha parameter for DMS (Gali)", units="N/A", default=-1.237)
+    call get_param(param_file, "generic_COBALT", "dms_beta",  cobalt%dms_beta, &
+                  "beta parameter for DMS (Gali)", units="N/A", default=0.578)
+    call get_param(param_file, "generic_COBALT", "dms_gamma",  cobalt%dms_gamma, &
+                  "gamma parameter for DMS (Gali)", units="N/A", default=0.0180)
+
+    call get_param(param_file, "generic_COBALT", "dmsp_strat_const",  cobalt%dmsp_strat_const, &
+                  "const for dmsp stratified Gali (2015) parameterization", units="N/A", default=1.7)
+    call get_param(param_file, "generic_COBALT", "dmsp_strat_chl",  cobalt%dmsp_strat_chl, &
+                  "coefficient for chl in dmsp stratified Gali (2015) parameterization", units="N/A", default=1.14)
+    call get_param(param_file, "generic_COBALT", "dmsp_strat_chl2",  cobalt%dmsp_strat_chl2, &
+                  "coefficient for chl**2 in dmsp stratified Gali (2015) parameterization", units="N/A", default=0.44)
+    call get_param(param_file, "generic_COBALT", "dmsp_strat_sst", cobalt%dmsp_strat_sst, &
+                  "coefficient for sst in dmsp stratified Gali (2015) parameterization", units="N/A", default=0.063)
+    call get_param(param_file, "generic_COBALT", "dmsp_strat_sst2",  cobalt%dmsp_strat_sst2, &
+                  "coefficient for sst**2 in dmsp stratified Gali (2015) parameterization", units="N/A", default=-0.0024)
+
+    call get_param(param_file, "generic_COBALT", "dmsp_mix_const",  cobalt%dmsp_mix_const, &
+                  "const for dmsp mixed Gali (2015) parameterization", units="N/A", default=1.74)
+    call get_param(param_file, "generic_COBALT", "dmsp_mix_chl",  cobalt%dmsp_mix_chl, &
+                  "coefficient for chl in dmsp mixed Gali (2015) parameterization", units="N/A", default=0.81)
+    call get_param(param_file, "generic_COBALT", "dmsp_mix_zeu_over_mld",  cobalt%dmsp_mix_zeu_over_mld, &
+                  "coefficient for zeu_over_mld in dmsp mixed Gali (2015) parameterization", units="N/A", default=0.6)
+    call get_param(param_file, "generic_COBALT", "dmsp_min_chl",  cobalt%dmsp_min_chl, &
+                  "minimum chlorophyll for DMSp calculation", units="mg/m3", default=0.04)
+    call get_param(param_file, "generic_COBALT", "dmsp_max_chl",  cobalt%dmsp_max_chl, &
+                  "maximum chlorophyll for DMSp calculation", units="mg/m3", default=60.)
+
+
     !
     !-----------------------------------------------------------------------
     ! Miscellaneous
     !-----------------------------------------------------------------------
     !
     ! Unused?
+
     call get_param(param_file, "generic_COBALT", "tracer_debug",  cobalt%tracer_debug, &
                   "flag for tracer debug operations", default=.false.)
     call get_param(param_file, "generic_COBALT", "min_thickness_for_imbalance",  cobalt%min_thickness, &
                    "minimum thickness of a layer that will be checked for source/sink imbalances", &
                    units="m", default= 0.001)
 
+
     call g_tracer_end_param_list(package_name)
+
+
   end subroutine user_add_params
 
   subroutine user_add_tracers(tracer_list)
@@ -1744,13 +1794,13 @@ contains
     !(to make flux exchanging Ocean tracers known for all PE's)
     !
     call g_tracer_start_param_list(package_name)
-    
+
     ! add MOM6-style interfaces for a parameter file
     call get_COBALT_param_file(param_file)
     call log_version(param_file, "COBALT", version, "", log_to_all=.true., debugging=.true.)
     !Specify and initialize all parameters used by this package
     call user_add_params(param_file)
-    
+
     ! Any additional get_param calls should be done in user_add_params and before closing the param_file
     call close_param_file(param_file)
 
@@ -2810,7 +2860,7 @@ contains
     ! Sinking phytoplankton: Iron
     !
     !> Iron flux to the sediment is removed, and flux from the sediment is
-    !! handled separately later using a relationship based on Dale et al., 2015. 
+    !! handled separately later using a relationship based on Dale et al., 2015.
     call g_tracer_get_values(tracer_list,'fedi','btm_reservoir',phyto(DIAZO)%ffe_btm,isd,jsd)
     phyto(DIAZO)%ffe_btm = phyto(DIAZO)%ffe_btm/dt
     call g_tracer_get_pointer(tracer_list,'fedi_btf','field',temp_field)
@@ -2951,7 +3001,7 @@ contains
     is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
     used = g_send_data(cobalt%id_fsitot_btm,   cobalt%fsitot_btm,             &
     model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)    
+    is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
     ! send_diag for integeral outputs
     call cobalt_send_diagnostics(tracer_list,model_time,grid_tmask,Temp,Salt,rho_dzt,dzt, &
@@ -3078,6 +3128,13 @@ contains
     real :: mu_temp, mu_opt
     integer :: yearday
     real :: rev_angle, dec_angle, temp_arg
+
+    !<for dms
+    real :: log10chl,log10zeu,log10dmsp_mix,log10dmsp_strat, log10dmsp
+    real :: log10dms_mix,log10dms_strat,log10dms
+    real :: log10_zeu_over_mld
+    !>
+
 
     logical ::  phos_nh3_override
     logical ::  pha_all_same = .true.
@@ -3457,7 +3514,7 @@ contains
     !-----------------------------------------------------------------------
     !
 
-    !  
+    !
     ! Calculate the mixed layer for phytoplankton photoacclimation
     ! The default criteria is de Boyer Montegut et al. (2004), where the
     ! mixed layer is calculated relative to zmld_ref = 10m and is based on when
@@ -3486,10 +3543,10 @@ contains
     ! near infrared fall into the "shortwave" part of the radiation spectrum.  Following
     ! Morel and Antoine (1994) and Sweeney et al. (2005), about 57% of the incoming irradiance
     ! is assumed to lie within the visible range in the standard MOM6 radiation scheme
-    ! with interactive chlorophyll.    
-    ! 
+    ! with interactive chlorophyll.
+    !
     ! In COBALTv1/v2, all of the visible wavelengths were included as photosynthically
-    ! active radiation (PAR).  This approach, however, included wavelengths shorter than  
+    ! active radiation (PAR).  This approach, however, included wavelengths shorter than
     ! the ~350-400 nanometer lower bound applied for PAR.  The "par_adj" parameter
     ! allows for a downward adjustment.  Its default value of 0.83 gives a PAR of 47%
     ! of the total shortwave flux, consistent with Baker and Frouin (1987).
@@ -3497,13 +3554,13 @@ contains
     ! The instantaneous and acclimation irradiances are then calculated at all depths.  The
     ! former is eventually used to calculate instaneous phytoplankton growth, while the latter
     ! is used to calculate the chlorophyll to carbon ratio.  The acclimation irradiance
-    ! is effectively an average of the instantaneous irradiance over daylight hours across 
-    ! an acclimation timescale (typically 24 hours).  The daylength for this calculation is 
-    ! taken from CBM model described in Forsythe et al. (1995). The acclimation irradiance 
+    ! is effectively an average of the instantaneous irradiance over daylight hours across
+    ! an acclimation timescale (typically 24 hours).  The daylength for this calculation is
+    ! taken from CBM model described in Forsythe et al. (1995). The acclimation irradiance
     ! in the surface mixed layer is generally assumed to be the average in the mixed layer,
     ! except when the mixed layer extends beyond "ml_aclm_efold" e-folding scales for the
-    ! irradiance.  In these deep mixed layer cases the average light down to "ml_aclm_efold" 
-    ! is used for the acclimation irradiance with the mixed layer.  Full details of these 
+    ! irradiance.  In these deep mixed layer cases the average light down to "ml_aclm_efold"
+    ! is used for the acclimation irradiance with the mixed layer.  Full details of these
     ! calculations and their implications are presented and discussed in Stock et al. (submitted).
     !
     ! References:
@@ -3545,11 +3602,11 @@ contains
 
        ! Calculate the acclimation irradiance at the surface.  This basic equation relaxes
        ! the irradiance toward the current value with a an inverse time scale set by gamma:
-       !  
+       !
        ! I_aclm(t+1) = I_aclm(t) + (I*(24/daylength)-I_aclm(t))*gamma*dt
        !
        ! multiplication by 24/daylength adjusts the irradiance averaged over 24 hours to
-       ! upward to approximate the irradiance during daylight hours. For photoacclimation 
+       ! upward to approximate the irradiance during daylight hours. For photoacclimation
        ! the default relaxation timescale is set to 1 day (gamma = 1/86400 sec), and
        ! "dt" is the time step.
        cobalt%f_irr_aclm_sfc(i,j,1) = (cobalt%f_irr_aclm_sfc(i,j,1) + &
@@ -3559,7 +3616,7 @@ contains
        !
        ! Calculate the subsurface and irradiance fields
        !
-       kblt(i,j) = 0         ! saves the max k index within the mixed layer 
+       kblt(i,j) = 0         ! saves the max k index within the mixed layer
        tmp_irrad_ML = 0.0    ! integrates the irradiance in the mixed layer
        tmp_hblt = 0.0        ! tracks depth of the top of the current layer for mld calcs
        tmp_irrad_aclm = 0.0  ! integrates the irradiance in the surface photoacclimation layer
@@ -3576,7 +3633,7 @@ contains
           do nb=1,nbands !{
 
              ! Issue: This code currently includes an option to increase opacity in shallow/fresh
-             ! water.  This should be moved to a namelist (and eventually replaced with a more 
+             ! water.  This should be moved to a namelist (and eventually replaced with a more
              ! robust coastal optics model with full feedbacks to the physics)
              if ((zmid(i,j,nk).le.cobalt%case2_depth).or.(Salt(i,j,k).le.cobalt%case2_salt)) then
                tmp_opacity = opacity_band(nb,i,j,k) + cobalt%case2_opac_add
@@ -3586,7 +3643,7 @@ contains
 
              ! Calculate the irradiance at the mid-point of the grid cell
              tmp_irrad = tmp_irrad + max(0.0,tmp_irr_band(nb) * exp(-tmp_opacity * dzt(i,j,k) * 0.5))
-             ! Calculate the irradiance at the bottom of the grid cell in preparation for the next k 
+             ! Calculate the irradiance at the bottom of the grid cell in preparation for the next k
              tmp_irr_band(nb) = tmp_irr_band(nb) * exp(-tmp_opacity * dzt(i,j,k))
           enddo !}
 
@@ -3597,7 +3654,7 @@ contains
             phyto(n)%pcmlim_aclm_inst(i,j,k) = phyto(n)%liebig_lim(i,j,k)*exp(cobalt%kappa_eppley*Temp(i,j,k))
           enddo
 
-          ! Issue: evaluate what it would take to remove this variable 
+          ! Issue: evaluate what it would take to remove this variable
           cobalt%irr_mix(i,j,k) = tmp_irrad * grid_tmask(i,j,k)
 
           ! This acclimation irradiance variables saves the full depth structure (even in the mixed layer)
@@ -3636,7 +3693,7 @@ contains
          phyto(n)%pcmlim_aclm_inst(i,j,1:kblt(i,j)) = phyto(n)%tmp_pcmlim_aclm_ML / max(1.0e-6,tmp_hblt)
        enddo
 
-       ! Issue: what would it take to remove irr_mix? 
+       ! Issue: what would it take to remove irr_mix?
        cobalt%irr_mix(i,j,1:kblt(i,j)) = tmp_irrad_ML / max(1.0e-6,tmp_hblt)
     enddo;  enddo !} i,j
 
@@ -3659,7 +3716,7 @@ contains
     enddo; enddo ; enddo !} i,j,k
 
 
-    ! This needs to be moved! 
+    ! This needs to be moved!
     !nh3
     if (do_nh3_diag) then
     cobalt%f_nh3(:,:,:) = 0.
@@ -3681,7 +3738,7 @@ contains
     ! references:
     ! Moore and Chisholm: https://doi.org/10.4319/lo.1999.44.3.0628
     ! Stock et al. (submitted) (link to be added as soon as available)
-    !   
+    !
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%f_chl(i,j,k) = 0.0
 
@@ -3693,7 +3750,7 @@ contains
           !
           ! The basal respiration is a fraction of the maximum photosynthetic rate
           ! is higher within the mixed layer.  The variable bresp_temp will be multiplied
-          ! by the P_C_max for each ecotype to determine which is most competitive. 
+          ! by the P_C_max for each ecotype to determine which is most competitive.
           !
           if (k.le.kblt(i,j)) then
              bresp_temp = phyto(n)%bresp_frac_mixed*cobalt%expkT(i,j,k)
@@ -3704,7 +3761,7 @@ contains
           bresp_temp = bresp_temp*phyto(n)%f_n(i,j,k)/(cobalt%refuge_conc+phyto(n)%f_n(i,j,k))
 
           ! Loop through the ecotypes to find the most competitive.  This is essentially a Geider growth
-          ! rate calculation for each ecotype using the acclimation irradiance.  
+          ! rate calculation for each ecotype using the acclimation irradiance.
           mu_opt = -999.0 ! arbitrarily low value
           do m = 1,cobalt%numlightadapt
             ! since we test the low and high, divide by m-1 so first step is the low and last is the high
@@ -3716,7 +3773,7 @@ contains
             ! option to do older photoacclimation approach where irradiance was time-filtered but not the nutrient and
             ! temperature limitations.  This option can lead to significant diurnal chlorophyll variability in high
             ! light, low nutrient regions
-            if (cobalt%photoaclm_opt.eq.0) then 
+            if (cobalt%photoaclm_opt.eq.0) then
               P_C_m_aclm =max(phyto(n)%liebig_lim(i,j,k)*P_C_max_temp*cobalt%expkT(i,j,k),epsln)
             endif
             theta_temp = max(phyto(n)%thetamax/(1.0 + phyto(n)%thetamax*alpha_temp*cobalt%f_irr_aclm(i,j,k)*0.5/P_C_m_aclm), &
@@ -3753,7 +3810,7 @@ contains
 
     !
     ! Calculate the time averaged growth rate (generally over 24 hours)
-    ! This is used later for phytoplankton stress calculations that can 
+    ! This is used later for phytoplankton stress calculations that can
     ! control sinking and aggregation.  First loop provides average growth
     ! in the mixed layer.  The second averages over all depths.
     !
@@ -3830,10 +3887,10 @@ contains
           phyto(n)%juptake_po4(i,j,k) = (phyto(n)%juptake_nh4(i,j,k)+phyto(n)%juptake_no3(i,j,k))* &
             phyto(n)%uptake_p_2_n(i,j,k)
           ! If growth is negative, address in a manner analogous to N
-          if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then 
+          if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
             cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
           else
-            cobalt%jprod_ldop(i,j,k) = cobalt%jprod_ldop(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k)) 
+            cobalt%jprod_ldop(i,j,k) = cobalt%jprod_ldop(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_p(i,j,k))
           endif
        enddo !} n
     enddo; enddo ; enddo !} i,j,k
@@ -3888,7 +3945,7 @@ contains
 
     ! Anammox converts NH4+ to N2 using NO3- in low O2 environments.
     ! This was not included in ESM4.1 and gamma_nh4amx is currently 0.0
-    ! by default. 
+    ! by default.
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
 
        if (cobalt%f_o2(i,j,k) .lt. cobalt%o2_max_amx) then !{
@@ -4002,20 +4059,20 @@ contains
     ! prey linkages (i.e., Hansen, B.W. et al., 1994; Hansen, P.J., et al. 1997).  Feeding relationships are based on
     ! simple saturating (Holling Type 2) relationships when there is a single prey type.  A density dependent switching
     ! response, however, is included when multiple prey types are present (Stock et al., 2008).  A small "refuge"
-    ! concentration has also been included as an extra safeguard against negative values and as a reflection of the 
+    ! concentration has also been included as an extra safeguard against negative values and as a reflection of the
     ! paradigm that Baas Becking's hypothesis that "Everything is everywhere, but the environment selects".  Predation
     ! by higher predators (e.g., planktivorous fish) is modeled in a manner analogous to zooplankton, but assuming that
     ! the biomass of these unresolved predators scales in proportion to the available prey.
     !
-    ! References: 
+    ! References:
     ! Hansen, B.W., Bjornsen, P.K., Hansen, P.J., 1994. The size ratio between planktonic predators and their prey.
     !    Limnol. & Oceanogr. 39, 395–402. https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1994.39.2.0395
-    ! Hansen, P.J., Bjornsen, P.K., Hansen, B.W., 1997. Zooplankton grazing and growth: scaling within the 
+    ! Hansen, P.J., Bjornsen, P.K., Hansen, B.W., 1997. Zooplankton grazing and growth: scaling within the
     !    2–2000-micron body size range. Limnol. & Oceanogr. 42, 687–704.
-    !    https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1997.42.4.0687 
+    !    https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1997.42.4.0687
     ! Stock, C.A., Powell, T.M., and Levin, S.A., 2008. Bottom-up and top-down forcing in a simple size-structured
-    !    plankton dynamics model.  Journal of Marine Systems. 74 (1-2), 134-152. 
-    !    https://doi.org/10.1016/j.jmarsys.2007.12.004 
+    !    plankton dynamics model.  Journal of Marine Systems. 74 (1-2), 134-152.
+    !    https://doi.org/10.1016/j.jmarsys.2007.12.004
 
     call mpp_clock_begin(id_clock_zooplankton_calculations)
 
@@ -4119,7 +4176,7 @@ contains
                                 (cobalt%k_o2 + max(cobalt%f_o2(i,j,k)-cobalt%o2_min,0.0))
 
        ! Prey vectors for ingestion and loss calculations
-       ! Note: ordering must match that used for the prey availability matrices above 
+       ! Note: ordering must match that used for the prey availability matrices above
        prey_vec(1) = max(phyto(DIAZO)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(2) = max(phyto(LARGE)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(3) = max(phyto(MEDIUM)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
@@ -4176,7 +4233,7 @@ contains
                  pa_matrix(m,4)*prey_vec(4)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
        ingest_matrix(m,5) = zoo(m)%temp_lim(i,j,k)*zoo(m)%o2lim(i,j,k)*zoo(m)%imax* &
                  pa_matrix(m,5)*prey_vec(5)*zoo(m)%f_n(i,j,k)/(zoo(m)%ki+tot_prey(m))
-       ! calculate the total ingestion of each element by small zooplankton 
+       ! calculate the total ingestion of each element by small zooplankton
        zoo(m)%jingest_n(i,j,k) = ingest_matrix(m,3) + ingest_matrix(m,4) + ingest_matrix(m,5)
        zoo(m)%jingest_p(i,j,k) = ingest_matrix(m,3)*prey_p2n_vec(3) + &
                                  ingest_matrix(m,4)*prey_p2n_vec(4) + &
@@ -4283,7 +4340,7 @@ contains
                                     ingest_matrix(m,3)*prey_si2n_vec(3)
 
        ! calculate the total filter feeding by medium and large zooplankton.  This rate is ultimately used to
-       ! scale the conversion of lithogenic dust into lithogenic detritus. 
+       ! scale the conversion of lithogenic dust into lithogenic detritus.
        cobalt%total_filter_feeding(i,j,k) = ingest_matrix(2,1) + ingest_matrix(2,2) + &
           ingest_matrix(2,3) + ingest_matrix(2,4) +  ingest_matrix(3,1) + ingest_matrix(3,2) + &
           ingest_matrix(3,3) + ingest_matrix(3,4)
@@ -4345,11 +4402,11 @@ contains
        tot_prey_hp = hp_pa_vec(7)*prey_vec(7) + hp_pa_vec(8)*prey_vec(8)
        ! calculate the rate at which large zooplankton ingests each prey type.  The default assumption for higher
        ! predators is that the biomass of higher predators scales in proportion to the available prey.  That is,
-       ! it is implicitly assumed that fish biomass is proportional to tot_prey_hp.  For example, the ingestion of 
+       ! it is implicitly assumed that fish biomass is proportional to tot_prey_hp.  For example, the ingestion of
        ! medium zooplankton (mz) by hp is:
        !
        ! hp_ingest_vec(7) = Imax(T,O2)*(available mz biomass)/(ki_hp + tot_prey_hp) * HP; where HP ~ tot_prey_hp
-       ! 
+       !
        ! Note that this results in a density-dependent (i.e., quadratic) mortality consistent with fish aggregating
        ! over regions of abundant prey.  This response can be modulated with coef_hp, but care would be needed
        ! to ensure imax_hp has proper units if this coefficient were changed.
@@ -4397,16 +4454,16 @@ contains
        !
        ! stress_fac thus equals 0 when mu_mem >= frac_mu_stress*P_C_max(T) and ramps up non-linearly to 1 as mu_mem->0.
        ! Since stress_fac multiplies the loss term, stress_fac=0 shuts the loss off when the cell is "happy", while
-       ! stress_fac=1 allows the loss to achieve its full value when the cell is severely stressed.  This 
+       ! stress_fac=1 allows the loss to achieve its full value when the cell is severely stressed.  This
        ! parameterization is consistent with observed sinking, aggregation, and stress-driven mortality responses
        ! (e.g., Waite et al., 1992; Smayda et al., 1971).
        !
        ! Aggregation is modeled as a density-dependent (quadratic) loss that effects large cells most, does not
-       ! depend on temperature, and results in sinking detritus (e.g., Jackson et al., 1992).  Phytoplankton sinking as 
+       ! depend on temperature, and results in sinking detritus (e.g., Jackson et al., 1992).  Phytoplankton sinking as
        ! non-aggregates is simulated directly using the "move_vertical" option in generic_tracers, with larger and more
        ! stressed cells sinking more quickly.  Phytoplankton mortality (cell death) is not used in the default settings
        ! but it is set as a linear loss rate that generates dissolved organic material.  Note that this differs from
-       ! phytoplankton basal respiration, which is also linear but results in inorganic nutrients and carbon via 
+       ! phytoplankton basal respiration, which is also linear but results in inorganic nutrients and carbon via
        ! respiration.
        !
        ! REFERENCES
@@ -4460,13 +4517,13 @@ contains
 
        ! 3.2.3 Calculate losses to exudation
        !
-       ! Phytoplankton are assumed to lose a constant fraction of nitrogen they fix to dissolved organic nutrients 
+       ! Phytoplankton are assumed to lose a constant fraction of nitrogen they fix to dissolved organic nutrients
        ! (phyto(n)%exu = 0.13 (Baines and Pace, 1991).  The model assumes losses of phosphate and iron occur in
        ! proportion the the loss in N, but Si is assumed to be in the cell structure.
        !
        ! Reference: Baines, S.B., Pace, M.L., 1991.  The production of dissolved organic matter by phytoplankton and
        ! its importance to bacteria: Patterns across marine and freshwater systems. Limnol. and Oceanogr., 36(6),
-       ! 1078-1090. https://doi.org/10.4319/lo.1991.36.6.1078 
+       ! 1078-1090. https://doi.org/10.4319/lo.1991.36.6.1078
 
        n = DIAZO
        phyto(n)%jexuloss_n(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+ &
@@ -4483,7 +4540,7 @@ contains
 
     ! Assume that individually sinking phytoplankton, which sink at slow rates relative to aggregates and fecal
     ! pellets, collect in a nepholoid layer and are available for resuspension if they are exposed to mixing. This
-    ! is accomplished by setting the vertical sinking rate in the bottom layer to 0, and is assumed to occur when 
+    ! is accomplished by setting the vertical sinking rate in the bottom layer to 0, and is assumed to occur when
     ! the depth is less than twice the depth of active mixing.  Cells are otherwise assumed to sink into the
     ! benthos and be remineralized along with sinking detritus.
 
@@ -4522,13 +4579,13 @@ contains
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
 
        ! 3.3.1: Production of detritus and dissolved organic matter
-       ! 
+       !
        ! The production of detritus and dissolved organic material is controlled by phi_det, phi_ldon, phi_sldon and
-       ! phi_srdon (and corresponding values for P).  These are generally specified as fractions of the ingested   
-       ! material, or fractions of the loss term. 
+       ! phi_srdon (and corresponding values for P).  These are generally specified as fractions of the ingested
+       ! material, or fractions of the loss term.
        !
        ! Note: For zooplankton ingestion, the "assimilation efficiency" is determined by 1.0 - the egested fraction.
-       ! This is assumed to be 0.7 by default. Thus, for zoo phi_det + phi_ldon + phi_sldon + phi_srdon = 0.3.  If 
+       ! This is assumed to be 0.7 by default. Thus, for zoo phi_det + phi_ldon + phi_sldon + phi_srdon = 0.3.  If
        ! this sum increases, you have effectively decreased the assimilation efficiency and vice-versa.
 
        do m = 1,NUM_ZOO
@@ -4642,7 +4699,7 @@ contains
        ! production to detritus.  Nutrients are excreted in balance with respiration.
        !
        ! References:
-       ! Hansen, P.J., Bjornsen, P.K., Hansen, B.W., 1997. Zooplankton grazing and growth: scaling within the 
+       ! Hansen, P.J., Bjornsen, P.K., Hansen, B.W., 1997. Zooplankton grazing and growth: scaling within the
        !   2–2000-micron body size range. Limnol. & Oceanogr. 42, 687–704.
        !   https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1997.42.4.0687
        ! Straile, D., 1997. Gross growth efficiencies of protozoan and metazoan zooplankton and their dependence on
@@ -4664,7 +4721,7 @@ contains
 
           ! Ingested material that does not go to zooplankton production or egestion (i.e., detrital production or
           ! production of dissolved organic material) is excreted as nh4 or po4 as part of the respiration process.
-          ! Note that ingestion is oxygen limited and is 0 below o2_min, so jprod_n(i,j,k) > 0 implies o2 is present 
+          ! Note that ingestion is oxygen limited and is 0 below o2_min, so jprod_n(i,j,k) > 0 implies o2 is present
           if (zoo(m)%jprod_n(i,j,k) .gt. 0.0) then
              zoo(m)%jprod_nh4(i,j,k) =  zoo(m)%jingest_n(i,j,k) - zoo(m)%jprod_ndet(i,j,k) -  &
                                         zoo(m)%jprod_n(i,j,k) - zoo(m)%jprod_ldon(i,j,k) - &
@@ -4724,7 +4781,7 @@ contains
     call mpp_clock_begin(id_clock_ballast_loops)
 !
 !------------------------------------------------------------------------------------
-! 4: Mineral ballasting/dissolution and detrital remineralization  
+! 4: Mineral ballasting/dissolution and detrital remineralization
 !------------------------------------------------------------------------------------
     !
     ! 4.1: Determine the aragonite and calcite saturation states and the production of calcite and aragonite detritus
@@ -4739,7 +4796,7 @@ contains
     ! The production of calcite and aragonite detritus is assumed to be proportional to the saturation state with
     ! respect to calcite and aragonite and rates associated with the production of detritus from organisms that form
     ! calcite or aragonite shells.  The overall scalings are controlled by the parameters ca_2_n_arag and ca_2_n_calc.
-    ! The saturation state dependence is capped with the parameter caco3_sat_max.   
+    ! The saturation state dependence is capped with the parameter caco3_sat_max.
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
         ! Pteropods are assumed to be the primary aragonite shell formers.  Pteropods fall into the medium and large
         ! zooplankton groups within COBALT.  Production of aragonite detritus is thus linked to the consumption of
@@ -4751,7 +4808,7 @@ contains
         ! Forams and coccolithophores are assumed to be the primary calcite shell formers.  Forams fall into the small
         ! zooplankton group and coccolithophores fall into the small and medium phytoplankton groups. Production of
         ! calcite detritus is thus linked to a) the consumption of these groups by zooplankton and the proportion of the
-        ! material consumed that ends up as detritus, and b) the aggregation of small and medium phytoplankton groups. 
+        ! material consumed that ends up as detritus, and b) the aggregation of small and medium phytoplankton groups.
         ! The fractional detritus production by the primary zooplankton predator for each group was used for a).
         cobalt%jprod_cadet_calc(i,j,k) = (zoo(1)%jzloss_n(i,j,k)*zoo(2)%phi_det + &
                        phyto(SMALL)%jzloss_n(i,j,k)*zoo(1)%phi_det + phyto(MEDIUM)%jzloss_n(i,j,k)*zoo(2)%phi_det + &
@@ -4802,14 +4859,14 @@ contains
     !
     ! 4.2: Lithogenic detritus production
     !
-    ! Lithogenic minerals (f_lith) are assumed to be incorporated into detritus by filter feeding copepods.  The 
+    ! Lithogenic minerals (f_lith) are assumed to be incorporated into detritus by filter feeding copepods.  The
     ! creation rate is assumed to be proportional to the total filter feeding (moles N kg-1 sec-1) divided by the total
     ! phytoplankton biomass being fed upon (moles N kg-1), plus a background rate (k_lith).  The proportionality
     ! constant is phi_lith.  Large phytoplankton and diazotrophs are assumed to be solely consumed by filter feeding
     ! copepods.  The proportion of medium and small phytoplankton subject to filter feeding is assumed proportional to
     ! the relative prey availability of small and medium phytoplankton to copepods versus small zooplankton.
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
-       cobalt%jprod_lithdet(i,j,k)=( cobalt%total_filter_feeding(i,j,k)/ & 
+       cobalt%jprod_lithdet(i,j,k)=( cobalt%total_filter_feeding(i,j,k)/ &
                                    ( phyto(LARGE)%f_n(i,j,k) + phyto(DIAZO)%f_n(i,j,k) + &
                                      0.8*phyto(MEDIUM)%f_n(i,j,k) + 0.3*phyto(SMALL)%f_n(i,j,k) + epsln) * &
                                     cobalt%phi_lith + cobalt%k_lith ) * cobalt%f_lith(i,j,k)
@@ -4824,7 +4881,7 @@ contains
     ! the COBALTv2 documentation paper: https://doi.org/10.1029/2019MS002043.
     !
     ! Note: Dissolution of aragonite and calcite detritus has been observed under supersaturating conditions. This
-    ! process will be added in a future COBALT update. 
+    ! process will be added in a future COBALT update.
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec  !{
        cobalt%jdiss_cadet_arag(i,j,k) = cobalt%gamma_cadet_arag * &
          max(0.0, 1.0 - cobalt%omega_arag(i,j,k)) * cobalt%f_cadet_arag(i,j,k)
@@ -4848,12 +4905,12 @@ contains
     !
     ! 4.4: Remineralization of nitrogen, phosphorous and iron detritus
     !
-    ! Remineralization is handled following Laufkotter et al. (2017), which combines a "mineral protection/ballasting" 
+    ! Remineralization is handled following Laufkotter et al. (2017), which combines a "mineral protection/ballasting"
     ! scheme (Armstrong et al., 2001; and Klaas and Archer 2002) with temperature and oxygen dependence calibrated to
     ! a global database of sediment trap profiles.  As described in Laufkotter, remineralization under aerobic
-    ! conditions was ramped up over a depth scale of 50m. This prevents excessive recycling in warm surface waters and 
-    ! is attributed to the colonization of the particles as they traverse the euphotic zone  
-    ! 
+    ! conditions was ramped up over a depth scale of 50m. This prevents excessive recycling in warm surface waters and
+    ! is attributed to the colonization of the particles as they traverse the euphotic zone
+    !
     ! In the mineral protection scheme, only the portion of organic material left unprotected by biogenic or lithogenic
     ! minerals is available to be remineralized.  The "unprotected" organic fraction is calculated as:
     !
@@ -4869,7 +4926,7 @@ contains
     ! Laufkotter et al., 2017: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2017GB005643
     ! Armstrong, 2002: https://doi.org/10.1016/S0967-0645(01)00101-1
     ! Klaas and Archer, 2002: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2001GB001765
-    ! Dunne et al., 2005: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2004GB002390    
+    ! Dunne et al., 2005: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2004GB002390
     !
     do k=1,nk ; do j=jsc,jec ; do i=isc,iec  !{
        cobalt%expkreminT(i,j,k) = exp(cobalt%kappa_remin * Temp(i,j,k))
@@ -4944,11 +5001,11 @@ contains
 
     ! 
     ! 4.5: Iron scavenging onto detritus
-    !  
+    !
     ! COBALT uses a single ligand complexation model for iron scavenging onto detritus (e.g., Archer and Johnson, 2000).
     ! The binding strength of the ligand, however, is modulated between weak high-light (kfe_eq_hl) and strong low-
     ! light limits (kfelig_ll) to mimic the weakening effect that oxygen free radicals have on iron binding in well-lit
-    ! waters (Fan, 2008).  The weakest binding is at light levels greater than io_fescav = 10 watts m-2.  Values decline 
+    ! waters (Fan, 2008).  The weakest binding is at light levels greater than io_fescav = 10 watts m-2.  Values decline
     ! to the strongest low-light limit at 0.01 watts m-2.
     !
     ! The ligand concentration includes a background concentration (felig_bkg) and an additional amount proportional
@@ -4957,14 +5014,14 @@ contains
     ! fast_fescav_fac to mimic rapid precipitation. For coarse resolution global simulations, fast_fescav_fac was set
     ! set to 10.0.  This high value helped erode coastal iron signals that likely propagated too far into the open
     ! due to under-resolved shelves.  The current default is 2.0, which was able to better maintain iron limitation
-    ! patterns in higher-resolution simulations. 
-    ! 
+    ! patterns in higher-resolution simulations.
+    !
     ! The scavenging formulation includes both a linear option (~alpha_fescav*feprime) and an option that depends on
     ! the interaction between free iron and detritus (~beta_fescav*feprime*f_ndet).  The latter was used in COBALTv1,
     ! while the former was used in COBALTv2 and remains the default in COBALTv3.
     !
     ! References:
-    ! Archer and Johnson (2000): https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2004GB002390 
+    ! Archer and Johnson (2000): https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2004GB002390
     ! Fan et al. (2008): https://www.sciencedirect.com/science/article/pii/S030442030800008X
     ! Liu and Millero (2002): https://www.sciencedirect.com/science/article/pii/S030442030800008X
     !
@@ -5001,7 +5058,7 @@ contains
             cobalt%f_fed(i,j,k))**(0.5)) / (2.0 * max(epsln,cobalt%kfe_eq_lig(i,j,k)))
 
        ! Calculate the iron solubility following Liu and Millero (2002).  The quantity "fe_salt" is the ionic strength
-       ! These values were derived for Fe(III) at a pH of 8 over a range of salinities and temperatures. 
+       ! These values were derived for Fe(III) at a pH of 8 over a range of salinities and temperatures.
        fe_salt = 19.922*Salt(i,j,k)/(1000.0 - 1.005*Salt(i,j,k))
        cobalt%fe_sol(i,j,k) = 10**(-10.53 + 322.5/(Temp(i,j,k)+273.15) - 2.524*sqrt(fe_salt) + &
                               2.921*fe_salt)
@@ -5077,10 +5134,10 @@ contains
             if (rho_dzt_bot(i,j).lt.(cobalt%Rho_0*cobalt%bottom_thickness)) then
               k_bot(i,j) = k
               rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
-              cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%f_o2(i,j,k)*rho_dzt(i,j,k) 
-              cobalt%btm_no3(i,j) = cobalt%btm_no3(i,j) + cobalt%f_no3(i,j,k)*rho_dzt(i,j,k) 
-              cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k) 
-              cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k) 
+              cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%f_o2(i,j,k)*rho_dzt(i,j,k)
+              cobalt%btm_no3(i,j) = cobalt%btm_no3(i,j) + cobalt%f_no3(i,j,k)*rho_dzt(i,j,k)
+              cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k)
+              cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k)
             endif
           enddo
           ! Subtract off overshoot
@@ -5098,7 +5155,7 @@ contains
           cobalt%btm_omega_calc(i,j)=cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
 
           ! Calculate the processing of organic matter in the sediment.  The fate of organic matter is partitioned
-          ! between burial (i.e., removal from the system), aerobic remineralization, remineralization via 
+          ! between burial (i.e., removal from the system), aerobic remineralization, remineralization via
           ! denitrification, and remineralization via sulfate reduction.  Note that the latter pathway is effectively
           ! a "catch all" for any other anaerobic pathway and the sulfate cycle is not explicitly modeled.
           k = grid_kmt(i,j)
@@ -5112,7 +5169,7 @@ contains
              !
              ! As described in Dunne et al., (2007) this relationship was generally developed for deeper ocean areas
              ! and its validity in shallow areas is unclear.  Past experiments suggest that it may overestimate burial
-             ! in shallow areas, resulting in large nutrient losses that are inconsistent with observations.  The 
+             ! in shallow areas, resulting in large nutrient losses that are inconsistent with observations.  The
              ! parameter "z_burial" thus provides a depth scale (an effective "half-saturation") for ramping up burial
              ! from 0 to its full value.
              !
@@ -5126,23 +5183,23 @@ contains
              cobalt%fp_burial(i,j) = cobalt%frac_burial(i,j)*cobalt%fptot_btm(i,j)
 
              ! Denitrification follows Middelburg et al., 1996. Denitrification in marine sediments: a modeling study
-             ! Global Biogeochemical Cycles 10(4).  pp. 661-673.  https://doi.org/10.1029/96GB02562. COBALT uses the  
+             ! Global Biogeochemical Cycles 10(4).  pp. 661-673.  https://doi.org/10.1029/96GB02562. COBALT uses the
              ! carbon flux-based relationship based on Middelburg's first extraction of his metamodel (the first
              ! equation in Section 3.4 of the paper).  This relationship requires a flux to the benthos in micromoles C
              ! cm-2 day-1.  This means that fpoc_btm defined for the burial calculation above must be multiplied by:
-             ! 
+             !
              ! 1e3 micromoles/millimole*1e-4 cm2/m2 = 0.1
-             ! 
+             !
              ! to get the proper units.  The Middelburg relationship yields a rate at which arriving particulate organic
              ! carbon is denitrified in micromoles C cm-2 day-1.  This is converted to a rate at which arriving
              ! particulate organic nitrogen denitrified in moles N m-2 sec-1 by dividing by:
-             ! 
+             !
              ! c_2_n*sperd*1e6 micromoles/mole*1e-4 cm2/m2 = c_2_n*sperd*100
              !
              ! The nitrate demand associated with this denitrification (fno3denit_sed) is obtained by multiplying the
              ! resulting value by the moles of NO3 required to denitrify each mole of organic N (n_2_n_denit).
              !
-             ! A number of limiters are applied to support global application.  First, the C flux used in the  
+             ! A number of limiters are applied to support global application.  First, the C flux used in the
              ! Middelburg relationship is capped at 43.0 micromoles C cm-2 day-1 to avoid anomalous extrapolation.
              ! Second, denitrification is slowed when bottom nitrate is low by a) scaling rates with a nitrate
              ! half-saturation constant with (k_no3_denit), b) preventing the exhaustion of bottom nitrate over
@@ -5164,7 +5221,7 @@ contains
              ! *within the sediment*, resulting in an oxygen demand at the sediment-water interface.  These
              ! include direct aerobic remineralization and sulfate reduction/HS- oxidation (see stoichiometry
              ! for details).  Note that the partitioning between these two pathways is not calculated, just the
-             ! combined effect. 
+             ! combined effect.
              !
              ! fnso4_sed (moles N m-2 sec-1) accounts for organic material that only undergoes sulfate reduction in
              ! the sediment, but not HS- oxidation.  This results in HS- released from the sediment.  The latent O2
@@ -5234,7 +5291,7 @@ contains
                 cobalt%ffe_sed_max*tanh( ( (cobalt%f_ndet(i,j,k)*cobalt%wsink+ &
                 cobalt%f_ndet_fast(i,j,k)*cobalt%wsink_fast + &
                 phyto(SMALL)%f_n(i,j,k)*phyto(SMALL)%vmove(i,j,k)+ &
-                phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k)+ & 
+                phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k)+ &
                 phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%vmove(i,j,k)+ &
                 phyto(DIAZO)%f_n(i,j,k)*phyto(DIAZO)%vmove(i,j,k))*cobalt%c_2_n*sperd*1.0e3 )/ &
                 max(cobalt%f_o2(i,j,k)*1.0e6,epsln) )/rho_dzt(i,j,k)
@@ -5970,11 +6027,11 @@ contains
     call g_tracer_set_values(tracer_list,'pcmlim_aclm_nsm' ,'field',phyto(SMALL)%f_pcmlim_aclm ,isd,jsd)
 
     ! CAS calculate totals after source/sinks have been applied
-    ! Imbalance in one timestep is converted from moles kg-1 to units of mmoles m-3 day-1 and compared 
-    ! to a tolerance set in the input namelist. This means that imbalance is not sensetive to the timestep 
-    ! and has understandable units. For example, typical plankton concentrations are ~0.1-1 mmoles N m-3 
-    ! day-1, so an imbalance of order 1 would be very large whereas 1e-9 is very small. 
-    ! A reccomended tolerance is between 1e-7 and 1e-9. 
+    ! Imbalance in one timestep is converted from moles kg-1 to units of mmoles m-3 day-1 and compared
+    ! to a tolerance set in the input namelist. This means that imbalance is not sensetive to the timestep
+    ! and has understandable units. For example, typical plankton concentrations are ~0.1-1 mmoles N m-3
+    ! day-1, so an imbalance of order 1 would be very large whereas 1e-9 is very small.
+    ! A reccomended tolerance is between 1e-7 and 1e-9.
     imbal_flag = 0;
     stdoutunit = stdout();
     allocate(post_totn(isc:iec,jsc:jec,1:nk))
@@ -6048,6 +6105,82 @@ contains
     enddo; enddo ; enddo  !} i,j,k
 
     !
+    !----------------
+    ! DMS diagnostics
+    !----------------
+    !
+
+    if (cobalt%do_dms_diag) then
+
+       cobalt%dmsp_zeu(:,:)                = 0.
+       cobalt%dmspos_mix(:,:)              = 0.
+       cobalt%dmspos_strat(:,:)            = 0.
+       cobalt%dmspos(:,:)                  = 0.
+       cobalt%irr_aclm_sfc_dayint(:,:)     = 0.
+       cobalt%irr_sfc_dms(:,:)             = 0.
+       cobalt%dmsos_mix(:,:)               = 0.
+       cobalt%dmsos_strat(:,:)             = 0.
+       cobalt%dmsos(:,:)                   = 0.
+       cobalt%weight_dmsp_strat(:,:)       = 0.
+
+       do j = jsc, jec ; do i = isc, iec  !{
+
+          !f_chl is in ug/kg - Gali mg/m3
+
+          cobalt%chl_dmsp(i,j) = max(min(cobalt%f_chl(i,j,1)*cobalt%Rho_0*1e-3, &
+                                         cobalt%dmsp_max_chl),                  &
+                                         cobalt%dmsp_min_chl)                         !Chl is mg/m3
+
+          log10chl = log10(cobalt%chl_dmsp(i,j))
+
+          ! ! Euphotic layer depth model      (Morel et al. 2007 [https://doi.org/10.1016/j.rse.2007.03.012], eqn 10, )
+          ! Gali uses  1 % penetration depth of 490 nm radiation
+          log10zeu = 1.524 - 0.436 * log10chl - 0.0145 * log10chl**2 + 0.0186 * log10chl**3
+          cobalt%dmsp_zeu(i, j) = 10.0 ** log10zeu
+
+          ! ! Mixed water column model        (Gali et al. 2015)
+          log10_zeu_over_mld     = log10zeu - log10(max(cobalt%mld_aclm(i,j),epsln))
+          log10dmsp_mix = cobalt%dmsp_mix_const + cobalt%dmsp_mix_chl*log10chl + cobalt%dmsp_mix_zeu_over_mld*log10_zeu_over_mld
+          cobalt%dmspos_mix(i, j) = 10.0 ** log10dmsp_mix
+
+          ! ! Stratified water column model   (Gali et al. 2015)
+          log10dmsp_strat = cobalt%dmsp_strat_const + cobalt%dmsp_strat_chl*log10chl + cobalt%dmsp_strat_chl2*log10chl**2 + cobalt%dmsp_strat_sst*Temp(i,j,1) + cobalt%dmsp_strat_sst2*Temp(i,j,1)**2
+          cobalt%dmspos_strat(i, j) = 10.0 ** log10dmsp_strat
+
+          !Gali: MLD>Zeu -> use mixed model
+          !      MLD<Zeu -> use stratified model
+          !
+          !Here we use a smoother transition between the two regimes
+          cobalt%weight_dmsp_strat(i,j)     = min(max(0.5+cobalt%dmsp_zeu_over_mld_scale*log10_zeu_over_mld,0.),1.)
+
+          cobalt%dmspos(i, j) = cobalt%dmspos_mix(i, j)*(1.-cobalt%weight_dmsp_strat(i,j)) &
+                              + cobalt%dmspos_strat(i,j)*cobalt%weight_dmsp_strat(i,j)
+
+          log10dmsp = log10(cobalt%dmspos(i,j))
+
+          cobalt%dmspos_mix(i,j)   = cobalt%dmspos_mix(i,j)/1e6   * grid_tmask(i,j,1)     ! convert from nmol L to mol m-3
+          cobalt%dmspos_strat(i,j) = cobalt%dmspos_strat(i,j)/1e6 * grid_tmask(i,j,1)     ! convert from nmol L to mol m-3
+          cobalt%dmspos(i,j)       = cobalt%dmspos(i,j)/1e6       * grid_tmask(i,j,1)     ! convert from nmol L to mol m-3
+
+          ! ! Undo daylength adjustment to get 24h integrated irr
+          cobalt%irr_aclm_sfc_dayint(i,j) = cobalt%f_irr_aclm_sfc(i,j,1) * (max(cobalt%daylength(i,j),cobalt%min_daylength) / 24.0) * grid_tmask(i,j,1)
+
+          ! ! Unit conversion: W m-2 to mol photons m-2 d-1
+          cobalt%irr_sfc_dms(i,j) = cobalt%irr_aclm_sfc_dayint(i,j) * 4.6e-6 * 86400. * grid_tmask(i,j,1)
+
+          ! ! DMS regression model            (Gali et al. 2018)
+          log10dms_mix = cobalt%dms_alpha + (cobalt%dms_beta * log10dmsp_mix) + (cobalt%dms_gamma * cobalt%irr_sfc_dms(i,j))
+          cobalt%dmsos_mix(i, j) = ((10.0 ** log10dms_mix) / 1e6) * grid_tmask(i,j,1)
+
+          log10dms_strat = cobalt%dms_alpha + (cobalt%dms_beta * log10dmsp_strat) + (cobalt%dms_gamma * cobalt%irr_sfc_dms(i,j))
+          cobalt%dmsos_strat(i, j) = ((10.0 ** log10dms_strat) / 1e6) * grid_tmask(i,j,1)
+
+          log10dms = cobalt%dms_alpha + (cobalt%dms_beta * log10dmsp) + (cobalt%dms_gamma * cobalt%irr_sfc_dms(i,j))
+          cobalt%dmsos(i, j) = ((10.0 ** log10dms) / 1e6) * grid_tmask(i,j,1)
+
+       enddo; enddo  !} i,j,k
+    end if
+    !
     !-----------------------------------------------------------------------
     ! 6: Source/sink diagnostic calculations
     !-----------------------------------------------------------------------
@@ -6112,12 +6245,12 @@ contains
 
     enddo; enddo ; enddo  !} i,j,k
 
-    ! 
+    !
     ! Calculate layer integrals for key combinations of tracers, most of which are ultimately used to calculate global
     ! budgets.  The variable "rho_dzt" is the layer mass per unit area (kg m-2) calculated by multiplying the layer
     ! thickness by the density.  Multiplication by a concentration per mass (moles kg-1) thus yields a tracer layer
     ! integral per unit area (moles m-2).  Summing these layer integrals gives the water column (wc) integral of the
-    ! tracer per unit area.  Multiplying this by the grid cell area and summing across all grid cells yields the 
+    ! tracer per unit area.  Multiplying this by the grid cell area and summing across all grid cells yields the
     ! global inventory in moles.
     ! (TRACERS, MOVE AFTER TRIDAGONAL)
     !
@@ -6169,7 +6302,7 @@ contains
     ! tracer units are moles m-2, fluxes are moles sec-1 m-2
     !
     do j = jsc, jec ; do i = isc, iec !{
-       ! Tracers (MOVE AFTER TRIDAGONAL?) 
+       ! Tracers (MOVE AFTER TRIDAGONAL?)
        cobalt%wc_vert_int_c(i,j) = 0.0
        cobalt%wc_vert_int_dic(i,j) = 0.0
        cobalt%wc_vert_int_doc(i,j) = 0.0
@@ -6182,7 +6315,7 @@ contains
        cobalt%wc_vert_int_alk(i,j) = 0.0
        ! Fluxes
        cobalt%wc_vert_int_npp(i,j) = 0.0              ! wc integrated net primary production
-       cobalt%wc_vert_int_jdiss_sidet(i,j) = 0.0      ! wc integrated dissolution of silica detritus     
+       cobalt%wc_vert_int_jdiss_sidet(i,j) = 0.0      ! wc integrated dissolution of silica detritus
        cobalt%wc_vert_int_jdiss_cadet(i,j) = 0.0      ! wc integrated dissolution of calcite detritus
        cobalt%wc_vert_int_jo2resp(i,j) = 0.0          ! wc integrated oxygen consumption
        cobalt%wc_vert_int_jprod_cadet(i,j) = 0.0      ! wc integrated production of calcite detritus
@@ -6251,7 +6384,7 @@ contains
     !
     ! Numerous CMIP variables require the bottom source to be added to rate of change diagnostics before they are assigned
     ! to the relevant CMIP variable in cobalt_send_diag.F90
-    ! 
+    !
     ! First populate the entire array with the water column changes
     do j = jsc, jec ; do i = isc, iec ; do k = 1, nk  !{
        cobalt%jdiss_cadet_calc_plus_btm(i,j,k)  = cobalt%jdiss_cadet_calc(i,j,k)
@@ -6275,7 +6408,7 @@ contains
     allocate(k_bot(isc:iec,jsc:jec))
     do j = jsc, jec ; do i = isc, iec  !{
       k = grid_kmt(i,j)         ! start at the bottom
-      rho_dzt_bot(i,j) = 0.0    ! local variable to track the mass of the cells assigned to the bottom (kg m-2) 
+      rho_dzt_bot(i,j) = 0.0    ! local variable to track the mass of the cells assigned to the bottom (kg m-2)
       if (k .gt. 0) then !{
         do k = grid_kmt(i,j),1,-1   !{
           if (rho_dzt_bot(i,j).lt.cobalt%Rho_0*cobalt%bottom_thickness) then
@@ -6286,11 +6419,11 @@ contains
       endif
     enddo; enddo
 
-    ! Lastly add the bottom fluxes to the bottom of the water column to form the "plus_btm" diagnostics.  The bottom 
+    ! Lastly add the bottom fluxes to the bottom of the water column to form the "plus_btm" diagnostics.  The bottom
     ! fluxes are in moles m-2 sec-1.  Dividing by the bottom layer mass (rho_dzt_bot, kg m-2) gives  moles kg-1 sec-1,
     ! which is dimensionally consistent with other water column fluxes.
     ! Note: Updated to directly reference the bottom fluxes passed to the tridiagonal solver when possible.  The
-    ! convention for these is that a negative flux is into the domain, explaining subtractions below 
+    ! convention for these is that a negative flux is into the domain, explaining subtractions below
     do j = jsc, jec ; do i = isc, iec  !{
       k = grid_kmt(i,j)
       if (k .gt. 0) then !{
@@ -6306,7 +6439,7 @@ contains
           cobalt%jfed_plus_btm(i,j,k) = cobalt%jfed(i,j,k) - cobalt%b_fed(i,j)/rho_dzt_bot(i,j)
           cobalt%jnh4_plus_btm(i,j,k) = cobalt%jnh4(i,j,k) - cobalt%b_nh4(i,j)/rho_dzt_bot(i,j)
           cobalt%jno3_plus_btm(i,j,k) = cobalt%jno3(i,j,k) - cobalt%fno3denit_sed(i,j)/rho_dzt_bot(i,j)
-          cobalt%jpo4_plus_btm(i,j,k) = cobalt%jpo4(i,j,k) - cobalt%b_po4(i,j)/rho_dzt_bot(i,j) 
+          cobalt%jpo4_plus_btm(i,j,k) = cobalt%jpo4(i,j,k) - cobalt%b_po4(i,j)/rho_dzt_bot(i,j)
           cobalt%jsio4_plus_btm(i,j,k) = cobalt%jsio4(i,j,k) - cobalt%b_sio4(i,j)/rho_dzt_bot(i,j)
           cobalt%jdin_plus_btm(i,j,k)  = cobalt%jno3_plus_btm(i,j,k) + cobalt%jnh4_plus_btm(i,j,k)
         enddo
@@ -6348,9 +6481,9 @@ contains
                              phyto(MEDIUM)%jprod_n(i,j,1)*phyto(MEDIUM)%silim(i,j,1)) *rho_dzt(i,j,1)
        ! May need to add these to update the biomass-weighted limitation terms for COBALTv3
        !cobalt%nmd_diat_100(i,j) =
-       !cobalt%nlg_diat_100(i,j) = 
+       !cobalt%nlg_diat_100(i,j) =
        !cobalt%nmd_misc_100(i,j) =
-       !cobalt%nlg_misc_100(i,j) = 
+       !cobalt%nlg_misc_100(i,j) =
        phyto(LARGE)%juptake_sio4_100(i,j) = phyto(LARGE)%juptake_sio4(i,j,1) * rho_dzt(i,j,1)
        do n = 1, NUM_ZOO  !{
           zoo(n)%jprod_n_100(i,j) = zoo(n)%jprod_n(i,j,1) * rho_dzt(i,j,1)
@@ -7725,6 +7858,18 @@ contains
       allocate(cobalt%deltap_o2(isd:ied, jsd:jed));            cobalt%deltap_o2=0.0
       allocate(cobalt%mld_aclm(isd:ied, jsd:jed));             cobalt%mld_aclm=0.0
 
+      !DMS diagnostics
+      allocate(cobalt%dmsp_zeu(isd:ied, jsd:jed))           ; cobalt%dmsp_zeu=0.0
+      allocate(cobalt%weight_dmsp_strat(isd:ied, jsd:jed))  ; cobalt%weight_dmsp_strat=0.0
+      allocate(cobalt%dmspos_mix(isd:ied, jsd:jed))         ; cobalt%dmspos_mix=0.0
+      allocate(cobalt%dmspos_strat(isd:ied, jsd:jed))       ; cobalt%dmspos_strat=0.0
+      allocate(cobalt%dmspos(isd:ied, jsd:jed))             ; cobalt%dmspos=0.0
+      allocate(cobalt%dmsos_mix(isd:ied, jsd:jed))          ; cobalt%dmsos_mix=0.0
+      allocate(cobalt%dmsos_strat(isd:ied, jsd:jed))        ; cobalt%dmsos_strat=0.0
+      allocate(cobalt%dmsos(isd:ied, jsd:jed))              ; cobalt%dmsos=0.0
+      allocate(cobalt%irr_aclm_sfc_dayint(isd:ied, jsd:jed)); cobalt%irr_aclm_sfc_dayint=0.0
+      allocate(cobalt%irr_sfc_dms(isd:ied, jsd:jed))        ; cobalt%irr_sfc_dms=0.0
+      allocate(cobalt%chl_dmsp(isd:ied, jsd:jed))           ; cobalt%chl_dmsp=0.0
 
   end subroutine user_allocate_arrays
 
@@ -8283,6 +8428,18 @@ contains
       deallocate(cobalt%deltap_dic)
       deallocate(cobalt%deltap_o2)
       deallocate(cobalt%mld_aclm)
+
+      deallocate(cobalt%weight_dmsp_strat)
+      deallocate(cobalt%dmsp_zeu)
+      deallocate(cobalt%dmspos_mix)
+      deallocate(cobalt%dmspos_strat)
+      deallocate(cobalt%dmspos)
+      deallocate(cobalt%dmsos_mix)
+      deallocate(cobalt%dmsos_strat)
+      deallocate(cobalt%dmsos)
+      deallocate(cobalt%irr_aclm_sfc_dayint)
+      deallocate(cobalt%irr_sfc_dms)
+      deallocate(cobalt%chl_dmsp)
 
   end subroutine user_deallocate_arrays
 
