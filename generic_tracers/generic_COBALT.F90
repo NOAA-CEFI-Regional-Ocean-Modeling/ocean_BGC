@@ -4019,7 +4019,7 @@ contains
                               (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))
        ! Note that nitrate availability affects the anaerobic remineralization of dissolved organic material 
        ! as that of particulate organic material
-       if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then !{
+       if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min .or. cobalt%gamma_nh4amx .eq. 0.0) then !{
           bact(1)%no3lim(i,j,k) = 1.0
        else
           bact(1)%no3lim(i,j,k) = max(0.0, cobalt%f_no3(i,j,k)/(cobalt%k_no3_denit + cobalt%f_no3(i,j,k)))
