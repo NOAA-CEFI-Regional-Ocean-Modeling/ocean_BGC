@@ -3826,7 +3826,7 @@ module COBALT_reg_diag
     cobalt%id_expcalcob = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expcalcob", cmor_units="mol m-2 s-1",                          &
-         cmor_standard_name="sinking_mole_flux_of_calcite_expressed_as_carbon_in_in_sea_water", &
+         cmor_standard_name="sinking_mole_flux_of_calcite_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Sinking Flux of Calcite Reaching the Ocean Bottom")
 
     vardesc_temp = vardesc("exparag_raw","Sinking Aragonite Flux",'h','L','s','mol m-2 s-1','f')
@@ -4513,14 +4513,14 @@ module COBALT_reg_diag
          cmor_long_name="Net Primary Organic Carbon Production by Other Phytoplankton")
 
     vardesc_temp = vardesc("intppnano_raw","Net Primary Organic Carbon Production by Nanophytoplankton",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_intppmisc = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+    cobalt%id_intppnano = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="intppnano", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="net_primary_mole_productivity_of_biomass_expressed_as_carbon_by_nanophytoplankton", &
          cmor_long_name="Net Primary Organic Carbon Production by Nanophytoplankton")
 
     vardesc_temp = vardesc("intppmicro_raw","Net Primary Organic Carbon Production by Microphytoplankton",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_intppmisc = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+    cobalt%id_intppmicro = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="intppmicro", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="net_primary_mole_productivity_of_biomass_expressed_as_carbon_by_microphytoplankton", &
