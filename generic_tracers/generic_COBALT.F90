@@ -1489,10 +1489,10 @@ contains
     ! << Respiration-driven CaCO3 dissolution ratios from param file
     call get_param(param_file, "generic_COBALT", "resp_ca_2_n_arag", cobalt%resp_ca_2_n_arag, &
                    "ratio of aragonite dissolution to organic matter remineralization (respiration-driven)", &
-                   units="mol dissolved arag mol org. C-1", default = 0.0, scale = c2n)
+                   units="kg (mol N)-1", default = 0.0, scale = c2n)
     call get_param(param_file, "generic_COBALT", "resp_ca_2_n_calc", cobalt%resp_ca_2_n_calc, &
                    "ratio of calcite dissolution to organic matter remineralization (respiration-driven)", &
-                   units="mol dissolved calc mol org. C-1", default = 0.0, scale = c2n)
+                   units="kg (mol N)-1", default = 0.0, scale = c2n)
     ! >>          
 
     ! Organic matter remineralization: Oxygen and temperature dependence follows Laufkotter et al. (2017).
