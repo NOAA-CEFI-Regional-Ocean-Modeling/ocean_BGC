@@ -1508,6 +1508,10 @@ module COBALT_reg_diag
     bact(1)%id_temp_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
+    vardesc_temp = vardesc("no3lim_Bact","Nitrate limitation of bacteria",'h','L','s','dimensionless','f')
+    bact(1)%id_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
     !
     ! Register general COBALT diagnostics
     !
@@ -2153,10 +2157,6 @@ module COBALT_reg_diag
 
     vardesc_temp = vardesc("ffe_geotherm","Geothermal iron efflux",'h','1','s','mol m-2 s-1','f')
     cobalt%id_ffe_geotherm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("ffe_iceberg","iceberg iron efflux",'h','1','s','mol m-2 s-1','f')
-    cobalt%id_ffe_iceberg = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("flithdet_btm","Lithogenic detrital sinking flux burial",'h','1','s','g m-2 s-1','f')
@@ -3363,7 +3363,6 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_dissolved_inorganic_carbon_abiotic_analogue_in_sea_water",  &
          cmor_long_name="Abiotic Dissolved Inorganic Carbon Concentration")
 
-! 2017/12/28 jgj Updated standard name in data request: added _abiotic_analogue
     vardesc_temp = vardesc("dissi14cabio_raw","Abiotic Dissolved Inorganic 14Carbon Concentration",'h','L','s','mol m-3','f')
     cobalt%id_dissi14cabio = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -3413,6 +3412,7 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_calcite_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Calcite Concentration")
 
+    ! Note that COBALT only tracks aragonite detritus
     vardesc_temp = vardesc("arag_raw","Aragonite Concentration",'h','L','s','mol m-3','f')
     cobalt%id_arag = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -3420,47 +3420,47 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Aragonite Concentration")
 
-    vardesc_temp = vardesc("phydiat_raw","Mole Concentration of Diatoms expressed as Carbon in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("phydiat_raw","Mole Concentration of Diatoms expressed as Carbon in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_phydiat = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phydiat", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_diatoms_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Mole Concentration of Diatoms expressed as Carbon in sea water")
+         cmor_long_name="Mole Concentration of Diatoms expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("phydiaz_raw","Mole Concentration of Diazotrophs expressed as Carbon in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("phydiaz_raw","Mole Concentration of Diazotrophs expressed as Carbon in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_phydiaz = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phydiaz", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_diazotrophs_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Mole Concentration of Diazotrophs expressed as Carbon in sea water")
+         cmor_long_name="Mole Concentration of Diazotrophs expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("phypico_raw","Mole Concentration of Picophytoplankton expressed as Carbon in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("phypico_raw","Mole Concentration of Picophytoplankton expressed as Carbon in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_phypico = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phypico", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_picophytoplankton_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Mole Concentration of Picophytoplankton expressed as Carbon in sea water")
+         cmor_long_name="Mole Concentration of Picophytoplankton expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("phymisc_raw","Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("phymisc_raw","Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_phymisc = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phymisc", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_miscellaneous_phytoplankton_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in sea water")
+         cmor_long_name="Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("zmicro_raw","Mole Concentration of Microzooplankton expressed as Carbon in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("zmicro_raw","Mole Concentration of Microzooplankton expressed as Carbon in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_zmicro = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="zmicro", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_microzooplankton_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Mole Concentration of Microzooplankton expressed as Carbon in sea water")
+         cmor_long_name="Mole Concentration of Microzooplankton expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("zmeso_raw","Mole Concentration of Mesozooplankton expressed as Carbon in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("zmeso_raw","Mole Concentration of Mesozooplankton expressed as Carbon in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_zmeso = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="zmeso", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_mesozooplankton_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Mole Concentration of Mesozooplankton expressed as Carbon in sea water")
+         cmor_long_name="Mole Concentration of Mesozooplankton expressed as Carbon in Sea Water")
 
     vardesc_temp = vardesc("talk_raw","Total Alkalinity",'h','L','s','mol m-3','f')
     cobalt%id_talk = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
@@ -3497,7 +3497,7 @@ module COBALT_reg_diag
          cmor_standard_name="sea_water_ph_abiotic_analogue_reported_on_total_scale", &
          cmor_long_name="Abiotic pH")
 
-!! same name in model and CMOR, but different units - use _cmip for now
+    ! Same name in model and CMOR, but different units - use "_cmip" to differentiate
     vardesc_temp = vardesc("o2_raw","Dissolved Oxygen Concentration",'h','L','s','mol m-3','f')
     cobalt%id_o2_cmip = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -3512,7 +3512,7 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_dissolved_molecular_oxygen_in_sea_water_at_saturation", &
          cmor_long_name="Dissolved Oxygen Concentration at Saturation")
 
-!! same name in model and CMOR, but different units - use _cmip for now
+    ! Same name in model and CMOR, but different units - use "_cmip" to differentiate
     vardesc_temp = vardesc("no3_raw","Dissolved Nitrate Concentration",'h','L','s','mol m-3','f')
     cobalt%id_no3_cmip = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -3551,106 +3551,106 @@ module COBALT_reg_diag
          cmor_long_name="Total Dissolved Inorganic Silicon Concentration")
 
 !! same name in model and CMOR, but different units - use _cmip for now
-    vardesc_temp = vardesc("chl_raw","Mass Concentration of Total Phytoplankton expressed as Chlorophyll in sea water",'h','L','s','kg m-3','f')
+    vardesc_temp = vardesc("chl_raw","Mass Concentration of Total Phytoplankton expressed as Chlorophyll in Sea Water",'h','L','s','kg m-3','f')
     cobalt%id_chl_cmip = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="chl_cmip", cmor_units="kg m-3",                          &
          cmor_standard_name="mass_concentration_of_phytoplankton_expressed_as_chlorophyll_in_sea_water", &
-         cmor_long_name="Mass Concentration of Total Phytoplankton expressed as Chlorophyll in sea water")
+         cmor_long_name="Mass Concentration of Total Phytoplankton expressed as Chlorophyll in Sea Water")
 
-    vardesc_temp = vardesc("chldiat_raw","Mass Concentration of Diatoms expressed as Chlorophyll in sea water",'h','L','s','kg m-3','f')
+    vardesc_temp = vardesc("chldiat_raw","Mass Concentration of Diatoms expressed as Chlorophyll in Sea Water",'h','L','s','kg m-3','f')
     cobalt%id_chldiat = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="chldiat", cmor_units="kg m-3",                          &
          cmor_standard_name="mass_concentration_of_diatoms_expressed_as_chlorophyll_in_sea_water", &
-         cmor_long_name="Mass Concentration of Diatoms expressed as Chlorophyll in sea water")
+         cmor_long_name="Mass Concentration of Diatoms expressed as Chlorophyll in Sea Water")
 
-    vardesc_temp = vardesc("chldiaz_raw","Mass Concentration of Diazotrophs expressed as Chlorophyll in sea water",'h','L','s','kg m-3','f')
+    vardesc_temp = vardesc("chldiaz_raw","Mass Concentration of Diazotrophs expressed as Chlorophyll in Sea Water",'h','L','s','kg m-3','f')
     cobalt%id_chldiaz = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="chldiaz", cmor_units="kg m-3",                          &
          cmor_standard_name="mass_concentration_of_diazotrophs_expressed_as_chlorophyll_in_sea_water", &
-         cmor_long_name="Mass Concentration of Diazotrophs expressed as Chlorophyll in sea water")
+         cmor_long_name="Mass Concentration of Diazotrophs expressed as Chlorophyll in Sea Water")
 
-    vardesc_temp = vardesc("chlpico_raw","Mass Concentration of Picophytoplankton expressed as Chlorophyll in sea water",'h','L','s','kg m-3','f')
+    vardesc_temp = vardesc("chlpico_raw","Mass Concentration of Picophytoplankton expressed as Chlorophyll in Sea Water",'h','L','s','kg m-3','f')
     cobalt%id_chlpico = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="chlpico", cmor_units="kg m-3",                          &
          cmor_standard_name="mass_concentration_of_picophytoplankton_expressed_as_chlorophyll_in_sea_water", &
-         cmor_long_name="Mass Concentration of Picophytoplankton expressed as Chlorophyll in sea water")
+         cmor_long_name="Mass Concentration of Picophytoplankton expressed as Chlorophyll in Sea Water")
 
-    vardesc_temp = vardesc("chlmisc_raw","Mass Concentration of Other Phytoplankton expressed as Chlorophyll in sea water",'h','L','s','kg m-3','f')
+    vardesc_temp = vardesc("chlmisc_raw","Mass Concentration of Other Phytoplankton expressed as Chlorophyll in Sea Water",'h','L','s','kg m-3','f')
     cobalt%id_chlmisc = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="chlmisc", cmor_units="kg m-3",                          &
          cmor_standard_name="mass_concentration_of_miscellaneous_phytoplankton_expressed_as_chlorophyll_in_sea_water", &
-         cmor_long_name="Mass Concentration of Other Phytoplankton expressed as Chlorophyll in sea water")
+         cmor_long_name="Mass Concentration of Other Phytoplankton expressed as Chlorophyll in Sea Water")
 
 ! 2017/11/27 not in data request
-    vardesc_temp = vardesc("poc_raw","Mole Concentration of Particulate Organic Matter expressed as Carbon in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("poc_raw","Mole Concentration of Particulate Organic Matter expressed as Carbon in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_poc = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="poc", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Mole Concentration of Particulate Organic Matter expressed as Carbon in sea water")
+         cmor_long_name="Mole Concentration of Particulate Organic Matter expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("pon_raw","Mole Concentration of Particulate Organic Matter expressed as Nitrogen in sea water",'h','L','s','mol N m-3','f')
+    vardesc_temp = vardesc("pon_raw","Mole Concentration of Particulate Organic Matter expressed as Nitrogen in Sea Water",'h','L','s','mol N m-3','f')
     cobalt%id_pon = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="pon", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_particulate_organic_matter_expressed_as_nitrogen_in_sea_water", &
-         cmor_long_name="Mole Concentration of Particulate Organic Matter expressed as Nitrogen in sea water")
+         cmor_long_name="Mole Concentration of Particulate Organic Matter expressed as Nitrogen in Sea Water")
 
-    vardesc_temp = vardesc("pop_raw","Mole Concentration of Particulate Organic Matter expressed as Phosphorus in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("pop_raw","Mole Concentration of Particulate Organic Matter expressed as Phosphorus in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_pop = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="pop", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_particulate_organic_matter_expressed_as_phosphorus_in_sea_water", &
-         cmor_long_name="Mole Concentration of Particulate Organic Matter expressed as Phosphorus in sea water")
+         cmor_long_name="Mole Concentration of Particulate Organic Matter expressed as Phosphorus in Sea Water")
 
-    vardesc_temp = vardesc("bfe_raw","Mole Concentration of Particulate Organic Matter expressed as Iron in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("bfe_raw","Mole Concentration of Particulate Organic Matter expressed as Iron in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_bfe = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="bfe", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_particulate_organic_matter_expressed_as_iron_in_sea_water", &
-         cmor_long_name="Mole Concentration of Particulate Organic Matter expressed as Iron in sea water")
+         cmor_long_name="Mole Concentration of Particulate Organic Matter expressed as Iron in Sea Water")
 
 ! CHECK3:
 ! 2017/12/28 jgj Updated standard name in data request to include _organic
-    vardesc_temp = vardesc("bsi_raw","Mole Concentration of Particulate Organic Matter expressed as Silicon in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("bsi_raw","Mole Concentration of Particulate Organic Matter expressed as Silicon in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_bsi = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="bsi", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_particulate_organic_matter_expressed_as_silicon_in_sea_water", &
-         cmor_long_name="Mole Concentration of Particulate Organic Matter expressed as Silicon in sea water")
+         cmor_long_name="Mole Concentration of Particulate Organic Matter expressed as Silicon in Sea Water")
 
-    vardesc_temp = vardesc("phyn_raw","Mole Concentration of Total Phytoplankton expressed as Nitrogen in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("phyn_raw","Mole Concentration of Total Phytoplankton expressed as Nitrogen in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_phyn = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phyn", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_phytoplankton_expressed_as_nitrogen_in_sea_water", &
-         cmor_long_name="Mole Concentration of Total Phytoplankton expressed as Nitrogen in sea water")
+         cmor_long_name="Mole Concentration of Total Phytoplankton expressed as Nitrogen in Sea Water")
 
-    vardesc_temp = vardesc("phyp_raw","Mole Concentration of Total Phytoplankton expressed as Phosphorus in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("phyp_raw","Mole Concentration of Total Phytoplankton expressed as Phosphorus in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_phyp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phyp", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_phytoplankton_expressed_as_phosphorus_in_sea_water", &
-         cmor_long_name="Mole Concentration of Total Phytoplankton expressed as Phosphorus in sea water")
+         cmor_long_name="Mole Concentration of Total Phytoplankton expressed as Phosphorus in Sea Water")
 
-    vardesc_temp = vardesc("phyfe_raw","Mole Concentration of Total Phytoplankton expressed as Iron in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("phyfe_raw","Mole Concentration of Total Phytoplankton expressed as Iron in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_phyfe = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phyfe", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_phytoplankton_expressed_as_iron_in_sea_water", &
-         cmor_long_name="Mole Concentration of Total Phytoplankton expressed as Iron in sea water")
+         cmor_long_name="Mole Concentration of Total Phytoplankton expressed as Iron in Sea Water")
 
-    vardesc_temp = vardesc("physi_raw","Mole Concentration of Total Phytoplankton expressed as Silicon in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("physi_raw","Mole Concentration of Total Phytoplankton expressed as Silicon in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_physi = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="physi", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_phytoplankton_expressed_as_silicon_in_sea_water", &
-         cmor_long_name="Mole Concentration of Total Phytoplankton expressed as Silicon in sea water")
+         cmor_long_name="Mole Concentration of Total Phytoplankton expressed as Silicon in Sea Water")
 
     vardesc_temp = vardesc("co3_raw","Carbonate Ion Concentration",'h','L','s','mol m-3','f')
     cobalt%id_co3 = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
@@ -3674,20 +3674,20 @@ module COBALT_reg_diag
          cmor_long_name="Abiotic Carbonate Ion Concentration")
 
 ! 2018/01/17 jgj Updated standard name in data request to match equivalent surface variable
-    vardesc_temp = vardesc("co3satcalc_raw","Mole Concentration of Carbonate Ion in Equilibrium with Pure Calcite in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("co3satcalc_raw","Mole Concentration of Carbonate Ion in Equilibrium with Pure Calcite in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_co3satcalc = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="co3satcalc", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_carbonate_expressed_as_carbon_at_equilibrium_with_pure_calcite_in_sea_water", &
-         cmor_long_name="Mole Concentration of Carbonate Ion in Equilibrium with Pure Calcite in sea water")
+         cmor_long_name="Mole Concentration of Carbonate Ion in Equilibrium with Pure Calcite in Sea Water")
 
 ! 2018/01/17 jgj Updated standard name in data request to match equivalent surface variable
-    vardesc_temp = vardesc("co3satarag_raw","Mole Concentration of Carbonate Ion in Equilibrium with Pure Aragonite in sea water",'h','L','s','mol m-3','f')
+    vardesc_temp = vardesc("co3satarag_raw","Mole Concentration of Carbonate Ion in Equilibrium with Pure Aragonite in Sea Water",'h','L','s','mol m-3','f')
     cobalt%id_co3satarag = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="co3satarag", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_carbonate_expressed_as_carbon_at_equilibrium_with_pure_aragonite_in_sea_water", &
-         cmor_long_name="Mole Concentration of Carbonate Ion in Equilibrium with Pure Aragonite in sea water")
+         cmor_long_name="Mole Concentration of Carbonate Ion in Equilibrium with Pure Aragonite in Sea Water")
 
 !------------------------------------------------------------------------------------------------------------------
 ! 3-D rates
@@ -3729,7 +3729,8 @@ module COBALT_reg_diag
          cmor_standard_name="tendency_of_mole_concentration_of_silicon_in_sea_water_due_to_biological_production", &
          cmor_long_name="Biogenic Silicon Production")
 
-! Oyr only
+    ! Note: COBALT only models the production of calcite detritus, so values will be smaller than estimates of total
+    ! calcite production by approximately a factor of 1 over the calcite-specific export ratio.
     vardesc_temp = vardesc("pcalc_raw","Calcite Production",'h','L','s','mol m-3 s-1','f')
     cobalt%id_pcalc = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -3737,7 +3738,8 @@ module COBALT_reg_diag
          cmor_standard_name="tendency_of_mole_concentration_of_calcite_expressed_as_carbon_in_sea_water_due_to_biological_production", &
          cmor_long_name="Calcite Production")
 
-! Oyr only
+    ! Note: COBALT only models the production of aragonite detritus, so values will be smaller than estimates of total
+    ! aragonite production by approximately a factor of 1 over the aragonite-specific export ratio.
     vardesc_temp = vardesc("parag_raw","Aragonite Production",'h','L','s','mol m-3 s-1','f')
     cobalt%id_parag = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -3754,12 +3756,26 @@ module COBALT_reg_diag
          cmor_standard_name="sinking_mole_flux_of_particulate_organic_matter_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Sinking Particulate Organic Carbon Flux")
 
+    vardesc_temp = vardesc("expcob_raw","Sinking Flux of Particulate Organic Carbon Reaching the Ocean Bottom",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_expcob = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expcob", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_particulate_organic_matter_expressed_as_carbon_in_sea_water", &
+         cmor_long_name="Sinking Flux of Particulate Organic Carbon Reaching the Ocean Bottom")
+
     vardesc_temp = vardesc("expn_raw","Sinking Particulate Organic Nitrogen Flux",'h','L','s','mol m-2 s-1','f')
     cobalt%id_expn_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expn", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_particulate_organic_nitrogen_in_sea_water", &
          cmor_long_name="Sinking Particulate Organic Nitrogen Flux")
+
+    vardesc_temp = vardesc("expnob_raw","Sinking Flux of Particulate Organic Nitrogen Reaching the Ocean Bottom",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_expnob = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expnob", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_particulate_organic_nitrogen_in_sea_water", &
+         cmor_long_name="Sinking Flux of Particulate Organic Nitrogen Reaching the Ocean Bottom")
 
     vardesc_temp = vardesc("expp_raw","Sinking Particulate Organic Phosphorus Flux",'h','L','s','mol m-2 s-1','f')
     cobalt%id_expp_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
@@ -3768,12 +3784,26 @@ module COBALT_reg_diag
          cmor_standard_name="sinking_mole_flux_of_particulate_organic_phosphorus_in_sea_water", &
          cmor_long_name="Sinking Particulate Organic Phosphorus Flux")
 
+    vardesc_temp = vardesc("exppob_raw","Sinking Flux of Particulate Organic Phosphorus Reaching the Ocean Bottom",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_exppob = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="exppob", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_particulate_organic_phosphorus_in_sea_water", &
+         cmor_long_name="Sinking Flux of Particulate Organic Phosphorus Reaching the Ocean Bottom")
+
     vardesc_temp = vardesc("expfe_raw","Sinking Particulate Iron Flux",'h','L','s','mol m-2 s-1','f')
     cobalt%id_expfe_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expfe", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_particulate_iron_in_sea_water", &
          cmor_long_name="Sinking Particulate Iron Flux")
+
+    vardesc_temp = vardesc("expfeob_raw","Sinking Flux of Particulate Iron Reaching the Ocean Bottom",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_expfeob = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expfeob", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_particulate_iron_in_sea_water", &
+         cmor_long_name="Sinking Flux of Particulate Iron Reaching the Ocean Bottom")
 
     vardesc_temp = vardesc("expsi_raw","Sinking Particulate Silicon Flux",'h','L','s','mol m-2 s-1','f')
     cobalt%id_expsi_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
@@ -3782,6 +3812,13 @@ module COBALT_reg_diag
          cmor_standard_name="sinking_mole_flux_of_particulate_silicon_in_sea_water", &
          cmor_long_name="Sinking Particulate Silicon Flux")
 
+    vardesc_temp = vardesc("expsiob_raw","Sinking Flux of Particulate Silicon Reaching the Ocean Bottom",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_expsiob = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expsiob", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_particulate_silicon_in_sea_water", &
+         cmor_long_name="Sinking Flux of Particulate Silicon Reaching the Ocean Bottom")
+
     vardesc_temp = vardesc("expcalc_raw","Sinking Calcite Flux",'h','L','s','mol m-2 s-1','f')
     cobalt%id_expcalc_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -3789,12 +3826,26 @@ module COBALT_reg_diag
          cmor_standard_name="sinking_mole_flux_of_calcite_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Sinking Calcite Flux")
 
+    vardesc_temp = vardesc("expcalcob_raw","Sinking Flux of Calcite Reaching the Ocean Bottom",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_expcalcob = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="expcalcob", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_calcite_expressed_as_carbon_in_sea_water", &
+         cmor_long_name="Sinking Flux of Calcite Reaching the Ocean Bottom")
+
     vardesc_temp = vardesc("exparag_raw","Sinking Aragonite Flux",'h','L','s','mol m-2 s-1','f')
     cobalt%id_exparag_tp = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="exparag", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_aragonite_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Sinking Aragonite Flux")
+
+    vardesc_temp = vardesc("exparagob_raw","Sinking Flux of Aragonite Reaching the Ocean Bottom",'h','L','s','mol m-2 s-1','f')
+    cobalt%id_exparagob = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="exparagob", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="sinking_mole_flux_of_aragonite_expressed_as_carbon_in_sea_water", &
+         cmor_long_name="Sinking Flux of Aragonite Reaching the Ocean Bottom")
 
     !
     ! Option to save at interfaces
@@ -3813,21 +3864,21 @@ module COBALT_reg_diag
          cmor_standard_name="sinking_mole_flux_of_particulate_organic_nitrogen_in_sea_water", &
          cmor_long_name="Sinking Particulate Organic Nitrogen Flux")
          
-    vardesc_temp = vardesc("expp_raw_i","Sinking Particulate Organic Phosphorus Flux (@interfaces)",'h','L','s','mol m-2 s-1','f')
+    vardesc_temp = vardesc("expp_raw_i","Sinking Particulate Organic Phosphorus Flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
     cobalt%id_expp_i = register_diag_field(package_name, vardesc_temp%name, axes(1:1), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expp_i", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_particulate_organic_phosphorus_in_sea_water", &
          cmor_long_name="Sinking Particulate Organic Phosphorus Flux")
          
-    vardesc_temp = vardesc("expfe_raw_i","Sinking Particulate Iron Flux (@interfaces)",'h','L','s','mol m-2 s-1','f')
+    vardesc_temp = vardesc("expfe_raw_i","Sinking Particulate Iron Flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
     cobalt%id_expfe_i = register_diag_field(package_name, vardesc_temp%name, axes(1:1), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expfe_i", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="sinking_mole_flux_of_particulate_iron_in_sea_water", &
          cmor_long_name="Sinking Particulate Iron Flux")
 
-    vardesc_temp = vardesc("expsi_raw_i","Sinking Particulate Silicon Flux (@interfaces)",'h','L','s','mol m-2 s-1','f')
+    vardesc_temp = vardesc("expsi_raw_i","Sinking Particulate Silicon Flux (@interfaces)",'h','i','s','mol m-2 s-1','f')
     cobalt%id_expsi_i = register_diag_field(package_name, vardesc_temp%name, axes(1:1), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="expsi_i", cmor_units="mol m-2 s-1",                          &
@@ -3957,8 +4008,6 @@ module COBALT_reg_diag
          cmor_standard_name="tendency_of_mole_concentration_of_dissolved_iron_in_sea_water_due_to_dissolution_from_inorganic_particles", &
          cmor_long_name="Particle Source of Dissolved Iron")
 
-! CHECK3:
-! 2017/08/04 jgj: CMOR requires area:areacello, volume:volcello
     vardesc_temp = vardesc("graz_raw","Total Grazing of Phytoplankton by Zooplankton",'h','L','s','mol m-3 s-1','f')
     cobalt%id_graz = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -4158,6 +4207,7 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_calcite_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Surface Calcite Concentration")
 
+    ! Note that COBALT onlt tracks aragonite detritus
     vardesc_temp = vardesc("aragos_raw","Surface Aragonite Concentration",'h','1','s','mol m-3','f')
     cobalt%id_aragos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -4165,47 +4215,47 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Surface Aragonite Concentration")
 
-    vardesc_temp = vardesc("phydiatos_raw","Surface Mole Concentration of Diatoms expressed as Carbon in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("phydiatos_raw","Surface Mole Concentration of Diatoms expressed as Carbon in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_phydiatos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phydiatos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_diatoms_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Diatoms expressed as Carbon in sea water")
+         cmor_long_name="Surface Mole Concentration of Diatoms expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("phydiazos_raw","Surface Mole Concentration of Diazotrophs expressed as Carbon in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("phydiazos_raw","Surface Mole Concentration of Diazotrophs expressed as Carbon in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_phydiazos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phydiazos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_diazotrophs_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Diazotrophs expressed as Carbon in sea water")
+         cmor_long_name="Surface Mole Concentration of Diazotrophs expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("phypicoos_raw","Surface Mole Concentration of Picophytoplankton expressed as Carbon in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("phypicoos_raw","Surface Mole Concentration of Picophytoplankton expressed as Carbon in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_phypicoos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phypicoos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_picophytoplankton_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Picophytoplankton expressed as Carbon in sea water")
+         cmor_long_name="Surface Mole Concentration of Picophytoplankton expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("phymiscos_raw","Surface Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("phymiscos_raw","Surface Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_phymiscos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phymiscos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_miscellaneous_phytoplankton_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in sea water")
+         cmor_long_name="Surface Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("zmicroos_raw","Surface Mole Concentration of Microzooplankton expressed as Carbon in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("zmicroos_raw","Surface Mole Concentration of Microzooplankton expressed as Carbon in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_zmicroos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="zmicroos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_microzooplankton_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Microzooplankton expressed as Carbon in sea water")
+         cmor_long_name="Surface Mole Concentration of Microzooplankton expressed as Carbon in Sea Water")
 
-    vardesc_temp = vardesc("zmesoos_raw","Surface Mole Concentration of Mesozooplankton expressed as Carbon in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("zmesoos_raw","Surface Mole Concentration of Mesozooplankton expressed as Carbon in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_zmesoos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="zmesoos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_mesozooplankton_expressed_as_carbon_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Mesozooplankton expressed as Carbon in sea water")
+         cmor_long_name="Surface Mole Concentration of Mesozooplankton expressed as Carbon in Sea Water")
 
     vardesc_temp = vardesc("talkos_raw","Surface Total Alkalinity",'h','1','s','mol m-3','f')
     cobalt%id_talkos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
@@ -4242,7 +4292,6 @@ module COBALT_reg_diag
          cmor_standard_name="sea_water_ph_abiotic_analogue_reported_on_total_scale", &
          cmor_long_name="Surface Abiotic pH")
 
-!! jgj 2017/08/04 removed _cmip in cmor_field_name - update diag table
     vardesc_temp = vardesc("o2os_raw","Surface Dissolved Oxygen Concentration",'h','1','s','mol m-3','f')
     cobalt%id_o2os = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -4250,7 +4299,6 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_dissolved_molecular_oxygen_in_sea_water", &
          cmor_long_name="Surface Dissolved Oxygen Concentration")
 
-! CHECK3: need 3-D field
     vardesc_temp = vardesc("o2satos_raw","Surface Dissolved Oxygen Concentration at Saturation",'h','1','s','mol m-3','f')
     cobalt%id_o2satos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -4258,7 +4306,6 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_dissolved_molecular_oxygen_in_sea_water_at_saturation", &
          cmor_long_name="Surface Dissolved Oxygen Concentration at Saturation")
 
-!! jgj 2017/08/04 removed _cmip in cmor_field_name - update diag table
     vardesc_temp = vardesc("no3os_raw","Surface Dissolved Nitrate Concentration",'h','1','s','mol m-3','f')
     cobalt%id_no3os = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -4297,99 +4344,97 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_dissolved_inorganic_silicon_in_sea_water", &
          cmor_long_name="Surface Total Dissolved Inorganic Silicon Concentration")
 
-!! jgj 2017/08/04 removed _cmip in cmor_field_name - update diag table
-! also in Oday (updated to match Omon long_name, standard_name)
-    vardesc_temp = vardesc("chlos_raw","Surface Mass Concentration of Total Phytoplankton expressed as Chlorophyll in sea water",'h','1','s','kg m-3','f')
+    vardesc_temp = vardesc("chlos_raw","Surface Mass Concentration of Total Phytoplankton expressed as Chlorophyll in Sea Water",'h','1','s','kg m-3','f')
     cobalt%id_chlos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="chlos", cmor_units="kg m-3",                          &
          cmor_standard_name="mass_concentration_of_phytoplankton_expressed_as_chlorophyll_in_sea_water", &
-         cmor_long_name="Surface Mass Concentration of Total Phytoplankton expressed as Chlorophyll in sea water")
+         cmor_long_name="Surface Mass Concentration of Total Phytoplankton expressed as Chlorophyll in Sea Water")
 
-    vardesc_temp = vardesc("chldiatos_raw","Surface Mass Concentration of Diatoms expressed as Chlorophyll in sea water",'h','1','s','kg m-3','f')
+    vardesc_temp = vardesc("chldiatos_raw","Surface Mass Concentration of Diatoms expressed as Chlorophyll in Sea Water",'h','1','s','kg m-3','f')
     cobalt%id_chldiatos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="chldiatos", cmor_units="kg m-3",                          &
          cmor_standard_name="mass_concentration_of_diatoms_expressed_as_chlorophyll_in_sea_water", &
-         cmor_long_name="Surface Mass Concentration of Diatoms expressed as Chlorophyll in sea water")
+         cmor_long_name="Surface Mass Concentration of Diatoms expressed as Chlorophyll in Sea Water")
 
-    vardesc_temp = vardesc("chldiazos_raw","Surface Mass Concentration of Diazotrophs expressed as Chlorophyll in sea water",'h','1','s','kg m-3','f')
+    vardesc_temp = vardesc("chldiazos_raw","Surface Mass Concentration of Diazotrophs expressed as Chlorophyll in Sea Water",'h','1','s','kg m-3','f')
     cobalt%id_chldiazos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="chldiazos", cmor_units="kg m-3",                          &
          cmor_standard_name="mass_concentration_of_diazotrophs_expressed_as_chlorophyll_in_sea_water", &
-         cmor_long_name="Surface Mass Concentration of Diazotrophs expressed as Chlorophyll in sea water")
+         cmor_long_name="Surface Mass Concentration of Diazotrophs expressed as Chlorophyll in Sea Water")
 
-    vardesc_temp = vardesc("chlpicoos_raw","Surface Mass Concentration of Picophytoplankton expressed as Chlorophyll in sea water",'h','1','s','kg m-3','f')
+    vardesc_temp = vardesc("chlpicoos_raw","Surface Mass Concentration of Picophytoplankton expressed as Chlorophyll in Sea Water",'h','1','s','kg m-3','f')
     cobalt%id_chlpicoos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="chlpicoos", cmor_units="kg m-3",                          &
          cmor_standard_name="mass_concentration_of_picophytoplankton_expressed_as_chlorophyll_in_sea_water", &
-         cmor_long_name="Surface Mass Concentration of Picophytoplankton expressed as Chlorophyll in sea water")
+         cmor_long_name="Surface Mass Concentration of Picophytoplankton expressed as Chlorophyll in Sea Water")
 
-    vardesc_temp = vardesc("chlmiscos_raw","Surface Mass Concentration of Other Phytoplankton expressed as Chlorophyll in sea water",'h','1','s','kg m-3','f')
+    vardesc_temp = vardesc("chlmiscos_raw","Surface Mass Concentration of Other Phytoplankton expressed as Chlorophyll in Sea Water",'h','1','s','kg m-3','f')
     cobalt%id_chlmiscos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="chlmiscos", cmor_units="kg m-3",                          &
          cmor_standard_name="mass_concentration_of_miscellaneous_phytoplankton_expressed_as_chlorophyll_in_sea_water", &
-         cmor_long_name="Surface Mass Concentration of Other Phytoplankton expressed as Chlorophyll in sea water")
+         cmor_long_name="Surface Mass Concentration of Other Phytoplankton expressed as Chlorophyll in Sea Water")
 
-    vardesc_temp = vardesc("ponos_raw","Surface Mole Concentration of Particulate Organic Matter expressed as Nitrogen in sea water",'h','1','s','mol N m-3','f')
+    vardesc_temp = vardesc("ponos_raw","Surface Mole Concentration of Particulate Organic Matter expressed as Nitrogen in Sea Water",'h','1','s','mol N m-3','f')
     cobalt%id_ponos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="ponos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_particulate_organic_matter_expressed_as_nitrogen_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Particulate Organic Matter expressed as Nitrogen in sea water")
+         cmor_long_name="Surface Mole Concentration of Particulate Organic Matter expressed as Nitrogen in Sea Water")
 
-    vardesc_temp = vardesc("popos_raw","Surface Mole Concentration of Particulate Organic Matter expressed as Phosphorus in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("popos_raw","Surface Mole Concentration of Particulate Organic Matter expressed as Phosphorus in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_popos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="popos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_particulate_organic_matter_expressed_as_phosphorus_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Particulate Organic Matter expressed as Phosphorus in sea water")
+         cmor_long_name="Surface Mole Concentration of Particulate Organic Matter expressed as Phosphorus in Sea Water")
 
-    vardesc_temp = vardesc("bfeos_raw","Surface Mole Concentration of Particulate Organic Matter expressed as Iron in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("bfeos_raw","Surface Mole Concentration of Particulate Organic Matter expressed as Iron in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_bfeos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="bfeos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_particulate_organic_matter_expressed_as_iron_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Particulate Organic Matter expressed as Iron in sea water")
+         cmor_long_name="Surface Mole Concentration of Particulate Organic Matter expressed as Iron in Sea Water")
 
-    vardesc_temp = vardesc("bsios_raw","Surface Mole Concentration of Particulate Organic Matter expressed as Silicon in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("bsios_raw","Surface Mole Concentration of Particulate Organic Matter expressed as Silicon in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_bsios = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="bsios", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_particulate_organic_matter_expressed_as_silicon_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Particulate Organic Matter expressed as Silicon in sea water")
+         cmor_long_name="Surface Mole Concentration of Particulate Organic Matter expressed as Silicon in Sea Water")
 
-    vardesc_temp = vardesc("phynos_raw","Surface Mole Concentration of Phytoplankton Nitrogen in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("phynos_raw","Surface Mole Concentration of Phytoplankton Nitrogen in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_phynos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phynos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_phytoplankton_expressed_as_nitrogen_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Phytoplankton Nitrogen in sea water")
+         cmor_long_name="Surface Mole Concentration of Phytoplankton Nitrogen in Sea Water")
 
-    vardesc_temp = vardesc("phypos_raw","Surface Mole Concentration of Total Phytoplankton expressed as Phosphorus in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("phypos_raw","Surface Mole Concentration of Total Phytoplankton expressed as Phosphorus in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_phypos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phypos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_phytoplankton_expressed_as_phosphorus_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Total Phytoplankton expressed as Phosphorus in sea water")
+         cmor_long_name="Surface Mole Concentration of Total Phytoplankton expressed as Phosphorus in Sea Water")
 
-! 2017/12/28 jgj Updated long name in data request: Surface Mole Concentration of Total Phytoplankton expressed as Iron in sea water
-    vardesc_temp = vardesc("phyfeos_raw","Surface Mole Concentration of Total Phytoplankton expressed as Iron in sea water",'h','1','s','mol m-3','f')
+! 2017/12/28 jgj Updated long name in data request: Surface Mole Concentration of Total Phytoplankton expressed as Iron in Sea Water
+    vardesc_temp = vardesc("phyfeos_raw","Surface Mole Concentration of Total Phytoplankton expressed as Iron in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_phyfeos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="phyfeos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_phytoplankton_expressed_as_iron_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Total Phytoplankton expressed as Iron in sea water")
+         cmor_long_name="Surface Mole Concentration of Total Phytoplankton expressed as Iron in Sea Water")
 
-    vardesc_temp = vardesc("physios_raw","Surface Mole Concentration of Total Phytoplankton expressed as Silicon in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("physios_raw","Surface Mole Concentration of Total Phytoplankton expressed as Silicon in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_physios = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="physios", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_phytoplankton_expressed_as_silicon_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Total Phytoplankton expressed as Silicon in sea water")
+         cmor_long_name="Surface Mole Concentration of Total Phytoplankton expressed as Silicon in Sea Water")
 
     vardesc_temp = vardesc("co3os_raw","Surface Carbonate Ion Concentration",'h','1','s','mol m-3','f')
     cobalt%id_co3os = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
@@ -4412,19 +4457,19 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_carbonate_abiotic_analogue_expressed_as_carbon_in_sea_water", &
          cmor_long_name="Surface Abiotic Carbonate Ion Concentration")
 
-    vardesc_temp = vardesc("co3satcalcos_raw","Surface Mole Concentration of Carbonate Ion in Equilibrium with Pure Calcite in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("co3satcalcos_raw","Surface Mole Concentration of Carbonate Ion in Equilibrium with Pure Calcite in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_co3satcalcos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="co3satcalcos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_carbonate_expressed_as_carbon_at_equilibrium_with_pure_calcite_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Carbonate Ion in Equilibrium with Pure Calcite in sea water")
+         cmor_long_name="Surface Mole Concentration of Carbonate Ion in Equilibrium with Pure Calcite in Sea Water")
 
-    vardesc_temp = vardesc("co3sataragos_raw","Surface Mole Concentration of Carbonate Ion in Equilibrium with Pure Aragonite in sea water",'h','1','s','mol m-3','f')
+    vardesc_temp = vardesc("co3sataragos_raw","Surface Mole Concentration of Carbonate Ion in Equilibrium with Pure Aragonite in Sea Water",'h','1','s','mol m-3','f')
     cobalt%id_co3sataragos = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="co3sataragos", cmor_units="mol m-3",                          &
          cmor_standard_name="mole_concentration_of_carbonate_expressed_as_carbon_at_equilibrium_with_pure_aragonite_in_sea_water", &
-         cmor_long_name="Surface Mole Concentration of Carbonate Ion in Equilibrium with Pure Aragonite in sea water")
+         cmor_long_name="Surface Mole Concentration of Carbonate Ion in Equilibrium with Pure Aragonite in Sea Water")
 
 !------------------------------------------------------------------------------------------------------------------
 ! 2-D fields (from Omon)
@@ -4470,6 +4515,20 @@ module COBALT_reg_diag
          cmor_field_name="intppmisc", cmor_units="mol m-2 s-1",                          &
          cmor_standard_name="net_primary_mole_productivity_of_biomass_expressed_as_carbon_by_miscellaneous_phytoplankton", &
          cmor_long_name="Net Primary Organic Carbon Production by Other Phytoplankton")
+
+    vardesc_temp = vardesc("intppnano_raw","Net Primary Organic Carbon Production by Nanophytoplankton",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_intppnano = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="intppnano", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="net_primary_mole_productivity_of_biomass_expressed_as_carbon_by_nanophytoplankton", &
+         cmor_long_name="Net Primary Organic Carbon Production by Nanophytoplankton")
+
+    vardesc_temp = vardesc("intppmicro_raw","Net Primary Organic Carbon Production by Microphytoplankton",'h','1','s','mol m-2 s-1','f')
+    cobalt%id_intppmicro = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
+         cmor_field_name="intppmicro", cmor_units="mol m-2 s-1",                          &
+         cmor_standard_name="net_primary_mole_productivity_of_biomass_expressed_as_carbon_by_microphytoplankton", &
+         cmor_long_name="Net Primary Organic Carbon Production by Microphytoplankton")
 
     vardesc_temp = vardesc("intpbn_raw","Nitrogen Production",'h','1','s','mol m-2 s-1','f')
     cobalt%id_intpbn = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
@@ -4634,8 +4693,6 @@ module COBALT_reg_diag
          cmor_standard_name="surface_molecular_oxygen_partial_pressure_difference_between_sea_water_and_air", &
          cmor_long_name="Delta PO2")
 
-! CHECK3:
-! 2017/08/04 jgj: CMOR requires positive down, area:areacello
     vardesc_temp = vardesc("fgco2_raw","Surface Downward Flux of Total CO2",'h','1','s','kg m-2 s-1','f')
     cobalt%id_fgco2 = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -4643,8 +4700,6 @@ module COBALT_reg_diag
          cmor_standard_name="surface_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon", &
          cmor_long_name="Surface Downward Flux of Total CO2")
 
-! CHECK3:
-! 2017/08/04 jgj: CMOR requires positive down, area:areacello
     vardesc_temp = vardesc("fgco2nat_raw","Surface Downward Flux of Natural CO2",'h','1','s','kg m-2 s-1','f')
     cobalt%id_fgco2nat = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -4652,8 +4707,6 @@ module COBALT_reg_diag
          cmor_standard_name="surface_downward_mass_flux_of_carbon_dioxide_natural_analogue_expressed_as_carbon", &
          cmor_long_name="Surface Downward Flux of Natural CO2")
 
-! CHECK3:
-! 2017/08/04 jgj: CMOR requires positive down, area:areacello
     vardesc_temp = vardesc("fgco2abio_raw","Surface Downward Flux of Abiotic CO2",'h','1','s','kg m-2 s-1','f')
     cobalt%id_fgco2abio = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -4661,8 +4714,6 @@ module COBALT_reg_diag
          cmor_standard_name="surface_downward_mass_flux_of_carbon_dioxide_abiotic_analogue_expressed_as_carbon", &
          cmor_long_name="Surface Downward Flux of Abiotic CO2")
 
-! CHECK3:
-! 2017/08/04 jgj: CMOR requires positive down, area:areacello
     vardesc_temp = vardesc("fg14co2abio_raw","Surface Downward Flux of Abiotic 14CO2",'h','1','s','kg m-2 s-1','f')
     cobalt%id_fg14co2abio = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -4670,8 +4721,6 @@ module COBALT_reg_diag
          cmor_standard_name="surface_downward_mass_flux_of_carbon14_dioxide_abiotic_analogue_expressed_as_carbon", &
          cmor_long_name="Surface Downward Flux of Abiotic 14CO2")
 
-! CHECK3:
-! 2017/08/04 jgj: CMOR requires positive down, area:areacello
     vardesc_temp = vardesc("fgo2_raw","Surface Downward Flux of O2",'h','1','s','mol m-2 s-1','f')
     cobalt%id_fgo2 = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -4739,7 +4788,7 @@ module COBALT_reg_diag
     cobalt%id_frfe = register_diag_field(package_name, vardesc_temp%name, axes(1:2), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
          cmor_field_name="frfe", cmor_units="mol m-2 s-1",                          &
-         cmor_standard_name="tendency_of_ocean_mole_content_of_iron_due_to_sedimentation", &
+         cmor_standard_name="minus_tendency_of_ocean_mole_content_of_iron_due_to_sedimentation", &
          cmor_long_name="Iron Loss to Sediments")
 
     vardesc_temp = vardesc("o2min_raw","Oxygen Minimum Concentration",'h','1','s','mol m-3','f')
