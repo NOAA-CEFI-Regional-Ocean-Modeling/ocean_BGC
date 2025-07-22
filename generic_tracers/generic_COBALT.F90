@@ -4838,7 +4838,7 @@ contains
     ! << Enable neritic CaCO3 burial in shallow regions (depth <= 150m)
     ! Read 'neritic_cased_burial' from netCDF file (O'Mara & Dunne, 2019) to apply spatial pattern
     if (cobalt%do_ner_ca_bur) then
-        allocate(neritic_cased_burial(isd:ied,jsd:jed))
+        allocate(neritic_cased_burial(isd:ied,jsd:jed)); neritic_cased_burial = 0.0
         ! 'neritic_cased_burial' is the 2-D burial field saved in netCDF
         ! data_override is intended to replace internal model fields with externally specified data
         call data_override('OCN', 'neritic_cased_burial', neritic_cased_burial(isc:iec,jsc:jec), model_time,override=neritic_override)
