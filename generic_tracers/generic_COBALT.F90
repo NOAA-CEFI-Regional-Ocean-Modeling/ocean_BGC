@@ -4652,7 +4652,7 @@ contains
            cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + phyto(m)%jaggloss_n(i,j,k)
            cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + phyto(m)%jaggloss_p(i,j,k)
            cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + phyto(m)%jaggloss_fe(i,j,k)
-           cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + phyto(m)%jaggloss_sio2(i,j,k)
+           cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + phyto(m)%jaggloss_sio2(i,j,k) + phyto(m)%jmortloss_sio2(i,j,k)
        enddo !} m
 
        ! Dissolved organic and inorganic production from viral lysis, exudation, and phytoplankton mortality
@@ -4673,8 +4673,7 @@ contains
                    (phyto(m)%jvirloss_p(i,j,k) + phyto(m)%jmortloss_p(i,j,k))
            cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k)   + phyto(m)%jvirloss_fe(i,j,k) + &
                                        phyto(m)%jmortloss_fe(i,j,k) + phyto(m)%jexuloss_fe(i,j,k)
-           cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + phyto(m)%jvirloss_sio2(i,j,k) + &
-                                      phyto(m)%jmortloss_sio2(i,j,k)
+           cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + phyto(m)%jvirloss_sio2(i,j,k)
        enddo !} m
 
        ! Sources of dissolved organic material from viral lysis due to bacteria
