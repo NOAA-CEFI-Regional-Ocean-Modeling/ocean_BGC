@@ -1040,8 +1040,15 @@ contains
     call get_param(param_file, "generic_COBALT", "mort_Md", phyto(MEDIUM)%mort, &
                    "mortality (cell death) rate constant for medium phytoplankton @ 0 deg. C", &
                    units="day-1", default=0.0, scale=I_sperd)
+	! Diatom silica exudation or loss due to mortality and basal respiration
+    call get_param(param_file, "generic_COBALT", "phi_sidiss_mort_Md", phyto(MEDIUM)%phi_sidiss_mort, &
+                   "fraction of medium diatom silica exuded or lost as silicate", &
+                   units="none", default=0.5)
+    call get_param(param_file, "generic_COBALT", "phi_sidiss_mort_Lg", phyto(LARGE)%phi_sidiss_mort, &
+                   "fraction of larger diatom silica exuded or lost as silicate", &
+                   units="none", default=0.5)
     !
-    ! Phytoplankton loss of organic carbon to exudation is assumed to be a constant fraction of NPP following Baines
+	! Phytoplankton loss of organic carbon to exudation is assumed to be a constant fraction of NPP following Baines
     ! and Pace (1991) (https://aslopubs.onlinelibrary.wiley.com/doi/abs/10.4319/lo.1991.36.6.1078)
     !
     call get_param(param_file, "generic_COBALT", "exu_Sm",phyto(SMALL)%exu, &
@@ -1360,7 +1367,14 @@ contains
     call get_param(param_file, "generic_COBALT", "phi_sldop_lgz", zoo(3)%phi_sldop, &
                    "fraction of P ingestion by large zooplankton to semi-labile dissolved organic phosphorus", &
                    units="none", default=0.3*(0.30-zoo(3)%phi_det))
-    !
+    ! Partitioning of silica detritus production from zooplankton is by default slightly higher than organic matter detritus
+    call get_param(param_file, "generic_COBALT", "phi_det_si_smz", zoo(1)%phi_det_si, &
+                   "fraction of silica ingestion by small zooplankton to si detritus", units="none", default=0.0)
+    call get_param(param_file, "generic_COBALT", "phi_det_si_mdz", zoo(2)%phi_det_si, &
+                   "fraction of silica ingestion by medium zooplankton to si detritus", units="none", default=0.20)
+    call get_param(param_file, "generic_COBALT", "phi_det_si_lgz", zoo(3)%phi_det_si, &
+                   "fraction of silica ingestion by large zooplankton to si detritus", units="none", default=0.35)
+	!
     !----------------------------------------------------------------------
     ! Partitioning of viral losses to various dissolved pools
     !----------------------------------------------------------------------
@@ -3923,16 +3937,24 @@ contains
     ! Silicate uptake
     !
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec   !{
+	   ! Diatoms are modeled as the fraction of the medium and large phytoplankton based on silica limitation
        cobalt%nlg_diatoms(i,j,k)=phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%silim(i,j,k)
        cobalt%nmd_diatoms(i,j,k)=phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%silim(i,j,k)
        cobalt%nlg_misc(i,j,k)=phyto(LARGE)%f_n(i,j,k) - phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%silim(i,j,k)
        cobalt%nmd_misc(i,j,k)=phyto(MEDIUM)%f_n(i,j,k) - phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%silim(i,j,k)
+
+	   ! silim present in here twice to first determine the biomass of the diatoms, and secondly to determine the uptake
        phyto(LARGE)%juptake_sio4(i,j,k) = &
              max(phyto(LARGE)%juptake_no3(i,j,k)+phyto(LARGE)%juptake_nh4(i,j,k),0.0)*phyto(LARGE)%silim(i,j,k)* &
              phyto(LARGE)%silim(i,j,k)*phyto(LARGE)%si_2_n_max
        phyto(MEDIUM)%juptake_sio4(i,j,k) = &
              max(phyto(MEDIUM)%juptake_no3(i,j,k)+phyto(MEDIUM)%juptake_nh4(i,j,k),0.0)*phyto(MEDIUM)%silim(i,j,k)* &
              phyto(MEDIUM)%silim(i,j,k)*phyto(MEDIUM)%si_2_n_max
+
+       ! If growth is negative, silica gets lost to mortality similar to the other elements
+	   ! multiplied by a conversion efficiency that determines the fraction of the silica shell left over in silg and simd
+	   phyto(MEDIUM)%jexuloss_sio2(i,j,k) = min(0.0,phyto(MEDIUM)%mu(i,j,k)*cobalt%f_simd(i,j,k)*phyto(MEDIUM)%phi_sidiss_mort)
+	   phyto(LARGE)%jexuloss_sio2(i,j,k) = min(0.0,phyto(LARGE)%mu(i,j,k)*cobalt%f_silg(i,j,k)*phyto(LARGE)%phi_sidiss_mort)
 
        ! Note that this is si_2_n in large phytoplankton pool, not in diatoms themselves (q_si_2_n_lg_diatoms)
        phyto(LARGE)%q_si_2_n(i,j,k) = cobalt%f_silg(i,j,k)/(phyto(LARGE)%f_n(i,j,k)+epsln)
@@ -4501,7 +4523,7 @@ contains
                    phyto(n)%f_n(i,j,k)/(cobalt%refuge_conc + phyto(n)%f_n(i,j,k))
             phyto(n)%jmortloss_p(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_p_2_n(i,j,k)
             phyto(n)%jmortloss_fe(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_fe_2_n(i,j,k)
-            phyto(n)%jmortloss_sio2(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
+            phyto(n)%jmortloss_sio2(i,j,k) = phyto(n)%phi_sidiss_mort*phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
             ! calculate the vertical sinking
             phyto(n)%vmove(i,j,k) = phyto(n)%sink_max*phyto(n)%stress_fac(i,j,k)
        enddo !} n
@@ -4610,7 +4632,7 @@ contains
            zoo(m)%jprod_ldop(i,j,k) = zoo(m)%phi_ldop*zoo(m)%jingest_p(i,j,k)
            zoo(m)%jprod_srdop(i,j,k) = zoo(m)%phi_srdop*zoo(m)%jingest_p(i,j,k)
            zoo(m)%jprod_fedet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_fe(i,j,k)
-           zoo(m)%jprod_sidet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_sio2(i,j,k)
+           zoo(m)%jprod_sidet(i,j,k) = zoo(m)%phi_det_si*zoo(m)%jingest_sio2(i,j,k)
 		   
            ! augment cumulative production variables for detritus and dissolved organics
            cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + zoo(m)%jprod_ndet(i,j,k)
@@ -4652,7 +4674,7 @@ contains
            cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + phyto(m)%jaggloss_n(i,j,k)
            cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + phyto(m)%jaggloss_p(i,j,k)
            cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + phyto(m)%jaggloss_fe(i,j,k)
-           cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + phyto(m)%jaggloss_sio2(i,j,k) + phyto(m)%jmortloss_sio2(i,j,k)
+           cobalt%jprod_sidet(i,j,k) = cobalt%jprod_sidet(i,j,k) + phyto(m)%jaggloss_sio2(i,j,k)
        enddo !} m
 
        ! Dissolved organic and inorganic production from viral lysis, exudation, and phytoplankton mortality
@@ -4672,8 +4694,9 @@ contains
            cobalt%jprod_srdop(i,j,k) = cobalt%jprod_srdop(i,j,k) + cobalt%lysis_phi_srdop* &
                    (phyto(m)%jvirloss_p(i,j,k) + phyto(m)%jmortloss_p(i,j,k))
            cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k)   + phyto(m)%jvirloss_fe(i,j,k) + &
-                                       phyto(m)%jmortloss_fe(i,j,k) + phyto(m)%jexuloss_fe(i,j,k)
-           cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + phyto(m)%jvirloss_sio2(i,j,k)
+                   phyto(m)%jmortloss_fe(i,j,k) + phyto(m)%jexuloss_fe(i,j,k)
+           cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + phyto(m)%jvirloss_sio2(i,j,k) + &
+		           phyto(m)%jmortloss_sio2(i,j,k) + phyto(m)%jexuloss_sio2(i,j,k)
        enddo !} m
 
        ! Sources of dissolved organic material from viral lysis due to bacteria
@@ -5640,7 +5663,7 @@ contains
        cobalt%jsilg(i,j,k) = phyto(LARGE)%juptake_sio4(i,j,k) - &
                              phyto(LARGE)%jzloss_sio2(i,j,k) - phyto(LARGE)%jhploss_sio2(i,j,k) - &
                              phyto(LARGE)%jaggloss_sio2(i,j,k) - phyto(LARGE)%jvirloss_sio2(i,j,k) - &
-                             phyto(LARGE)%jmortloss_sio2(i,j,k)
+                             phyto(LARGE)%jmortloss_sio2(i,j,k) - phyto(LARGE)%jexuloss_sio2(i,j,k)
        cobalt%p_silg(i,j,k,tau) = cobalt%p_silg(i,j,k,tau) + cobalt%jsilg(i,j,k)*dt*grid_tmask(i,j,k)
        !
        ! Medium Phytoplankton Silicon
@@ -5648,7 +5671,7 @@ contains
        cobalt%jsimd(i,j,k) = phyto(MEDIUM)%juptake_sio4(i,j,k) - &
                              phyto(MEDIUM)%jzloss_sio2(i,j,k) - phyto(MEDIUM)%jhploss_sio2(i,j,k) - &
                              phyto(MEDIUM)%jaggloss_sio2(i,j,k) - phyto(MEDIUM)%jvirloss_sio2(i,j,k) - &
-                             phyto(MEDIUM)%jmortloss_sio2(i,j,k)
+                             phyto(MEDIUM)%jmortloss_sio2(i,j,k) - phyto(MEDIUM)%jexuloss_sio2(i,j,k)
        cobalt%p_simd(i,j,k,tau) = cobalt%p_simd(i,j,k,tau) + cobalt%jsimd(i,j,k)*dt*grid_tmask(i,j,k)
        !
        ! Diazotrophic Phytoplankton Iron
