@@ -1043,10 +1043,10 @@ contains
 	! Diatom silica exudation or loss due to mortality and basal respiration
     call get_param(param_file, "generic_COBALT", "phi_sidiss_mort_Md", phyto(MEDIUM)%phi_sidiss_mort, &
                    "fraction of medium diatom silica exuded or lost as silicate", &
-                   units="none", default=0.5)
+                   units="none", default=0.0)
     call get_param(param_file, "generic_COBALT", "phi_sidiss_mort_Lg", phyto(LARGE)%phi_sidiss_mort, &
                    "fraction of larger diatom silica exuded or lost as silicate", &
-                   units="none", default=0.5)
+                   units="none", default=0.0)
     !
 	! Phytoplankton loss of organic carbon to exudation is assumed to be a constant fraction of NPP following Baines
     ! and Pace (1991) (https://aslopubs.onlinelibrary.wiley.com/doi/abs/10.4319/lo.1991.36.6.1078)
@@ -1371,9 +1371,9 @@ contains
     call get_param(param_file, "generic_COBALT", "phi_det_si_smz", zoo(1)%phi_det_si, &
                    "fraction of silica ingestion by small zooplankton to si detritus", units="none", default=0.0)
     call get_param(param_file, "generic_COBALT", "phi_det_si_mdz", zoo(2)%phi_det_si, &
-                   "fraction of silica ingestion by medium zooplankton to si detritus", units="none", default=0.20)
+                   "fraction of silica ingestion by medium zooplankton to si detritus", units="none", default=0.15)
     call get_param(param_file, "generic_COBALT", "phi_det_si_lgz", zoo(3)%phi_det_si, &
-                   "fraction of silica ingestion by large zooplankton to si detritus", units="none", default=0.35)
+                   "fraction of silica ingestion by large zooplankton to si detritus", units="none", default=0.30)
 	!
     !----------------------------------------------------------------------
     ! Partitioning of viral losses to various dissolved pools
@@ -3953,8 +3953,8 @@ contains
 
        ! If growth is negative, silica gets lost to mortality similar to the other elements
 	   ! multiplied by a conversion efficiency that determines the fraction of the silica shell left over in silg and simd
-	   phyto(MEDIUM)%jexuloss_sio2(i,j,k) = min(0.0,phyto(MEDIUM)%mu(i,j,k)*cobalt%f_simd(i,j,k)*phyto(MEDIUM)%phi_sidiss_mort)
-	   phyto(LARGE)%jexuloss_sio2(i,j,k) = min(0.0,phyto(LARGE)%mu(i,j,k)*cobalt%f_silg(i,j,k)*phyto(LARGE)%phi_sidiss_mort)
+	   phyto(MEDIUM)%jexuloss_sio2(i,j,k) = -1.0 * min(0.0,phyto(MEDIUM)%mu(i,j,k)*cobalt%f_simd(i,j,k)*phyto(MEDIUM)%phi_sidiss_mort)
+	   phyto(LARGE)%jexuloss_sio2(i,j,k) = -1.0 * min(0.0,phyto(LARGE)%mu(i,j,k)*cobalt%f_silg(i,j,k)*phyto(LARGE)%phi_sidiss_mort)
 
        ! Note that this is si_2_n in large phytoplankton pool, not in diatoms themselves (q_si_2_n_lg_diatoms)
        phyto(LARGE)%q_si_2_n(i,j,k) = cobalt%f_silg(i,j,k)/(phyto(LARGE)%f_n(i,j,k)+epsln)
