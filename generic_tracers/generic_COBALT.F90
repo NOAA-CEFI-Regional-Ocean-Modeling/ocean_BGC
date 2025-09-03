@@ -1353,7 +1353,7 @@ contains
                    "fraction of N ingestion by small zooplankton to semi-labile dissolved organic nitrogen", &
                    units="none", default=0.3*(0.30-zoo(1)%phi_det))
     call get_param(param_file, "generic_COBALT", "phi_sldon_mdz", zoo(2)%phi_sldon, &
-                /   "fraction of N ingestion by medium zooplankton to semi-labile dissolved organic nitrogen", &
+                   "fraction of N ingestion by medium zooplankton to semi-labile dissolved organic nitrogen", &
                    units="none", default=0.3*(0.30-zoo(2)%phi_det))
     call get_param(param_file, "generic_COBALT", "phi_sldon_lgz", zoo(3)%phi_sldon, &
                    "fraction of N ingestion by large zooplankton to semi-labile dissolved organic nitrogen", &
