@@ -7432,6 +7432,7 @@ contains
        allocate(phyto(n)%jexuloss_fe(isd:ied,jsd:jed,nk))  ; phyto(n)%jexuloss_fe    = 0.0
        allocate(phyto(n)%jexuloss_n(isd:ied,jsd:jed,nk))   ; phyto(n)%jexuloss_n     = 0.0
        allocate(phyto(n)%jexuloss_p(isd:ied,jsd:jed,nk))   ; phyto(n)%jexuloss_p     = 0.0
+       allocate(phyto(n)%jexuloss_sio2(isd:ied,jsd:jed,nk)); phyto(n)%jexuloss_sio2  = 0.0
        allocate(phyto(n)%jhploss_fe(isd:ied,jsd:jed,nk))   ; phyto(n)%jhploss_fe     = 0.0
        allocate(phyto(n)%jhploss_n(isd:ied,jsd:jed,nk))    ; phyto(n)%jhploss_n      = 0.0
        allocate(phyto(n)%jhploss_p(isd:ied,jsd:jed,nk))    ; phyto(n)%jhploss_p      = 0.0
@@ -8029,6 +8030,7 @@ contains
        deallocate(phyto(n)%jexuloss_n)
        deallocate(phyto(n)%jexuloss_p)
        deallocate(phyto(n)%jexuloss_fe)
+       deallocate(phyto(n)%jexuloss_sio2)
        deallocate(phyto(n)%jhploss_fe)
        deallocate(phyto(n)%jhploss_n)
        deallocate(phyto(n)%jhploss_p)

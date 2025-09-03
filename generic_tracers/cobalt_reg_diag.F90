@@ -798,6 +798,20 @@ module COBALT_reg_diag
     phyto(SMALL)%id_jexuloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
+    vardesc_temp = vardesc("jexuloss_sio2_Lg","Large phyto silica loss via exudation",&
+                           'h','L','s','mol Si kg-1 s-1','f')
+    phyto(LARGE)%id_jexuloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("jexuloss_sio2_Md","Medium phyto silica loss via exudation",&
+                           'h','L','s','mol Si kg-1 s-1','f')
+    phyto(MEDIUM)%id_jexuloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+    vardesc_temp = vardesc("jexuloss_sio2_Sm","Small phyto silica loss via exudation",&
+                           'h','L','s','mol Si kg-1 s-1','f')
+    phyto(SMALL)%id_jexuloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
     !
     ! Phytoplankton losses to higher predators (0 by default)
     !
