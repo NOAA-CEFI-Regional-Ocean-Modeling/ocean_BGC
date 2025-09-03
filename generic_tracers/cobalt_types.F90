@@ -201,11 +201,10 @@ module cobalt_types
      integer ::  id_jmortloss_fe  = -1
      integer ::  id_jmortloss_n   = -1
      integer ::  id_jmortloss_p   = -1
-     integer ::  id_jmortloss_sio2= -1
+     integer ::  id_jdissloss_si = -1
      integer ::  id_jexuloss_n   = -1
      integer ::  id_jexuloss_p   = -1
      integer ::  id_jexuloss_fe  = -1
-	 integer ::  id_jexuloss_sio2 = -1
      integer ::  id_jhploss_fe   = -1
      integer ::  id_jhploss_n    = -1
      integer ::  id_jhploss_p    = -1
