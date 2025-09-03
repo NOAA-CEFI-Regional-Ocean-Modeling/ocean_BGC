@@ -715,25 +715,27 @@ module COBALT_reg_diag
                            'h','L','s','mol Fe kg-1 s-1','f')
     phyto(SMALL)%id_jmortloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("jmortloss_sio2_Di","Diazotroph silica loss to mortality",&
+    !
+    ! Register diagnostics for phytoplankton silica dissolution from respiration and mortality
+    !
+    vardesc_temp = vardesc("jdissloss_si_Di","Diazotroph silica dissolution from respiration and mortality",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(DIAZO)%id_jmortloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZO)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jmortloss_sio2_Lg","Large phyto silica loss to mortality",&
+    vardesc_temp = vardesc("jdissloss_si_Lg","Large phyto silica dissolution from respiration and mortality",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(LARGE)%id_jmortloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LARGE)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jmortloss_sio2_Md","Medium phyto silica loss to mortality",&
+    vardesc_temp = vardesc("jdissloss_si_Md","Medium phyto silica dissolution from respiration and mortality",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(MEDIUM)%id_jmortloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MEDIUM)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jmortloss_sio2_Sm","Small phyto silica loss to mortality",&
+    vardesc_temp = vardesc("jdissloss_si_Sm","Small phyto silica dissolution from respiration and mortality",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(SMALL)%id_jmortloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMALL)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
     !
     ! Register diagnostics for phytoplankton exudation
@@ -798,20 +800,6 @@ module COBALT_reg_diag
     phyto(SMALL)%id_jexuloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jexuloss_sio2_Lg","Large phyto silica loss via exudation",&
-                           'h','L','s','mol Si kg-1 s-1','f')
-    phyto(LARGE)%id_jexuloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("jexuloss_sio2_Md","Medium phyto silica loss via exudation",&
-                           'h','L','s','mol Si kg-1 s-1','f')
-    phyto(MEDIUM)%id_jexuloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-
-    vardesc_temp = vardesc("jexuloss_sio2_Sm","Small phyto silica loss via exudation",&
-                           'h','L','s','mol Si kg-1 s-1','f')
-    phyto(SMALL)%id_jexuloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
     !
     ! Phytoplankton losses to higher predators (0 by default)
     !

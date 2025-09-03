@@ -146,11 +146,10 @@ module cobalt_types
      real, ALLOCATABLE, dimension(:,:,:)  ::  jmortloss_fe   !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  jmortloss_n    !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  jmortloss_p    !<
-     real, ALLOCATABLE, dimension(:,:,:)  ::  jmortloss_sio2 !<
+     real, ALLOCATABLE, dimension(:,:,:)  ::  jdissloss_si   !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  jexuloss_fe    !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  jexuloss_n     !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  jexuloss_p     !<
-     real, ALLOCATABLE, dimension(:,:,:)  ::  jexuloss_sio2  !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  jhploss_fe     !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  jhploss_n      !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  jhploss_p      !<
