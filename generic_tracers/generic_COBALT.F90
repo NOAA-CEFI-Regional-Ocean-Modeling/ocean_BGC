@@ -1042,10 +1042,10 @@ contains
                    units="day-1", default=0.0, scale=I_sperd)
     ! Diatom silica exudation or loss due to mortality and basal respiration
     call get_param(param_file, "generic_COBALT", "phi_sidiss_mort_Md", phyto(MEDIUM)%phi_sidiss_mort, &
-                   "fraction of medium diatom silica exuded or lost as silicate", &
+                   "fraction of medium diatom silica dissolved during respiration and mortality", &
                    units="none", default=0.0)
     call get_param(param_file, "generic_COBALT", "phi_sidiss_mort_Lg", phyto(LARGE)%phi_sidiss_mort, &
-                   "fraction of larger diatom silica exuded or lost as silicate", &
+                   "fraction of larger diatom silica dissolved during respiration and mortality", &
                    units="none", default=0.0)
     !
     ! Phytoplankton loss of organic carbon to exudation is assumed to be a constant fraction of NPP following Baines
@@ -1367,7 +1367,7 @@ contains
     call get_param(param_file, "generic_COBALT", "phi_sldop_lgz", zoo(3)%phi_sldop, &
                    "fraction of P ingestion by large zooplankton to semi-labile dissolved organic phosphorus", &
                    units="none", default=0.3*(0.30-zoo(3)%phi_det))
-    ! Partitioning of silica detritus production from zooplankton is by default slightly higher than organic matter detritus
+    ! Partitioning of silica detritus production from zooplankton is by default the same as organic matter detritus
     call get_param(param_file, "generic_COBALT", "phi_det_si_smz", zoo(1)%phi_det_si, &
                    "fraction of silica ingestion by small zooplankton to si detritus", units="none", default=0.0)
     call get_param(param_file, "generic_COBALT", "phi_det_si_mdz", zoo(2)%phi_det_si, &
@@ -4526,7 +4526,8 @@ contains
             phyto(n)%jmortloss_fe(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_fe_2_n(i,j,k)
             ! silica dissolution from phytoplankton mortality is also multiplied by a scaling factor that 
             ! determines the amount of silica test left over as the phytoplankton dies
-            phyto(n)%jdissloss_si(i,j,k) = phyto(n)%phi_sidiss_mort*phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
+            phyto(n)%jdissloss_si(i,j,k) = phyto(n)%jdissloss_si(i,j,k) + &
+                    phyto(n)%phi_sidiss_mort*phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
             ! calculate the vertical sinking
             phyto(n)%vmove(i,j,k) = phyto(n)%sink_max*phyto(n)%stress_fac(i,j,k)
        enddo !} n
