@@ -474,7 +474,6 @@ module cobalt_types
           min_daylength,    &
           gamma_mu_mem,     &
           gamma_ndet,       &
-          gamma_ndet_fast,  &
           gamma_nitrif,     &
           k_nh3_nitrif,     &
           nitrif_b,         &

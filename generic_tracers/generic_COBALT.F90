@@ -1524,10 +1524,10 @@ contains
     call get_param(param_file, "generic_COBALT", "remin_ramp_scale", cobalt%remin_ramp_scale, &
                    "depth scale from the surface over which remineralization ramps up", units="m", default= 50.0)
     ! gamma_ndet is set to produce a Martin-curve like remineralization length scale at temperatures ~10 deg. C
+    ! While this parameter depends on the value of wsink, the resultant value (1/3.5) should be invariant
+    ! Therefore, we will use this same parameter for fast-sinking detritus as well
     call get_param(param_file, "generic_COBALT", "gamma_ndet", cobalt%gamma_ndet, &
                    "Remineralization rate for unprotected organic matter", units="s-1", default=cobalt%wsink/350.0)
-    call get_param(param_file, "generic_COBALT", "gamma_ndet_fast", cobalt%gamma_ndet_fast, &
-                   "Remineralization rate for fast-sinking unprotected organic matter", units="s-1", default=cobalt%wsink_fast/3500.0)
     ! mineral ballasting after Klaas and Archer (2002) and Dunne et al. (2007) (see p. 3) 
     ! conversion is 0.070 g C (g Ca)-1 to moles N (mole Ca)-1; Similar conversions below, but lith remains per gram
     call get_param(param_file, "generic_COBALT", "rpcaco3", cobalt%rpcaco3, "Organic matter protection from CaCO3", &
@@ -4982,7 +4982,8 @@ contains
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
 	      ! Adding in the remineralization from fast sinking detritus
-	      cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet_fast * cobalt%expkreminT(i,j,k) * &
+          ! Need to use the same remineralization rate (gamma_ndet) as bulk detritus
+	      cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet * cobalt%expkreminT(i,j,k) * &
 		        cobalt%f_ndet_fast(i,j,k) * (cobalt%f_o2(i,j,k) / (cobalt%k_o2 + cobalt%f_o2(i,j,k)))
           ! Augment total nh4 production and o2 consumption
           cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + cobalt%jremin_ndet(i,j,k) + cobalt%jremin_ndet_fast(i,j,k)
@@ -4998,7 +4999,7 @@ contains
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
           ! Adding in the remineralization from fast sinking detritus
-          cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet_fast * cobalt%f_ndet_fast(i,j,k) * &
+          cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet * cobalt%f_ndet_fast(i,j,k) * &
                (cobalt%o2_min / (cobalt%k_o2 + cobalt%o2_min)) * &
                (cobalt%f_no3(i,j,k) / (cobalt%k_no3_denit + cobalt%f_no3(i,j,k))) 
           ! Augment total nh4 production and no3 consumption
