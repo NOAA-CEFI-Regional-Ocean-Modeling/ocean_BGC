@@ -1523,9 +1523,13 @@ contains
                    "Temperature dependence of remineralization", units="deg C-1", default=0.063)
     call get_param(param_file, "generic_COBALT", "remin_ramp_scale", cobalt%remin_ramp_scale, &
                    "depth scale from the surface over which remineralization ramps up", units="m", default= 50.0)
-    ! gamma_ndet is set to produce a Martin-curve like remineralization length scale at temperatures ~10 deg. C
-    ! While this parameter depends on the value of wsink, the resultant value (1/3.5) should be invariant
-    ! Therefore, we will use this same parameter for fast-sinking detritus as well
+    ! gamma_ndet is set to produce a e-folding length scale for fresh (unprotected) organic matter of ~190m at ~10 deg. C, 
+    ! consistent with the Martin curve. The value has been defined as a function of the sinking rate for "standard detritus 
+    ! (i.e., zooplankton fecal pellets/phytoplankton aggregates) so that the remineralization length-scale is preserved even 
+    ! if the sinking rate changed. Once established, gamma_ndet is also used for fast sinking detritus 
+    ! (i.e., unprotected organic matter is assumed to decay at similar rates regardless of whether it sinking slowly or quickly). 
+    ! This means that the ratio of the remineralization length-scale for unprotected fast sinking detritus relative to that for 
+    ! unprotected standard detritus equal the ratio of their sinking speeds (wsink_fast/wsink).
     call get_param(param_file, "generic_COBALT", "gamma_ndet", cobalt%gamma_ndet, &
                    "Remineralization rate for unprotected organic matter", units="s-1", default=cobalt%wsink/350.0)
     ! mineral ballasting after Klaas and Archer (2002) and Dunne et al. (2007) (see p. 3) 
@@ -4982,7 +4986,7 @@ contains
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
 	      ! Adding in the remineralization from fast sinking detritus
-          ! Need to use the same remineralization rate (gamma_ndet) as bulk detritus
+          ! Unprotected organic matter assumed to decay at the same rate (gamma_ndet) whether it sinks quickly or not
 	      cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet * cobalt%expkreminT(i,j,k) * &
 		        cobalt%f_ndet_fast(i,j,k) * (cobalt%f_o2(i,j,k) / (cobalt%k_o2 + cobalt%f_o2(i,j,k)))
           ! Augment total nh4 production and o2 consumption
