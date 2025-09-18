@@ -2,7 +2,7 @@
 !! to be used by generic COBALT related modules
 !<----------------------------------------------------------------
 module cobalt_types
-  use field_manager_mod, only: fm_string_len, fm_path_name_len
+  use field_manager_mod, only: fm_string_len
   implicit none; private
 
   !
