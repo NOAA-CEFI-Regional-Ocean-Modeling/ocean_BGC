@@ -932,6 +932,7 @@ contains
     if(present(requires_src_info)) then
        g_tracer%requires_src_info = requires_src_info 
     elseif(trim(g_tracer%package_name) .eq. 'generic_cobalt' .or. &
+           trim(g_tracer%package_name) .eq. 'generic_feisty' .or. &
            trim(g_tracer%package_name) .eq. 'generic_abiotic' .or. &
            trim(g_tracer%package_name) .eq. 'generic_bling') then !Niki: later we can make this just else
        call  g_tracer_add_param('enforce_src_info', g_tracer%requires_src_info ,  .true.) 
@@ -3975,17 +3976,14 @@ contains
 
 #ifdef _USE_MOM6_DIAG
     type(g_diag_ctrl), pointer :: diag_CS_ptr 
-    if(diag_field_id .gt. 0) then
-      if(present(diag_CS)) then
-        diag_CS_ptr => diag_CS
-      else
-        call g_tracer_get_diagCS(diag_CS_ptr)
-      endif
-      call post_data_MOM(diag_field_id, field, diag_CS_ptr) 
-      g_send_data_0d = .TRUE.
+    
+    if(present(diag_CS)) then
+       diag_CS_ptr => diag_CS
     else
-      g_send_data_0d = .FALSE.
+       call g_tracer_get_diagCS(diag_CS_ptr)
     endif
+    call post_data_MOM(diag_field_id, field, diag_CS_ptr) 
+    g_send_data_0d = .TRUE.
 #else
     g_send_data_0d = send_data_FMS(diag_field_id, field, time, err_msg)
 #endif
@@ -4005,17 +4003,14 @@ contains
 
 #ifdef _USE_MOM6_DIAG
     type(g_diag_ctrl), pointer :: diag_CS_ptr 
-    if(diag_field_id .gt. 0) then
-      if(present(diag_CS)) then
-        diag_CS_ptr => diag_CS
-      else
-        call g_tracer_get_diagCS(diag_CS_ptr)
-      endif
-      call post_data_MOM(diag_field_id, field, diag_CS_ptr)     
-      g_send_data_1d = .TRUE.
+    
+    if(present(diag_CS)) then
+       diag_CS_ptr => diag_CS
     else
-      g_send_data_1d = .FALSE.
+       call g_tracer_get_diagCS(diag_CS_ptr)
     endif
+    call post_data_MOM(diag_field_id, field, diag_CS_ptr)     
+    g_send_data_1d = .TRUE.
 #else
     g_send_data_1d = send_data_FMS(diag_field_id, field, time, is_in, mask, rmask, ie_in, weight, err_msg)
 #endif
@@ -4036,17 +4031,14 @@ contains
 
 #ifdef _USE_MOM6_DIAG
     type(g_diag_ctrl), pointer :: diag_CS_ptr 
-    if(diag_field_id .gt. 0) then
-      if(present(diag_CS)) then
-        diag_CS_ptr => diag_CS
-      else
-        call g_tracer_get_diagCS(diag_CS_ptr)
-      endif
-      call post_data_MOM(diag_field_id, field, diag_CS_ptr)!, mask=rmask)         
-      g_send_data_2d = .TRUE.
+    
+    if(present(diag_CS)) then
+       diag_CS_ptr => diag_CS
     else
-      g_send_data_2d = .FALSE.
+       call g_tracer_get_diagCS(diag_CS_ptr)
     endif
+    call post_data_MOM(diag_field_id, field, diag_CS_ptr)!, mask=rmask)         
+    g_send_data_2d = .TRUE.
 #else
     g_send_data_2d = send_data_FMS(diag_field_id, field, time, is_in, js_in, &
        & mask, rmask, ie_in, je_in, weight, err_msg)
@@ -4068,17 +4060,14 @@ contains
 
 #ifdef _USE_MOM6_DIAG
     type(g_diag_ctrl), pointer :: diag_CS_ptr 
-    if(diag_field_id .gt. 0) then
-      if(present(diag_CS)) then
-        diag_CS_ptr => diag_CS
-      else
-        call g_tracer_get_diagCS(diag_CS_ptr)
-      endif
-      call post_data_MOM(diag_field_id, field, diag_CS_ptr)!, mask=rmask) 
-      g_send_data_3d = .TRUE.
+    
+    if(present(diag_CS)) then
+       diag_CS_ptr => diag_CS
     else
-      g_send_data_3d = .FALSE.
+       call g_tracer_get_diagCS(diag_CS_ptr)
     endif
+    call post_data_MOM(diag_field_id, field, diag_CS_ptr)!, mask=rmask) 
+    g_send_data_3d = .TRUE.
 #else
     g_send_data_3d = send_data_FMS(diag_field_id, field, time, is_in, js_in, ks_in, &
              & mask, rmask, ie_in, je_in, ke_in, weight, err_msg)

@@ -159,6 +159,15 @@ module generic_COBALT
 
   use FMS_ocmip2_co2calc_mod, only : FMS_ocmip2_co2calc, CO2_dope_vector
 
+  use generic_FEISTY,  only : generic_FEISTY_register, generic_FEISTY_init, generic_FEISTY_register_diag
+  use generic_FEISTY,  only : generic_FEISTY_tracer_get_values, generic_FEISTY_tracer_get_pointer
+  use generic_FEISTY,  only : generic_FEISTY_update_from_coupler, generic_FEISTY_fish_update_from_source
+  use generic_FEISTY,  only : generic_FEISTY_benthic_update_from_source
+  use generic_FEISTY,  only : generic_FEISTY_end
+  use generic_FEISTY,  only : generic_FEISTY_update_pointer, generic_FEISTY_send_diagnostic_data
+
+  
+
   implicit none ; private
 !-----------------------------------------------------------------------
   character(len=128) :: version = '$Id: generic_COBALT.F90,v 20.0.2.1.2.1 2014/09/29 16:40:08 Niki.Zadeh Exp $'
@@ -187,7 +196,7 @@ module generic_COBALT
   real, parameter :: sperd = 24.0 * 3600.0
   real, parameter :: spery = 365.25 * sperd
   real, parameter :: epsln=1.0e-30
-  real,parameter :: missing_value1=-1.0e+10
+  real, parameter :: missing_value1=-1.0e+10
   real, parameter :: missing_value_diag=-1.0e+10
 
   real, parameter :: vb_nh3 = 25.
@@ -200,6 +209,12 @@ module generic_COBALT
   logical :: do_14c             = .false.
   logical :: debug              = .false.
   logical :: do_nh3_atm_ocean_exchange = .false.
+
+  ! FEISTY namelist 
+  logical :: do_FEISTY                  = .true.   
+  logical :: do_print_FEISTY_diagnostic = .false.
+  real    :: nonFmort = 0.10
+  
   ! namelist capabilities for half-sats not used in this run
   logical :: do_vertfill_pre = .false.
   real    :: k_nh4_small = 1.e-8
@@ -224,7 +239,8 @@ module generic_COBALT
 
 namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange, scheme_nitrif, &
      k_nh4_small,k_nh4_large,k_nh4_diazo,scheme_no3_nh4_lim,k_no3_small,k_no3_large,k_no3_diazo, &
-     o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,gamma_nitrif,do_vertfill_pre,imbalance_tolerance
+     o2_min_nit,k_o2_nit,irr_inhibit,k_nh3_nitrif,gamma_nitrif,do_vertfill_pre,imbalance_tolerance, &
+     do_FEISTY, do_print_FEISTY_diagnostic, nonFmort
 
   ! Declare phytoplankton, zooplankton and cobalt variable types, which contain
   ! the vast majority of all variables used in this module.
@@ -418,7 +434,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
 
   type zooplankton
     real ::  &
-	  imax,             & ! maximum ingestion rate (sec-1)
+	     imax,             & ! maximum ingestion rate (sec-1)
           ki,               & ! half-sat for ingestion (moles N m-3)
           gge_max,          & ! max gross growth efficiciency (approached as i >> bresp, dimensionless)
           nswitch,          & ! switching parameter (dimensionless)
@@ -457,7 +473,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
     real, ALLOCATABLE, dimension(:,:,:) :: &
           f_n,              & ! zooplankton biomass
           jzloss_n,         & ! Losses of n due to consumption by other zooplankton groups
-          jzloss_p,	    & ! Losses of p due to consumption by other zooplankton groups
+          jzloss_p,	        & ! Losses of p due to consumption by other zooplankton groups
           jhploss_n,        & ! Losses of n due to consumption by unresolved higher preds
           jhploss_p,	    & ! Losses of p due to consumption by unresolved higher preds
           jingest_n,        & ! Total ingestion of n
@@ -516,7 +532,8 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           id_jprod_ndet_100 = -1, &
           id_jprod_don_100  = -1, &
           id_jremin_n_100   = -1, &
-          id_f_n_100        = -1
+          id_f_n_100        = -1, &
+          id_f_n
   end type zooplankton
 
   type bacteria
@@ -732,6 +749,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           hp_ipa_lgz,       & ! "  "  "  "  "  "  "  "  "   large zooplankton to hp
           hp_ipa_det,       & ! "  "  "  "  "  "  "  "  "   detritus to hp
           hp_phi_det          ! fraction of ingested N to detritus
+          
 
      real, dimension(3)                    :: total_atm_co2
 
@@ -949,7 +967,9 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           remoc, &
           tot_layer_int_doc,&
           tot_layer_int_poc,&
-          tot_layer_int_dic
+          tot_layer_int_dic,&
+          ! FEISTY variables 
+          Pop_btm                  ! Detritus flux to bottom used by Benthic communitites in FEISTY
 
 !==============================================================================================================
 
@@ -978,6 +998,7 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           ffe_iceberg,&
           fnfeso4red_sed,&
           fno3denit_sed,&
+          fn_residual_btm, &
           fnoxic_sed,&
           frac_burial,&
           fn_burial,&
@@ -1715,7 +1736,11 @@ namelist /generic_COBALT_nml/ do_14c, co2_calc, debug, do_nh3_atm_ocean_exchange
           id_fbddtdip           = -1, &
           id_fbddtdife          = -1, &
           id_fbddtdisi          = -1, &
-          id_fbddtalk           = -1
+          id_fbddtalk           = -1,&
+! ================================================
+          ! FEISTY: 
+          id_Pop_btm            = -1  ! Detritus flux to bottom used by Benthic communitites in FEISTY
+
 
 !==============================================================================================================
   end type generic_COBALT_type
@@ -1772,13 +1797,11 @@ contains
     character(len=256), parameter   :: note_header =                                &
       '==>Note from ' // trim(mod_name) // '(' // trim(sub_name) // '): '
 
-
-
     ! provide for namelist over-ride
     ! This needs to go before the add_tracers in order to allow the namelist
     ! settings to switch tracers on and off.
     !
-    stdoutunit=stdout();stdlogunit=stdlog()
+    stdoutunit=stdout(); stdlogunit=stdlog()
 
 #ifdef INTERNAL_FILE_NML
     read (input_nml_file, nml=generic_COBALT_nml, iostat=io_status)
@@ -1787,7 +1810,7 @@ contains
     ioun = open_namelist_file()
     read  (ioun, generic_COBALT_nml,iostat=io_status)
     ierr = check_nml_error(io_status,'generic_COBALT_nml')
-    call close_file (ioun)
+    call close_file(ioun)
 #endif
 
     write (stdoutunit,'(/)')
@@ -1805,10 +1828,17 @@ contains
     else
       call mpp_error(FATAL,"Unknown co2_calc option specified in generic_COBALT_nml")
     endif
+    
     !Specify all prognostic and diagnostic tracers of this modules.
     call user_add_tracers(tracer_list)
 
+    ! Add FEISTY tracers: 
+    if (do_FEISTY) then 
+          call generic_FEISTY_register(tracer_list)  
+    end if 
+
   end subroutine generic_COBALT_register
+
 
   !  <SUBROUTINE NAME="generic_COBALT_init">
   !  <OVERVIEW>
@@ -1833,7 +1863,7 @@ contains
   ! </SUBROUTINE>
   subroutine generic_COBALT_init(tracer_list, force_update_fluxes)
     type(g_tracer_type), pointer :: tracer_list
-    logical          ,intent(in) :: force_update_fluxes
+    logical          ,   intent(in) :: force_update_fluxes
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_init'
 
@@ -1870,8 +1900,14 @@ contains
     id_clock_cobalt_send_diagnostics = mpp_clock_id('(Cobalt: send diagnostics)',grain=CLOCK_MODULE)
     id_clock_cobalt_calc_diagnostics = mpp_clock_id('(Cobalt: calculate diagnostics)',grain=CLOCK_MODULE)
 
-  end subroutine generic_COBALT_init
+    ! Initialiser FEISTY: Add parameters and allocate arrays! 
+    if (do_FEISTY) then
+          call generic_FEISTY_init(tracer_list)
+    end if 
 
+  end subroutine generic_COBALT_init
+ 
+ 
   !   Register diagnostic fields to be used in this module.
   !   Note that the tracer fields are automatically registered in user_add_tracers
   !   User adds only diagnostics for fields that are not a member of g_tracer_type
@@ -1905,7 +1941,7 @@ contains
     !
     vardesc_temp = vardesc("P_C_max_Di","Diaz. Maximum Growth Rate",'h','L','s','sec-1','f')
     phyto(DIAZO)%id_P_C_max = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+         init_time, vardesc_temp%longname, vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("P_C_max_Lg","Large Phyto. Maximum Growth Rate",'h','L','s','sec-1','f')
     phyto(LARGE)%id_P_C_max = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
@@ -6082,14 +6118,23 @@ contains
          cmor_standard_name="integral_wrt_depth_of_tendency_of_sea_water_alkalinity_expressed_as_mole_equivalent_due_to_biological_processes", &
          cmor_long_name="Rate of Change of Biological Alkalinity due to Biological Activity")
 
+!==============================================================================================================
+!  09/05/2024: Remy DENECHERE <rdenechere@ucsd.edu> COBALT output for offline FEISTY run
+     vardesc_temp = vardesc("Pop_btm", "Detritus flux to sea floor",'h','L','s','g WW m-3 d-1','f')
+     cobalt%id_Pop_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
+        init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+
+
 !------------------------------------------------------------------------------------------------------------------
 ! 2-D fields (from Oday)
 
 ! previously defined above
-
-
 !==============================================================================================================
 
+     ! Register FEISTY diagnostic variable: 
+     if (do_FEISTY) then 
+         call generic_FEISTY_register_diag(diag_list)
+     end if
   end subroutine generic_COBALT_register_diag
 
   !
@@ -6553,9 +6598,8 @@ contains
     !----------------------------------------------------------------------
     ! Parameters for unresolved higher predators
     !----------------------------------------------------------------------
-    !
     call g_tracer_add_param('imax_hp',     cobalt%imax_hp, 0.09/sperd)     ! s-1
-    call g_tracer_add_param('ki_hp',       cobalt%ki_hp, 1.25e-6)           ! mol N kg-1
+    call g_tracer_add_param('ki_hp',       cobalt%ki_hp, 1.25e-6)          ! mol N kg-1
     call g_tracer_add_param('coef_hp',     cobalt%coef_hp, 2.0)            ! dimensionless
     call g_tracer_add_param('ktemp_hp',    cobalt%ktemp_hp, 0.063)         ! C-1
     call g_tracer_add_param('nswitch_hp',  cobalt%nswitch_hp, 2.0)         ! dimensionless
@@ -6597,7 +6641,6 @@ contains
     !-------------------------------------------------------------------------
     ! Remineralization
     !-------------------------------------------------------------------------
-    !
     call g_tracer_add_param('k_o2', cobalt%k_o2, 8.0e-6)                                     ! mol O2 kg-1
     call g_tracer_add_param('o2_min', cobalt%o2_min, 0.8e-6 )                                ! mol O2 kg-1
     call g_tracer_add_param('k_o2_nit', cobalt%k_o2_nit, k_o2_nit)                           ! mol O2 kg-1
@@ -6735,7 +6778,7 @@ contains
     !
     !       ALK (Total carbonate alkalinity)
     !
-    call g_tracer_add(tracer_list,package_name,&
+    call g_tracer_add(tracer_list, package_name,&
          name       = 'alk',         &
          longname   = 'Alkalinity',  &
          units      = 'mol/kg',      &
@@ -7519,7 +7562,7 @@ contains
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_copler'
 
-    real, dimension(:,:)  ,pointer    :: stf_alk,dry_no3,wet_no3
+    real, dimension(:,:)  ,pointer    :: stf_alk, dry_no3, wet_no3
 
     !
     ! NO3 has deposition, river flux, and negative deposition contribution to alkalinity
@@ -7527,7 +7570,7 @@ contains
     call g_tracer_get_pointer(tracer_list,'no3','drydep',dry_no3)
     call g_tracer_get_pointer(tracer_list,'no3','wetdep',wet_no3)
 
-    call g_tracer_get_pointer(tracer_list,'alk','stf',stf_alk)
+    call g_tracer_get_pointer(tracer_list,'alk','stf', stf_alk)
 
     stf_alk = stf_alk - dry_no3 - wet_no3 ! update 'tracer%stf' thru pointer
 
@@ -7578,7 +7621,7 @@ contains
     ! The bottom reservoirs of aragonite and calcite are immediately redistributed to the
     ! water column as a bottom flux (btf) where they impact the alkalinity and DIC
     !
-    call g_tracer_get_values(tracer_list,'cadet_arag','btm_reservoir',cobalt%fcadet_arag_btm,isd,jsd)
+    call g_tracer_get_values(tracer_list,'cadet_arag','btm_reservoir', cobalt%fcadet_arag_btm,isd,jsd)
     cobalt%fcadet_arag_btm = cobalt%fcadet_arag_btm/dt
     call g_tracer_get_pointer(tracer_list,'cadet_arag_btf','field',temp_field)
     temp_field(:,:,1) = cobalt%fcadet_arag_btm(:,:)
@@ -7702,10 +7745,10 @@ contains
     !
     ! Sinking phytoplankton: Iron
     !
-    !> Iron flux to the sediment is removed, and flux from the sediment is
-    !! handled separately later using a relationship based on Dale et al., 2015. 
     call g_tracer_get_values(tracer_list,'fedi','btm_reservoir',phyto(DIAZO)%ffe_btm,isd,jsd)
     phyto(DIAZO)%ffe_btm = phyto(DIAZO)%ffe_btm/dt
+    !call g_tracer_get_pointer(tracer_list,'fedi_btf','field',temp_field)
+    !temp_field(:,:,1) = phyto(DIAZO)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'fedi','btm_reservoir',0.0)
     if (phyto(DIAZO)%id_ffe_btm .gt. 0)           &
          used = g_send_data(phyto(DIAZO)%id_ffe_btm,phyto(DIAZO)%ffe_btm, &
@@ -7714,6 +7757,8 @@ contains
 
     call g_tracer_get_values(tracer_list,'felg','btm_reservoir',phyto(LARGE)%ffe_btm,isd,jsd)
     phyto(LARGE)%ffe_btm = phyto(LARGE)%ffe_btm/dt
+    !call g_tracer_get_pointer(tracer_list,'felg_btf','field',temp_field)
+    !temp_field(:,:,1) = phyto(LARGE)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'felg','btm_reservoir',0.0)
     if (phyto(LARGE)%id_ffe_btm .gt. 0)           &
          used = g_send_data(phyto(LARGE)%id_ffe_btm,phyto(LARGE)%ffe_btm, &
@@ -7722,6 +7767,8 @@ contains
 
     call g_tracer_get_values(tracer_list,'femd','btm_reservoir',phyto(MEDIUM)%ffe_btm,isd,jsd)
     phyto(MEDIUM)%ffe_btm = phyto(MEDIUM)%ffe_btm/dt
+    !call g_tracer_get_pointer(tracer_list,'femd_btf','field',temp_field)
+    !temp_field(:,:,1) = phyto(MEDIUM)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'femd','btm_reservoir',0.0)
     if (phyto(MEDIUM)%id_ffe_btm .gt. 0)           &
          used = g_send_data(phyto(MEDIUM)%id_ffe_btm,phyto(MEDIUM)%ffe_btm, &
@@ -7730,6 +7777,8 @@ contains
 
     call g_tracer_get_values(tracer_list,'fesm','btm_reservoir',phyto(SMALL)%ffe_btm,isd,jsd)
     phyto(SMALL)%ffe_btm = phyto(SMALL)%ffe_btm/dt
+    !call g_tracer_get_pointer(tracer_list,'fesm_btf','field',temp_field)
+    !temp_field(:,:,1) = phyto(SMALL)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'fesm','btm_reservoir',0.0)
     if (phyto(SMALL)%id_ffe_btm .gt. 0)           &
          used = g_send_data(phyto(SMALL)%id_ffe_btm,phyto(SMALL)%ffe_btm, &
@@ -7740,8 +7789,6 @@ contains
     !
     call g_tracer_get_values(tracer_list,'pdi','btm_reservoir',phyto(DIAZO)%fp_btm,isd,jsd)
     phyto(DIAZO)%fp_btm = phyto(DIAZO)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'pdi_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(DIAZO)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'pdi','btm_reservoir',0.0)
     if (phyto(DIAZO)%id_fp_btm .gt. 0)           &
          used = g_send_data(phyto(DIAZO)%id_fp_btm,phyto(DIAZO)%fp_btm, &
@@ -7750,8 +7797,6 @@ contains
 
     call g_tracer_get_values(tracer_list,'plg','btm_reservoir',phyto(LARGE)%fp_btm,isd,jsd)
     phyto(LARGE)%fp_btm = phyto(LARGE)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'plg_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(LARGE)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'plg','btm_reservoir',0.0)
     if (phyto(LARGE)%id_fp_btm .gt. 0)           &
          used = g_send_data(phyto(LARGE)%id_fp_btm,phyto(LARGE)%fp_btm, &
@@ -7760,8 +7805,6 @@ contains
 
     call g_tracer_get_values(tracer_list,'pmd','btm_reservoir',phyto(MEDIUM)%fp_btm,isd,jsd)
     phyto(MEDIUM)%fp_btm = phyto(MEDIUM)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'pmd_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(MEDIUM)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'pmd','btm_reservoir',0.0)
     if (phyto(MEDIUM)%id_fp_btm .gt. 0)           &
          used = g_send_data(phyto(MEDIUM)%id_fp_btm,phyto(MEDIUM)%fp_btm, &
@@ -7770,8 +7813,6 @@ contains
 
     call g_tracer_get_values(tracer_list,'psm','btm_reservoir',phyto(SMALL)%fp_btm,isd,jsd)
     phyto(SMALL)%fp_btm = phyto(SMALL)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'psm_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(SMALL)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'psm','btm_reservoir',0.0)
     if (phyto(SMALL)%id_fp_btm .gt. 0)           &
          used = g_send_data(phyto(SMALL)%id_fp_btm,phyto(SMALL)%fp_btm, &
@@ -7878,8 +7919,8 @@ contains
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_source'
     integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kbot
-    real, dimension(:,:,:) ,pointer :: grid_tmask
-    integer, dimension(:,:),pointer :: mask_coast,grid_kmt
+    real, dimension(:,:,:) , pointer :: grid_tmask
+    integer, dimension(:,:), pointer :: mask_coast, grid_kmt
     !
     !------------------------------------------------------------------------
     ! Local Variables
@@ -7934,8 +7975,12 @@ contains
     real :: tr,ltr
     real :: imbal
     integer :: stdoutunit, imbal_flag, outunit
-    type(g_tracer_type), pointer :: g_tracer,g_tracer_next
+    type(g_tracer_type), pointer :: g_tracer, g_tracer_next
     real :: KD_SMOOTH = 1.0E-05
+
+    ! Local variable added for FEISTY: 
+    real, dimension (:,:), allocatable :: fn_residual_btm
+
 
     if(do_vertfill_pre) then
       g_tracer => tracer_list
@@ -7960,7 +8005,7 @@ contains
     call g_tracer_get_values(tracer_list,'htotal','field', cobalt%f_htotal,isd,jsd,ntau=1)
     call g_tracer_get_values(tracer_list,'po4'   ,'field', cobalt%f_po4,isd,jsd,ntau=tau)
     call g_tracer_get_values(tracer_list,'sio4'  ,'field', cobalt%f_sio4,isd,jsd,ntau=tau)
-    call g_tracer_get_values(tracer_list,'alk'   ,'field', cobalt%f_alk,isd,jsd,ntau=tau)
+    call g_tracer_get_values(tracer_list,'alk'   ,'field', cobalt%f_alk, isd, jsd,ntau=tau)
     call g_tracer_get_values(tracer_list,'dic'   ,'field', cobalt%f_dic  ,isd,jsd,ntau=tau)
     if (do_nh3_diag) then
        allocate(pka_nh3(isd:ied,jsd:jed))
@@ -7988,6 +8033,9 @@ contains
        zmid(i,j,k) = ztop(i,j,k) + 0.5*dzt(i,j,k)
        zbot(i,j,k) = ztop(i,j,k) + dzt(i,j,k)
     enddo; enddo ; enddo !} i,j,k
+
+!     write (outunit,*)  'layer depth  =                   ', cobalt%zt(i,j,1:nk)
+!     write (outunit,*)  'thickness  =                     ', dzt(i,j,1:nk)
 
     !---------------------------------------------------------------------
     !Calculate co3_ion
@@ -8152,13 +8200,21 @@ contains
     !
     ! zooplankton fields
     !
-    call g_tracer_get_values(tracer_list,'nsmz'    ,'field',zoo(1)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'nmdz'    ,'field',zoo(2)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
-    call g_tracer_get_values(tracer_list,'nlgz'    ,'field',zoo(3)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nsmz' ,'field',zoo(1)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nmdz' ,'field',zoo(2)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nlgz' ,'field',zoo(3)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
+    ! 
+    ! fish from FEISTY  
+    ! 
+    if (do_FEISTY) then 
+          call generic_FEISTY_tracer_get_values(tracer_list, isd, jsd, tau)
+    end if 
+
     !
     ! bacteria
     !
     call g_tracer_get_values(tracer_list,'nbact'   ,'field',bact(1)%f_n(:,:,:) ,isd,jsd,ntau=tau,positive=.true.)
+
     !
     ! diagnostic tracers that are passed between time steps (except chlorophyll)
     !
@@ -8276,7 +8332,7 @@ contains
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        n=DIAZO
        phyto(n)%liebig_lim(i,j,k) = phyto(n)%o2lim(i,j,k)* &
-          min(phyto(n)%po4lim(i,j,k), max(phyto(n)%def_fe(i,j,k),phyto(n)%felim(i,j,k)))
+          min(phyto(n)%po4lim(i,j,k), phyto(n)%def_fe(i,j,k))
        do n= 2, NUM_PHYTO   !{
           phyto(n)%liebig_lim(i,j,k) = min(phyto(n)%no3lim(i,j,k)+phyto(n)%nh4lim(i,j,k),&
              phyto(n)%po4lim(i,j,k), max(phyto(n)%def_fe(i,j,k),phyto(n)%felim(i,j,k)))
@@ -8923,7 +8979,7 @@ contains
        !
        ! 3.1.1: Calculate zooplankton ingestion fluxes
        !
-
+       
        ! Calculate the temperature and oxygen limitations, no ingestion
        ! in low o2 environments
        do m = 1,3  !{
@@ -8931,6 +8987,7 @@ contains
           zoo(m)%o2lim(i,j,k) = max((cobalt%f_o2(i,j,k) - cobalt%o2_min),0.0)/ &
                                 (cobalt%k_o2 + max(cobalt%f_o2(i,j,k)-cobalt%o2_min,0.0))
        enddo  !}  m
+     
        cobalt%hp_temp_lim(i,j,k) = exp(cobalt%ktemp_hp*Temp(i,j,k))
        cobalt%hp_o2lim(i,j,k) = max((cobalt%f_o2(i,j,k) - cobalt%o2_min),0.0)/ &
                                 (cobalt%k_o2 + max(cobalt%f_o2(i,j,k)-cobalt%o2_min,0.0))
@@ -9217,23 +9274,58 @@ contains
        !hp_pa_vec(8) = hp_ipa_vec(8)* &
        !               ( (hp_ipa_vec(8)*prey_vec(8))**cobalt%nswitch_hp / &
        !                 (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
-       food1 = hp_ipa_vec(7)*prey_vec(7)
-       food2 = hp_ipa_vec(8)*prey_vec(8)
-       sw_fac_denom = food1**cobalt%nswitch_hp+food2**cobalt%nswitch_hp
-       hp_pa_vec(7) = hp_ipa_vec(7)*(food1**cobalt%nswitch_hp / &
-               (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
-       hp_pa_vec(8) = hp_ipa_vec(8)*(food2**cobalt%nswitch_hp / &
-               (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
-       tot_prey_hp = hp_pa_vec(7)*prey_vec(7) + hp_pa_vec(8)*prey_vec(8)
-       hp_ingest_vec(7) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%imax_hp* &
-                          hp_pa_vec(7)*prey_vec(7)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
-                            (cobalt%ki_hp+tot_prey_hp)
-       hp_ingest_vec(8) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%imax_hp* &
-                          hp_pa_vec(8)*prey_vec(8)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
-                            (cobalt%ki_hp+tot_prey_hp)
+     !   write (outunit,*)  'layer depth  =                   ', cobalt%zt(i,j,1:nk)
+     !   write (outunit,*)  'thickness  =                     ', dzt(i,j,1:nk)
+
+       ! Define params: imax_hp, ki_hp, coef_hp, nswitch_hp, mswitch_hp,   ktemp_hp, k_o2, o2_min, hp_ipa_vec
+       if ( do_FEISTY ) then
+          ! FEISTY calculation: 
+          call generic_FEISTY_fish_update_from_source(tracer_list, Temp(i,j,k), prey_vec, hp_ingest_vec, &
+                                                      i, j, k, nk, NUM_PREY, dt, tau, cobalt%zt(i, j, 1:nk), dzt(i, j, 1:nk))
+               ! prey_vec remain unchanged from FEISTY 
+               ! hp_ipa_vec(7:8) is calculated from FEISTY 
+          
+          ! Add non fish mortality on zooplankton :0.1 imax_hp? 
+          food1 = hp_ipa_vec(7)*prey_vec(7)
+          food2 = hp_ipa_vec(8)*prey_vec(8)
+          
+          ! COBALT-fish predation: (with 0.1* cobalt%imax_hp to keep some non-fish mortality on zooplankton) 
+          sw_fac_denom = food1**cobalt%nswitch_hp+food2**cobalt%nswitch_hp
+          hp_pa_vec(7) = hp_ipa_vec(7)*(food1**cobalt%nswitch_hp / &
+                    (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
+          hp_pa_vec(8) = hp_ipa_vec(8)*(food2**cobalt%nswitch_hp / &
+                    (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
+          tot_prey_hp = hp_pa_vec(7)*prey_vec(7) + hp_pa_vec(8)*prey_vec(8)
+          hp_ingest_vec(7) = hp_ingest_vec(7) + cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)* nonFmort *cobalt%imax_hp* &
+                              hp_pa_vec(7)*prey_vec(7)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
+                              (cobalt%ki_hp+tot_prey_hp)
+          hp_ingest_vec(8) = hp_ingest_vec(8) + cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)* nonFmort *cobalt%imax_hp* &
+                              hp_pa_vec(8)*prey_vec(8)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
+                              (cobalt%ki_hp+tot_prey_hp)
+
+       else ! Former fish predation on zooplankton from COBALT: 
+          food1 = hp_ipa_vec(7)*prey_vec(7)
+          food2 = hp_ipa_vec(8)*prey_vec(8)
+          sw_fac_denom = food1**cobalt%nswitch_hp+food2**cobalt%nswitch_hp
+          hp_pa_vec(7) = hp_ipa_vec(7)*(food1**cobalt%nswitch_hp / &
+                    (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
+          hp_pa_vec(8) = hp_ipa_vec(8)*(food2**cobalt%nswitch_hp / &
+                    (sw_fac_denom+epsln) )**(1.0/cobalt%mswitch_hp)
+          tot_prey_hp = hp_pa_vec(7)*prey_vec(7) + hp_pa_vec(8)*prey_vec(8)
+          hp_ingest_vec(7) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%imax_hp* &
+                              hp_pa_vec(7)*prey_vec(7)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
+                              (cobalt%ki_hp+tot_prey_hp)
+          hp_ingest_vec(8) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%imax_hp* &
+                              hp_pa_vec(8)*prey_vec(8)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
+                              (cobalt%ki_hp+tot_prey_hp)
+       end if
+
+
+       ! Hight trophic level ingestion: 
        cobalt%hp_jingest_n(i,j,k) = hp_ingest_vec(7) + hp_ingest_vec(8)
        cobalt%hp_jingest_p(i,j,k) = hp_ingest_vec(7)*prey_p2n_vec(7) + &
                                     hp_ingest_vec(8)*prey_p2n_vec(8)
+       
        !
        ! Calculate losses to higher predators
        !
@@ -9786,6 +9878,8 @@ contains
 
     allocate(rho_dzt_bot(isc:iec,jsc:jec))
     allocate(k_bot(isc:iec,jsc:jec))
+    ! added for FEISTY calculation at the bottom:
+    allocate(fn_residual_btm(isc:iec,jsc:jec))
 
     do j = jsc, jec; do i = isc, iec  !{
        if (grid_kmt(i,j) .gt. 0) then !{
@@ -9881,11 +9975,28 @@ contains
              ! Calculate the amount of organic matter (as nitrogen) that is remineralized
              ! via aerobic processes (fnoxic_sed)
              !
+
+               ! FEISTY-bottom: --------------------------------------------------------------------------------
+               !    input : fn_residual_btm, cobalt%btm_temp (old? )
+               !    output : fn_residual_btm 
+               ! -----------------------------------------------------------------------------------------------
+               ! fn_residual_btm: detritus usable for benthic comunities: 
+               fn_residual_btm(i, j) = cobalt%fntot_btm(i,j) - cobalt%fn_burial(i,j) - &
+                                         cobalt%fno3denit_sed(i,j)/cobalt%n_2_n_denit
+
+               if (do_FEISTY) then 
+                  call generic_FEISTY_benthic_update_from_source(fn_residual_btm(i, j), i, j, nk, dt)
+               end if
+              
+
+               ! Save flux of detritus to sea bed 
+               cobalt%Pop_btm(i,j,nk) = fn_residual_btm(i, j)
+
+
              if (cobalt%btm_o2(i,j) .gt. cobalt%o2_min) then  !{
                 cobalt%fnoxic_sed(i,j) = max(0.0, min(cobalt%btm_o2(i,j)*cobalt%bottom_thickness* &
                                          cobalt%Rho_0*r_dt*(1.0/cobalt%o2_2_nh4), &
-                                         cobalt%fntot_btm(i,j) - cobalt%fn_burial(i,j) - &
-                                         cobalt%fno3denit_sed(i,j)/cobalt%n_2_n_denit))
+                                         fn_residual_btm(i, j)))
              else
                 cobalt%fnoxic_sed(i,j) = 0.0
              endif !}
@@ -9902,7 +10013,7 @@ contains
 
           ! iron from sediment (Elrod)
           !cobalt%ffe_sed(i,j) = cobalt%fe_2_n_sed * cobalt%f_ndet_btf(i,j,1)
-          ! iron from sediment (Dale, 2015)
+          ! iron from sediment (Dale)
           cobalt%ffe_sed(i,j) = cobalt%ffe_sed_max * tanh( (cobalt%fntot_btm(i,j)*cobalt%c_2_n*sperd*1.0e3)/ &
                                 max(cobalt%btm_o2(i,j)*1.0e6,epsln) )
           cobalt%ffe_geotherm(i,j) = cobalt%ffe_geotherm_ratio*internal_heat(i,j)*4184.0/dt
@@ -9995,27 +10106,29 @@ contains
        endif !}
     enddo; enddo  !} i, j
 
+
+
     do k = 2, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%f_cased(i,j,k) = 0.0
     enddo; enddo ; enddo  !} i,j,k
 
     call mpp_clock_end(id_clock_ballast_loops)
 
-    call g_tracer_set_values(tracer_list,'alk',  'btf', cobalt%b_alk ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'dic',  'btf', cobalt%b_dic ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'fed',  'btf', cobalt%b_fed ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'nh4',  'btf', cobalt%b_nh4 ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'no3',  'btf', cobalt%b_no3 ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'o2',   'btf', cobalt%b_o2  ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'po4',  'btf', cobalt%b_po4 ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'sio4', 'btf', cobalt%b_sio4,isd,jsd)
-!
+    call g_tracer_set_values(tracer_list,'alk',  'btf', cobalt%b_alk ,isd, jsd)
+    call g_tracer_set_values(tracer_list,'dic',  'btf', cobalt%b_dic ,isd, jsd)
+    call g_tracer_set_values(tracer_list,'fed',  'btf', cobalt%b_fed ,isd, jsd)
+    call g_tracer_set_values(tracer_list,'nh4',  'btf', cobalt%b_nh4 ,isd, jsd)
+    call g_tracer_set_values(tracer_list,'no3',  'btf', cobalt%b_no3 ,isd, jsd)
+    call g_tracer_set_values(tracer_list,'o2',   'btf', cobalt%b_o2  ,isd, jsd)
+    call g_tracer_set_values(tracer_list,'po4',  'btf', cobalt%b_po4 ,isd, jsd)
+    call g_tracer_set_values(tracer_list,'sio4', 'btf', cobalt%b_sio4,isd, jsd)
+     !
     call mpp_clock_begin(id_clock_source_sink_loop1)
-!
-!-----------------------------------------------------------------------
-! 8: Source/sink calculations
-!-----------------------------------------------------------------------
-!
+     !
+     !-----------------------------------------------------------------------
+     ! 8: Source/sink calculations
+     !-----------------------------------------------------------------------
+     !
     !
     !-------------------------------------------------------------------
     ! 8.1: Update the prognostics tracer fields via their pointers.
@@ -10061,15 +10174,19 @@ contains
     call g_tracer_get_pointer(tracer_list,'nsmz'   ,'field',cobalt%p_nsmz   )
     call g_tracer_get_pointer(tracer_list,'nmdz'   ,'field',cobalt%p_nmdz   )
     call g_tracer_get_pointer(tracer_list,'nlgz'   ,'field',cobalt%p_nlgz   )
-
+    
     if (do_14c) then
        call g_tracer_get_pointer(tracer_list,'di14c','field',cobalt%p_di14c)
        call g_tracer_get_pointer(tracer_list,'do14c','field',cobalt%p_do14c)
     endif
 
+    if (do_FEISTY) then 
+          call generic_FEISTY_tracer_get_pointer(tracer_list)
+    end if 
+
     ! CAS calculate total N and P before source/sink
     ! calculate internal sources (those not applied as air-sea or benthos
-    ! exchanges) to close the balance
+    ! exchanges) to close the balance. Mass concervation check!
     allocate(pre_totn(isc:iec,jsc:jec,1:nk))
     allocate(pre_totc(isc:iec,jsc:jec,1:nk))
     allocate(net_srcn(isc:iec,jsc:jec,1:nk))
@@ -10295,8 +10412,17 @@ contains
                              zoo(3)%jhploss_n(i,j,k)
        cobalt%p_nlgz(i,j,k,tau) = cobalt%p_nlgz(i,j,k,tau) + cobalt%jnlgz(i,j,k)*dt*grid_tmask(i,j,k)
     enddo; enddo ; enddo  !} i,j,k
-!
     call mpp_clock_end(id_clock_source_sink_loop4)
+    
+    !
+    !     Fish Derivative: update from pointers 
+    !
+    if (do_FEISTY) then 
+          do k = 1, nk ; do j = jsc, jec ; do i = isc, iec  !{
+               call generic_FEISTY_update_pointer(i, j, k, tau, dt)
+          enddo; enddo ; enddo  !} i,j,k
+     end if 
+
     !
     !     NO3
     !
@@ -11784,7 +11910,6 @@ contains
     !--------------------------------------------------------------------------------------
     ! Send zooplankton diagnostic data
     !
-
     do n= 1, NUM_ZOO
        if (zoo(n)%id_jzloss_n .gt. 0)          &
             used = g_send_data(zoo(n)%id_jzloss_n, zoo(n)%jzloss_n*rho_dzt,           &
@@ -11883,6 +12008,24 @@ contains
             model_time, rmask = grid_tmask,&
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
     enddo
+    !--------------------------------------------------------------------------------------
+    ! Send Fish diagnostic data
+    !
+    ! COBALT tracers used for FEISTY offline 
+    if (zoo(2)%id_f_n .gt. 0)     &
+          used = g_send_data(zoo(2)%id_f_n, zoo(2)%f_n,         &
+          model_time, rmask = grid_tmask, &
+          is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+
+     if(zoo(3)%id_f_n .gt. 0)     &
+          used = g_send_data(zoo(3)%id_f_n, zoo(3)%f_n,         &
+          model_time, rmask = grid_tmask, &
+          is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+    ! Fish tracers and diagnostics 
+    if (do_FEISTY) then 
+          ! FEISTY tracers: 
+          call generic_FEISTY_send_diagnostic_data(model_time)
+    end if 
     !
     ! Production diagnostics
     !
@@ -14506,6 +14649,13 @@ contains
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
 !==============================================================================================================
+!  09/05/2024: Remy DENECHERE <rdenechere@ucsd.edu> COBALT output for offline FEISTY run       
+     if (cobalt%id_Pop_btm .gt. 0)          &
+        used = g_send_data(cobalt%id_Pop_btm, cobalt%Pop_btm ,           &
+        model_time, rmask = grid_tmask,&
+        is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+
+!==============================================================================================================
 
     call mpp_clock_end(id_clock_cobalt_send_diagnostics)
 
@@ -14891,6 +15041,11 @@ contains
   subroutine generic_COBALT_end
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_end'
     call user_deallocate_arrays
+    
+    ! Deallocate FEISTY arrays: 
+    if (do_FEISTY) then  
+          call generic_FEISTY_end
+    end if 
   end subroutine generic_COBALT_end
 
   !
@@ -15038,6 +15193,7 @@ contains
        allocate(zoo(n)%temp_lim(isd:ied,jsd:jed,nk))     ; zoo(n)%temp_lim        = 0.0
        allocate(zoo(n)%vmove(isd:ied,jsd:jed,nk))        ; zoo(n)%vmove           = 0.0
     enddo
+    ! FEISTY: 
 
     ! higher predator ingestion
     allocate(cobalt%hp_jingest_n(isd:ied,jsd:jed,nk))     ; cobalt%hp_jingest_n      = 0.0
@@ -15315,6 +15471,10 @@ contains
     allocate(cobalt%wc_vert_int_jfe_iceberg(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jfe_iceberg=0.0
     allocate(cobalt%wc_vert_int_jno3_iceberg(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jno3_iceberg=0.0
     allocate(cobalt%wc_vert_int_jpo4_iceberg(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jpo4_iceberg=0.0
+!==============================================================================================================
+!  09/05/2024: Remy DENECHERE <rdenechere@ucsd.edu> COBALT output for offline FEISTY run
+    allocate(cobalt%Pop_btm(isd:ied,jsd:jed,1:nk));  cobalt%Pop_btm  = 0.0 ! 
+    
 !==============================================================================================================
     !
     ! allocate 100m integrated quantities
@@ -15950,6 +16110,13 @@ contains
     deallocate(cobalt%wc_vert_int_jfe_iceberg)
     deallocate(cobalt%wc_vert_int_jno3_iceberg)
     deallocate(cobalt%wc_vert_int_jpo4_iceberg)
+
+!==============================================================================================================
+!  09/05/2024: Remy DENECHERE <rdenechere@ucsd.edu> COBALT output for offline FEISTY run
+    deallocate(cobalt%Pop_btm) 
+    
+!==============================================================================================================
+
 !==============================================================================================================
 
     do n = 1, NUM_PHYTO
