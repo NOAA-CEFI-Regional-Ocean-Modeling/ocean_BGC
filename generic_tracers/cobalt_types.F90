@@ -26,7 +26,6 @@ module cobalt_types
   logical, public :: do_14c             = .false.            !< If true, then simulate radiocarbon
   logical, public :: do_nh3_atm_ocean_exchange = .false.     ! If true, then do NH3 air-sea exchange
   !
-  logical, public :: do_vertfill_pre = .false.
   logical, public :: debug           = .false.             !< not use
   real, public    :: imbalance_tolerance=1.0e-10           !< the tolerance for non-conservation in C,N,P,Sc,Fe
 

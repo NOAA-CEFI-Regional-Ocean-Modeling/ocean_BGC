@@ -182,7 +182,7 @@ module generic_COBALT
                                              !! in generic_COBALT_nml.
 
   namelist /generic_COBALT_nml/ co2_calc, do_14c, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
-     do_vertfill_pre,imbalance_tolerance,as_param_cobalt
+     imbalance_tolerance,as_param_cobalt
 
   !
   ! Array allocations and flux calculations assume that phyto(1) is the
@@ -3180,19 +3180,6 @@ contains
     integer :: stdoutunit, imbal_flag, outunit
     type(g_tracer_type), pointer :: g_tracer,g_tracer_next
     real :: KD_SMOOTH = 1.0E-05
-
-    if(do_vertfill_pre) then
-      g_tracer => tracer_list
-      do
-       if(g_tracer_is_prog(g_tracer)) then
-         call g_tracer_vertfill(g_tracer, dzt, KD_SMOOTH*dt, tau=1)
-       endif
-       !traverse the linked list till hit NULL
-       call g_tracer_get_next(g_tracer, g_tracer_next)
-       if(.NOT. associated(g_tracer_next)) exit
-       g_tracer=>g_tracer_next
-      enddo
-    endif
 
     r_dt = 1.0 / dt
 
