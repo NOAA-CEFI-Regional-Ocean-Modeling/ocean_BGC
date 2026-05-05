@@ -136,14 +136,18 @@ module generic_tracer
   type(g_diag_type), save, pointer :: diag_list => NULL()
 
   logical :: do_generic_tracer = .false.
+  ! do_vertfill_post applies some additional diffusion at the end of the
+  ! g_tracer_vertdiff_G routine to help reduce irregularities in the vanished layers.
+  ! If not specified in the generic_tracer_nml namelist, it defaults to off.
   logical :: do_vertfill_post = .false.
   logical :: generic_tracer_register_called = .false.
   logical :: force_update_fluxes = .false.
   character(len=10) :: as_param   = 'W14'     ! Use Wanninkhoff 2014 parameters for air-sea gas transfer by default
-
+  logical :: use_Press_et_al_tridiag_solver = .false.  ! Use the tridiagonal solver from Press et al. (Numerical Recipes) for vertical diffusion correction
+     
   namelist /generic_tracer_nml/ do_generic_tracer, do_generic_abiotic, do_generic_age, do_generic_argon, do_generic_CFC, &
       do_generic_SF6, do_generic_BLING, do_generic_COBALT, &
-      force_update_fluxes, do_generic_blres, as_param, do_vertfill_post
+      force_update_fluxes, do_generic_blres, as_param, do_vertfill_post, use_Press_et_al_tridiag_solver
 
 contains
 
@@ -593,7 +597,6 @@ contains
     real,                   intent(in) :: dt, kg_m2_to_H, m_to_H
     integer,                intent(in) :: tau
     type(g_tracer_type), pointer    :: g_tracer,g_tracer_next
-    real :: KD_SMOOTH = 1.0E-06
 
     !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?    
     !JGJ 2013/05/31  merged COBALT into siena_201303
@@ -603,8 +606,8 @@ contains
        !Go through the list of tracers 
        do  
           if(g_tracer_is_prog(g_tracer)) then
-             call g_tracer_vertdiff_G(g_tracer,h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau)
-             if(do_vertfill_post) call g_tracer_vertfill(g_tracer, h_old, KD_SMOOTH*dt, tau=1)
+             call g_tracer_vertdiff_G(g_tracer, h_old, ea, eb, dt, &
+                 kg_m2_to_H, m_to_H, tau, use_Press_et_al_tridiag_solver, do_vertfill_post)
           endif
           !traverse the linked list till hit NULL
           call g_tracer_get_next(g_tracer, g_tracer_next)
