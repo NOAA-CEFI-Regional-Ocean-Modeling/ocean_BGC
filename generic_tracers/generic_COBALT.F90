@@ -3548,7 +3548,7 @@ contains
     if (present(photo_acc_dpth)) then
       pha_all_same = all(photo_acc_dpth == photo_acc_dpth(isc,jsc))
       if (pha_all_same) then
-        call mpp_error(WARNING, "Using uniform photoacclimation MLD in COBALTv3 which is not reccomended."//&
+        call mpp_error(FATAL, "Using uniform photoacclimation MLD in COBALTv3 which is not reccomended."//&
                                 "Check that PHA_MLD_CALC is true in the MOM paramter files or you "//&
                                 "may be using an unrealistic constant value!")
       endif
