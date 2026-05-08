@@ -138,7 +138,6 @@ module generic_COBALT
   use data_override_mod, only: data_override
   use fms_mod,           only: write_version_number, FATAL, WARNING, stdout, stdlog,mpp_pe,mpp_root_pe
   use fms_mod,           only: check_nml_error
-  use MOM_EOS,           only: calculate_density, EOS_type
 
   use g_tracer_utils, only : g_tracer_type,g_tracer_start_param_list,g_tracer_end_param_list
   use g_tracer_utils, only : g_tracer_add,g_tracer_add_param, g_tracer_set_files

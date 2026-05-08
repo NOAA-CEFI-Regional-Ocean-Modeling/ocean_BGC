@@ -105,7 +105,6 @@ module generic_tracer
   use generic_COBALT,  only : generic_COBALT_set_boundary_values, generic_COBALT_end, do_generic_COBALT
   use generic_COBALT,  only : as_param_cobalt
 
-  use MOM_EOS,         only: EOS_type
 
   implicit none ; private
 
