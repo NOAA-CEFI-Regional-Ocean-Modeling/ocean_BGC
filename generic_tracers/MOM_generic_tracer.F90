@@ -33,9 +33,8 @@ use MOM_ALE_sponge, only : set_up_ALE_sponge_field, ALE_sponge_CS
 use MOM_ALE_sponge, only : ALE_sponge_CS, initialize_ALE_sponge
 use MOM_coms, only : EFP_type, max_across_PEs, min_across_PEs, PE_here
 use MOM_diagnose_mld,  only : diagnoseMLDbyDensityDifference, diagnoseMLDbyEnergy
-use MOM_diag_mediator, only : post_data, register_diag_field, safe_alloc_ptr
 use MOM_diag_mediator, only : diag_ctrl, get_diag_time_end
-use MOM_error_handler, only : MOM_error, FATAL, WARNING, NOTE, is_root_pe
+use MOM_error_handler, only : MOM_error, FATAL, WARNING, NOTE
 use MOM_file_parser, only : get_param, log_param, log_version, param_file_type
 use MOM_forcing_type, only : forcing, optics_type
 use MOM_grid, only : ocean_grid_type
@@ -47,9 +46,9 @@ use MOM_open_boundary, only : register_obgc_segments, fill_obgc_segments
 use MOM_open_boundary, only : set_obgc_segments_props
 use MOM_restart, only : register_restart_field, query_initialized, set_initialized, MOM_restart_CS
 use MOM_spatial_means, only : global_area_mean, global_mass_int_EFP, array_global_min_max
-use MOM_sponge, only : set_up_sponge_field, sponge_CS
+use MOM_sponge, only : sponge_CS
 use MOM_time_manager, only : time_type, set_time
-use MOM_tracer_diabatic, only : tracer_vertdiff, applyTracerBoundaryFluxesInOut
+use MOM_tracer_diabatic, only : applyTracerBoundaryFluxesInOut
 use MOM_tracer_registry, only : register_tracer, tracer_registry_type
 use MOM_tracer_Z_init, only : tracer_Z_init
 use MOM_tracer_initialization_from_Z, only : MOM_initialize_tracer_from_Z
