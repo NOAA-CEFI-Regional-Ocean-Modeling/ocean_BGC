@@ -731,9 +731,15 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
       call g_tracer_get_pointer(g_tracer,g_tracer_name,'stf',   stf_array)
       call g_tracer_get_pointer(g_tracer,g_tracer_name,'trunoff',trunoff_array)
       call g_tracer_get_pointer(g_tracer,g_tracer_name,'runoff_tracer_flux',runoff_tracer_flux_array)
-      !nnz: Why is fluxes%river = 0?
-      runoff_tracer_flux_array(:,:) = trunoff_array(:,:) * &
-               US%RZ_T_to_kg_m2s*fluxes%lrunoff(:,:)
+      runoff_tracer_flux_array(:,:) = trunoff_array(:,:) * US%RZ_T_to_kg_m2s*fluxes%lrunoff(:,:)
+      !Add to the geological runoff fluxes the contemporary values calculated by land model for tracers that have them.
+      !Currently 'dic' from GIMICS
+      !We put the association check so that we can run models that use an older version of SIS2. 
+      !This associated() check could be removed in future once the new SIS2 becomed default.
+      if(trim(g_tracer_name) == 'dic') then; if(associated(fluxes%carbon_content_lrunoff)) then
+        !*1000./12. converts from KgC/m2/s to MoleC/m2/s
+        runoff_tracer_flux_array(:,:) = runoff_tracer_flux_array(:,:) + fluxes%carbon_content_lrunoff(:,:)*1000./12.
+      endif; endif
       stf_array = stf_array + runoff_tracer_flux_array
       g_tracer%runoff_added_to_stf = .true.
     endif
