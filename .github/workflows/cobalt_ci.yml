@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     # define container
     container:
-       image: ghcr.io/noaa-gfdl/cefi-regional-mom6/1d_mom6_cobalt:base
+       image: ghcr.io/noaa-gfdl/cefi-regional-mom6/1d_mom6_cobalt:2024_04
        options: --user=builder
 
     # Steps represent a sequence of tasks that will be executed as part of the job
