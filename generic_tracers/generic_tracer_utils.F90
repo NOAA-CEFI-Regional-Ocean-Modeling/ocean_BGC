@@ -329,6 +329,9 @@ module g_tracer_utils
      !Grid mask
      real, _ALLOCATABLE, dimension(:,:,:) :: grid_tmask  _NULL !nnz: Make this a pointer, needs to be "target" in models
 
+     !Grid depth
+     real, _ALLOCATABLE, dimension(:,:)  :: grid_depth  _NULL
+
      !Grid bottom index
      integer, _ALLOCATABLE, dimension(:,:):: grid_kmt    _NULL
 
@@ -1687,10 +1690,11 @@ contains
   !  </IN>
   ! </SUBROUTINE>
 
-  subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
+  subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,grid_depth,init_time)
     integer,                     intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes(3)
     real, dimension(isd:,jsd:,:),intent(in) :: grid_tmask
     integer,dimension(isd:,jsd:),intent(in) :: grid_kmt
+    real, dimension(isd:,jsd:),  intent(in) :: grid_depth
     type(time_type),             intent(in) :: init_time
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_set_common'
@@ -1714,6 +1718,8 @@ contains
     if(.NOT. _ALLOCATED(g_tracer_com%grid_tmask)) allocate(g_tracer_com%grid_tmask(isd:ied,jsd:jed,nk))
     g_tracer_com%grid_tmask=grid_tmask
 
+    if(.NOT. _ALLOCATED(g_tracer_com%grid_depth)) allocate(g_tracer_com%grid_depth(isd:ied,jsd:jed))
+    g_tracer_com%grid_depth = grid_depth
 
     if(.NOT. _ALLOCATED(g_tracer_com%grid_kmt)) allocate(g_tracer_com%grid_kmt(isd:ied,jsd:jed))
     g_tracer_com%grid_kmt = grid_kmt
@@ -1754,7 +1760,7 @@ contains
   ! </SUBROUTINE>
 
   subroutine g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
-       axes,grid_tmask,grid_mask_coast,grid_kmt,init_time,diag_CS)
+       axes,grid_tmask,grid_mask_coast,grid_kmt,grid_depth,init_time,diag_CS)
 
     integer,               intent(out) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau
     integer,optional,      intent(out) :: axes(3)
@@ -1762,6 +1768,7 @@ contains
     real, optional, dimension(:,:,:),pointer    :: grid_tmask
     integer, optional, dimension(:,:),  pointer :: grid_mask_coast
     integer, optional, dimension(:,:),  pointer :: grid_kmt
+    real, optional, dimension(:,:),  pointer    :: grid_depth
     type(g_diag_ctrl), optional,        pointer :: diag_CS
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_get_common'
@@ -1783,6 +1790,7 @@ contains
     if(present(grid_tmask))       grid_tmask => g_tracer_com%grid_tmask
     if(present(grid_mask_coast))  grid_mask_coast=> g_tracer_com%grid_mask_coast
     if(present(grid_kmt))         grid_kmt => g_tracer_com%grid_kmt
+    if(present(grid_depth))       grid_depth => g_tracer_com%grid_depth
     if(present(diag_CS))          diag_CS => g_tracer_com%diag_CS
 !    if(present(ice_restart_file)) ice_restart_file    = g_tracer_com%ice_restart_file
 !    if(present(ocean_restart_file)) ocean_restart_file  = g_tracer_com%ocean_restart_file

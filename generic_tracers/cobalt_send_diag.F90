@@ -1956,6 +1956,8 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_wc_vert_int_jfe_iceberg, cobalt%wc_vert_int_jfe_iceberg, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          used = g_send_data(cobalt%id_wc_vert_int_jfe_coast, cobalt%wc_vert_int_jfe_coast, &
+            model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_wc_vert_int_jno3_iceberg, cobalt%wc_vert_int_jno3_iceberg, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_wc_vert_int_jpo4_iceberg, cobalt%wc_vert_int_jpo4_iceberg, &
@@ -2214,8 +2216,8 @@ module COBALT_send_diag
           ! Tendency_of_ocean_mole_content_of_iron_due_to_deposition_and_runoff_and_sediment_dissolution
           ! included iceberg and geothermal sources to get the full budget
           used = g_send_data(cobalt%id_fsfe,  cobalt%runoff_flux_fed + cobalt%dry_fed + cobalt%wet_fed + &
-            cobalt%ffe_sed+cobalt%ffe_geotherm+cobalt%wc_vert_int_jfe_iceberg, model_time, rmask = grid_tmask(:,:,1), &
-            is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+            cobalt%ffe_sed+cobalt%ffe_geotherm+cobalt%wc_vert_int_jfe_iceberg+cobalt%wc_vert_int_jfe_coast, &
+            model_time, rmask = grid_tmask(:,:,1),is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
 ! 2016/08/15 - we will not be providing these fields
 ! CHECK: rate was computed offline for TOPAZ by saving a reference history file, dividing by secs_per_month and differencing monthly averages

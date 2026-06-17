@@ -136,6 +136,7 @@ function register_MOM_generic_tracer(HI, GV, param_file, CS, tr_Reg, restart_CS)
   real, dimension(:,:,:,:), pointer   :: tr_field ! A pointer to a generic tracer field, in concentration units [conc]
   real, dimension(:,:,:), pointer     :: tr_ptr   ! A pointer to a generic tracer field, in concentration units [conc]
   real,    dimension(SZI_(HI),SZJ_(HI),SZK_(GV)) :: grid_tmask ! A 3-d copy of G%mask2dT [nondim]
+  real,    dimension(SZI_(HI),SZJ_(HI))          :: grid_depth ! A 2-d copy of G%bathyT [m]
   integer, dimension(SZI_(HI),SZJ_(HI))          :: grid_kmt   ! A 2-d array of nk
 
   register_MOM_generic_tracer = .false.
@@ -186,13 +187,14 @@ function register_MOM_generic_tracer(HI, GV, param_file, CS, tr_Reg, restart_CS)
   !Fields cannot be diag registered as they are allocated and have to registered later.
   grid_tmask(:,:,:) = 0.0
   grid_kmt(:,:) = 0
+  grid_depth(:,:) = 0.0
   axes(:) = -1
 
   !
   ! Initialize all generic tracers
   !
   call generic_tracer_init(HI%isc,HI%iec,HI%jsc,HI%jec,HI%isd,HI%ied,HI%jsd,HI%jed,&
-       GV%ke,ntau,axes,grid_tmask,grid_kmt,set_time(0,0))
+       GV%ke,ntau,axes,grid_tmask,grid_kmt,grid_depth,set_time(0,0))
 
 
   !
@@ -483,7 +485,7 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
     endif
   enddo ; enddo
   call g_tracer_set_common(G%isc,G%iec,G%jsc,G%jec,G%isd,G%ied,G%jsd,G%jed,&
-                           GV%ke,1,CS%diag%axesTL%handles,grid_tmask,grid_kmt,day)
+                           GV%ke,1,CS%diag%axesTL%handles,grid_tmask,grid_kmt,G%bathyT,day)
 
   call get_param(param_file, "initialize_sponges_file", "DO_SPONGE_GENERIC_TRACER", do_use_gt_sponge, &
                  "If true, then some generic tracers may be nudged.", default=.false.)

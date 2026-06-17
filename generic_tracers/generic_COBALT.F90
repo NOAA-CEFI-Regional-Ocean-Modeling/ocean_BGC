@@ -3110,6 +3110,7 @@ contains
     integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kmld_ref
     real, dimension(:,:,:) ,pointer :: grid_tmask
     integer, dimension(:,:),pointer :: mask_coast,grid_kmt
+    real, dimension(:,:)   ,pointer :: grid_depth
     !
     !------------------------------------------------------------------------
     ! Local Variables
@@ -3128,6 +3129,7 @@ contains
     integer, dimension(:,:), Allocatable :: k_bot, kblt
     real, dimension(:), Allocatable   :: tmp_irr_band
     real, dimension(:,:), Allocatable :: rho_dzt_100,rho_dzt_200,rho_dzt_bot,sfc_irrad
+    real, dimension(:,:,:), Allocatable :: mask_sidewall
     ! << local variables used for neritic CaCO3 burial
     integer :: k_150
     real, dimension(:,:), Allocatable :: rho_dzt_150
@@ -3196,7 +3198,7 @@ contains
     r_dt = 1.0 / dt
 
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
-         grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt)
+         grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt,grid_depth=grid_depth)
 
     call mpp_clock_begin(id_clock_carbon_calculations)
     !Get necessary fields
@@ -5153,6 +5155,8 @@ contains
     ! Local variables used to determine the layers falling within the bottom thickness
     allocate(rho_dzt_bot(isc:iec,jsc:jec))
     allocate(k_bot(isc:iec,jsc:jec))
+    ! mask for entering iron fluxes through sidewalls
+    allocate(mask_sidewall(isc:iec,jsc:jec,1:nk))
 
     do j = jsc, jec; do i = isc, iec  !{
        if (grid_kmt(i,j) .gt. 0) then !{
@@ -5328,6 +5332,15 @@ contains
           ! of the sinking flux that would have been intercepted at shallower depths were the model resolution finer.
           ! The default value of fe_coast is 0 (i.e., only the explicitly resolved benthic flux is included).
           !
+          ! Note: the "tanh" function used in the jfe_coast expression is from Dale et al., (2015), a revised global
+          ! estimate of dissolved iron fluxes from marine sediments, GBC, doi:10.1002/2014GB005017, the same function
+          ! used for the sediment flux.  The numerator of this expression needs to be in mmoles C m-2 day-1, while
+          ! the denominator must be in uM (microMolar).  The conversion factors are slightly different here than
+          ! in the ffe_sed expression:
+          !
+          ! fntot*wsink*Rho_0 = moles N kg-1 * m s-1 * kg m-3 = moles N m-2 s-1 (same as fntot_btm)
+          ! moles N m-2 s-1 * moles C mole N-1 * s day-1 * mmoles C mole C-1 = mmoles C m-2 day-1
+          !
           ! Old Expression:
           ! cobalt%jfe_coast(i,j,1) = cobalt%fe_coast * mask_coast(i,j) * grid_tmask(i,j,1) / &
           !     sqrt(grid_dat(i,j))
@@ -5336,14 +5349,29 @@ contains
             if (cobalt%fe_coast == 0.0) then
               cobalt%jfe_coast(i,j,k) = 0.0
             else
-              cobalt%jfe_coast(i,j,k) = cobalt%fe_coast*dzt(i,j,k)*mask_coast(i,j)*grid_tmask(i,j,k)* &
-                cobalt%ffe_sed_max*tanh( ( (cobalt%f_ndet(i,j,k)*cobalt%wsink+ &
+              mask_sidewall(i,j,k) = 0.0
+              if ( (zmid(i,j,k).gt.grid_depth(i-1,j)).or.(zmid(i,j,k).gt.grid_depth(i+1,j,k)).or. &
+                   (zmid(i,j,k).gt.grid_depth(i,j-1)).or.(zmid(i,j,k).gt.grid_depth(i,j+1)) )
+                mask_sidewall(i,j,k) = 1.0
+              endif
+              cobalt%jfe_coast(i,j,k) = cobalt%fe_coast*dzt(i,j,k)*mask_sidewall(i,j,k)*grid_tmask(i,j,k)* &
+                cobalt%ffe_sed_max*tanh( ( (cobalt%f_ndet(i,j,k)*cobalt%wsink + &
                 cobalt%f_ndet_fast(i,j,k)*cobalt%wsink_fast + &
-                phyto(SMALL)%f_n(i,j,k)*phyto(SMALL)%vmove(i,j,k)+ &
-                phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k)+ &
-                phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%vmove(i,j,k)+ &
-                phyto(DIAZO)%f_n(i,j,k)*phyto(DIAZO)%vmove(i,j,k))*cobalt%c_2_n*sperd*1.0e3 )/ &
+                phyto(SMALL)%f_n(i,j,k)*phyto(SMALL)%vmove(i,j,k) + &
+                phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k) + &
+                phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%vmove(i,j,k) + &
+                phyto(DIAZO)%f_n(i,j,k)*phyto(DIAZO)%vmove(i,j,k)) * &
+                cobalt*Rho_0*cobalt%c_2_n*sperd*1.0e3 )/ &
                 max(cobalt%f_o2(i,j,k)*1.0e6,epsln) )/rho_dzt(i,j,k)
+              !cobalt%jfe_coast(i,j,k) = cobalt%fe_coast*dzt(i,j,k)*mask_coast(i,j)*grid_tmask(i,j,k)* &
+              !  cobalt%ffe_sed_max*tanh( ( (cobalt%f_ndet(i,j,k)*cobalt%wsink + &
+              !  cobalt%f_ndet_fast(i,j,k)*cobalt%wsink_fast + &
+              !  phyto(SMALL)%f_n(i,j,k)*phyto(SMALL)%vmove(i,j,k) + &
+              !  phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%vmove(i,j,k) + &
+              !  phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%vmove(i,j,k) + &
+              !  phyto(DIAZO)%f_n(i,j,k)*phyto(DIAZO)%vmove(i,j,k)) * &
+              !  cobalt*Rho_0*cobalt%c_2_n*sperd*1.0e3 )/ &
+              !  max(cobalt%f_o2(i,j,k)*1.0e6,epsln) )/rho_dzt(i,j,k)
             endif
           enddo  !} k
 
@@ -5446,6 +5474,7 @@ contains
     enddo; enddo  !} i, j
     deallocate(rho_dzt_bot)
     deallocate(k_bot)
+    deallocate(mask_sidewall)
 
     do k = 2, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%f_cased(i,j,k) = 0.0
@@ -6393,6 +6422,7 @@ contains
        cobalt%wc_vert_int_nfix(i,j) = 0.0             ! wc integrated nitrogen fixation
        cobalt%wc_vert_int_jnamx(i,j) = 0.0            ! wc integrated N lost to N2 via anammox
        cobalt%wc_vert_int_jfe_iceberg(i,j) = 0.0      ! wc integrated iron additions from icebergs
+       cobalt%wc_vert_int_jfe_coast(i,j) = 0.0        ! wc integrated iron additions from the coast
        cobalt%wc_vert_int_jno3_iceberg(i,j) = 0.0     ! wc integrated no3 additions from icebergs
        cobalt%wc_vert_int_jpo4_iceberg(i,j) = 0.0     ! wc integrated po4 additions from icebergs
     enddo; enddo !} i,j
@@ -6467,6 +6497,8 @@ contains
 
           ! Iceberg fluxes
           cobalt%wc_vert_int_jfe_iceberg(i,j) = cobalt%wc_vert_int_jfe_iceberg(i,j) + cobalt%jfe_iceberg(i,j,k) *&
+             rho_dzt(i,j,k) * grid_tmask(i,j,k)
+          cobalt%wc_vert_int_jfe_coast(i,j) = cobalt%wc_vert_int_jfe_coast(i,j) + cobalt%jfe_coast(i,j,k) *&
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_jno3_iceberg(i,j) = cobalt%wc_vert_int_jno3_iceberg(i,j) + cobalt%jno3_iceberg(i,j,k) *&
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
@@ -7835,6 +7867,7 @@ contains
     allocate(cobalt%wc_vert_int_juptake_si(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_juptake_si=0.0
     allocate(cobalt%wc_vert_int_nfix(isd:ied, jsd:jed))         ; cobalt%wc_vert_int_nfix=0.0
     allocate(cobalt%wc_vert_int_jfe_iceberg(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jfe_iceberg=0.0
+    allocate(cobalt%wc_vert_int_jfe_coast(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jfe_coast=0.0
     allocate(cobalt%wc_vert_int_jno3_iceberg(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jno3_iceberg=0.0
     allocate(cobalt%wc_vert_int_jpo4_iceberg(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jpo4_iceberg=0.0
 !==============================================================================================================
@@ -8502,6 +8535,7 @@ contains
     deallocate(cobalt%wc_vert_int_juptake_si)
     deallocate(cobalt%wc_vert_int_nfix)
     deallocate(cobalt%wc_vert_int_jfe_iceberg)
+    deallocate(cobalt%wc_vert_int_jfe_coast)
     deallocate(cobalt%wc_vert_int_jno3_iceberg)
     deallocate(cobalt%wc_vert_int_jpo4_iceberg)
 !==============================================================================================================

@@ -943,6 +943,7 @@ module cobalt_types
           wc_vert_int_nfix,&
           wc_vert_int_jnamx,&
           wc_vert_int_jfe_iceberg,&
+          wc_vert_int_jfe_coast,&
           wc_vert_int_jno3_iceberg,&
           wc_vert_int_jpo4_iceberg
 !==============================================================================================================
@@ -1277,6 +1278,7 @@ module cobalt_types
           id_wc_vert_int_juptake_fe = -1, &
           id_wc_vert_int_nfix = -1,        &
           id_wc_vert_int_jfe_iceberg = -1, &
+          id_wc_vert_int_jfe_coast = -1, &
           id_wc_vert_int_jno3_iceberg = -1, &
           id_wc_vert_int_jpo4_iceberg = -1, &
           id_wc_vert_int_jnamx = -1, &
