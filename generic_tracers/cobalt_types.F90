@@ -41,9 +41,9 @@ module cobalt_types
 
   ! parameters
   integer, parameter, public :: NUM_PHYTO = 4 !< total number of phytoplankton groups
-  integer, parameter, public :: NUM_ZOO = 3   !< total number of zooplankton groups
+  integer, parameter, public :: NUM_ZOO = 5   !< total number of zooplankton groups
   integer, parameter, public :: NUM_BACT = 1  !< total number of bacteria groups
-  integer, parameter, public :: NUM_PREY = 9  !< total numbers of prey groups
+  integer, parameter, public :: NUM_PREY = 11  !< total numbers of prey groups
   integer, parameter, public :: DIAZO      = 1 !< ID for diazotrophs
   integer, parameter, public :: LARGE      = 2 !< ID for large phytoplankton
   integer, parameter, public :: MEDIUM     = 3 !< ID for medium phytoplankton
@@ -270,6 +270,18 @@ module cobalt_types
     real mswitch           !< switching parameter (dimensionless)
     real bresp             !< basal respiration rate (sec-1)
     real ktemp             !< temperature dependence of zooplankton rates (C-1)
+    real k_clear_gut       ! mpoupon
+    real k_temp_gut        ! mpoupon
+    real k_clear_met       ! mpoupon
+    real  swim_max         ! maximum swimming speed for vertical migration, positive downwards (m sec-1)
+    real swim_ref          ! mpoupon
+    real dvm_I_thresh      ! irradiance threshold for DVM swimming (watts m-2)
+    real k_I_dvm           ! irradiance scaling for DVM swimming (watts m-2)
+    real swim_stop_o2      ! oxygen concentration limit for swimming
+    real phi_aresp         ! fraction of ingested N to active (food-dependent) respiration
+    real assim_eff_max     ! zooplankton maximum assimilation efficiency
+    real assim_eff_min     ! zooplankton minimum assimilation efficiency
+    real kae               ! half-saturation constant for assimilation efficiency (moles N m-3)
     real phi_det           !< fraction of ingested N to detritus
     real phi_ldon          !< fraction of ingested N/P to labile don
     real phi_sldon         !< fraction of ingested N/P to semi-labile don
@@ -286,6 +298,8 @@ module cobalt_types
     real ipa_smz           !< innate prey availability of small zooplankton
     real ipa_mdz           !< innate prey availability of large zooplankton
     real ipa_lgz           !< innate prey availability of x-large zooplankton
+    real ipa_vmmdz         !< innate prey availability of large migrating zooplankton
+    real ipa_vmlgz         !< innate prey availability of x-large migrating zooplankton
     real ipa_det           !< innate prey availability of detritus
     real ipa_bact          !< innate prey availability for bacteria
     real, ALLOCATABLE, dimension(:,:)  ::   jprod_n_100     !< zooplankton nitrogen prod. integral in upper 100m
@@ -296,12 +310,31 @@ module cobalt_types
     real, ALLOCATABLE, dimension(:,:)  ::   jprod_don_100   !< zooplankton dissolved org. nitrogen prod. integral in upper 100m
     real, ALLOCATABLE, dimension(:,:)  ::   jremin_n_100    !< zooplankton nitrogen remineralization integral in upper 100m
     real, ALLOCATABLE, dimension(:,:)  ::   f_n_100         !< zooplankton nitrogen biomass in upper 100m
-    real, ALLOCATABLE, dimension(:,:,:) ::  f_n          !< zooplankton biomass
+    real, ALLOCATABLE, dimension(:,:,:) ::  f_n             !< zooplankton biomass
+    real, ALLOCATABLE, dimension(:,:,:) ::  f_gut_n         ! zooplankton n gut content ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  f_gut_p         ! zooplankton p gut content ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  f_gut_fe        ! zooplankton fe gut content ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  f_gut_si        ! zooplankton si gut content ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  f_met_n         ! zooplankton metabolites ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  assim_eff       ! zooplankton assimilation efficiency
+    real, ALLOCATABLE, dimension(:,:,:) ::  jclear_gut_n    ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_gut_n     ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  jclear_gut_p    ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_gut_p     ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  jclear_gut_fe   ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_gut_fe    ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  jclear_gut_si   ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_gut_si    ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  jclear_met_n    ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  jprod_met_n     ! mpoupon 
+    real, ALLOCATABLE, dimension(:,:,:) ::  lim_nut_n_ingestion  ! mpoupon
+    real, ALLOCATABLE, dimension(:,:,:) ::  jmetabo_n    ! mpoupon
     real, ALLOCATABLE, dimension(:,:,:) ::  jzloss_n     !< Losses of n due to consumption by other zooplankton groups
     real, ALLOCATABLE, dimension(:,:,:) ::  jzloss_p     !< Losses of p due to consumption by other zooplankton groups
     real, ALLOCATABLE, dimension(:,:,:) ::  jhploss_n    !< Losses of n due to consumption by unresolved higher preds
     real, ALLOCATABLE, dimension(:,:,:) ::  jhploss_p    !< Losses of p due to consumption by unresolved higher preds
     real, ALLOCATABLE, dimension(:,:,:) ::  jingest_n    !< Total ingestion of n
+    real, ALLOCATABLE, dimension(:,:,:) ::  jingest_n_lim !< Total ingestion of n
     real, ALLOCATABLE, dimension(:,:,:) ::  jingest_p    !< Total ingestion of p
     real, ALLOCATABLE, dimension(:,:,:) ::  jingest_sio2 !< Total ingestion of silicate
     real, ALLOCATABLE, dimension(:,:,:) ::  jingest_fe   !< Total ingestion of iron
@@ -322,6 +355,12 @@ module cobalt_types
     real, ALLOCATABLE, dimension(:,:,:) ::  jprod_n      !< zooplankton production
     real, ALLOCATABLE, dimension(:,:,:) ::  o2lim        !< oxygen limitation of zooplankton activity
     real, ALLOCATABLE, dimension(:,:,:) ::  temp_lim     !< Temperature limitation
+    real, ALLOCATABLE, dimension(:,:,:)  ::  vmove
+    real, ALLOCATABLE, dimension(:,:,:)  ::  vmove_gut
+    real, ALLOCATABLE, dimension(:,:,:)  ::  vmove_gut_p
+    real, ALLOCATABLE, dimension(:,:,:)  ::  vmove_gut_fe
+    real, ALLOCATABLE, dimension(:,:,:)  ::  vmove_gut_si
+    real, ALLOCATABLE, dimension(:,:,:)  ::  vmove_met
     integer ::  id_jzloss_n       = -1 !< ID associated with diagnostics for losses of n due to consumption by other zooplankton groups
     integer ::  id_jzloss_p       = -1 !< ID associated with diagnostics for losses of p due to consumption by other zooplankton groups
     integer ::  id_jhploss_n      = -1 !< ID associated with diagnostics for losses of n due to consumption by unresolved higher preds
@@ -347,6 +386,21 @@ module cobalt_types
     integer ::  id_jprod_n        = -1 !< ID associated with diagnostics for zooplankton production
     integer ::  id_o2lim          = -1 !< ID associated with diagnostics for oxygen limitation of zooplankton activity
     integer ::  id_temp_lim       = -1 !< ID associated with diagnostics for temperature limitation
+    integer ::  id_vmove              = -1 !
+    integer ::   id_z_mig             = -1 !
+    integer ::   id_assim_eff         = -1 !
+    integer ::   id_jclear_gut_n      = -1 !
+    integer ::   id_jprod_gut_n       = -1 !
+    integer ::   id_jclear_gut_p      = -1 !
+    integer ::   id_jprod_gut_p       = -1 !
+    integer ::   id_jclear_gut_fe     = -1 !
+    integer ::   id_jprod_gut_fe      = -1 !
+    integer ::   id_jclear_gut_si     = -1 !
+    integer ::   id_jprod_gut_si      = -1 !
+    integer ::   id_jclear_met_n      = -1 !
+    integer ::   id_jprod_met_n       = -1 !
+    integer ::   id_jmetabo_n         = -1 !
+    integer ::   id_lim_nut_n_ingestion = -1 !
     integer ::  id_jprod_n_100    = -1 !< ID associated with diagnostics for zooplankton nitrogen prod. integral in upper 100m
     integer ::  id_jingest_n_100  = -1 !< ID associated with diagnostics for zooplankton nitrogen ingestion integral in upper 100m
     integer ::  id_jzloss_n_100   = -1 !< ID associated with diagnostics for zooplankton nitrogen loss to zooplankton integral in upper 100m
@@ -546,6 +600,7 @@ module cobalt_types
           imax_hp,          & ! unresolved higher pred. max ingestion rate
           ki_hp,            & ! unresolved higher pred. half-sat
           ktemp_hp,         & ! temperature dependence for higher predators
+          kirr_hp,          & ! irradiance dependence for higher predators
           coef_hp,          & ! scaling between unresolved preds and available prey
           nswitch_hp,	    & ! higher predator switching behavior
           mswitch_hp,       & ! higher predator switching behavior
@@ -557,9 +612,12 @@ module cobalt_types
           hp_ipa_smz,       & ! "  "  "  "  "  "  "  "  "   small zooplankton to hp
           hp_ipa_mdz,       & ! "  "  "  "  "  "  "  "  "   medium zooplankton to hp
           hp_ipa_lgz,       & ! "  "  "  "  "  "  "  "  "   large zooplankton to hp
+          hp_ipa_vmmdz,     & ! "  "  "  "  "  "  "  "  "   large migrating zooplankton to hp
+          hp_ipa_vmlgz,     & ! "  "  "  "  "  "  "  "  "   x-large migrating zooplankton to hp
           hp_ipa_det,       & ! "  "  "  "  "  "  "  "  "   detritus to hp
           hp_phi_det,       & ! fraction of ingested N to detritus
-          frac_fastsinking    ! fraction of higher predator detritus that is fast-sinking
+          frac_fastsinking, & ! fraction of higher predator detritus that is fast-sinking
+          hp_phi_vis          ! fraction of visual higher pred.
 
      real, dimension(3)                    :: total_atm_co2
 
@@ -654,6 +712,18 @@ module cobalt_types
           jnsmz,&
           jnmdz,&
           jnlgz,&
+          jnvmmdz,&      ! mpoupon
+          jnvmlgz,&      ! mpoupon
+          jnvmmdz_gut,&  ! mpoupon
+          jnvmlgz_gut,&  ! mpoupon
+          jpvmmdz_gut,&  ! mpoupon
+          jpvmlgz_gut,&  ! mpoupon
+          jfevmmdz_gut,& ! mpoupon
+          jfevmlgz_gut,& ! mpoupon
+          jsivmmdz_gut,& ! mpoupon
+          jsivmlgz_gut,& ! mpoupon
+          jnvmmdz_met,&  ! mpoupon
+          jnvmlgz_met,&  ! mpoupon
           jalk,&
           jalkh,&
           jalk_plus_btm,&
@@ -758,6 +828,7 @@ module cobalt_types
           expkreminT,&
           hp_temp_lim,&
           hp_o2lim,&
+          hp_vis_lim, &
           hp_jingest_n,&
           hp_jingest_p,&
           hp_jingest_fe,&
@@ -991,7 +1062,19 @@ module cobalt_types
           p_sio4,&
           p_nsmz,&
           p_nmdz,&
-          p_nlgz
+          p_nlgz,&
+          p_nvmmdz,&      ! mpoupon
+          p_nvmlgz,&      ! mpoupon
+          p_nvmmdz_gut,&  ! mpoupon
+          p_nvmlgz_gut,&  ! mpoupon
+          p_pvmmdz_gut,&  ! mpoupon
+          p_pvmlgz_gut,&  ! mpoupon
+          p_fevmmdz_gut,& ! mpoupon
+          p_fevmlgz_gut,& ! mpoupon
+          p_sivmmdz_gut,& ! mpoupon
+          p_sivmlgz_gut,& ! mpoupon
+          p_nvmmdz_met,&  ! mpoupon
+          p_nvmlgz_met    ! mpoupon
 
       real, dimension (:,:), allocatable :: &
           runoff_flux_alk,&
@@ -1090,6 +1173,7 @@ module cobalt_types
           id_expkreminT    = -1,       &
           id_hp_temp_lim   = -1,       &
           id_hp_o2lim      = -1,       &
+          id_hp_vis_lim    = -1,       &
           id_irr_inst      = -1,       &
           id_irr_mix       = -1,       &
           id_irr_aclm_inst = -1,       &
