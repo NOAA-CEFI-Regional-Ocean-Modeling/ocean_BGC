@@ -780,9 +780,9 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
       call diagnoseMLDbyDensityDifference(-1, h_old, tv, CS%mld_pha_drho, G, GV, US, CS%diag, &
               CS%mld_pha_href, id_ref_z=-1, id_ref_rho=-1, MLD_out=mld_pha)
     elseif (CS%mld_pha_use_delta_eng) then
-        !call diagnoseMLDbyEnergy((/-1, -1, -1/), h_old, tv, G, GV, US, (/CS%mld_pha_deng, &
-        !        CS%mld_pha_deng, CS%mld_pha_deng/), CS%diag, MLD_out=mld_pha)
-        call MOM_error(FATAL, "Photoacclimation MLD using delta energy MLD not supported")
+      !call diagnoseMLDbyEnergy((/-1, -1, -1/), h_old, tv, G, GV, US, (/CS%mld_pha_deng, &
+      !        CS%mld_pha_deng, CS%mld_pha_deng/), CS%diag, MLD_out=mld_pha)
+      call MOM_error(FATAL, "Photoacclimation MLD using delta energy MLD not supported")
     endif
   endif
 
