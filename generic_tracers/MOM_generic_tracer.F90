@@ -459,6 +459,7 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
                    "The density difference for a density difference based photoacclimation MLD [kg m-3].", &
                     units='kg/m3', default=0.03, scale=US%kg_m3_to_R, do_not_log=.not.CS%mld_pha_use_delta_rho)
     elseif (CS%mld_pha_use_delta_eng) then
+      call MOM_error(FATAL, "Photoacclimation MLD using delta energy MLD not supported")
       call get_param(param_file, "MOM", "PHA_MLD_DENG", CS%mld_pha_deng, &
                    "The energy for an energy difference based photoacclimation MLD.", default=25.0, &
                    units='J/m2',scale=US%W_m2_to_RZ3_T3*US%s_to_T, do_not_log=.not.CS%mld_pha_use_delta_eng)
@@ -779,8 +780,9 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
       call diagnoseMLDbyDensityDifference(-1, h_old, tv, CS%mld_pha_drho, G, GV, US, CS%diag, &
               CS%mld_pha_href, id_ref_z=-1, id_ref_rho=-1, MLD_out=mld_pha)
     elseif (CS%mld_pha_use_delta_eng) then
-      call diagnoseMLDbyEnergy((/-1, -1, -1/), h_old, tv, G, GV, US, (/CS%mld_pha_deng, &
-              CS%mld_pha_deng, CS%mld_pha_deng/), CS%diag, MLD_out=mld_pha)
+        !call diagnoseMLDbyEnergy((/-1, -1, -1/), h_old, tv, G, GV, US, (/CS%mld_pha_deng, &
+        !        CS%mld_pha_deng, CS%mld_pha_deng/), CS%diag, MLD_out=mld_pha)
+        call MOM_error(FATAL, "Photoacclimation MLD using delta energy MLD not supported")
     endif
   endif
 
