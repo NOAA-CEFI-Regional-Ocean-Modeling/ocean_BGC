@@ -598,6 +598,8 @@ module cobalt_types
           refuge_conc,      &
           imax_hp,          & ! unresolved higher pred. max ingestion rate
           ki_hp,            & ! unresolved higher pred. half-sat
+          kirr_hp,          & ! half-saturation irradiance for light-dependent higher predation (W m-2)
+          hp_phi_vis,       & ! fraction of higher-predator ingestion that is visual
           ktemp_hp,         & ! temperature dependence for higher predators
           kirr_hp,          & ! irradiance dependence for higher predators
           coef_hp,          & ! scaling between unresolved preds and available prey

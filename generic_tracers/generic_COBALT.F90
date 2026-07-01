@@ -1158,10 +1158,9 @@ contains
     call get_param(param_file, "generic_COBALT", "swim_max_lgz", zoo(3)%swim_max, "Maximum swimming speed for large zooplankton", &
                    units="m s-1", default=0.0)
     call get_param(param_file, "generic_COBALT", "swim_max_vmmdz", zoo(4)%swim_max, "Maximum swimming speed for medium migrating zooplankton", &
-                   units="m s-1", default=0.0) ! 0.06
+                   units="m s-1", default=0.06) ! 0.06
     call get_param(param_file, "generic_COBALT", "swim_max_vmlgz", zoo(5)%swim_max, "Maximum swimming speed for large migrating zooplankton", &
-                   units="m s-1", default=0.0) ! 0.08
-
+                   units="m s-1", default=0.08) ! 0.08
     call get_param(param_file, "generic_COBALT", "swim_ref_smz", zoo(1)%swim_ref, "Reference swimming speed for small zooplankton", &
                    units="m s-1", default=0.0)
     call get_param(param_file, "generic_COBALT", "swim_ref_mdz", zoo(2)%swim_ref, "Reference swimming speed for medium zooplankton", &
@@ -1654,8 +1653,12 @@ contains
     !
     call get_param(param_file, "generic_COBALT", "imax_hp", cobalt%imax_hp, &
                    "max ingestion rate for higher predators @ 0 deg. C", units="day-1", default=0.09, scale=I_sperd)
-    call get_param(param_file, "generic_COBALT", "ki_hp", cobalt%ki_hp, "half-sat for ingestion by higher predators", &
-                   units="mol N kg-1", default=1.25e-6)
+    call get_param(param_file, "generic_COBALT", "ki_hp", cobalt%ki_hp, &
+                   "half-sat for ingestion by higher predators", units="mol N kg-1", default=1.25e-6)
+    call get_param(param_file, "generic_COBALT", "kirr_hp", cobalt%kirr_hp, &
+                   "half-saturation irradiance for light-dependent higher-predator ingestion", units="W m-2", default=0.1)
+    call get_param(param_file, "generic_COBALT", "hp_phi_vis", cobalt%hp_phi_vis, &
+                   "fraction of higher-predator ingestion that is visually mediated", units="none", default=0.90)
     call get_param(param_file, "generic_COBALT", "coef_hp", cobalt%coef_hp, &
                    "coefficient for higher predator losses (2=quadratic)", units="none", default=2.0)
     call get_param(param_file, "generic_COBALT", "ktemp_hp", cobalt%ktemp_hp, &
@@ -4567,10 +4570,18 @@ contains
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec; !{
         vmmd_rho_dzt(i,j,k) = rho_dzt(i,j,k) * zoo(4)%f_n(i,j,k)
         vmlg_rho_dzt(i,j,k) = rho_dzt(i,j,k) * zoo(5)%f_n(i,j,k)
-        vmmd_prey_rho_dzt(i,j,k) =  rho_dzt(i,j,k) * ( phyto(DIAZO)%f_n(i,j,k) + \
-                                    phyto(LARGE)%f_n(i,j,k) + zoo(1)%f_n(i,j,k) )
-        vmlg_prey_rho_dzt(i,j,k) = rho_dzt(i,j,k) * ( phyto(DIAZO)%f_n(i,j,k) + \
-                                   phyto(LARGE)%f_n(i,j,k) + zoo(2)%f_n(i,j,k) + zoo(4)%f_n(i,j,k) )
+        vmmd_prey_rho_dzt(i,j,k) = rho_dzt(i,j,k) * ( &
+                                    phyto(DIAZO)%f_n(i,j,k)  + &
+                                    phyto(LARGE)%f_n(i,j,k)  + &
+                                    phyto(MEDIUM)%f_n(i,j,k) + &
+                                    phyto(SMALL)%f_n(i,j,k)  + &
+                                    zoo(1)%f_n(i,j,k) )
+
+        vmlg_prey_rho_dzt(i,j,k) = rho_dzt(i,j,k) * ( &
+                                    phyto(DIAZO)%f_n(i,j,k)  + &
+                                    phyto(LARGE)%f_n(i,j,k)  + &
+                                    phyto(MEDIUM)%f_n(i,j,k) + &
+                                    zoo(2)%f_n(i,j,k) )
     enddo; enddo; enddo;  !}  i, j, k
 
     do j = jsc, jec ; do i = isc, iec; !{
@@ -4588,19 +4599,19 @@ contains
     enddo; enddo; enddo;  !}  i, j, k 
 
     do j = jsc, jec ; do i = isc, iec; !{
-        vmmd_norm_cum(i,j,1)  = vmmd_rho_dzt(i,j,1)    /   vmmd_int(i,j)
-        vmlg_norm_cum(i,j,1)    = vmlg_rho_dzt(i,j,1)      /   vmlg_int(i,j)
-        vmmd_prey_norm_cum(i,j,1)  = vmmd_prey_rho_dzt(i,j,1)  /   vmmd_prey_int(i,j)
-        vmlg_prey_norm_cum(i,j,1)    = vmlg_prey_rho_dzt(i,j,1)    /   vmlg_prey_int(i,j)
+        vmmd_norm_cum(i,j,1)  = vmmd_rho_dzt(i,j,1)    /   (vmmd_int(i,j) + epsln)
+        vmlg_norm_cum(i,j,1)  = vmlg_rho_dzt(i,j,1)    /   (vmlg_int(i,j) + epsln)
+        vmmd_prey_norm_cum(i,j,1)  = vmmd_prey_rho_dzt(i,j,1)  /  (vmmd_prey_int(i,j) + epsln)
+        vmlg_prey_norm_cum(i,j,1)  = vmlg_prey_rho_dzt(i,j,1)  /  (vmlg_prey_int(i,j) + epsln)
     enddo; enddo;  !}  j, i
 
 
     do k = 2, nk ; do j = jsc, jec ; do i = isc, iec; !{
         ! Normalization and cumulative sum
-        vmmd_norm_cum(i,j,k)  = vmmd_norm_cum(i,j,k-1) + vmmd_rho_dzt(i,j,k)    /   vmmd_int(i,j)
-        vmlg_norm_cum(i,j,k)    = vmlg_norm_cum(i,j,k-1) + vmlg_rho_dzt(i,j,k)      /   vmlg_int(i,j)
-        vmmd_prey_norm_cum(i,j,k)  =  vmmd_prey_norm_cum(i,j,k-1)  + vmmd_prey_rho_dzt(i,j,k)  /   vmmd_prey_int(i,j)
-        vmlg_prey_norm_cum(i,j,k)    = vmlg_prey_norm_cum(i,j,k-1) + vmlg_prey_rho_dzt(i,j,k)    /   vmlg_prey_int(i,j)
+        vmmd_norm_cum(i,j,k)    = vmmd_norm_cum(i,j,k-1) + vmmd_rho_dzt(i,j,k)    /  (vmmd_int(i,j) + epsln)
+        vmlg_norm_cum(i,j,k)    = vmlg_norm_cum(i,j,k-1) + vmlg_rho_dzt(i,j,k)    /  (vmlg_int(i,j) + epsln)
+        vmmd_prey_norm_cum(i,j,k)  =  vmmd_prey_norm_cum(i,j,k-1)  + vmmd_prey_rho_dzt(i,j,k)  /  (vmmd_prey_int(i,j) + epsln)
+        vmlg_prey_norm_cum(i,j,k)  = vmlg_prey_norm_cum(i,j,k-1)   + vmlg_prey_rho_dzt(i,j,k)  /  (vmlg_prey_int(i,j) + epsln)
     enddo; enddo; enddo;  !}  i, j, k 
 
     !
@@ -4978,6 +4989,14 @@ contains
        ! calculate the total prey from the realized prey availability
        tot_prey_hp = hp_pa_vec(7)*prey_vec(7) + hp_pa_vec(8)*prey_vec(8)+ &
                      hp_pa_vec(9)*prey_vec(9) + hp_pa_vec(10)*prey_vec(10)
+
+
+       ! Light-dependent predation by unresolved higher predators (Poupon et al. 2025, Bianchi et al. 2013).
+       ! hp_phi_vis is the visually mediated fraction of HP ingestion.
+       ! The remaining fraction, 1 - hp_phi_vis, is non-visual and persists in darkness.
+       cobalt%hp_vis_lim(i,j,k) = (1.0 - cobalt%hp_phi_vis) + cobalt%hp_phi_vis * cobalt%irr_inst(i,j,k) / &
+                                  (cobalt%irr_inst(i,j,k) + cobalt%kirr_hp * cobalt%ki_hp / &
+                                  (cobalt%ki_hp + tot_prey_hp + epsln) + epsln)
       
        ! calculate the rate at which large zooplankton ingests each prey type.  The default assumption for higher
        ! predators is that the biomass of higher predators scales in proportion to the available prey.  That is,
@@ -4989,18 +5008,20 @@ contains
        ! Note that this results in a density-dependent (i.e., quadratic) mortality consistent with fish aggregating
        ! over regions of abundant prey.  This response can be modulated with coef_hp, but care would be needed
        ! to ensure imax_hp has proper units if this coefficient were changed.
-       hp_ingest_vec(7) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%imax_hp* &
+                                    
+       hp_ingest_vec(7) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%hp_vis_lim(i,j,k)*cobalt%imax_hp* &
                           hp_pa_vec(7)*prey_vec(7)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
                             (cobalt%ki_hp+tot_prey_hp)
-       hp_ingest_vec(8) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%imax_hp* &
+       hp_ingest_vec(8) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%hp_vis_lim(i,j,k)*cobalt%imax_hp* &
                           hp_pa_vec(8)*prey_vec(8)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
                             (cobalt%ki_hp+tot_prey_hp)
-       hp_ingest_vec(9) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%imax_hp* &
+       hp_ingest_vec(9) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%hp_vis_lim(i,j,k)*cobalt%imax_hp* &
                           hp_pa_vec(9)*prey_vec(9)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
                             (cobalt%ki_hp+tot_prey_hp)
-       hp_ingest_vec(10) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%imax_hp* &
+       hp_ingest_vec(10) = cobalt%hp_temp_lim(i,j,k)*cobalt%hp_o2lim(i,j,k)*cobalt%hp_vis_lim(i,j,k)*cobalt%imax_hp* &
                           hp_pa_vec(10)*prey_vec(10)*tot_prey_hp**(cobalt%coef_hp-1.0)/ &
                             (cobalt%ki_hp+tot_prey_hp)
+                            
        cobalt%hp_jingest_n(i,j,k) = hp_ingest_vec(7) + hp_ingest_vec(8) + hp_ingest_vec(9) + hp_ingest_vec(10)
        cobalt%hp_jingest_p(i,j,k) = hp_ingest_vec(7)*prey_p2n_vec(7) + &
                                     hp_ingest_vec(8)*prey_p2n_vec(8) + &
@@ -5166,7 +5187,7 @@ contains
        do n = 2, NUM_ZOO !{
            
            swim = zoo(n)%swim_max * abs( LOG(zoo(n)%dvm_I_thresh/(epsln+cobalt%irr_inst(i,j,k))) / 0.0232) / &
-                   (50.0 + abs( LOG(zoo(n)%dvm_I_thresh/(epsln+cobalt%irr_inst(i,j,k))) / 0.0232))
+                  (50.0 + abs( LOG(zoo(n)%dvm_I_thresh/(epsln+cobalt%irr_inst(i,j,k))) / 0.0232))
            
            ! Upward swimming (during night)
            if ( cobalt%irr_inst(i,j,k) .lt. zoo(n)%dvm_I_thresh ) then
@@ -8593,6 +8614,7 @@ contains
     allocate(cobalt%expkreminT(isd:ied, jsd:jed, 1:nk))   ; cobalt%expkreminT=0.0
     allocate(cobalt%hp_o2lim(isd:ied, jsd:jed, 1:nk))     ; cobalt%hp_o2lim=0.0
     allocate(cobalt%hp_temp_lim(isd:ied, jsd:jed, 1:nk))  ; cobalt%hp_temp_lim=0.0
+    allocate(cobalt%hp_vis_lim(isd:ied, jsd:jed, 1:nk))   ; cobalt%hp_vis_lim=0.0
     allocate(cobalt%irr_inst(isd:ied, jsd:jed, 1:nk))     ; cobalt%irr_inst=0.0
     allocate(cobalt%irr_mix(isd:ied, jsd:jed, 1:nk))      ; cobalt%irr_mix=0.0
     allocate(cobalt%irr_aclm_inst(isd:ied, jsd:jed, 1:nk))   ; cobalt%irr_aclm_inst=0.0
@@ -9233,6 +9255,7 @@ contains
     deallocate(cobalt%expkreminT)
     deallocate(cobalt%hp_o2lim)
     deallocate(cobalt%hp_temp_lim)
+    deallocate(cobalt%hp_vis_lim)
     deallocate(cobalt%hp_jingest_n)
     deallocate(cobalt%hp_jingest_p)
     deallocate(cobalt%hp_jingest_sio2)

@@ -3364,20 +3364,34 @@ contains
           ! so that the characteristics do not cross within a timestep.
           !   If a non-constant sinking rate were used, that would be incorprated
           ! here.
+
+		  ! Enforce one way flow into the bottom reservoir
+		  
+          if (.NOT. _ALLOCATED(g_tracer%btm_reservoir)) then
+             sink_dist(nz+1) = 0.0
+          endif
+
+          ! Avoid vertically moving tracers with non-positive source concentrations.
+          ! For positive sink_dist(k), the source is layer k-1: downward motion.
+          ! For negative sink_dist(k), the source is layer k: upward motion.
+          do k=2,nz
+             if (sink_dist(k) > 0.0 .and. g_tracer%field(i,j,k-1,tau) <= 0.0) sink_dist(k) = 0.0
+             if (sink_dist(k) < 0.0 .and. g_tracer%field(i,j,k,  tau) <= 0.0) sink_dist(k) = 0.0
+          enddo
+
+          ! Bottom interface: only allow export to the bottom reservoir, not an upward
+          ! source from an implicit bottom reservoir. Also avoid export from a
+          ! non-positive bottom-layer concentration.
+          if (sink_dist(nz+1) > 0.0 .and. g_tracer%field(i,j,nz,tau) <= 0.0) sink_dist(nz+1) = 0.0
+          if (sink_dist(nz+1) < 0.0) sink_dist(nz+1) = 0.0
+
           if (_ALLOCATED(g_tracer%btm_reservoir)) then
              sink(nz+1) = sink_dist(nz+1)
           else
              sink(nz+1) = 0.0
              sink_dist(nz+1) = 0.0
           endif
-
-          !Avoid sinking tracers with negative concentrations
-          !do k=2,nz+1
-          !   if(g_tracer%field(i,j,k-1,tau) < 0.0)
-          !     sink(k) = 0.0
-          !     sink_dist(k) = 0.0
-          !   endif
-          !enddo
+          
 
           ! Find the limited sinking distance at the interfaces.
           do k=nz,2,-1
@@ -3432,9 +3446,14 @@ contains
             g_tracer%field(i,j,1,tau)  = g_tracer%field(i,j,1,tau)  + sfc_src/h_old(i,j,1)
             g_tracer%field(i,j,nz,tau) = g_tracer%field(i,j,nz,tau) + btm_src/h_old(i,j,nz)
             do k=1,nz
-               a(k)= -(ea(i,j,k)+sink(k))/h_old(i,j,k)
-               c(k)= -eb(i,j,k)/h_old(i,j,k)
-               b(k)=  (h_old(i,j,k)+eb(i,j,k)+ea(i,j,k)+sink(k+1))/h_old(i,j,k)
+               ! Sign-split vertical motion:
+               !   max(sink,0) = downward flux contribution
+               !   min(sink,0) = upward flux contribution
+               ! This preserves the upwind structure for bidirectional swimming.
+               a(k)= -(ea(i,j,k)+max(sink(k),0.0))/h_old(i,j,k)
+               c(k)= -(eb(i,j,k)-min(sink(k+1),0.0))/h_old(i,j,k)
+               b(k)=  (h_old(i,j,k)+eb(i,j,k)+ea(i,j,k) &
+                    + max(sink(k+1),0.0)-min(sink(k),0.0))/h_old(i,j,k)
                f_old(k)= g_tracer%field(i,j,k,tau)
             enddo
             call tridiag_solver_Press_et_al(a,b,c,f_old,g_tracer%field(i,j,:,tau),nz)
