@@ -43,7 +43,7 @@ subroutine extract_coupler_values(BC_struc, BC_index, BC_element, array_out, ilb
 
   if ((BC_element /= ind_flux) .and. (BC_element /= ind_alpha) .and. &
       (BC_element /= ind_csurf) .and. (BC_element /= ind_sc_no) .and. &
-      (BC_element /= ind_deltap) .and. (BC_element /= ind_kw) then
+      (BC_element /= ind_deltap) .and. (BC_element /= ind_kw)) then
     call mpp_error(FATAL,"extract_coupler_values: Unrecognized BC_element.")
   endif
 
@@ -109,7 +109,7 @@ subroutine set_coupler_values(array_in, BC_struc, BC_index, BC_element, ilb, jlb
 
   if ((BC_element /= ind_flux) .and. (BC_element /= ind_alpha) .and. &
       (BC_element /= ind_csurf) .and. (BC_element /= ind_sc_no) .and. &
-      (BC_element /= ind_deltap) .and. (BC_element /= ind_kw) then
+      (BC_element /= ind_deltap) .and. (BC_element /= ind_kw)) then
     call mpp_error(FATAL,"extract_coupler_values: Unrecognized BC_element.")
   endif
 
