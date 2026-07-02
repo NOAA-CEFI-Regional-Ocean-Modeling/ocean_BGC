@@ -9,7 +9,6 @@ module FMS_coupler_util
 ! robust extraction of the various fields in the coupler types.
 use mpp_mod,           only : mpp_error, FATAL, WARNING
 use coupler_types_mod, only : coupler_2d_bc_type, ind_flux, ind_deltap, ind_kw
-use coupler_types_mod, only : ind_kw_asym, ind_f_asym, ind_out1, ind_out2 ! YZ: D25, 19/06/2025
 use coupler_types_mod, only : ind_alpha, ind_csurf, ind_sc_no
 
 implicit none ; private
@@ -44,9 +43,7 @@ subroutine extract_coupler_values(BC_struc, BC_index, BC_element, array_out, ilb
 
   if ((BC_element /= ind_flux) .and. (BC_element /= ind_alpha) .and. &
       (BC_element /= ind_csurf) .and. (BC_element /= ind_sc_no) .and. &
-      (BC_element /= ind_deltap) .and. (BC_element /= ind_kw) .and. &
-      (BC_element /= ind_kw_asym) .and. (BC_element /= ind_f_asym) .and. &
-      (BC_element /= ind_out1) .and. (BC_element /= ind_out2)) then ! YZ: D25, 19/06/2025
+      (BC_element /= ind_deltap) .and. (BC_element /= ind_kw) then
     call mpp_error(FATAL,"extract_coupler_values: Unrecognized BC_element.")
   endif
 
@@ -112,9 +109,7 @@ subroutine set_coupler_values(array_in, BC_struc, BC_index, BC_element, ilb, jlb
 
   if ((BC_element /= ind_flux) .and. (BC_element /= ind_alpha) .and. &
       (BC_element /= ind_csurf) .and. (BC_element /= ind_sc_no) .and. &
-      (BC_element /= ind_deltap) .and. (BC_element /= ind_kw) .and. &
-      (BC_element /= ind_kw_asym) .and. (BC_element /= ind_f_asym) .and. &
-      (BC_element /= ind_out1) .and. (BC_element /= ind_out2)) then  ! YZ: D25, 19/06/2025
+      (BC_element /= ind_deltap) .and. (BC_element /= ind_kw) then
     call mpp_error(FATAL,"extract_coupler_values: Unrecognized BC_element.")
   endif
 
