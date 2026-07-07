@@ -3166,14 +3166,15 @@ contains
     real, dimension(:,:),   Allocatable :: neritic_cased_burial
     ! >>
 
-    real, dimension(:,:,:), Allocatable :: pre_totn, net_srcn, post_totn
-    real, dimension(:,:,:), Allocatable :: pre_totp, net_srcp, post_totp
-    real, dimension(:,:,:), Allocatable :: pre_totsi, post_totsi
-    real, dimension(:,:,:), Allocatable :: pre_totfe, net_srcfe, post_totfe
-    real, dimension(:,:,:), Allocatable :: pre_totc, net_srcc, post_totc
     real, dimension(:,:),   Allocatable :: ztop
     real, dimension(:,:,:), Allocatable :: zmid, zbot
+    real, dimension(:,:,:), Allocatable :: pre_totn, net_srcn
+    real, dimension(:,:,:), Allocatable :: pre_totp, net_srcp
+    real, dimension(:,:,:), Allocatable :: pre_totsi
+    real, dimension(:,:,:), Allocatable :: pre_totfe, net_srcfe
+    real, dimension(:,:,:), Allocatable :: pre_totc, net_srcc
     real, dimension(:,:),   Allocatable :: pka_nh3,phos_nh3_exchange
+    real :: post_totn, post_totp, post_totsi, post_totfe, post_totc
 
     real :: tr,ltr
     real :: imbal
@@ -6079,15 +6080,14 @@ contains
     ! day-1, so an imbalance of order 1 would be very large whereas 1e-9 is very small.
     ! A reccomended tolerance is between 1e-7 and 1e-9.
     imbal_flag = 0;
-    stdoutunit = stdout();
-    allocate(post_totn(isc:iec,jsc:jec,1:nk))
-    allocate(post_totc(isc:iec,jsc:jec,1:nk))
-    allocate(post_totp(isc:iec,jsc:jec,1:nk))
-    allocate(post_totsi(isc:iec,jsc:jec,1:nk))
-    allocate(post_totfe(isc:iec,jsc:jec,1:nk))
+    post_totn = 0;
+    post_totc = 0;
+    post_totp = 0;
+    post_totsi = 0;
+    post_totfe = 0;
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec  !{
       if (dzt(i,j,k).gt.cobalt%min_thickness) then
-         post_totn(i,j,k) = (cobalt%p_no3(i,j,k,tau) + cobalt%p_nh4(i,j,k,tau) + &
+         post_totn = (cobalt%p_no3(i,j,k,tau) + cobalt%p_nh4(i,j,k,tau) + &
                     cobalt%p_ndi(i,j,k,tau) + cobalt%p_nlg(i,j,k,tau) + cobalt%p_nmd(i,j,k,tau) + &
                     cobalt%p_nsm(i,j,k,tau) + cobalt%p_nbact(i,j,k,tau) + &
                     cobalt%p_ldon(i,j,k,tau) + cobalt%p_sldon(i,j,k,tau) + &
@@ -6095,13 +6095,13 @@ contains
 					cobalt%p_ndet_fast(i,j,k,tau) + &
                     cobalt%p_nsmz(i,j,k,tau) + cobalt%p_nmdz(i,j,k,tau) + &
                     cobalt%p_nlgz(i,j,k,tau))*grid_tmask(i,j,k)
-         imbal = (post_totn(i,j,k) - pre_totn(i,j,k) - net_srcn(i,j,k))*86400.0/dt*1.03e6
+         imbal = (post_totn - pre_totn(i,j,k) - net_srcn(i,j,k))*86400.0/dt*1.03e6
          if (abs(imbal).gt.imbalance_tolerance) then
            call mpp_error(FATAL,&
            '==>biological source/sink imbalance (generic_COBALT_update_from_source): Nitrogen')
          endif
 
-         post_totc(i,j,k) = (cobalt%p_dic(i,j,k,tau) + &
+         post_totc = (cobalt%p_dic(i,j,k,tau) + &
                     cobalt%p_cadet_arag(i,j,k,tau) + cobalt%p_cadet_calc(i,j,k,tau) + &
                     cobalt%c_2_n*(cobalt%p_ndi(i,j,k,tau) + cobalt%p_nlg(i,j,k,tau) + &
                     cobalt%p_nmd(i,j,k,tau) + cobalt%p_nsm(i,j,k,tau) + cobalt%p_nbact(i,j,k,tau) + &
@@ -6110,13 +6110,13 @@ contains
 					cobalt%p_ndet_fast(i,j,k,tau) + &
                     cobalt%p_nsmz(i,j,k,tau) + cobalt%p_nmdz(i,j,k,tau) + &
                     cobalt%p_nlgz(i,j,k,tau)))*grid_tmask(i,j,k)
-        imbal = (post_totc(i,j,k) - pre_totc(i,j,k) - net_srcc(i,j,k))*86400.0/dt*1.03e6
+        imbal = (post_totc - pre_totc(i,j,k) - net_srcc(i,j,k))*86400.0/dt*1.03e6
          if (abs(imbal).gt.imbalance_tolerance) then
            call mpp_error(FATAL,&
            '==>biological source/sink imbalance (generic_COBALT_update_from_source): Carbon')
          endif
 
-         post_totp(i,j,k) = (cobalt%p_po4(i,j,k,tau) + cobalt%p_pdi(i,j,k,tau) + &
+         post_totp = (cobalt%p_po4(i,j,k,tau) + cobalt%p_pdi(i,j,k,tau) + &
                     cobalt%p_plg(i,j,k,tau) + cobalt%p_pmd(i,j,k,tau) + cobalt%p_psm(i,j,k,tau) + &
                     cobalt%p_ldop(i,j,k,tau) + cobalt%p_sldop(i,j,k,tau) + &
                     cobalt%p_srdop(i,j,k,tau) + cobalt%p_pdet(i,j,k,tau) + &
@@ -6125,30 +6125,41 @@ contains
                     cobalt%p_nmdz(i,j,k,tau)*zoo(2)%q_p_2_n + &
                     cobalt%p_nlgz(i,j,k,tau)*zoo(3)%q_p_2_n + &
                     bact(1)%q_p_2_n*cobalt%p_nbact(i,j,k,tau))*grid_tmask(i,j,k)
-         imbal = (post_totp(i,j,k) - pre_totp(i,j,k) - net_srcp(i,j,k))*86400.0/dt*1.03e6
+         imbal = (post_totp - pre_totp(i,j,k) - net_srcp(i,j,k))*86400.0/dt*1.03e6
          if (abs(imbal).gt.imbalance_tolerance) then
            call mpp_error(FATAL,&
            '==>biological source/sink imbalance (generic_COBALT_update_from_source): Phosphorus')
          endif
 
-         post_totfe(i,j,k) = (cobalt%p_fed(i,j,k,tau) + cobalt%p_fedi(i,j,k,tau) + &
+         post_totfe = (cobalt%p_fed(i,j,k,tau) + cobalt%p_fedi(i,j,k,tau) + &
                     cobalt%p_felg(i,j,k,tau) + cobalt%p_femd(i,j,k,tau) + cobalt%p_fesm(i,j,k,tau) + &
                     cobalt%p_fedet(i,j,k,tau))*grid_tmask(i,j,k)
-         imbal = (post_totfe(i,j,k) - pre_totfe(i,j,k) - net_srcfe(i,j,k))*86400.0/dt*1.03e6
+         imbal = (post_totfe - pre_totfe(i,j,k) - net_srcfe(i,j,k))*86400.0/dt*1.03e6
          if (abs(imbal).gt.imbalance_tolerance) then
            call mpp_error(FATAL,&
            '==>biological source/sink imbalance (generic_COBALT_update_from_source): Iron')
          endif
 
-         post_totsi(i,j,k) = (cobalt%p_sio4(i,j,k,tau) + cobalt%p_silg(i,j,k,tau) + &
+         post_totsi = (cobalt%p_sio4(i,j,k,tau) + cobalt%p_silg(i,j,k,tau) + &
                     cobalt%p_simd(i,j,k,tau) + cobalt%p_sidet(i,j,k,tau))*grid_tmask(i,j,k)
-         imbal = (post_totsi(i,j,k) - pre_totsi(i,j,k))*86400.0/dt*1.03e6
+         imbal = (post_totsi - pre_totsi(i,j,k))*86400.0/dt*1.03e6
          if (abs(imbal).gt.imbalance_tolerance) then
            call mpp_error(FATAL,&
            '==>biological source/sink imbalance (generic_COBALT_update_from_source): Silica')
          endif
       endif
     enddo; enddo ; enddo  !} i,j,k
+
+    ! Deallocate total nutrient arrays:
+    deallocate(pre_totn)
+    deallocate(pre_totc)
+    deallocate(net_srcn)
+    deallocate(net_srcp)
+    deallocate(net_srcc)
+    deallocate(pre_totp)
+    deallocate(pre_totfe)
+    deallocate(net_srcfe)
+    deallocate(pre_totsi)
 
     !
     !----------------
