@@ -3,6 +3,7 @@
 !<----------------------------------------------------------------
 module cobalt_types
   use field_manager_mod, only: fm_string_len
+  use generic_bottom_layer_diags, only: generic_bld
   implicit none; private
 
   !
@@ -1023,6 +1024,9 @@ module cobalt_types
      character(len=fm_string_len)          :: file
      character(len=fm_string_len) :: ice_restart_file
      character(len=fm_string_len) :: ocean_restart_file,IC_file
+
+     ! Generic bottom layer diagnostics
+     type(generic_bld) :: bld
 
      integer               ::          &
           id_co3_sol_arag  = -1,       &
