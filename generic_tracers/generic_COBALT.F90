@@ -3166,12 +3166,13 @@ contains
     real, dimension(:,:),   Allocatable :: neritic_cased_burial
     ! >>
 
-    real, dimension(:,:,:), Allocatable :: ztop, zmid, zbot
     real, dimension(:,:,:), Allocatable :: pre_totn, net_srcn, post_totn
     real, dimension(:,:,:), Allocatable :: pre_totp, net_srcp, post_totp
     real, dimension(:,:,:), Allocatable :: pre_totsi, post_totsi
     real, dimension(:,:,:), Allocatable :: pre_totfe, net_srcfe, post_totfe
     real, dimension(:,:,:), Allocatable :: pre_totc, net_srcc, post_totc
+    real, dimension(:,:),   Allocatable :: ztop
+    real, dimension(:,:,:), Allocatable :: zmid, zbot
     real, dimension(:,:),   Allocatable :: pka_nh3,phos_nh3_exchange
 
     real :: tr,ltr
@@ -3202,28 +3203,29 @@ contains
     !
     ! Calculate some thickness/vertical reference points for later calculations
     !
-    allocate(ztop(isc:iec,jsc:jec,1:nk))
+    allocate(ztop(isc:iec,jsc:jec))
     allocate(zmid(isc:iec,jsc:jec,1:nk))
     allocate(zbot(isc:iec,jsc:jec,1:nk))
     do j = jsc, jec ; do i = isc, iec   !{
        cobalt%zt(i,j,1) = dzt(i,j,1)
-       ztop(i,j,1) = 0.0
+       ztop(i,j) = 0.0
        zmid(i,j,1) = 0.5*dzt(i,j,1)
        zbot(i,j,1) = dzt(i,j,1)
     enddo; enddo !} i,j
 
     do k = 2, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%zt(i,j,k) = cobalt%zt(i,j,k-1) + dzt(i,j,k)
-       ztop(i,j,k) = zbot(i,j,k-1)
-       zmid(i,j,k) = ztop(i,j,k) + 0.5*dzt(i,j,k)
-       zbot(i,j,k) = ztop(i,j,k) + dzt(i,j,k)
+       ztop(i,j) = zbot(i,j,k-1)
+       zmid(i,j,k) = ztop(i,j) + 0.5*dzt(i,j,k)
+       zbot(i,j,k) = ztop(i,j) + dzt(i,j,k)
     enddo; enddo ; enddo !} i,j,k
+
+    deallocate(ztop)
 
     !---------------------------------------------------------------------
     !Calculate co3_ion
     !Also calculate co2 fluxes csurf and alpha for the next round of exchange
     !---------------------------------------------------------------------
-
 
     k=1
     do j = jsc, jec ; do i = isc, iec  !{
@@ -3707,6 +3709,7 @@ contains
     enddo;  enddo !} i,j
 
     deallocate(tmp_irr_band)
+    deallocate(zmid)
     !
     ! Calculate the final photoacclimation irradiance using the standard relaxation
     ! scheme (I_aclm(t+1) = I_aclm(t) + (I*(24/daylength)-I_aclm(t))*gamma*dt).
@@ -5017,6 +5020,8 @@ contains
 
        cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jremin_fedet(i,j,k)
     enddo; enddo; enddo  !} i,j,k
+
+    deallocate(zbot)
 
     ! << Enhanced CaCO3 dissolution driven by localized undersaturation around sinking particles >>
     ! Add CaCO3 dissolution enhancement associated with organic matter (OM) decomposition
