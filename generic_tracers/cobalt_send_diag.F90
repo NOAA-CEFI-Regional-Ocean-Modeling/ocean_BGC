@@ -59,10 +59,6 @@ module COBALT_send_diag
       call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
            grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt)
 
-
-      call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
-           grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt)
-
       ! Set default value
       is_post_vertdiff = .false.
 

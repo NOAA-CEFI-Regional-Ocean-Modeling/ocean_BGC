@@ -358,8 +358,6 @@ contains
     !User also adds the definition of each parameter in generic_COBALT_params type
     !==============================================================
 
-    integer :: stdoutunit
-
     !=============
     !Block Starts: g_tracer_add_param
     !=============
@@ -368,8 +366,6 @@ contains
     !All the g_tracer_add_param calls must happen between
     !g_tracer_start_param_list and g_tracer_end_param_list  calls.
     !This implementation enables runtime overwrite via COBALT_input or COBALT_override.
-
-    stdoutunit=stdout()
 
     call g_tracer_start_param_list(package_name)
     call get_param(param_file, "generic_COBALT", "init", cobalt%init, "init", default=.false.)
@@ -3111,7 +3107,7 @@ contains
     real, dimension(ilb:,jlb:), optional, intent(in) :: photo_acc_dpth
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_source'
-    integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kmld_ref
+    integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200
     real, dimension(:,:,:) ,pointer :: grid_tmask
     integer, dimension(:,:),pointer :: mask_coast,grid_kmt
     !
@@ -3147,10 +3143,9 @@ contains
     real :: fpoc_btm, log10_fpoc_btm
     real :: fe_salt
     real :: sal,tt,tkb,ts,ts2,ts3,ts4,ts5
-    real :: rho_mld_ref,rho_k,dK,dKm1,afac,deltaRhoAtK,deltaRhoAtKm1,deltaRhoFlag
     real :: alpha_temp, alpha_step
     real :: P_C_max_temp, P_C_max_step, bresp_temp
-    real :: theta_temp, theta_step, irrlim_temp, P_C_m_aclm, P_C_m
+    real :: theta_temp, irrlim_temp, P_C_m_aclm, P_C_m
     real :: mu_temp, mu_opt
     integer :: yearday
     real :: rev_angle, dec_angle, temp_arg
@@ -3181,9 +3176,6 @@ contains
 
     real :: tr,ltr
     real :: imbal
-    integer :: stdoutunit, imbal_flag, outunit
-    type(g_tracer_type), pointer :: g_tracer,g_tracer_next
-    real :: KD_SMOOTH = 1.0E-05
 
     r_dt = 1.0 / dt
 
@@ -3309,26 +3301,26 @@ contains
        call g_tracer_set_values(tracer_list,'nh4','csurf',cobalt%nh3_csurf    ,isd,jsd)
     end if
 
-      if (do_14c) then                                        !<<RADIOCARBON
+    if (do_14c) then                                        !<<RADIOCARBON
 
       ! Normally, the alpha would be multiplied by the atmospheric 14C/12C ratio. However,
       ! here that is set to 1, so that alpha_14C = alpha_12C. This needs to be changed!
 
-   call g_tracer_get_values(tracer_list,'di14c' ,'field', cobalt%f_di14c,isd,jsd,positive=.true.)
+      call g_tracer_get_values(tracer_list,'di14c' ,'field', cobalt%f_di14c,isd,jsd,positive=.true.)
 
-    ! This is not used until later, but get it now
-    call g_tracer_get_values(tracer_list,'do14c' ,'field', cobalt%f_do14c,isd,jsd,positive=.true.)
+      ! This is not used until later, but get it now
+      call g_tracer_get_values(tracer_list,'do14c' ,'field', cobalt%f_do14c,isd,jsd,positive=.true.)
 
-       do j = jsc, jec ; do i = isc, iec  !{
-       cobalt%c14o2_csurf(i,j) =  cobalt%co2_csurf(i,j) *                &
-         cobalt%f_di14c(i,j,1) / (cobalt%f_dic(i,j,1) + epsln)
-       cobalt%c14o2_alpha(i,j) =  cobalt%co2_alpha(i,j)
-       enddo; enddo ; !} i, j
+      do j = jsc, jec ; do i = isc, iec  !{
+        cobalt%c14o2_csurf(i,j) =  cobalt%co2_csurf(i,j) *                &
+        cobalt%f_di14c(i,j,1) / (cobalt%f_dic(i,j,1) + epsln)
+        cobalt%c14o2_alpha(i,j) =  cobalt%co2_alpha(i,j)
+      enddo; enddo ; !} i, j
 
-    call g_tracer_set_values(tracer_list,'di14c','alpha',cobalt%c14o2_alpha      ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'di14c','csurf',cobalt%c14o2_csurf      ,isd,jsd)
+      call g_tracer_set_values(tracer_list,'di14c','alpha',cobalt%c14o2_alpha      ,isd,jsd)
+      call g_tracer_set_values(tracer_list,'di14c','csurf',cobalt%c14o2_csurf      ,isd,jsd)
 
-      endif                                                   !RADIOCARBON>>
+    endif                                                   !RADIOCARBON>>
 
     !---------------------------------------------------------------------
     ! Get positive tracer concentrations
@@ -3734,7 +3726,6 @@ contains
        cobalt%f_nh3(i,j,k) = cobalt%f_nh4(i,j,k)/(1.+10**(calc_pka_nh3(temp(i,j,k),salt(i,j,k))+log10(min(max(cobalt%f_htotal(i,j,1),1e-10),1e-5)))) * grid_tmask(i,j,k)
     enddo;  enddo ; enddo !} i,j,k
     end if
-
 
     !
     ! Calculate the phytoplankton growth rate calculation based on Geider et al. (1997).
