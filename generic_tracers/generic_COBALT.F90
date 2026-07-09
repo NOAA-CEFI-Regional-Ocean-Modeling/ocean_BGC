@@ -3038,9 +3038,6 @@ contains
   !   This is the subroutine to contain most of the biogeochemistry for calculating the
   !   interaction of tracers with each other and with outside forcings.
   !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call generic_COBALT_update_from_source(tracer_list,Temp,Salt,dzt,hblt_depth,&
-  !                                         ilb,jlb,tau,dt, grid_dat,sw_pen,opacity)
   !  </TEMPLATE>
   !  <IN NAME="tracer_list" TYPE="type(g_tracer_type), pointer">
   !   Pointer to the head of generic tracer list.
@@ -3080,7 +3077,7 @@ contains
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
   ! If you'd like to pass the thermodynamic variables for a mld calculation
   subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
-       ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff, &
+       ilb,jlb,tau,dt,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff, &
        geolat, photo_acc_dpth)
   !subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
@@ -3091,9 +3088,7 @@ contains
     real, dimension(ilb:,jlb:),     intent(in) :: hblt_depth
     integer,                        intent(in) :: ilb,jlb,tau
     real,                           intent(in) :: dt
-    real, dimension(ilb:,jlb:),     intent(in) :: grid_dat
     type(time_type),                intent(in) :: model_time
-
     integer,                        intent(in) :: nbands
     real, dimension(:),             intent(in) :: max_wavelength_band
     real, dimension(:,ilb:,jlb:),   intent(in) :: sw_pen_band
