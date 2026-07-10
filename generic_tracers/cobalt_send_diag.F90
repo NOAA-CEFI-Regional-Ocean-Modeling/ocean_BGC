@@ -50,7 +50,6 @@ module COBALT_send_diag
       real :: drho_dzt
       real, dimension(:,:,:) ,pointer :: grid_tmask
       integer, dimension(:,:),pointer :: mask_coast,grid_kmt
-      integer, dimension(:,:), Allocatable :: k_bot
       real, dimension(:,:), Allocatable :: rho_dzt_100,rho_dzt_200
       integer :: k_100,k_200
       real, dimension(:,:), Allocatable :: field_2d !used to calculate some 2d fields before saving
