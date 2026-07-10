@@ -7,10 +7,10 @@ module generic_bottom_layer_diags
   private
 
   type, public :: generic_bld
-    real, pointer :: rho_dzt(:, :, :) => null()  !< density * dz * dt
-    integer, allocatable :: kmt(:, :)            !< index of the bottom layer, copy of grid_kmt
-    integer, allocatable :: k_bot(:, :)          !< shallowest layer within bottom_thickness
+    real, pointer :: rho_dzt(:, :, :) => null()  !< density * thickness
     real, allocatable :: rho_dzt_bot(:, :)       !< Accumulated mass in bottom layer
+    integer, pointer :: kmt(:, :) => null()      !< Index of the bottom layer
+    integer, allocatable :: k_bot(:, :)          !< Shallowest layer within bottom_thickness
     real :: Rho_0, bottom_thickness
     integer :: isc, iec, jsc, jec
   end type generic_bld
@@ -23,7 +23,6 @@ module generic_bottom_layer_diags
       type(generic_bld), intent(inout) :: bld
       integer, intent(in) :: isc, iec, jsc, jec
       real, intent(in) :: Rho_0, bottom_thickness
-      allocate(bld%kmt(isc:iec, jsc:jec))
       allocate(bld%k_bot(isc:iec, jsc:jec))
       allocate(bld%rho_dzt_bot(isc:iec, jsc:jec))
       bld%isc = isc
@@ -37,7 +36,7 @@ module generic_bottom_layer_diags
     subroutine generic_bld_dealloc(bld)
       type(generic_bld), intent(inout) :: bld
       nullify(bld%rho_dzt)
-      deallocate(bld%kmt)
+      nullify(bld%kmt)
       deallocate(bld%k_bot)
       deallocate(bld%rho_dzt_bot)
     end subroutine generic_bld_dealloc
@@ -47,19 +46,20 @@ module generic_bottom_layer_diags
     subroutine generic_bld_update(bld, rho_dzt, grid_kmt)
       type(generic_bld), intent(inout) :: bld
       real, target :: rho_dzt(:, :, :)
-      integer, intent(in) :: grid_kmt(:, :)
+      integer, target :: grid_kmt(:, :)
       integer :: i, j, k
 
       bld%rho_dzt => rho_dzt
+      bld%kmt => grid_kmt
 
       do j = bld%jsc, bld%jec; do i = bld%isc, bld%iec
-        bld%kmt(i,j) = grid_kmt(i,j)
         bld%k_bot(i,j) = 0
         bld%rho_dzt_bot(i,j) = 0.0
-        if (grid_kmt(i,j) .gt. 0) then
-          do k = grid_kmt(i,j),1,-1
-            ! Check if the top of layer k is within the bottom thickness.  If so, include its properties in the bottom
-            ! layer averages.  Overshoots will be subtracted off later.
+        if (bld%kmt(i,j) .gt. 0) then
+          do k = bld%kmt(i,j),1,-1
+            ! Check if the top of layer k is within the bottom thickness.
+            ! If so, include its properties in the bottom
+            ! layer averages. Overshoots will be subtracted off later.
             if (bld%rho_dzt_bot(i,j).lt.(bld%Rho_0*bld%bottom_thickness)) then
               bld%k_bot(i,j) = k
               bld%rho_dzt_bot(i,j) = bld%rho_dzt_bot(i,j) + bld%rho_dzt(i,j,k)
