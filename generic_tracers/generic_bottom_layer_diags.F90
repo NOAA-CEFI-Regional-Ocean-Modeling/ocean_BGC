@@ -63,6 +63,8 @@ module generic_bottom_layer_diags
             if (bld%rho_dzt_bot(i,j).lt.(bld%Rho_0*bld%bottom_thickness)) then
               bld%k_bot(i,j) = k
               bld%rho_dzt_bot(i,j) = bld%rho_dzt_bot(i,j) + bld%rho_dzt(i,j,k)
+            else
+              exit
             endif
           enddo
         endif
