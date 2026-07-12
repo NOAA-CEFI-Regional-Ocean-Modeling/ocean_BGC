@@ -3121,7 +3121,7 @@ contains
     real :: tmp_irrad_aclm, tmp_zaclm
     real :: drho_dzt
     integer, dimension(:,:), Allocatable :: k_bot, kblt
-    real, dimension(:), Allocatable   :: tmp_irr_band
+    real, dimension(nbands) :: tmp_irr_band
     real, dimension(:,:), Allocatable :: rho_dzt_100,rho_dzt_200,rho_dzt_bot,sfc_irrad
     ! << local variables used for neritic CaCO3 burial
     integer :: k_150
@@ -3213,12 +3213,6 @@ contains
     !---------------------------------------------------------------------
 
     k=1
-    do j = jsc, jec ; do i = isc, iec  !{
-       cobalt%htotallo(i,j) = cobalt%htotal_scale_lo * cobalt%f_htotal(i,j,k)
-       cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * cobalt%f_htotal(i,j,k)
-    enddo; enddo ; !} i, j
-
-
     call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
          Temp(:,:,k), Salt(:,:,k),                    &
          cobalt%f_dic(:,:,k),                          &
@@ -3238,11 +3232,6 @@ contains
          omega_calc=cobalt%omega_calc(:,:,k))
 
     do k = 2, nk
-       do j = jsc, jec ; do i = isc, iec  !{
-          cobalt%htotallo(i,j) = cobalt%htotal_scale_lo * cobalt%f_htotal(i,j,k)
-          cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * cobalt%f_htotal(i,j,k)
-       enddo; enddo ; !} i, j
-
        call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
             Temp(:,:,k), Salt(:,:,k),                    &
             cobalt%f_dic(:,:,k),                          &
@@ -3345,7 +3334,7 @@ contains
     call g_tracer_get_values(tracer_list,'sldop'   ,'field',cobalt%f_sldop   ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'sidet'  ,'field',cobalt%f_sidet    ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'sio4'   ,'field',cobalt%f_sio4     ,isd,jsd,positive=.true.)
-!
+    !
     ! phytoplankton fields
     !
     call g_tracer_get_values(tracer_list,'fedi'   ,'field',phyto(DIAZ)%f_fe(:,:,:) ,isd,jsd,positive=.true.)
@@ -3566,7 +3555,7 @@ contains
     ! Forsythe et al.: https://www.sciencedirect.com/science/article/pii/030438009400034F
     ! Stock et al. (submitted) (link to be added as soon as available)
     !
-    allocate(tmp_irr_band(nbands))        ! irradiance in wavelength bands
+    !allocate(tmp_irr_band(nbands))        ! irradiance in wavelength bands
     allocate(sfc_irrad(isc:iec,jsc:jec))  ! surface photosythetically available irradiance
     allocate(kblt(isc:iec,jsc:jec))       ! tracks of max k index in mixed layer
     frac_sfc_irrad_aclm = 1.0/(2.71828**cobalt%ml_aclm_efold) ! controls acclimation in deep mixed layers
@@ -3693,7 +3682,7 @@ contains
        cobalt%irr_mix(i,j,1:kblt(i,j)) = tmp_irrad_ML / max(1.0e-6,tmp_hblt)
     enddo;  enddo !} i,j
 
-    deallocate(tmp_irr_band)
+    !deallocate(tmp_irr_band)
     deallocate(zmid_nk)
     !
     ! Calculate the final photoacclimation irradiance using the standard relaxation
@@ -6023,7 +6012,6 @@ contains
     ! and has understandable units. For example, typical plankton concentrations are ~0.1-1 mmoles N m-3
     ! day-1, so an imbalance of order 1 would be very large whereas 1e-9 is very small.
     ! A reccomended tolerance is between 1e-7 and 1e-9.
-    imbal_flag = 0;
     post_totn = 0;
     post_totc = 0;
     post_totp = 0;
@@ -7056,11 +7044,6 @@ contains
 
        call g_tracer_get_values(tracer_list,'htotal' ,'field', htotal_field,isd,jsd)
        call g_tracer_get_values(tracer_list,'co3_ion','field',co3_ion_field,isd,jsd)
-
-       do j = jsc, jec ; do i = isc, iec  !{
-          cobalt%htotallo(i,j) = cobalt%htotal_scale_lo * htotal_field(i,j,1)
-          cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * htotal_field(i,j,1)
-       enddo; enddo ; !} i, j
 
        if(.not. present(dzt)) then
           ! 2017/08/11 jgj is cobalt type defined/passed here ?
