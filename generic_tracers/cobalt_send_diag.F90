@@ -295,18 +295,18 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_sfc_co3_sol_calc, cobalt%co3_sol_calc(:,:,1),  &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
-          ! Bottom averaged diagnostics
-
-          call generic_bld_average(cobalt%bld, cobalt%p_o2(:,:,:,tau), cobalt%btm_o2)
+          ! Calculate bottom averaged diagnostics.
+          ! Note that averages for btm_o2, btm_no3, btm_co3_ion, and btm_co3_sol_calc
+          ! were already calculated in generic_COBALT_update_from_source.
           call generic_bld_average(cobalt%bld, cobalt%p_alk(:,:,:,tau), cobalt%btm_alk)
           call generic_bld_average(cobalt%bld, cobalt%p_dic(:,:,:,tau), cobalt%btm_dic)
           call generic_bld_average(cobalt%bld, Temp(:,:,:), cobalt%btm_temp)
           call generic_bld_average(cobalt%bld, cobalt%f_htotal(:,:,:), cobalt%btm_htotal)
           call generic_bld_average(cobalt%bld, cobalt%co3_sol_arag(:,:,:), cobalt%btm_co3_sol_arag)
 
-          ! Averages for btm_co3_ion and btm_co3_sol_calc were already calculated during
-          ! generic_COBALT_update_from_source. If the carbon system has been recalculated above,
-          ! we also need to re-average them.
+          ! Because the averages for btm_co3_ion and btm_co3_sol_calc were already calculated during
+          ! generic_COBALT_update_from_source, we only need to re-average them if the
+          ! carbon system was recalculated above.
           if (cobalt%recalculate_carbon) then
             call generic_bld_average(cobalt%bld, cobalt%f_co3_ion, cobalt%btm_co3_ion)
             call generic_bld_average(cobalt%bld, cobalt%co3_sol_calc, cobalt%btm_co3_sol_calc)
