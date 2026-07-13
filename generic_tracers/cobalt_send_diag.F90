@@ -187,9 +187,6 @@ module COBALT_send_diag
               cobalt%nmd_misc(i,j,k)=phyto(MEDIUM)%f_n(i,j,k) - phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%silim(i,j,k)
             enddo; enddo ; enddo !} i,j,k
 
-            call generic_bld_average(cobalt%bld, cobalt%f_co3_ion, cobalt%btm_co3_ion)
-            call generic_bld_average(cobalt%bld, cobalt%co3_sol_calc, cobalt%btm_co3_sol_calc)
-
           endif !} recalculate carbon system properties
 
           used = g_send_data(cobalt%id_co3_sol_arag, cobalt%co3_sol_arag, &
@@ -298,12 +295,22 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_sfc_co3_sol_calc, cobalt%co3_sol_calc(:,:,1),  &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
+          ! Bottom averaged diagnostics
+
           call generic_bld_average(cobalt%bld, cobalt%p_o2(:,:,:,tau), cobalt%btm_o2)
           call generic_bld_average(cobalt%bld, cobalt%p_alk(:,:,:,tau), cobalt%btm_alk)
           call generic_bld_average(cobalt%bld, cobalt%p_dic(:,:,:,tau), cobalt%btm_dic)
           call generic_bld_average(cobalt%bld, Temp(:,:,:), cobalt%btm_temp)
           call generic_bld_average(cobalt%bld, cobalt%f_htotal(:,:,:), cobalt%btm_htotal)
           call generic_bld_average(cobalt%bld, cobalt%co3_sol_arag(:,:,:), cobalt%btm_co3_sol_arag)
+
+          ! Averages for btm_co3_ion and btm_co3_sol_calc were already calculated during
+          ! generic_COBALT_update_from_source. If the carbon system has been recalculated above,
+          ! we also need to re-average them.
+          if (cobalt%recalculate_carbon) then
+            call generic_bld_average(cobalt%bld, cobalt%f_co3_ion, cobalt%btm_co3_ion)
+            call generic_bld_average(cobalt%bld, cobalt%co3_sol_calc, cobalt%btm_co3_sol_calc)
+          endif
 
           do j = jsc, jec ; do i = isc, iec
             cobalt%btm_omega_calc(i,j) = 0.0
@@ -322,7 +329,7 @@ module COBALT_send_diag
              endif
           enddo; enddo
 
-          ! CALCULATE BOTTOM PROGNOSTIC TRACERS
+          ! Send bottom diagnostics
           used = g_send_data(cobalt%id_btm_temp, cobalt%btm_temp, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_btm_o2, cobalt%btm_o2, &
