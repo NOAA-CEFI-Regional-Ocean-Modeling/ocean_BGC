@@ -3,6 +3,7 @@
 ! which does the actual averaging of the 3D data into a 2D bottom field.
 ! The other subroutines allocate and update information about the vertical coordinates.
 module generic_bottom_layer_diags
+  use MOM_error_handler, only : MOM_error, FATAL
   implicit none
   private
 
@@ -77,6 +78,12 @@ module generic_bottom_layer_diags
       real, intent(in) :: field(:, :, :)   !< 3D field to be averaged
       real, intent(out) :: field_btm(:, :) !< 2D field of bottom layer average
       integer :: i, j, k
+
+      ! COBALT always calls generic_bld_update beforehand,
+      ! but check anyways in case another module is using this routine.
+      if (.not. associated(bld%rho_dzt) .or. .not. associated(bld%kmt)) then
+        call MOM_error(FATAL, "generic_bld_update must be called before generic_bld_average.")
+      endif
 
       do j = bld%jsc, bld%jec; do i = bld%isc, bld%iec
         field_btm(i,j) = 0.0
