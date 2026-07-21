@@ -543,8 +543,8 @@ module COBALT_send_diag
           cobalt%tot_layer_int_p(:,:,:) = (cobalt%p_po4(:,:,:,tau) + cobalt%p_pdi(:,:,:,tau) + cobalt%p_plg(:,:,:,tau) + &
             cobalt%p_pmd(:,:,:,tau) + cobalt%p_psm(:,:,:,tau) + cobalt%p_ldop(:,:,:,tau) + cobalt%p_sldop(:,:,:,tau) + &
             cobalt%p_srdop(:,:,:,tau) + cobalt%p_pdet(:,:,:,tau) + cobalt%p_pdet_fast(:,:,:,tau) + bact(1)%q_p_2_n*cobalt%p_nbact(:,:,:,tau) + &
-            zoo(1)%q_p_2_n*cobalt%p_nsmz(:,:,:,tau) + zoo(2)%q_p_2_n*cobalt%p_nmdz(:,:,:,tau) + &
-            zoo(3)%q_p_2_n*cobalt%p_nlgz(:,:,:,tau))*rho_dzt(:,:,:)
+            zoo(SMZ)%q_p_2_n*cobalt%p_nsmz(:,:,:,tau) + zoo(MDZ)%q_p_2_n*cobalt%p_nmdz(:,:,:,tau) + &
+            zoo(LGZ)%q_p_2_n*cobalt%p_nlgz(:,:,:,tau))*rho_dzt(:,:,:)
 
           cobalt%tot_layer_int_si(:,:,:) = (cobalt%p_sio4(:,:,:,tau) + cobalt%p_silg(:,:,:,tau) + &
             cobalt%p_simd(:,:,:,tau) + cobalt%p_sidet(:,:,:,tau)) * rho_dzt(:,:,:)
@@ -644,9 +644,9 @@ module COBALT_send_diag
             phyto(LARGE)%f_n_100(i,j) = cobalt%p_nlg(i,j,1,tau) * rho_dzt(i,j,1)
             phyto(MEDIUM)%f_n_100(i,j) = cobalt%p_nmd(i,j,1,tau) * rho_dzt(i,j,1)
             phyto(SMALL)%f_n_100(i,j) = cobalt%p_nsm(i,j,1,tau) * rho_dzt(i,j,1)
-            zoo(1)%f_n_100(i,j) = cobalt%p_nsmz(i,j,1,tau) * rho_dzt(i,j,1)
-            zoo(2)%f_n_100(i,j) = cobalt%p_nmdz(i,j,1,tau) * rho_dzt(i,j,1)
-            zoo(3)%f_n_100(i,j) = cobalt%p_nlgz(i,j,1,tau) * rho_dzt(i,j,1)
+            zoo(SMZ)%f_n_100(i,j) = cobalt%p_nsmz(i,j,1,tau) * rho_dzt(i,j,1)
+            zoo(MDZ)%f_n_100(i,j) = cobalt%p_nmdz(i,j,1,tau) * rho_dzt(i,j,1)
+            zoo(LGZ)%f_n_100(i,j) = cobalt%p_nlgz(i,j,1,tau) * rho_dzt(i,j,1)
             bact(1)%f_n_100(i,j) = cobalt%p_nbact(i,j,1,tau) * rho_dzt(i,j,1)
             cobalt%f_ndet_100(i,j) = cobalt%p_ndet(i,j,1,tau) * rho_dzt(i,j,1)
             cobalt%f_ndet_fast_100(i,j) = cobalt%p_ndet_fast(i,j,1,tau) * rho_dzt(i,j,1)
@@ -704,9 +704,9 @@ module COBALT_send_diag
                 phyto(LARGE)%f_n_100(i,j) = phyto(LARGE)%f_n_100(i,j) + cobalt%p_nlg(i,j,k,tau) * rho_dzt(i,j,k)
                 phyto(MEDIUM)%f_n_100(i,j) = phyto(MEDIUM)%f_n_100(i,j) + cobalt%p_nmd(i,j,k,tau) * rho_dzt(i,j,k)
                 phyto(SMALL)%f_n_100(i,j) = phyto(SMALL)%f_n_100(i,j) + cobalt%p_nsm(i,j,k,tau) * rho_dzt(i,j,k)
-                zoo(1)%f_n_100(i,j) = zoo(1)%f_n_100(i,j) + cobalt%p_nsmz(i,j,k,tau) * rho_dzt(i,j,k)
-                zoo(2)%f_n_100(i,j) = zoo(2)%f_n_100(i,j) + cobalt%p_nmdz(i,j,k,tau) * rho_dzt(i,j,k)
-                zoo(3)%f_n_100(i,j) = zoo(3)%f_n_100(i,j) + cobalt%p_nlgz(i,j,k,tau) * rho_dzt(i,j,k)
+                zoo(SMZ)%f_n_100(i,j) = zoo(SMZ)%f_n_100(i,j) + cobalt%p_nsmz(i,j,k,tau) * rho_dzt(i,j,k)
+                zoo(MDZ)%f_n_100(i,j) = zoo(MDZ)%f_n_100(i,j) + cobalt%p_nmdz(i,j,k,tau) * rho_dzt(i,j,k)
+                zoo(LGZ)%f_n_100(i,j) = zoo(LGZ)%f_n_100(i,j) + cobalt%p_nlgz(i,j,k,tau) * rho_dzt(i,j,k)
                 bact(1)%f_n_100(i,j) = bact(1)%f_n_100(i,j) + cobalt%p_nbact(i,j,k,tau) * rho_dzt(i,j,k)
                 cobalt%f_ndet_100(i,j) = cobalt%f_ndet_100(i,j) + cobalt%p_ndet(i,j,k,tau)*rho_dzt(i,j,k)
                 cobalt%f_ndet_fast_100(i,j) = cobalt%f_ndet_fast_100(i,j) + cobalt%p_ndet_fast(i,j,k,tau)*rho_dzt(i,j,k)
@@ -760,9 +760,9 @@ module COBALT_send_diag
               phyto(LARGE)%f_n_100(i,j) = phyto(LARGE)%f_n_100(i,j) + cobalt%p_nlg(i,j,k_100,tau) * drho_dzt
               phyto(MEDIUM)%f_n_100(i,j) = phyto(MEDIUM)%f_n_100(i,j) + cobalt%p_nmd(i,j,k_100,tau) * drho_dzt
               phyto(SMALL)%f_n_100(i,j) = phyto(SMALL)%f_n_100(i,j) + cobalt%p_nsm(i,j,k_100,tau) * drho_dzt
-              zoo(1)%f_n_100(i,j) = zoo(1)%f_n_100(i,j) + cobalt%p_nsmz(i,j,k_100,tau) * drho_dzt
-              zoo(2)%f_n_100(i,j) = zoo(2)%f_n_100(i,j) + cobalt%p_nmdz(i,j,k_100,tau) * drho_dzt
-              zoo(3)%f_n_100(i,j) = zoo(3)%f_n_100(i,j) + cobalt%p_nlgz(i,j,k_100,tau) * drho_dzt
+              zoo(SMZ)%f_n_100(i,j) = zoo(SMZ)%f_n_100(i,j) + cobalt%p_nsmz(i,j,k_100,tau) * drho_dzt
+              zoo(MDZ)%f_n_100(i,j) = zoo(MDZ)%f_n_100(i,j) + cobalt%p_nmdz(i,j,k_100,tau) * drho_dzt
+              zoo(LGZ)%f_n_100(i,j) = zoo(LGZ)%f_n_100(i,j) + cobalt%p_nlgz(i,j,k_100,tau) * drho_dzt
               bact(1)%f_n_100(i,j) = bact(1)%f_n_100(i,j) + cobalt%p_nbact(i,j,k_100,tau) * drho_dzt
               cobalt%f_ndet_100(i,j) = cobalt%f_ndet_100(i,j) + cobalt%p_ndet(i,j,k_100,tau)*drho_dzt
               cobalt%f_ndet_fast_100(i,j) = cobalt%f_ndet_fast_100(i,j) + cobalt%p_ndet_fast(i,j,k_100,tau)*drho_dzt
@@ -875,7 +875,7 @@ module COBALT_send_diag
           allocate(rho_dzt_200(isc:iec,jsc:jec))
           do j = jsc, jec ; do i = isc, iec !{
             rho_dzt_200(i,j) = rho_dzt(i,j,1)
-            cobalt%f_mesozoo_200(i,j) = (zoo(2)%f_n(i,j,1)+zoo(3)%f_n(i,j,1))*rho_dzt(i,j,1)
+            cobalt%f_mesozoo_200(i,j) = (zoo(MDZ)%f_n(i,j,1)+zoo(LGZ)%f_n(i,j,1))*rho_dzt(i,j,1)
           enddo; enddo !} i,j
 
           do j = jsc, jec ; do i = isc, iec ; !{
@@ -885,14 +885,14 @@ module COBALT_send_diag
                 k_200 = k
                 rho_dzt_200(i,j) = rho_dzt_200(i,j) + rho_dzt(i,j,k)
                 cobalt%f_mesozoo_200(i,j) = cobalt%f_mesozoo_200(i,j) + &
-                  (zoo(2)%f_n(i,j,k)+zoo(3)%f_n(i,j,k))*rho_dzt(i,j,k)
+                  (zoo(MDZ)%f_n(i,j,k)+zoo(LGZ)%f_n(i,j,k))*rho_dzt(i,j,k)
               endif
             enddo  !} k
 
             if (k_200 .gt. 1 .and. k_200 .lt. grid_kmt(i,j)) then
               drho_dzt = cobalt%Rho_0 * 200.0 - rho_dzt_200(i,j)
               cobalt%f_mesozoo_200(i,j) = cobalt%f_mesozoo_200(i,j) + &
-                (zoo(2)%f_n(i,j,k_200)+zoo(3)%f_n(i,j,k_200))*drho_dzt
+                (zoo(MDZ)%f_n(i,j,k_200)+zoo(LGZ)%f_n(i,j,k_200))*drho_dzt
             endif
           enddo ; enddo  !} i,j
           deallocate(rho_dzt_200)
@@ -992,8 +992,8 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_pop, (cobalt%p_pdi(:,:,:,tau) + cobalt%p_plg(:,:,:,tau) + &
             cobalt%p_pmd(:,:,:,tau) + cobalt%p_psm(:,:,:,tau) + bact(1)%q_p_2_n * cobalt%p_nbact(:,:,:,tau) + &
-            cobalt%p_pdet(:,:,:,tau) + cobalt%p_pdet_fast(:,:,:,tau) + zoo(1)%q_p_2_n * cobalt%p_nsmz(:,:,:,tau) + &
-			zoo(2)%q_p_2_n * cobalt%p_nmdz(:,:,:,tau) + zoo(3)%q_p_2_n * cobalt%p_nlgz(:,:,:,tau)) * cobalt%Rho_0, &
+            cobalt%p_pdet(:,:,:,tau) + cobalt%p_pdet_fast(:,:,:,tau) + zoo(SMZ)%q_p_2_n * cobalt%p_nsmz(:,:,:,tau) + &
+			zoo(MDZ)%q_p_2_n * cobalt%p_nmdz(:,:,:,tau) + zoo(LGZ)%q_p_2_n * cobalt%p_nlgz(:,:,:,tau)) * cobalt%Rho_0, &
             model_time, rmask = grid_tmask,is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_bfe, (cobalt%p_fedi(:,:,:,tau) + cobalt%p_felg(:,:,:,tau) + &
             cobalt%p_femd(:,:,:,tau) + cobalt%p_fesm(:,:,:,tau) + cobalt%p_fedet(:,:,:,tau))*cobalt%Rho_0, &
@@ -1222,8 +1222,8 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_popos, (cobalt%p_pdi(:,:,1,tau) + cobalt%p_plg(:,:,1,tau) + &
             cobalt%p_pmd(:,:,1,tau) + cobalt%p_psm(:,:,1,tau) + bact(1)%q_p_2_n * cobalt%p_nbact(:,:,1,tau) + &
-            cobalt%p_pdet(:,:,1,tau) + cobalt%p_pdet_fast(:,:,1,tau) + zoo(1)%q_p_2_n * cobalt%p_nsmz(:,:,1,tau) + &
-			      zoo(2)%q_p_2_n * cobalt%p_nmdz(:,:,1,tau) + zoo(3)%q_p_2_n * cobalt%p_nlgz(:,:,1,tau)) * cobalt%Rho_0, &
+            cobalt%p_pdet(:,:,1,tau) + cobalt%p_pdet_fast(:,:,1,tau) + zoo(SMZ)%q_p_2_n * cobalt%p_nsmz(:,:,1,tau) + &
+			      zoo(MDZ)%q_p_2_n * cobalt%p_nmdz(:,:,1,tau) + zoo(LGZ)%q_p_2_n * cobalt%p_nlgz(:,:,1,tau)) * cobalt%Rho_0, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_bfeos, (cobalt%p_fedi(:,:,1,tau) + cobalt%p_felg(:,:,1,tau) + &
             cobalt%p_femd(:,:,1,tau) + cobalt%p_fesm(:,:,1,tau) + cobalt%p_fedet(:,:,1,tau))*cobalt%Rho_0, &

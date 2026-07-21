@@ -184,7 +184,7 @@ module generic_COBALT
      imbalance_tolerance,as_param_cobalt
 
   !
-  ! Array allocations and flux calculations assume that phyto(1) is the
+  ! Array allocations and flux calculations assume that phyto(DIAZO) is the
   ! only phytoplankton group cabable of nitrogen uptake by N2 fixation while phyto(2:NUM_PHYTO)
   ! are only cabable of nitrgen uptake by NH4 and NO3 uptake
   !
@@ -897,11 +897,11 @@ contains
     ! Zooplankton stoichiometry is currently static.  The lower values for smaller zooplankton reflect the tendency of
     ! their prey to have lower P:N ratios.
     !
-    call get_param(param_file, "generic_COBALT", "q_p_2_n_smz", zoo(1)%q_p_2_n, "Small zooplankton P:N", &
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_smz", zoo(SMZ)%q_p_2_n, "Small zooplankton P:N", &
                    units="mol P mol N-1", default= 1.0/20.0)
-    call get_param(param_file, "generic_COBALT", "q_p_2_n_mdz", zoo(2)%q_p_2_n, "Medium zooplankton P:N", &
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_mdz", zoo(MDZ)%q_p_2_n, "Medium zooplankton P:N", &
                    units="mol P mol N-1", default= 1.0/18.0)
-    call get_param(param_file, "generic_COBALT", "q_p_2_n_lgz", zoo(3)%q_p_2_n, "Large zooplankton P:N", &
+    call get_param(param_file, "generic_COBALT", "q_p_2_n_lgz", zoo(LGZ)%q_p_2_n, "Large zooplankton P:N", &
                    units="mol P mol N-1", default= 1.0/16.0)
     !
     !-----------------------------------------------------------------------
@@ -1096,24 +1096,24 @@ contains
     ! Stock and Dunne, 2010 (https://doi.org/10.1016/j.dsr.2009.10.006)
     ! Stock et al., 2014 (https://doi.org/10.1016/j.pocean.2013.07.001)
     !
-    call get_param(param_file, "generic_COBALT", "imax_smz", zoo(1)%imax, &
+    call get_param(param_file, "generic_COBALT", "imax_smz", zoo(SMZ)%imax, &
                    "max ingestion rate for small zooplankton @ 0 deg. C", units="day-1", default=0.8*1.42, &
                    scale=I_sperd)
-    call get_param(param_file, "generic_COBALT", "imax_mdz", zoo(2)%imax, &
+    call get_param(param_file, "generic_COBALT", "imax_mdz", zoo(MDZ)%imax, &
                    "max ingestion rate for medium zooplankton @ 0 deg. C", units="day-1", default=0.57, scale=I_sperd)
-    call get_param(param_file, "generic_COBALT", "imax_lgz", zoo(3)%imax, &
+    call get_param(param_file, "generic_COBALT", "imax_lgz", zoo(LGZ)%imax, &
                    "max ingestion rate for large zooplankton @ 0 deg. C", units="day-1", default= 0.23, scale=I_sperd)
-    call get_param(param_file, "generic_COBALT", "ki_smz", zoo(1)%ki, "half-sat for ingestion by small zooplankton", &
+    call get_param(param_file, "generic_COBALT", "ki_smz", zoo(SMZ)%ki, "half-sat for ingestion by small zooplankton", &
                    units="mol N kg-1", default=1.25e-6)
-    call get_param(param_file, "generic_COBALT", "ki_mdz", zoo(2)%ki, "half-sat for ingestion by medium zooplankton", &
+    call get_param(param_file, "generic_COBALT", "ki_mdz", zoo(MDZ)%ki, "half-sat for ingestion by medium zooplankton", &
                    units="mol N kg-1", default=1.25e-6)
-    call get_param(param_file, "generic_COBALT", "ki_lgz", zoo(3)%ki, "half-sat for ingestion by large zooplankton", &
+    call get_param(param_file, "generic_COBALT", "ki_lgz", zoo(LGZ)%ki, "half-sat for ingestion by large zooplankton", &
                    units="mol N kg-1", default=1.25e-6)
-    call get_param(param_file, "generic_COBALT", "ktemp_smz", zoo(1)%ktemp, &
+    call get_param(param_file, "generic_COBALT", "ktemp_smz", zoo(SMZ)%ktemp, &
                    "exponential temperature dependence of small zooplankton rates", units="deg. C-1", default=0.063)
-    call get_param(param_file, "generic_COBALT", "ktemp_mdz", zoo(2)%ktemp, &
+    call get_param(param_file, "generic_COBALT", "ktemp_mdz", zoo(MDZ)%ktemp, &
                    "exponential temperature dependence of medium zooplankton rates", units="deg. C-1", default=0.063)
-    call get_param(param_file, "generic_COBALT", "ktemp_lgz", zoo(3)%ktemp, &
+    call get_param(param_file, "generic_COBALT", "ktemp_lgz", zoo(LGZ)%ktemp, &
                    "exponential temperature dependence of large zooplankton rates", units="deg. C-1", default=0.063)
     !
     ! Prey availability parameters.  These parameters set the "innate prey availability", or ipa, of each plankton prey
@@ -1133,86 +1133,86 @@ contains
     !
     ! Small zooplankton innate prey availabilities
     !
-    call get_param(param_file, "generic_COBALT", "smz_ipa_smp", zoo(1)%ipa_smp, &
+    call get_param(param_file, "generic_COBALT", "smz_ipa_smp", zoo(SMZ)%ipa_smp, &
                    "innate availability of small phytoplankton to small zooplankton feeding (0-1)", units="none", &
                    default=1.0)
-    call get_param(param_file, "generic_COBALT", "smz_ipa_mdp", zoo(1)%ipa_mdp, &
+    call get_param(param_file, "generic_COBALT", "smz_ipa_mdp", zoo(SMZ)%ipa_mdp, &
                    "innate availability of medium phytoplankton to small zooplankton feeding (0-1)", units="none", &
                    default=0.4)
-    call get_param(param_file, "generic_COBALT", "smz_ipa_lgp", zoo(1)%ipa_lgp, &
+    call get_param(param_file, "generic_COBALT", "smz_ipa_lgp", zoo(SMZ)%ipa_lgp, &
                    "innate availability of large phytoplankton to small zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "smz_ipa_diaz",zoo(1)%ipa_diaz, &
+    call get_param(param_file, "generic_COBALT", "smz_ipa_diaz",zoo(SMZ)%ipa_diaz, &
                    "innate availability of diazotrophs to small zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "smz_ipa_smz", zoo(1)%ipa_smz, &
+    call get_param(param_file, "generic_COBALT", "smz_ipa_smz", zoo(SMZ)%ipa_smz, &
                    "innate availability of small zooplankton to small zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "smz_ipa_mdz", zoo(1)%ipa_mdz, &
+    call get_param(param_file, "generic_COBALT", "smz_ipa_mdz", zoo(SMZ)%ipa_mdz, &
                    "innate availability of medium zooplankton to small zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "smz_ipa_lgz", zoo(1)%ipa_lgz, &
+    call get_param(param_file, "generic_COBALT", "smz_ipa_lgz", zoo(SMZ)%ipa_lgz, &
                    "innate availability of large zooplankton to small zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "smz_ipa_bact",zoo(1)%ipa_bact, &
+    call get_param(param_file, "generic_COBALT", "smz_ipa_bact",zoo(SMZ)%ipa_bact, &
                    "innate availability of bacteria to small zooplankton feeding (0-1)", units="none", default=0.5)
-    call get_param(param_file, "generic_COBALT", "smz_ipa_det", zoo(1)%ipa_det, &
+    call get_param(param_file, "generic_COBALT", "smz_ipa_det", zoo(SMZ)%ipa_det, &
                    "innate availability of detritus to small zooplankton feeding (0-1)", units="none", default=0.0)
     !
     ! Medium zooplankton innate prey availabilities
     !
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_smp", zoo(2)%ipa_smp, &
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_smp", zoo(MDZ)%ipa_smp, &
                    "innate availability of small phytoplankton to medium zooplankton feeding (0-1)", units="none", &
                    default=0.4)
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_mdp", zoo(2)%ipa_mdp, &
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_mdp", zoo(MDZ)%ipa_mdp, &
                    "innate availability of medium phytoplankton to medium zooplankton feeding (0-1)", units="none", &
                    default=1.0)
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_lgp", zoo(2)%ipa_lgp, &
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_lgp", zoo(MDZ)%ipa_lgp, &
                    "innate availability of large phytoplankton to medium zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_diaz",zoo(2)%ipa_diaz, &
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_diaz",zoo(MDZ)%ipa_diaz, &
                    "innate availability of diazotrophs to medium zooplankton feeding (0-1)", units="none", &
                    default=0.75)
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_smz", zoo(2)%ipa_smz, &
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_smz", zoo(MDZ)%ipa_smz, &
                    "innate availability of small zooplankton to medium zooplankton feeding (0-1)", units="none", &
                    default=1.0)
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_mdz", zoo(2)%ipa_mdz, &
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_mdz", zoo(MDZ)%ipa_mdz, &
                    "innate availability of medium zooplankton to medium zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_lgz", zoo(2)%ipa_lgz, &
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_lgz", zoo(MDZ)%ipa_lgz, &
                    "innate availability of large zooplankton to medium zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_bact", zoo(2)%ipa_bact, &
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_bact", zoo(MDZ)%ipa_bact, &
                    "innate availability of bacteria to medium zooplankton feeding (0-1)", units="none", default=0.0)
-    call get_param(param_file, "generic_COBALT", "mdz_ipa_det", zoo(2)%ipa_det, &
+    call get_param(param_file, "generic_COBALT", "mdz_ipa_det", zoo(MDZ)%ipa_det, &
                    "innate availability of detritus to medium zooplankton feeding (0-1)", units="none", default=0.0)
     !
     ! Large zooplankton/krill innate prey availabilities
     !
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_smp", zoo(3)%ipa_smp, &
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_smp", zoo(LGZ)%ipa_smp, &
                    "innate availability of small phytoplankton to large zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_mdp", zoo(3)%ipa_mdp, &
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_mdp", zoo(LGZ)%ipa_mdp, &
                    "innate availability of medium phytoplankton to large zooplankton feeding (0-1)", units="none", &
                    default=0.4)
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_lgp", zoo(3)%ipa_lgp, &
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_lgp", zoo(LGZ)%ipa_lgp, &
                    "innate availability of large phytoplankton to large zooplankton feeding (0-1)", units="none", &
                    default=1.0)
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_diaz",zoo(3)%ipa_diaz, &
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_diaz",zoo(LGZ)%ipa_diaz, &
                    "innate availability of diazotrophs to large zooplankton feeding (0-1)", units="none", &
                    default=0.4)
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_smz", zoo(3)%ipa_smz, &
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_smz", zoo(LGZ)%ipa_smz, &
                    "innate availability of small zooplankton to large zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_mdz", zoo(3)%ipa_mdz, &
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_mdz", zoo(LGZ)%ipa_mdz, &
                    "innate availability of medium zooplankton to large zooplankton feeding (0-1)", units="none", &
                    default=1.0)
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_lgz", zoo(3)%ipa_lgz, &
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_lgz", zoo(LGZ)%ipa_lgz, &
                    "innate availability of large zooplankton to large zooplankton feeding (0-1)", units="none", &
                    default=0.0)
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_bact",zoo(3)%ipa_bact, &
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_bact",zoo(LGZ)%ipa_bact, &
                    "innate availability of bacteria to large zooplankton feeding (0-1)", units="none", default=0.0)
-    call get_param(param_file, "generic_COBALT", "lgz_ipa_det", zoo(3)%ipa_det, &
+    call get_param(param_file, "generic_COBALT", "lgz_ipa_det", zoo(LGZ)%ipa_det, &
                    "innate availability of detritus to large zooplankton feeding (0-1)", units="none", default=0.0)
     !
     ! Switching parameters: The innate availabilities of prey items defined above are modulated by density dependent
@@ -1233,17 +1233,17 @@ contains
     ! Gentleman et al. (2003): https://doi.org/10.1016/j.dsr2.2003.07.001
     ! Stock et al. (2008): https://doi.org/10.1016/j.jmarsys.2007.12.004
     !
-    call get_param(param_file, "generic_COBALT", "nswitch_smz", zoo(1)%nswitch, &
+    call get_param(param_file, "generic_COBALT", "nswitch_smz", zoo(SMZ)%nswitch, &
                    "prey switching parameter 1 for small zooplankton", units="none", default=2.0)
-    call get_param(param_file, "generic_COBALT", "nswitch_mdz", zoo(2)%nswitch, &
+    call get_param(param_file, "generic_COBALT", "nswitch_mdz", zoo(MDZ)%nswitch, &
                    "prey switching parameter 1 for medium zooplankton", units="none", default=2.0)
-    call get_param(param_file, "generic_COBALT", "nswitch_lgz", zoo(3)%nswitch, &
+    call get_param(param_file, "generic_COBALT", "nswitch_lgz", zoo(LGZ)%nswitch, &
                    "prey switching parameter 1 for large zooplankton", units="none", default=2.0)
-    call get_param(param_file, "generic_COBALT", "mswitch_smz", zoo(1)%mswitch, &
+    call get_param(param_file, "generic_COBALT", "mswitch_smz", zoo(SMZ)%mswitch, &
                    "prey switching parameter 2 for small zooplankton", units="none", default=2.0)
-    call get_param(param_file, "generic_COBALT", "mswitch_mdz", zoo(2)%mswitch, &
+    call get_param(param_file, "generic_COBALT", "mswitch_mdz", zoo(MDZ)%mswitch, &
                    "prey switching parameter 2 for medium zooplankton", units="none", default=2.0)
-    call get_param(param_file, "generic_COBALT", "mswitch_lgz", zoo(3)%mswitch, &
+    call get_param(param_file, "generic_COBALT", "mswitch_lgz", zoo(LGZ)%mswitch, &
                    "prey switching parameter 2 for large zooplankton", units="none", default=2.0)
     !
     !----------------------------------------------------------------------
@@ -1259,17 +1259,17 @@ contains
     ! reasonable mesozooplankton biomass/production in subtropical gyres following Stock and Dunne (2010,
     ! https://doi.org/10.1016/j.dsr.2009.10.006).  Values near the lower end of observed range were needed.
     !
-    call get_param(param_file, "generic_COBALT", "gge_max_smz", zoo(1)%gge_max, &
+    call get_param(param_file, "generic_COBALT", "gge_max_smz", zoo(SMZ)%gge_max, &
                    "maximum gross growth efficiency for small zooplankton", units="none", default=0.4)
-    call get_param(param_file, "generic_COBALT", "gge_max_mdz",zoo(2)%gge_max, &
+    call get_param(param_file, "generic_COBALT", "gge_max_mdz",zoo(MDZ)%gge_max, &
                    "maximum gross growth efficiency for medium zooplankton", units="none", default=0.4)
-    call get_param(param_file, "generic_COBALT", "gge_max_lgz",zoo(3)%gge_max, &
+    call get_param(param_file, "generic_COBALT", "gge_max_lgz",zoo(LGZ)%gge_max, &
                    "maximum gross growth efficiency for large zooplankton", units="none", default=0.4)
-    call get_param(param_file, "generic_COBALT", "bresp_smz", zoo(1)%bresp, &
+    call get_param(param_file, "generic_COBALT", "bresp_smz", zoo(SMZ)%bresp, &
                    "basal respiration rate for small zooplankton", units="day-1", default=0.8*0.020, scale=I_sperd)
-    call get_param(param_file, "generic_COBALT", "bresp_mdz", zoo(2)%bresp, &
+    call get_param(param_file, "generic_COBALT", "bresp_mdz", zoo(MDZ)%bresp, &
                    "basal respiration rate for medium zooplankton", units="day-1", default=0.008,scale=I_sperd)
-    call get_param(param_file, "generic_COBALT", "bresp_lgz", zoo(3)%bresp, &
+    call get_param(param_file, "generic_COBALT", "bresp_lgz", zoo(LGZ)%bresp, &
                    "basal respiration rate for large zooplankton", units="day-1", default=0.0032, scale=I_sperd)
     !
     ! By default, 30% of food ingested by zooplankton is egested as either particulate or dissolved organic material.
@@ -1303,75 +1303,75 @@ contains
     ! Wheeler et al., 1997. (https://doi.org/10.1016/S0967-0637(96)00089-1)
     ! Vidal et al., 1999. (https://doi.org/10.4319/lo.1999.44.1.0106)
     !
-    call get_param(param_file, "generic_COBALT", "phi_det_smz", zoo(1)%phi_det, &
+    call get_param(param_file, "generic_COBALT", "phi_det_smz", zoo(SMZ)%phi_det, &
                    "fraction of ingestion by small zooplankton to detritus", units="none", default=0.0)
-    call get_param(param_file, "generic_COBALT", "phi_det_mdz", zoo(2)%phi_det, &
+    call get_param(param_file, "generic_COBALT", "phi_det_mdz", zoo(MDZ)%phi_det, &
                    "fraction of ingestion by medium zooplankton to detritus", units="none", default=0.15)
-    call get_param(param_file, "generic_COBALT", "phi_det_lgz", zoo(3)%phi_det, &
+    call get_param(param_file, "generic_COBALT", "phi_det_lgz", zoo(LGZ)%phi_det, &
                    "fraction of ingestion by large zooplankton to detritus", units="none", default=0.30)
     ! partitioning of zooplankton ingestion to labile dissolved organic material
-    call get_param(param_file, "generic_COBALT", "phi_ldon_smz", zoo(1)%phi_ldon, &
+    call get_param(param_file, "generic_COBALT", "phi_ldon_smz", zoo(SMZ)%phi_ldon, &
                    "fraction of N ingestion by small zooplankton to labile dissolved organic nitrogen", &
-                   units="none", default=0.625*(0.30-zoo(1)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_ldon_mdz", zoo(2)%phi_ldon, &
+                   units="none", default=0.625*(0.30-zoo(SMZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_ldon_mdz", zoo(MDZ)%phi_ldon, &
                    "fraction of N ingestion by medium zooplankton to labile dissolved organic nitrogen", &
-                   units="none", default=0.625*(0.30-zoo(2)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_ldon_lgz", zoo(3)%phi_ldon, &
+                   units="none", default=0.625*(0.30-zoo(MDZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_ldon_lgz", zoo(LGZ)%phi_ldon, &
                    "fraction of N ingestion by large zooplankton to labile dissolved organic nitrogen", &
-                   units="none", default=0.625*(0.30-zoo(3)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_ldop_smz", zoo(1)%phi_ldop, &
+                   units="none", default=0.625*(0.30-zoo(LGZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_ldop_smz", zoo(SMZ)%phi_ldop, &
                    "fraction of P ingestion by small zooplankton to labile dissolved organic phosphorus", &
-                   units="none", default=0.575*(0.30-zoo(1)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_ldop_mdz", zoo(2)%phi_ldop, &
+                   units="none", default=0.575*(0.30-zoo(SMZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_ldop_mdz", zoo(MDZ)%phi_ldop, &
                    "fraction of P ingestion by medium zooplankton to labile dissolved organic phosphorus", &
-                   units="none", default=0.575*(0.30-zoo(2)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_ldop_lgz", zoo(3)%phi_ldop, &
+                   units="none", default=0.575*(0.30-zoo(MDZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_ldop_lgz", zoo(LGZ)%phi_ldop, &
                    "fraction of P ingestion by large zooplankton to labile dissolved organic phosphorus", &
-                   units="none", default=0.575*(0.30-zoo(3)%phi_det))
+                   units="none", default=0.575*(0.30-zoo(LGZ)%phi_det))
     ! partitioning of zooplankton ingestion to semi-refractory dissolved organic material
-    call get_param(param_file, "generic_COBALT", "phi_srdon_smz", zoo(1)%phi_srdon, &
+    call get_param(param_file, "generic_COBALT", "phi_srdon_smz", zoo(SMZ)%phi_srdon, &
                    "fraction of N ingestion by small zooplankton to semi-refractory dissolved organic nitrogen", &
-                   units="none", default=0.075*(0.30-zoo(1)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_srdon_mdz", zoo(2)%phi_srdon, &
+                   units="none", default=0.075*(0.30-zoo(SMZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_srdon_mdz", zoo(MDZ)%phi_srdon, &
                    "fraction of N ingestion by medium zooplankton to semi-refractory dissolved organic nitrogen", &
-                   units="none", default=0.075*(0.30-zoo(2)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_srdon_lgz", zoo(3)%phi_srdon, &
+                   units="none", default=0.075*(0.30-zoo(MDZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_srdon_lgz", zoo(LGZ)%phi_srdon, &
                    "fraction of N ingestion by large zooplankton to semi-refractory dissolved organic nitrogen", &
-                   units="none", default=0.075*(0.30-zoo(3)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_srdop_smz", zoo(1)%phi_srdop, &
+                   units="none", default=0.075*(0.30-zoo(LGZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_srdop_smz", zoo(SMZ)%phi_srdop, &
                    "fraction of P ingestion by small zooplankton to semi-refractory dissolved organic phosphorus", &
-                   units="none", default=0.125*(0.30-zoo(1)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_srdop_mdz", zoo(2)%phi_srdop, &
+                   units="none", default=0.125*(0.30-zoo(SMZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_srdop_mdz", zoo(MDZ)%phi_srdop, &
                    "fraction of P ingestion by medium zooplankton to semi-refractory dissolved organic phosphorus", &
-                   units="none", default=0.125*(0.30-zoo(2)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_srdop_lgz", zoo(3)%phi_srdop, &
+                   units="none", default=0.125*(0.30-zoo(MDZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_srdop_lgz", zoo(LGZ)%phi_srdop, &
                    "fraction of P ingestion by large zooplankton to semi-refractory dissolved organic phosphorus", &
-                   units="none", default=0.125*(0.30-zoo(3)%phi_det))
+                   units="none", default=0.125*(0.30-zoo(LGZ)%phi_det))
     ! partitioning of zooplankton ingestion to semi-labile dissolved organic material
-    call get_param(param_file, "generic_COBALT", "phi_sldon_smz", zoo(1)%phi_sldon, &
+    call get_param(param_file, "generic_COBALT", "phi_sldon_smz", zoo(SMZ)%phi_sldon, &
                    "fraction of N ingestion by small zooplankton to semi-labile dissolved organic nitrogen", &
-                   units="none", default=0.3*(0.30-zoo(1)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_sldon_mdz", zoo(2)%phi_sldon, &
+                   units="none", default=0.3*(0.30-zoo(SMZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_sldon_mdz", zoo(MDZ)%phi_sldon, &
                    "fraction of N ingestion by medium zooplankton to semi-labile dissolved organic nitrogen", &
-                   units="none", default=0.3*(0.30-zoo(2)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_sldon_lgz", zoo(3)%phi_sldon, &
+                   units="none", default=0.3*(0.30-zoo(MDZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_sldon_lgz", zoo(LGZ)%phi_sldon, &
                    "fraction of N ingestion by large zooplankton to semi-labile dissolved organic nitrogen", &
-                   units="none", default=0.3*(0.30-zoo(3)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_sldop_smz", zoo(1)%phi_sldop, &
+                   units="none", default=0.3*(0.30-zoo(LGZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_sldop_smz", zoo(SMZ)%phi_sldop, &
                    "fraction of P ingestion by small zooplankton to semi-labile dissolved organic phosphorus", &
-                   units="none", default=0.3*(0.30-zoo(1)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_sldop_mdz", zoo(2)%phi_sldop, &
+                   units="none", default=0.3*(0.30-zoo(SMZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_sldop_mdz", zoo(MDZ)%phi_sldop, &
                    "fraction of P ingestion by medium zooplankton to semi-labile dissolved organic phosphorus", &
-                   units="none", default=0.3*(0.30-zoo(2)%phi_det))
-    call get_param(param_file, "generic_COBALT", "phi_sldop_lgz", zoo(3)%phi_sldop, &
+                   units="none", default=0.3*(0.30-zoo(MDZ)%phi_det))
+    call get_param(param_file, "generic_COBALT", "phi_sldop_lgz", zoo(LGZ)%phi_sldop, &
                    "fraction of P ingestion by large zooplankton to semi-labile dissolved organic phosphorus", &
-                   units="none", default=0.3*(0.30-zoo(3)%phi_det))
+                   units="none", default=0.3*(0.30-zoo(LGZ)%phi_det))
     ! Partitioning of silica detritus production from zooplankton is by default the same as organic matter detritus
-    call get_param(param_file, "generic_COBALT", "phi_det_si_smz", zoo(1)%phi_det_si, &
+    call get_param(param_file, "generic_COBALT", "phi_det_si_smz", zoo(SMZ)%phi_det_si, &
                    "fraction of silica ingestion by small zooplankton to si detritus", units="none", default=0.0)
-    call get_param(param_file, "generic_COBALT", "phi_det_si_mdz", zoo(2)%phi_det_si, &
+    call get_param(param_file, "generic_COBALT", "phi_det_si_mdz", zoo(MDZ)%phi_det_si, &
                    "fraction of silica ingestion by medium zooplankton to si detritus", units="none", default=0.15)
-    call get_param(param_file, "generic_COBALT", "phi_det_si_lgz", zoo(3)%phi_det_si, &
+    call get_param(param_file, "generic_COBALT", "phi_det_si_lgz", zoo(LGZ)%phi_det_si, &
                    "fraction of silica ingestion by large zooplankton to si detritus", units="none", default=0.30)
 	!
     !----------------------------------------------------------------------
@@ -3386,9 +3386,9 @@ contains
     !
     ! zooplankton fields
     !
-    call g_tracer_get_values(tracer_list,'nsmz'    ,'field',zoo(1)%f_n(:,:,:) ,isd,jsd,positive=.true.)
-    call g_tracer_get_values(tracer_list,'nmdz'    ,'field',zoo(2)%f_n(:,:,:) ,isd,jsd,positive=.true.)
-    call g_tracer_get_values(tracer_list,'nlgz'    ,'field',zoo(3)%f_n(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nsmz'    ,'field',zoo(SMZ)%f_n(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nmdz'    ,'field',zoo(MDZ)%f_n(:,:,:) ,isd,jsd,positive=.true.)
+    call g_tracer_get_values(tracer_list,'nlgz'    ,'field',zoo(LGZ)%f_n(:,:,:) ,isd,jsd,positive=.true.)
     !
     ! bacteria
     !
@@ -4162,9 +4162,9 @@ contains
     !
 
     prey_p2n_vec(5) = bact(1)%q_p_2_n
-    prey_p2n_vec(6) = zoo(1)%q_p_2_n
-    prey_p2n_vec(7) = zoo(2)%q_p_2_n
-    prey_p2n_vec(8) = zoo(3)%q_p_2_n
+    prey_p2n_vec(6) = zoo(SMZ)%q_p_2_n
+    prey_p2n_vec(7) = zoo(MDZ)%q_p_2_n
+    prey_p2n_vec(8) = zoo(LGZ)%q_p_2_n
 
     prey_fe2n_vec(5) = 0.0
     prey_fe2n_vec(6) = 0.0
@@ -4190,7 +4190,7 @@ contains
 
        ! Calculate the temperature and oxygen limitations for zooplankton feeding and growth
        ! Since zooplankton ingestion uses oxygen, there is no zooplankton feeding when f_o2 is less than o2_min.
-       do m = 1,3  !{
+       do m = 1, NUM_ZOO  !{
           zoo(m)%temp_lim(i,j,k) = exp(zoo(m)%ktemp*Temp(i,j,k))
           zoo(m)%o2lim(i,j,k) = max((cobalt%f_o2(i,j,k) - cobalt%o2_min),0.0)/ &
                                 (cobalt%k_o2 + max(cobalt%f_o2(i,j,k)-cobalt%o2_min,0.0))
@@ -4206,9 +4206,9 @@ contains
        prey_vec(3) = max(phyto(MEDIUM)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(4) = max(phyto(SMALL)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(5) = max(bact(1)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
-       prey_vec(6) = max(zoo(1)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
-       prey_vec(7) = max(zoo(2)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
-       prey_vec(8) = max(zoo(3)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
+       prey_vec(6) = max(zoo(SMZ)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
+       prey_vec(7) = max(zoo(MDZ)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
+       prey_vec(8) = max(zoo(LGZ)%f_n(i,j,k) - cobalt%refuge_conc,0.0)
        prey_vec(9) = max(cobalt%f_ndet(i,j,k) + cobalt%f_ndet_fast(i,j,k) - cobalt%refuge_conc,0.0)
 
        ! Set dynamic prey stoichiometric ratios inside k,j,i loop
@@ -4232,10 +4232,10 @@ contains
        !
        ! Calculate zooplankton ingestion
        !
-       ! Small zooplankton (m = 1) consuming medium phytoplankton (3), small phytoplankton (4) and bacteria (5).
+       ! Small zooplankton consuming medium phytoplankton (3), small phytoplankton (4) and bacteria (5).
        ! Density-dependent switching occurs between phytoplankton and bacterial prey.
        !
-       m = 1
+       m = SMZ
        ! alternative prey items for the switching calculation
        food1 = ipa_matrix(m,3)*prey_vec(3)+ipa_matrix(m,4)*prey_vec(4)
        food2 = ipa_matrix(m,5)*prey_vec(5)
@@ -4266,13 +4266,13 @@ contains
                                   ingest_matrix(m,4)*prey_fe2n_vec(4)
        zoo(m)%jingest_sio2(i,j,k) = ingest_matrix(m,3)*prey_si2n_vec(3)
 
-       ! Medium zooplankton (m = 2) consuming diazotrophs (1), large phytoplankton (2), medium phytoplankton (3),
+       ! Medium zooplankton consuming diazotrophs (1), large phytoplankton (2), medium phytoplankton (3),
        ! small phytoplankton (4), and small zooplankton (6).  Switching occurs between herbivory (1-4) and carnivory.
        !
        ! Note: The default availability of large phytoplankton to medium zooplankton is 0.  The optimal setting for
        ! this parameter, however, is still being actively investigated.
        !
-       m = 2
+       m = MDZ
        ! alternative prey items for the switching calculation (herbivory versus carnivory)
        food1 = ipa_matrix(m,1)*prey_vec(1)+ipa_matrix(m,2)*prey_vec(2)+ &
                ipa_matrix(m,3)*prey_vec(3)+ipa_matrix(m,4)*prey_vec(4)
@@ -4320,10 +4320,10 @@ contains
        zoo(m)%jingest_sio2(i,j,k) = ingest_matrix(m,2)*prey_si2n_vec(2) + &
                                     ingest_matrix(m,3)*prey_si2n_vec(3)
 
-       ! Large zooplankton (m = 3) consuming diazotrophs (1), large phytoplankton (2), medium pytoplankton (3),
+       ! Large zooplankton consuming diazotrophs (1), large phytoplankton (2), medium pytoplankton (3),
        ! and medium zooplankton (7).  Switching occurs between herbibory (1-3) and carnivory (7).
        !
-       m = 3
+       m = LGZ
        ! alternative prey items for the switching calculation (herbivory versus carnivory)
        food1 = ipa_matrix(m,1)*prey_vec(1)+ipa_matrix(m,2)*prey_vec(2)+ &
                ipa_matrix(m,3)*prey_vec(3)
@@ -4836,16 +4836,16 @@ contains
         ! zooplankton groups within COBALT.  Production of aragonite detritus is thus linked to the consumption of
         ! medium and large zooplankton by zooplankton and higher predators, and the proportion of the material consumed
         ! that ends up as detritus (i.e., phi_det).
-        cobalt%jprod_cadet_arag(i,j,k) = (zoo(2)%jzloss_n(i,j,k)*zoo(3)%phi_det + &
-                       (zoo(2)%jhploss_n(i,j,k) + zoo(3)%jhploss_n(i,j,k))*cobalt%hp_phi_det)* &
+        cobalt%jprod_cadet_arag(i,j,k) = (zoo(MDZ)%jzloss_n(i,j,k)*zoo(LGZ)%phi_det + &
+                       (zoo(MDZ)%jhploss_n(i,j,k) + zoo(LGZ)%jhploss_n(i,j,k))*cobalt%hp_phi_det)* &
                        cobalt%ca_2_n_arag*min(cobalt%caco3_sat_max, max(0.0,cobalt%omega_arag(i,j,k) - 1.0)) + epsln
         ! Forams and coccolithophores are assumed to be the primary calcite shell formers.  Forams fall into the small
         ! zooplankton group and coccolithophores fall into the small and medium phytoplankton groups. Production of
         ! calcite detritus is thus linked to a) the consumption of these groups by zooplankton and the proportion of the
         ! material consumed that ends up as detritus, and b) the aggregation of small and medium phytoplankton groups.
         ! The fractional detritus production by the primary zooplankton predator for each group was used for a).
-        cobalt%jprod_cadet_calc(i,j,k) = (zoo(1)%jzloss_n(i,j,k)*zoo(2)%phi_det + &
-                       phyto(SMALL)%jzloss_n(i,j,k)*zoo(1)%phi_det + phyto(MEDIUM)%jzloss_n(i,j,k)*zoo(2)%phi_det + &
+        cobalt%jprod_cadet_calc(i,j,k) = (zoo(SMZ)%jzloss_n(i,j,k)*zoo(MDZ)%phi_det + &
+                       phyto(SMALL)%jzloss_n(i,j,k)*zoo(SMZ)%phi_det + phyto(MEDIUM)%jzloss_n(i,j,k)*zoo(MDZ)%phi_det + &
                        phyto(SMALL)%jaggloss_n(i,j,k) + phyto(MEDIUM)%jaggloss_n(i,j,k))*cobalt%ca_2_n_calc* &
                        min(cobalt%caco3_sat_max, max(0.0, cobalt%omega_calc(i,j,k) - 1.0)) + epsln
     enddo; enddo ; enddo !} i,j,k
@@ -5551,9 +5551,9 @@ contains
                     cobalt%p_ldop(i,j,k,tau) + cobalt%p_sldop(i,j,k,tau) + &
                     cobalt%p_srdop(i,j,k,tau) + cobalt%p_pdet(i,j,k,tau) + &
 					cobalt%p_pdet_fast(i,j,k,tau) + &
-                    cobalt%p_nsmz(i,j,k,tau)*zoo(1)%q_p_2_n + &
-                    cobalt%p_nmdz(i,j,k,tau)*zoo(2)%q_p_2_n + &
-                    cobalt%p_nlgz(i,j,k,tau)*zoo(3)%q_p_2_n + &
+                    cobalt%p_nsmz(i,j,k,tau)*zoo(SMZ)%q_p_2_n + &
+                    cobalt%p_nmdz(i,j,k,tau)*zoo(MDZ)%q_p_2_n + &
+                    cobalt%p_nlgz(i,j,k,tau)*zoo(LGZ)%q_p_2_n + &
                     bact(1)%q_p_2_n*cobalt%p_nbact(i,j,k,tau))*grid_tmask(i,j,k)
          net_srcp(i,j,k) = cobalt%jpo4_iceberg(i,j,k)*dt*grid_tmask(i,j,k)
          pre_totfe(i,j,k) = (cobalt%p_fed(i,j,k,tau) + cobalt%p_fedi(i,j,k,tau) + &
@@ -5721,20 +5721,20 @@ contains
        !
        ! Small zooplankton
        !
-       cobalt%jnsmz(i,j,k) = zoo(1)%jprod_n(i,j,k) - zoo(1)%jzloss_n(i,j,k) - &
-                             zoo(1)%jhploss_n(i,j,k)
+       cobalt%jnsmz(i,j,k) = zoo(SMZ)%jprod_n(i,j,k) - zoo(SMZ)%jzloss_n(i,j,k) - &
+                             zoo(SMZ)%jhploss_n(i,j,k)
        cobalt%p_nsmz(i,j,k,tau) = cobalt%p_nsmz(i,j,k,tau) + cobalt%jnsmz(i,j,k)*dt*grid_tmask(i,j,k)
        !
        ! Medium zooplankton
        !
-       cobalt%jnmdz(i,j,k) = zoo(2)%jprod_n(i,j,k) - zoo(2)%jzloss_n(i,j,k) - &
-                             zoo(2)%jhploss_n(i,j,k)
+       cobalt%jnmdz(i,j,k) = zoo(MDZ)%jprod_n(i,j,k) - zoo(MDZ)%jzloss_n(i,j,k) - &
+                             zoo(MDZ)%jhploss_n(i,j,k)
        cobalt%p_nmdz(i,j,k,tau) = cobalt%p_nmdz(i,j,k,tau) + cobalt%jnmdz(i,j,k)*dt*grid_tmask(i,j,k)
        !
        ! Large zooplankton
        !
-       cobalt%jnlgz(i,j,k) = zoo(3)%jprod_n(i,j,k) - zoo(3)%jzloss_n(i,j,k) - &
-                             zoo(3)%jhploss_n(i,j,k)
+       cobalt%jnlgz(i,j,k) = zoo(LGZ)%jprod_n(i,j,k) - zoo(LGZ)%jzloss_n(i,j,k) - &
+                             zoo(LGZ)%jhploss_n(i,j,k)
        cobalt%p_nlgz(i,j,k,tau) = cobalt%p_nlgz(i,j,k,tau) + cobalt%jnlgz(i,j,k)*dt*grid_tmask(i,j,k)
     enddo; enddo ; enddo  !} i,j,k
 !
@@ -6116,9 +6116,9 @@ contains
                     cobalt%p_ldop(i,j,k,tau) + cobalt%p_sldop(i,j,k,tau) + &
                     cobalt%p_srdop(i,j,k,tau) + cobalt%p_pdet(i,j,k,tau) + &
 					cobalt%p_pdet_fast(i,j,k,tau) + &
-                    cobalt%p_nsmz(i,j,k,tau)*zoo(1)%q_p_2_n + &
-                    cobalt%p_nmdz(i,j,k,tau)*zoo(2)%q_p_2_n + &
-                    cobalt%p_nlgz(i,j,k,tau)*zoo(3)%q_p_2_n + &
+                    cobalt%p_nsmz(i,j,k,tau)*zoo(SMZ)%q_p_2_n + &
+                    cobalt%p_nmdz(i,j,k,tau)*zoo(MDZ)%q_p_2_n + &
+                    cobalt%p_nlgz(i,j,k,tau)*zoo(LGZ)%q_p_2_n + &
                     bact(1)%q_p_2_n*cobalt%p_nbact(i,j,k,tau))*grid_tmask(i,j,k)
          imbal = (post_totp(i,j,k) - pre_totp(i,j,k) - net_srcp(i,j,k))*86400.0/dt*1.03e6
          if (abs(imbal).gt.imbalance_tolerance) then
@@ -6328,8 +6328,8 @@ contains
          cobalt%p_pmd(:,:,:,tau) + cobalt%p_psm(:,:,:,tau) + cobalt%p_ldop(:,:,:,tau) + cobalt%p_sldop(:,:,:,tau) + &
          cobalt%p_srdop(:,:,:,tau) + cobalt%p_pdet(:,:,:,tau) + cobalt%p_pdet_fast(:,:,:,tau) + &
 		 bact(1)%q_p_2_n*cobalt%p_nbact(:,:,:,tau) + &
-         zoo(1)%q_p_2_n*cobalt%p_nsmz(:,:,:,tau) + zoo(2)%q_p_2_n*cobalt%p_nmdz(:,:,:,tau) + &
-         zoo(3)%q_p_2_n*cobalt%p_nlgz(:,:,:,tau))*rho_dzt(:,:,:)
+         zoo(SMZ)%q_p_2_n*cobalt%p_nsmz(:,:,:,tau) + zoo(MDZ)%q_p_2_n*cobalt%p_nmdz(:,:,:,tau) + &
+         zoo(LGZ)%q_p_2_n*cobalt%p_nlgz(:,:,:,tau))*rho_dzt(:,:,:)
 
     cobalt%tot_layer_int_si(:,:,:) = (cobalt%p_sio4(:,:,:,tau) + cobalt%p_silg(:,:,:,tau) + &
          cobalt%p_simd(:,:,:,tau) + cobalt%p_sidet(:,:,:,tau)) * rho_dzt(:,:,:)
@@ -6575,13 +6575,13 @@ contains
           zoo(n)%jremin_n_100(i,j) = zoo(n)%jprod_nh4(i,j,1) * rho_dzt(i,j,1)
        enddo   !} n
 
-       do n = 1,2  !{
+       do n = SMZ,MDZ  !{
           zoo(n)%jzloss_n_100(i,j) = zoo(n)%jzloss_n(i,j,1) * rho_dzt(i,j,1)
           zoo(n)%jprod_don_100(i,j) = (zoo(n)%jprod_ldon(i,j,1) + zoo(n)%jprod_sldon(i,j,1) + &
              zoo(n)%jprod_srdon(i,j,1))  * rho_dzt(i,j,1)
        enddo   !} n
 
-       do n = 2,3  !{
+       do n = MDZ,LGZ  !{
           zoo(n)%jhploss_n_100(i,j) = zoo(n)%jhploss_n(i,j,1) * rho_dzt(i,j,1)
           zoo(n)%jprod_ndet_100(i,j) = zoo(n)%jprod_ndet(i,j,1) * rho_dzt(i,j,1)
        enddo   !} n
@@ -6662,14 +6662,14 @@ contains
                    rho_dzt(i,j,k)
              enddo !} n
 
-             do n = 1,2 !{
+             do n = SMZ,MDZ !{
                 zoo(n)%jzloss_n_100(i,j) = zoo(n)%jzloss_n_100(i,j) + zoo(n)%jzloss_n(i,j,k)* &
                    rho_dzt(i,j,k)
                 zoo(n)%jprod_don_100(i,j) = zoo(n)%jprod_don_100(i,j) + (zoo(n)%jprod_ldon(i,j,k) + &
                    zoo(n)%jprod_sldon(i,j,k) + zoo(n)%jprod_srdon(i,j,k))*rho_dzt(i,j,k)
              enddo !} n
 
-             do n = 2,3 !{
+             do n = MDZ,LGZ !{
                 zoo(n)%jhploss_n_100(i,j) = zoo(n)%jhploss_n_100(i,j) + zoo(n)%jhploss_n(i,j,k)* &
                    rho_dzt(i,j,k)
                 zoo(n)%jprod_ndet_100(i,j) = zoo(n)%jprod_ndet_100(i,j) + zoo(n)%jprod_ndet(i,j,k)* &
@@ -6751,14 +6751,14 @@ contains
                  drho_dzt
            enddo !} n
 
-           do n = 1,2 !{
+           do n = SMZ,MDZ !{
                zoo(n)%jzloss_n_100(i,j) = zoo(n)%jzloss_n_100(i,j) + zoo(n)%jzloss_n(i,j,k_100)* &
                  drho_dzt
                zoo(n)%jprod_don_100(i,j) = zoo(n)%jprod_don_100(i,j) + (zoo(n)%jprod_ldon(i,j,k_100) + &
                  zoo(n)%jprod_sldon(i,j,k_100) + zoo(n)%jprod_srdon(i,j,k_100))*drho_dzt
            enddo !} n
 
-           do n = 2,3 !{
+           do n = MDZ,LGZ !{
                zoo(n)%jhploss_n_100(i,j) = zoo(n)%jhploss_n_100(i,j) + zoo(n)%jhploss_n(i,j,k_100)* &
                  drho_dzt
                zoo(n)%jprod_ndet_100(i,j) = zoo(n)%jprod_ndet_100(i,j) + zoo(n)%jprod_ndet(i,j,k_100)* &
@@ -6887,9 +6887,9 @@ contains
     allocate(rho_dzt_200(isc:iec,jsc:jec))
     do j = jsc, jec ; do i = isc, iec !{
        rho_dzt_200(i,j) = rho_dzt(i,j,1)
-       cobalt%jprod_mesozoo_200(i,j) = (zoo(2)%jprod_n(i,j,1) + zoo(3)%jprod_n(i,j,1))*rho_dzt(i,j,1)
-       cobalt%jprod_allphytos_200(i,j) = (phyto(1)%jprod_n(i,j,1) + phyto(2)%jprod_n(i,j,1) + &
-             phyto(3)%jprod_n(i,j,1) + phyto(4)%jprod_n(i,j,1))*rho_dzt(i,j,1);
+       cobalt%jprod_mesozoo_200(i,j) = (zoo(MDZ)%jprod_n(i,j,1) + zoo(LGZ)%jprod_n(i,j,1))*rho_dzt(i,j,1)
+       cobalt%jprod_allphytos_200(i,j) = (phyto(DIAZO)%jprod_n(i,j,1) + phyto(LARGE)%jprod_n(i,j,1) + &
+             phyto(MEDIUM)%jprod_n(i,j,1) + phyto(SMALL)%jprod_n(i,j,1))*rho_dzt(i,j,1);
     enddo; enddo !} i,j
 
     do j = jsc, jec ; do i = isc, iec ; !{
@@ -6899,20 +6899,20 @@ contains
              k_200 = k
              rho_dzt_200(i,j) = rho_dzt_200(i,j) + rho_dzt(i,j,k)
              cobalt%jprod_mesozoo_200(i,j) = cobalt%jprod_mesozoo_200(i,j) + &
-                (zoo(2)%jprod_n(i,j,k) + zoo(3)%jprod_n(i,j,k))*rho_dzt(i,j,k)
+                (zoo(MDZ)%jprod_n(i,j,k) + zoo(LGZ)%jprod_n(i,j,k))*rho_dzt(i,j,k)
              cobalt%jprod_allphytos_200(i,j) = cobalt%jprod_allphytos_200(i,j) + &
-                 (phyto(1)%jprod_n(i,j,k) + phyto(2)%jprod_n(i,j,k) + &
-                 phyto(3)%jprod_n(i,j,k) + phyto(4)%jprod_n(i,j,k))*rho_dzt(i,j,k);
+                 (phyto(DIAZO)%jprod_n(i,j,k) + phyto(LARGE)%jprod_n(i,j,k) + &
+                 phyto(MEDIUM)%jprod_n(i,j,k) + phyto(SMALL)%jprod_n(i,j,k))*rho_dzt(i,j,k);
           endif
        enddo  !} k
 
        if (k_200 .gt. 1 .and. k_200 .lt. grid_kmt(i,j)) then
           drho_dzt = cobalt%Rho_0 * 200.0 - rho_dzt_200(i,j)
           cobalt%jprod_mesozoo_200(i,j) = cobalt%jprod_mesozoo_200(i,j) + &
-              (zoo(2)%jprod_n(i,j,k_200) + zoo(3)%jprod_n(i,j,k_200))*drho_dzt
+              (zoo(MDZ)%jprod_n(i,j,k_200) + zoo(LGZ)%jprod_n(i,j,k_200))*drho_dzt
           cobalt%jprod_allphytos_200(i,j) = cobalt%jprod_allphytos_200(i,j) + &
-               (phyto(1)%jprod_n(i,j,k_200) + phyto(2)%jprod_n(i,j,k_200) + &
-               phyto(3)%jprod_n(i,j,k_200) + phyto(4)%jprod_n(i,j,k_200))*drho_dzt
+               (phyto(DIAZO)%jprod_n(i,j,k_200) + phyto(LARGE)%jprod_n(i,j,k_200) + &
+               phyto(MEDIUM)%jprod_n(i,j,k_200) + phyto(SMALL)%jprod_n(i,j,k_200))*drho_dzt
        endif
     enddo ; enddo  !} i,j
     deallocate(rho_dzt_200)
@@ -7865,12 +7865,12 @@ contains
        allocate(zoo(n)%f_n_100(isd:ied,jsd:jed))          ; zoo(n)%f_n_100          = 0.0
     enddo
 
-   do n = 1,2
+   do n = SMZ,MDZ
        allocate(zoo(n)%jzloss_n_100(isd:ied,jsd:jed))     ; zoo(n)%jzloss_n_100     = 0.0
        allocate(zoo(n)%jprod_don_100(isd:ied,jsd:jed))    ; zoo(n)%jprod_don_100    = 0.0
    enddo
 
-   do n = 2,3
+   do n = MDZ,LGZ
        allocate(zoo(n)%jhploss_n_100(isd:ied,jsd:jed))    ; zoo(n)%jhploss_n_100     = 0.0
        allocate(zoo(n)%jprod_ndet_100(isd:ied,jsd:jed))   ; zoo(n)%jprod_ndet_100    = 0.0
    enddo
@@ -8516,12 +8516,12 @@ contains
        deallocate(zoo(n)%f_n_100)
     enddo
 
-    do n = 1,2
+    do n = SMZ,MDZ
        deallocate(zoo(n)%jzloss_n_100)
        deallocate(zoo(n)%jprod_don_100)
     enddo
 
-    do n = 2,3
+    do n = MDZ,LGZ
        deallocate(zoo(n)%jhploss_n_100)
        deallocate(zoo(n)%jprod_ndet_100)
     enddo

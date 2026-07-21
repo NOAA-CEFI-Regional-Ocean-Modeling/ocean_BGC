@@ -43,10 +43,18 @@ module cobalt_types
   integer, parameter, public :: NUM_ZOO = 3   !< total number of zooplankton groups
   integer, parameter, public :: NUM_BACT = 1  !< total number of bacteria groups
   integer, parameter, public :: NUM_PREY = 9  !< total numbers of prey groups
+
+  ! phytoplankton IDs
   integer, parameter, public :: DIAZO      = 1 !< ID for diazotrophs
   integer, parameter, public :: LARGE      = 2 !< ID for large phytoplankton
   integer, parameter, public :: MEDIUM     = 3 !< ID for medium phytoplankton
   integer, parameter, public :: SMALL      = 4 !< ID for small phytoplankton
+
+  ! zooplankton IDs
+  integer, parameter, public :: SMZ        = 1 !< ID for small zooplankton
+  integer, parameter, public :: MDZ        = 2 !< ID for medium zooplankton
+  integer, parameter, public :: LGZ        = 3 !< ID for large zooplankton
+
 
   real, parameter, public :: sperd = 24.0 * 3600.0    !< number of seconds in a day (sec)
   real, parameter, public :: I_sperd = 1.0/sperd      !< inverse of number of seconds in a day (sec)
