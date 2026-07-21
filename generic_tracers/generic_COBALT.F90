@@ -4365,9 +4365,9 @@ contains
 
        ! calculate the total filter feeding by medium and large zooplankton.  This rate is ultimately used to
        ! scale the conversion of lithogenic dust into lithogenic detritus.
-       cobalt%total_filter_feeding(i,j,k) = ingest_matrix(2,1) + ingest_matrix(2,2) + &
-          ingest_matrix(2,3) + ingest_matrix(2,4) +  ingest_matrix(3,1) + ingest_matrix(3,2) + &
-          ingest_matrix(3,3) + ingest_matrix(3,4)
+       cobalt%total_filter_feeding(i,j,k) = ingest_matrix(MDZ,1) + ingest_matrix(MDZ,2) + &
+          ingest_matrix(MDZ,3) + ingest_matrix(MDZ,4) +  ingest_matrix(LGZ,1) + ingest_matrix(LGZ,2) + &
+          ingest_matrix(LGZ,3) + ingest_matrix(LGZ,4)
        !
        ! calculate losses of each prey type to zooplankton, starting with phytoplankton
        !
