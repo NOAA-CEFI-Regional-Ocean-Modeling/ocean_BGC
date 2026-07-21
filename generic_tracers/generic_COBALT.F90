@@ -184,7 +184,7 @@ module generic_COBALT
      imbalance_tolerance,as_param_cobalt
 
   !
-  ! Array allocations and flux calculations assume that phyto(DIAZO) is the
+  ! Array allocations and flux calculations assume that phyto(1) is the
   ! only phytoplankton group cabable of nitrogen uptake by N2 fixation while phyto(2:NUM_PHYTO)
   ! are only cabable of nitrgen uptake by NH4 and NO3 uptake
   !
