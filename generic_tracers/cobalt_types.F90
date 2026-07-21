@@ -48,6 +48,18 @@ module cobalt_types
   integer, parameter, public :: MEDIUM     = 3 !< ID for medium phytoplankton
   integer, parameter, public :: SMALL      = 4 !< ID for small phytoplankton
 
+
+  ! Prey Array IDs
+  integer, parameter, public :: PR_DIAZO  = 1
+  integer, parameter, public :: PR_LARGE  = 2
+  integer, parameter, public :: PR_MEDIUM = 3
+  integer, parameter, public :: PR_SMALL  = 4
+  integer, parameter, public :: PR_BACT   = 5
+  integer, parameter, public :: PR_SMZ    = 6
+  integer, parameter, public :: PR_MDZ    = 7
+  integer, parameter, public :: PR_LGZ    = 8
+  integer, parameter, public :: PR_DET    = 9
+
   real, parameter, public :: sperd = 24.0 * 3600.0    !< number of seconds in a day (sec)
   real, parameter, public :: I_sperd = 1.0/sperd      !< inverse of number of seconds in a day (sec)
   real, parameter, public :: spery = 365.25 * sperd   !< number of seconds in a year (sec)
