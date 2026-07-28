@@ -1607,6 +1607,12 @@ module COBALT_send_diag
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
             used = g_send_data(zoo(n)%id_temp_lim, zoo(n)%temp_lim, &
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+            ! jmetabo_n is allocated, and id_jmetabo_n registered, only for the vertically migrating
+            ! groups (see user_allocate_arrays and cobalt_reg_diagnostics)
+            if ( n .eq. 4 .or. n .eq. 5 ) then !{
+              used = g_send_data(zoo(n)%id_jmetabo_n, zoo(n)%jmetabo_n, &
+                model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+            endif !}
           enddo
 
           !
