@@ -8962,6 +8962,7 @@ contains
        deallocate(phyto(n)%jhploss_fe)
        deallocate(phyto(n)%jhploss_n)
        deallocate(phyto(n)%jhploss_p)
+       deallocate(phyto(n)%jhploss_sio2)
        deallocate(phyto(n)%juptake_fe)
        deallocate(phyto(n)%juptake_nh4)
        deallocate(phyto(n)%juptake_no3)
@@ -9053,6 +9054,7 @@ contains
       
        if ( n .eq. 4 .or. n .eq. 5) then
           deallocate(zoo(n)%lim_nut_n_ingestion) ! mpoupon
+          deallocate(zoo(n)%jmetabo_n)      ! mpoupon
           deallocate(zoo(n)%f_gut_n)        ! mpoupon
           deallocate(zoo(n)%f_gut_p)        ! mpoupon
           deallocate(zoo(n)%f_gut_fe)       ! mpoupon
@@ -9475,12 +9477,13 @@ contains
        deallocate(zoo(n)%f_n_100)
     enddo
 
-    do n = 1,2
+    do n = 1, 4
+       if (n == 3) cycle
        deallocate(zoo(n)%jzloss_n_100)
        deallocate(zoo(n)%jprod_don_100)
     enddo
 
-    do n = 2,3
+    do n = 2, 5
        deallocate(zoo(n)%jhploss_n_100)
        deallocate(zoo(n)%jprod_ndet_100)
     enddo
