@@ -924,7 +924,7 @@ module COBALT_send_diag
               cobalt%f_mesozoo_200(i,j) = cobalt%f_mesozoo_200(i,j) + &
                 (zoo(2)%f_n(i,j,k_200)+zoo(3)%f_n(i,j,k_200)+&
                  zoo(4)%f_n(i,j,k_200)+zoo(4)%f_met_n(i,j,k_200)+zoo(4)%f_gut_n(i,j,k_200)+&
-                 zoo(5)%f_n(i,j,k_200)+zoo(5)%f_met_n(i,j,k_200)+zoo(5)%f_gut_n(i,j,k_200))*rho_dzt(i,j,k_200)
+                 zoo(5)%f_n(i,j,k_200)+zoo(5)%f_met_n(i,j,k_200)+zoo(5)%f_gut_n(i,j,k_200))*drho_dzt(i,j,k_200)
             endif
           enddo ; enddo  !} i,j
           deallocate(rho_dzt_200)
