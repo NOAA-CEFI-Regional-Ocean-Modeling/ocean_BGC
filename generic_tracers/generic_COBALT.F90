@@ -7787,7 +7787,7 @@ contains
           drho_dzt = cobalt%Rho_0 * 200.0 - rho_dzt_200(i,j)
           cobalt%jprod_mesozoo_200(i,j) = cobalt%jprod_mesozoo_200(i,j) + &
              (zoo(2)%jprod_n(i,j,k_200) + zoo(3)%jprod_n(i,j,k_200) + &
-             zoo(4)%jprod_n(i,j,k_200) + zoo(5)%jprod_n(i,j,k_200))*drho_dzt(i,j,k)
+             zoo(4)%jprod_n(i,j,k_200) + zoo(5)%jprod_n(i,j,k_200))*drho_dzt
           cobalt%jprod_allphytos_200(i,j) = cobalt%jprod_allphytos_200(i,j) + &
                (phyto(1)%jprod_n(i,j,k_200) + phyto(2)%jprod_n(i,j,k_200) + &
                phyto(3)%jprod_n(i,j,k_200) + phyto(4)%jprod_n(i,j,k_200))*drho_dzt
