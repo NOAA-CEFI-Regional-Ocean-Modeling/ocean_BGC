@@ -7755,12 +7755,15 @@ contains
     !---------------------------------------------------------------------
     ! calculate upper 200m vertical integrals for mesozooplankton
     ! quantities for comparison with COPEPOD database
+    !
+    ! include vertically migrating (crustacean) zooplankton
     !---------------------------------------------------------------------
     !
     allocate(rho_dzt_200(isc:iec,jsc:jec))
     do j = jsc, jec ; do i = isc, iec !{
        rho_dzt_200(i,j) = rho_dzt(i,j,1)
-       cobalt%jprod_mesozoo_200(i,j) = (zoo(2)%jprod_n(i,j,1) + zoo(3)%jprod_n(i,j,1))*rho_dzt(i,j,1)
+       cobalt%jprod_mesozoo_200(i,j) = (zoo(2)%jprod_n(i,j,1) + zoo(3)%jprod_n(i,j,1) + &
+             zoo(4)%jprod_n(i,j,1) + zoo(5)%jprod_n(i,j,1))*rho_dzt(i,j,1)
        cobalt%jprod_allphytos_200(i,j) = (phyto(1)%jprod_n(i,j,1) + phyto(2)%jprod_n(i,j,1) + &
              phyto(3)%jprod_n(i,j,1) + phyto(4)%jprod_n(i,j,1))*rho_dzt(i,j,1);
     enddo; enddo !} i,j
@@ -7772,7 +7775,8 @@ contains
              k_200 = k
              rho_dzt_200(i,j) = rho_dzt_200(i,j) + rho_dzt(i,j,k)
              cobalt%jprod_mesozoo_200(i,j) = cobalt%jprod_mesozoo_200(i,j) + &
-                (zoo(2)%jprod_n(i,j,k) + zoo(3)%jprod_n(i,j,k))*rho_dzt(i,j,k)
+                (zoo(2)%jprod_n(i,j,k) + zoo(3)%jprod_n(i,j,k) + &
+                 zoo(4)%jprod_n(i,j,k) + zoo(5)%jprod_n(i,j,k))*rho_dzt(i,j,k)
              cobalt%jprod_allphytos_200(i,j) = cobalt%jprod_allphytos_200(i,j) + &
                  (phyto(1)%jprod_n(i,j,k) + phyto(2)%jprod_n(i,j,k) + &
                  phyto(3)%jprod_n(i,j,k) + phyto(4)%jprod_n(i,j,k))*rho_dzt(i,j,k);
@@ -7782,7 +7786,8 @@ contains
        if (k_200 .gt. 1 .and. k_200 .lt. grid_kmt(i,j)) then
           drho_dzt = cobalt%Rho_0 * 200.0 - rho_dzt_200(i,j)
           cobalt%jprod_mesozoo_200(i,j) = cobalt%jprod_mesozoo_200(i,j) + &
-              (zoo(2)%jprod_n(i,j,k_200) + zoo(3)%jprod_n(i,j,k_200))*drho_dzt
+             (zoo(2)%jprod_n(i,j,k) + zoo(3)%jprod_n(i,j,k) + &
+             zoo(4)%jprod_n(i,j,k) + zoo(5)%jprod_n(i,j,k))*rho_dzt(i,j,k)
           cobalt%jprod_allphytos_200(i,j) = cobalt%jprod_allphytos_200(i,j) + &
                (phyto(1)%jprod_n(i,j,k_200) + phyto(2)%jprod_n(i,j,k_200) + &
                phyto(3)%jprod_n(i,j,k_200) + phyto(4)%jprod_n(i,j,k_200))*drho_dzt

@@ -897,10 +897,13 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_ffetot_100, cobalt%ffetot_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
+          ! mirroring the zmeso diagnostic, f_mesozoo_200 also includes gut and metabolite nitrogen
           allocate(rho_dzt_200(isc:iec,jsc:jec))
           do j = jsc, jec ; do i = isc, iec !{
             rho_dzt_200(i,j) = rho_dzt(i,j,1)
-            cobalt%f_mesozoo_200(i,j) = (zoo(2)%f_n(i,j,1)+zoo(3)%f_n(i,j,1))*rho_dzt(i,j,1)
+            cobalt%f_mesozoo_200(i,j) = (zoo(2)%f_n(i,j,1)+zoo(3)%f_n(i,j,1)+&
+               zoo(4)%f_n(i,j,1)+zoo(4)%f_met_n(i,j,1)+zoo(4)%f_gut_n(i,j,1)+&
+               zoo(5)%f_n(i,j,1)+zoo(5)%f_met_n(i,j,1)+zoo(5)%f_gut_n(i,j,1))*rho_dzt(i,j,1)
           enddo; enddo !} i,j
 
           do j = jsc, jec ; do i = isc, iec ; !{
@@ -910,14 +913,18 @@ module COBALT_send_diag
                 k_200 = k
                 rho_dzt_200(i,j) = rho_dzt_200(i,j) + rho_dzt(i,j,k)
                 cobalt%f_mesozoo_200(i,j) = cobalt%f_mesozoo_200(i,j) + &
-                  (zoo(2)%f_n(i,j,k)+zoo(3)%f_n(i,j,k))*rho_dzt(i,j,k)
+                  (zoo(2)%f_n(i,j,k)+zoo(3)%f_n(i,j,k)+&
+   	               zoo(4)%f_n(i,j,k)+zoo(4)%f_met_n(i,j,k)+zoo(4)%f_gut_n(i,j,k)+&
+   	               zoo(5)%f_n(i,j,k)+zoo(5)%f_met_n(i,j,k)+zoo(5)%f_gut_n(i,j,k))*rho_dzt(i,j,k)
               endif
             enddo  !} k
 
             if (k_200 .gt. 1 .and. k_200 .lt. grid_kmt(i,j)) then
               drho_dzt = cobalt%Rho_0 * 200.0 - rho_dzt_200(i,j)
               cobalt%f_mesozoo_200(i,j) = cobalt%f_mesozoo_200(i,j) + &
-                (zoo(2)%f_n(i,j,k_200)+zoo(3)%f_n(i,j,k_200))*drho_dzt
+                (zoo(2)%f_n(i,j,k_200)+zoo(3)%f_n(i,j,k_200)+&
+                 zoo(4)%f_n(i,j,k_200)+zoo(4)%f_met_n(i,j,k_200)+zoo(4)%f_gut_n(i,j,k_200)+&
+                 zoo(5)%f_n(i,j,k_200)+zoo(5)%f_met_n(i,j,k_200)+zoo(5)%f_gut_n(i,j,k_200))*rho_dzt(i,j,k_200)
             endif
           enddo ; enddo  !} i,j
           deallocate(rho_dzt_200)
