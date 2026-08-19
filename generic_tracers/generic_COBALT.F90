@@ -1449,6 +1449,9 @@ contains
                    "innate availability of detritus to higher predator feeding (0-1)", units="none", default=0.0)
     ! The material ingested by higher predators is partitioned between detritus, remineralization, and dissolved organic nitrogen
     ! Remineralization = 1.0 - hp_phi_det - hp_phi_ldon - hp_phi_sldon - hp_phi_srdon
+    ! hp_phi_det + hp_phi_ldon + hp_phi_sldon + hp_phi_srdon must equal 0.35 to maintain the assimilation efficiency
+    ! The DON pathways were added to generalize the higher predator ingestion carbon partitioning for future experiments
+    ! and are set to zero by default to avoid changing answers
     call get_param(param_file, "generic_COBALT", "hp_phi_det", cobalt%hp_phi_det, &
                    "fraction of ingestion by higher predators to detritus", units="none", default=0.35)
     call get_param(param_file, "generic_COBALT", "hp_phi_ldon", cobalt%hp_phi_ldon, &
@@ -4668,6 +4671,7 @@ contains
           cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
        endif
        ! A portion of egestion will be released into dissolved organic nitrogen pools
+       ! hp_phi_det + hp_phi_ldon + hp_phi_sldon + hp_phi_srdon = 0.35 (total egestion)
        cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) + cobalt%hp_phi_ldon*cobalt%hp_jingest_n(i,j,k)
        cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) + cobalt%hp_phi_sldon*cobalt%hp_jingest_n(i,j,k)
        cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) + cobalt%hp_phi_srdon*cobalt%hp_jingest_n(i,j,k)
