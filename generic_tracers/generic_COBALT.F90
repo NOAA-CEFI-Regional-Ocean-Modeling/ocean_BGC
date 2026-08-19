@@ -4670,11 +4670,15 @@ contains
           cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
           cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
        endif
-       ! A portion of egestion will be released into dissolved organic nitrogen pools
+       
+       ! A portion of egestion will be released into dissolved organic nitrogen and phosphorus pools
        ! hp_phi_det + hp_phi_ldon + hp_phi_sldon + hp_phi_srdon = 0.35 (total egestion)
        cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) + cobalt%hp_phi_ldon*cobalt%hp_jingest_n(i,j,k)
        cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) + cobalt%hp_phi_sldon*cobalt%hp_jingest_n(i,j,k)
        cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) + cobalt%hp_phi_srdon*cobalt%hp_jingest_n(i,j,k)
+       cobalt%jprod_ldop(i,j,k) = cobalt%jprod_ldop(i,j,k) + cobalt%hp_phi_ldon*cobalt%hp_jingest_p(i,j,k)
+       cobalt%jprod_sldop(i,j,k) = cobalt%jprod_sldop(i,j,k) + cobalt%hp_phi_sldon*cobalt%hp_jingest_p(i,j,k)
+       cobalt%jprod_srdop(i,j,k) = cobalt%jprod_srdop(i,j,k) + cobalt%hp_phi_srdon*cobalt%hp_jingest_p(i,j,k)
 
        ! Silica and iron detritus from HP does not sink quickly - just gets added to the bulk total
        cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_fe(i,j,k)
@@ -4819,12 +4823,13 @@ contains
        if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
          cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + &
                                   (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*cobalt%hp_jingest_n(i,j,k)
-         cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_p(i,j,k)
+         cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + &
+                                  (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*cobalt%hp_jingest_p(i,j,k)
          cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + &
                                     (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*cobalt%hp_jingest_n(i,j,k)*cobalt%o2_2_nh4
        else
-         cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)
-         cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_p(i,j,k)
+         cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*cobalt%hp_jingest_n(i,j,k)
+         cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*cobalt%hp_jingest_p(i,j,k)
        endif
 
     enddo; enddo ; enddo !} i,j,k
