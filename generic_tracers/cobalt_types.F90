@@ -45,16 +45,26 @@ module cobalt_types
   integer, parameter, public :: NUM_PREY = 9  !< total numbers of prey groups
 
   ! phytoplankton IDs
-  integer, parameter, public :: DIAZO      = 1 !< ID for diazotrophs
-  integer, parameter, public :: LARGE      = 2 !< ID for large phytoplankton
-  integer, parameter, public :: MEDIUM     = 3 !< ID for medium phytoplankton
-  integer, parameter, public :: SMALL      = 4 !< ID for small phytoplankton
+  integer, parameter, public :: DIAZ       = 1 !< ID for diazotrophs
+  integer, parameter, public :: LGP        = 2 !< ID for large phytoplankton
+  integer, parameter, public :: MDP        = 3 !< ID for medium phytoplankton
+  integer, parameter, public :: SMP        = 4 !< ID for small phytoplankton
 
   ! zooplankton IDs
   integer, parameter, public :: SMZ        = 1 !< ID for small zooplankton
   integer, parameter, public :: MDZ        = 2 !< ID for medium zooplankton
   integer, parameter, public :: LGZ        = 3 !< ID for large zooplankton
 
+  ! prey array IDs
+  integer, parameter, public :: PR_DIAZ   = 1 !< prey array ID for diazotrophs
+  integer, parameter, public :: PR_LGP    = 2 !< prey array ID for large phytoplankton
+  integer, parameter, public :: PR_MDP    = 3 !< prey array ID for medium phytoplankton
+  integer, parameter, public :: PR_SMP    = 4 !< prey array ID for small phytoplankton
+  integer, parameter, public :: PR_BACT   = 5 !< prey array ID for bacteria
+  integer, parameter, public :: PR_SMZ    = 6 !< prey array ID for small zooplankton
+  integer, parameter, public :: PR_MDZ    = 7 !< prey array ID for medium zooplankton
+  integer, parameter, public :: PR_LGZ    = 8 !< prey array ID for large zooplankton
+  integer, parameter, public :: PR_DET    = 9 !< prey array ID for detritus
 
   real, parameter, public :: sperd = 24.0 * 3600.0    !< number of seconds in a day (sec)
   real, parameter, public :: I_sperd = 1.0/sperd      !< inverse of number of seconds in a day (sec)

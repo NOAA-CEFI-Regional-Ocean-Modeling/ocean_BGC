@@ -42,343 +42,343 @@ module COBALT_reg_diag
     ! Register Limitation Diagnostics
     !
     vardesc_temp = vardesc("P_C_max_Di","Diaz. Maximum Growth Rate",'h','L','s','sec-1','f')
-    phyto(DIAZO)%id_P_C_max = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_P_C_max = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("P_C_max_Lg","Large Phyto. Maximum Growth Rate",'h','L','s','sec-1','f')
-    phyto(LARGE)%id_P_C_max = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_P_C_max = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("P_C_max_Md","Medium Phyto. Maximum Growth Rate",'h','L','s','sec-1','f')
-    phyto(MEDIUM)%id_P_C_max = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_P_C_max = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("P_C_max_Sm","Small Phyto. Maximum Growth Rate",'h','L','s','sec-1','f')
-    phyto(SMALL)%id_P_C_max = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_P_C_max = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("alpha_Di","Diaz. Photo. vs Irrad. slope",'h','L','s','gC gChl-1 sec-1 (W m-2)-1','f')
-    phyto(DIAZO)%id_alpha = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_alpha = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("alpha_Lg","Large Phyto. Photo. vs Irrad. slope",'h','L','s','gC gChl-1 sec-1 (W m-2)-1','f')
-    phyto(LARGE)%id_alpha = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_alpha = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("alpha_Md","Medium Phyto. Photo. vs Irrad. slope",'h','L','s','gC gChl-1 sec-1 (W m-2)-1','f')
-    phyto(MEDIUM)%id_alpha = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_alpha = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("alpha_Sm","Small Phyto. Photo. vs Irrad. slope",'h','L','s','gC gChl-1 sec-1 (W m-2)-1','f')
-    phyto(SMALL)%id_alpha = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_alpha = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("bresp_Di","Diaz. Basal Respiration Rate",'h','L','s','sec-1','f')
-    phyto(DIAZO)%id_bresp = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_bresp = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("bresp_Lg","Large Phyto. Basal Respiration Rate",'h','L','s','sec-1','f')
-    phyto(LARGE)%id_bresp = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_bresp = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("bresp_Md","Medium Phyto. Basal Respiration Rate",'h','L','s','sec-1','f')
-    phyto(MEDIUM)%id_bresp = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_bresp = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("bresp_Sm","Small Phyto. Basal Respiration Rate",'h','L','s','sec-1','f')
-    phyto(SMALL)%id_bresp = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_bresp = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("def_fe_Di","Diaz. Phyto. Fe Deficiency",'h','L','s','dimensionless','f')
-    phyto(DIAZO)%id_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("def_fe_Lg","Large Phyto. Fe Deficiency",'h','L','s','dimensionless','f')
-    phyto(LARGE)%id_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("def_fe_Md","Medium Phyto. Fe Deficiency",'h','L','s','dimensionless','f')
-    phyto(MEDIUM)%id_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("def_fe_Sm","Small Phyto. Fe Deficiency",'h','L','s','dimensionless','f')
-    phyto(SMALL)%id_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("felim_Di","Diaz. Phyto. Fed uptake Limitation",'h','L','s','dimensionless','f')
-    phyto(DIAZO)%id_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("felim_Lg","Large Phyto. Fed uptake Limitation",'h','L','s','dimensionless','f')
-    phyto(LARGE)%id_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("felim_Md","Medium Phyto. Fed uptake Limitation",'h','L','s','dimensionless','f')
-    phyto(MEDIUM)%id_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("felim_Sm","Small Phyto. Fed uptake Limitation",'h','L','s','dimensionless','f')
-    phyto(SMALL)%id_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("irrlim_Di","Diaz. Phyto. Light Limitation",'h','L','s','dimensionless','f')
-    phyto(DIAZO)%id_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("irrlim_Lg","Large Phyto. Light Limitation",'h','L','s','dimensionless','f')
-    phyto(LARGE)%id_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("irrlim_Md","Medium Phyto. Light Limitation",'h','L','s','dimensionless','f')
-    phyto(MEDIUM)%id_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("irrlim_Sm","Small Phyto. Light Limitation",'h','L','s','dimensionless','f')
-    phyto(SMALL)%id_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("theta_Di","Diaz. Phyto. Chl:C",'h','L','s','g Chl (g C)-1','f')
-    phyto(DIAZO)%id_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("theta_Lg","Large Phyto. Chl:C",'h','L','s','g Chl (g C)-1','f')
-    phyto(LARGE)%id_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("theta_Md","Medium Phyto. Chl:C",'h','L','s','g Chl (g C)-1','f')
-    phyto(MEDIUM)%id_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("theta_Sm","Small Phyto. Chl:C",'h','L','s','g Chl (g C)-1','f')
-    phyto(SMALL)%id_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("chl_Di","Diaz. Phyto. Chlorophyll",'h','L','s','ug Kg-1','f')
-    phyto(DIAZO)%id_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("chl_Lg","Large Phyto. Chlorophyll",'h','L','s','ug Kg-1','f')
-    phyto(LARGE)%id_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("chl_Md","Medium Phyto. Chlorophyll",'h','L','s','ug Kg-1','f')
-    phyto(MEDIUM)%id_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("chl_Sm","Small Phyto. Chlorophyll",'h','L','s','ug Kg-1','f')
-    phyto(SMALL)%id_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_Di","Diaz. Phyto. Overall Growth Rate",'h','L','s','s-1','f')
-    phyto(DIAZO)%id_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_Lg","Large Phyto. Overall Growth Rate",'h','L','s','s-1','f')
-    phyto(LARGE)%id_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_Md","Medium Phyto. Overall Growth Rate",'h','L','s','s-1','f')
-    phyto(MEDIUM)%id_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_Sm","Small Phyto. Growth Rate",'h','L','s','s-1','f')
-    phyto(SMALL)%id_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_mem_Di","Diaz. Phyto. Growth Memory",'h','L','s','s-1','f')
-    phyto(DIAZO)%id_f_mu_mem = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_f_mu_mem = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_mem_Lg","Large Phyto. Growth memory",'h','L','s','s-1','f')
-    phyto(LARGE)%id_f_mu_mem = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_f_mu_mem = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_mem_Md","Medium Phyto. Growth memory",'h','L','s','s-1','f')
-    phyto(MEDIUM)%id_f_mu_mem = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_f_mu_mem = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_mem_Sm","Small Phyto. Growth Memory",'h','L','s','s-1','f')
-    phyto(SMALL)%id_f_mu_mem = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_f_mu_mem = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("pcmlim_aclm_Di","Diaz. Phyto. acclimation nut*temp lim",'h','L','s','none','f')
-    phyto(DIAZO)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("pcmlim_aclm_Lg","Large Phyto. acclimation nut*temp lim",'h','L','s','none','f')
-    phyto(LARGE)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("pcmlim_aclm_Md","Medium Phyto. acclimation nut*temp lim",'h','L','s','none','f')
-    phyto(MEDIUM)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("pcmlim_aclm_Sm","Small Phyto. acclimation nut*temp lim" ,'h','L','s','none','f')
-    phyto(SMALL)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_f_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("pcmlim_aclm_inst_Di","Diaz. Phyto. instantaneous nut*temp lim",'h','L','s','none','f')
-    phyto(DIAZO)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("pcmlim_aclm_inst_Lg","Large Phyto. instantaneous nut*temp lim",'h','L','s','none','f')
-    phyto(LARGE)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("pcmlim_aclm_inst_Md","Medium Phyto. instantaneous nut*temp lim",'h','L','s','none','f')
-    phyto(MEDIUM)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("pcmlim_aclm_inst_Sm","Small Phyto. instantaneous nut*temp lim" ,'h','L','s','none','f')
-    phyto(SMALL)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_pcmlim_aclm_inst = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("vmove_Di","Diaz. Phyto. movement",'h','L','s','m s-1','f')
-    phyto(DIAZO)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("vmove_Lg","Large Phyto. movement",'h','L','s','m s-1','f')
-    phyto(LARGE)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("vmove_Md","Medium Phyto. movement",'h','L','s','m s-1','f')
-    phyto(MEDIUM)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("vmove_Sm","Small Phyto. movement",'h','L','s','m s-1','f')
-    phyto(SMALL)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_vmove = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_mix_Di","Diaz. Phyto. ML ave",'h','L','s','s-1','f')
-    phyto(DIAZO)%id_mu_mix = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_mu_mix = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_mix_Lg","Large Phyto. ML ave",'h','L','s','s-1','f')
-    phyto(LARGE)%id_mu_mix = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_mu_mix = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_mix_Md","Medium Phyto. ML ave",'h','L','s','s-1','f')
-    phyto(MEDIUM)%id_mu_mix = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_mu_mix = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("mu_mix_Sm","Small Phyto. ML ave",'h','L','s','s-1','f')
-    phyto(SMALL)%id_mu_mix = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_mu_mix = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("nh4lim_Lg","Ammonia Limitation of Large Phyto",'h','L','s','dimensionless','f')
-    phyto(LARGE)%id_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("nh4lim_Md","Ammonia Limitation of Medium Phyto",'h','L','s','dimensionless','f')
-    phyto(MEDIUM)%id_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("nh4lim_Sm","Ammonia Limitation of Small Phyto",'h','L','s','dimensionless','f')
-    phyto(SMALL)%id_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("nh4lim_Di","Ammonia Limitation of Diazo",'h','L','s','dimensionless','f')
-    phyto(DIAZO)%id_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("no3lim_Lg","Nitrate Limitation of Large Phyto",'h','L','s','dimensionless','f')
-    phyto(LARGE)%id_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("no3lim_Md","Nitrate Limitation of Medium Phyto",'h','L','s','dimensionless','f')
-    phyto(MEDIUM)%id_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("no3lim_Sm","Nitrate Limitation of Small Phyto",'h','L','s','dimensionless','f')
-    phyto(SMALL)%id_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("no3lim_Di","Ammonia Limitation of Diazo",'h','L','s','dimensionless','f')
-    phyto(DIAZO)%id_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("po4lim_Di","Phosphate Limitation of Diaz. Phyto",'h','L','s','dimensionless','f')
-    phyto(DIAZO)%id_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("po4lim_Lg","Phosphate Limitation of Large Phyto",'h','L','s','dimensionless','f')
-    phyto(LARGE)%id_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("po4lim_Md","Phosphate Limitation of Medium Phyto",'h','L','s','dimensionless','f')
-    phyto(MEDIUM)%id_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("po4lim_Sm","Phosphate Limitation of Small Phyto",'h','L','s','dimensionless','f')
-    phyto(SMALL)%id_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("liebig_Sm","Overall (Liebig) nutrient lim., Small Phyto",'h','L','s','dimensionless','f')
-    phyto(SMALL)%id_liebig_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_liebig_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("liebig_Md","Overall (Liebig) nutrient lim., Medium Phyto",'h','L','s','dimensionless','f')
-    phyto(MEDIUM)%id_liebig_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_liebig_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("liebig_Lg","Overall (Liebig) nutrient lim., Large Phyto",'h','L','s','dimensionless','f')
-    phyto(LARGE)%id_liebig_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_liebig_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("liebig_Di","Overall (Liebig) nutrient lim., Diazotrophs",'h','L','s','dimensionless','f')
-    phyto(DIAZO)%id_liebig_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_liebig_lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("o2lim_Di","Oxygen Limitation of Diaz. Phyto",'h','L','s','dimensionless','f')
-    phyto(DIAZO)%id_o2lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_o2lim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("q_fe_2_n_Di","Fe:N ratio of Diaz. Phyto",'h','L','s','mol Fe/mol N','f')
-    phyto(DIAZO)%id_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("q_fe_2_n_Lg","Fe:N ratio of Large Phyto",'h','L','s','mol Fe/mol N','f')
-    phyto(LARGE)%id_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("q_fe_2_n_Md","Fe:N ratio of Medium Phyto",'h','L','s','mol Fe/mol N','f')
-    phyto(MEDIUM)%id_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("q_fe_2_n_Sm","Fe:N ratio of Small Phyto",'h','L','s','mol Fe/mol N','f')
-    phyto(SMALL)%id_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("q_p_2_n_Di","P:N ratio of Diaz. Phyto",'h','L','s','mol P/mol N','f')
-    phyto(DIAZO)%id_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("q_p_2_n_Lg","P:N ratio of Large Phyto",'h','L','s','mol P/mol N','f')
-    phyto(LARGE)%id_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("q_p_2_n_Md","P:N ratio of Medium Phyto",'h','L','s','mol P/mol N','f')
-    phyto(MEDIUM)%id_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("q_p_2_n_Sm","P:N ratio of Small Phyto",'h','L','s','mol P/mol N','f')
-    phyto(SMALL)%id_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("silim_Lg","SiO4 Limitation of Large Phyto",'h','L','s','dimensionless','f')
-    phyto(LARGE)%id_silim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_silim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("silim_Md","SiO4 Limitation of Medium Phyto",'h','L','s','dimensionless','f')
-    phyto(MEDIUM)%id_silim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_silim = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("q_si_2_n_Lg","Si:N ratio of Large Phyto",'h','L','s','mol Si/mol N','f')
-    phyto(LARGE)%id_q_si_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_q_si_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("q_si_2_n_Md","Si:N ratio of Medium Phyto",'h','L','s','mol Si/mol N','f')
-    phyto(MEDIUM)%id_q_si_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_q_si_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !
@@ -387,82 +387,82 @@ module COBALT_reg_diag
 
     vardesc_temp = vardesc("jzloss_n_Di","Diazotroph nitrogen loss to zooplankton",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(DIAZO)%id_jzloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jzloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_n_Lg","Large phyto nitrogen loss to zooplankton",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(LARGE)%id_jzloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jzloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_n_Md","Medium phyto nitrogen loss to zooplankton",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(MEDIUM)%id_jzloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jzloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_n_Sm","Small phyto nitrogen loss to zooplankton",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(SMALL)%id_jzloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jzloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_p_Di","Diazotroph phosphorus loss to zooplankton",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(DIAZO)%id_jzloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jzloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_p_Lg","Large phyto phosphorus loss to zooplankton",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(LARGE)%id_jzloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jzloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_p_Md","Medium phyto phosphorus loss to zooplankton",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(MEDIUM)%id_jzloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jzloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_p_Sm","Small phyto phosphorus loss to zooplankton",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(SMALL)%id_jzloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jzloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_fe_Di","Diazotroph iron loss to zooplankton",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(DIAZO)%id_jzloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jzloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_fe_Lg","Large phyto iron loss to zooplankton",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(LARGE)%id_jzloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jzloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_fe_Md","Medium phyto iron loss to zooplankton",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(MEDIUM)%id_jzloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jzloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_fe_Sm","Small phyto iron loss to zooplankton",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(SMALL)%id_jzloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jzloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_sio2_Di","Diazotroph silica loss to zooplankton",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(DIAZO)%id_jzloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jzloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_sio2_Lg","Large phyto silica loss to zooplankton",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(LARGE)%id_jzloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jzloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_sio2_Md","Medium phyto silica loss to zooplankton",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(MEDIUM)%id_jzloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jzloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_sio2_Sm","Small phyto silica loss to zooplankton",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(SMALL)%id_jzloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jzloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !
@@ -471,102 +471,102 @@ module COBALT_reg_diag
 
     vardesc_temp = vardesc("jaggloss_n_Di","Diazotroph nitrogen loss to aggregation",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(DIAZO)%id_jaggloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jaggloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_n_Lg","Large phyto nitrogen loss to aggregation",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(LARGE)%id_jaggloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jaggloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_n_Md","Medium phyto nitrogen loss to aggregation",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(MEDIUM)%id_jaggloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jaggloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_n_Sm","Small phyto nitrogen loss to aggregation",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(SMALL)%id_jaggloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jaggloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_p_Di","Diazotroph phosphorus loss to aggregation",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(DIAZO)%id_jaggloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jaggloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_p_Lg","Large phyto phosphorus loss to aggregation",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(LARGE)%id_jaggloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jaggloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_p_Md","Medium phyto phosphorus loss to aggregation",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(MEDIUM)%id_jaggloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jaggloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_p_Sm","Small phyto phosphorus loss to aggregation",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(SMALL)%id_jaggloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jaggloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
      vardesc_temp = vardesc("jaggloss_fe_Di","Diazotroph iron loss to aggregation",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(DIAZO)%id_jaggloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jaggloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_fe_Lg","Large phyto iron loss to aggregation",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(LARGE)%id_jaggloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jaggloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_fe_Md","Medium phyto iron loss to aggregation",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(MEDIUM)%id_jaggloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jaggloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_fe_Sm","Small phyto iron loss to aggregation",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(SMALL)%id_jaggloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jaggloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
      vardesc_temp = vardesc("jaggloss_sio2_Di","Diazotroph silica loss to aggregation",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(DIAZO)%id_jaggloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jaggloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_sio2_Lg","Large phyto silica loss to aggregation",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(LARGE)%id_jaggloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jaggloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_sio2_Md","Medium phyto silica loss to aggregation",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(MEDIUM)%id_jaggloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jaggloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_sio2_Sm","Small phyto silica loss to aggregation",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(SMALL)%id_jaggloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jaggloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("stress_fac_Di","Diazotroph stress factor",&
                            'h','L','s','dimensionless','f')
-    phyto(DIAZO)%id_stress_fac = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_stress_fac = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("stress_fac_Lg","Large phyto stress factor",&
                            'h','L','s','dimensionless','f')
-    phyto(LARGE)%id_stress_fac = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_stress_fac = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("stress_fac_Md","Medium phyto stress factor",&
                            'h','L','s','dimensionless','f')
-    phyto(MEDIUM)%id_stress_fac = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_stress_fac = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("stress_fac_Sm","Small phyto stress factor",&
                            'h','L','s','dimensionless','f')
-    phyto(SMALL)%id_stress_fac = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_stress_fac = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !
@@ -574,82 +574,82 @@ module COBALT_reg_diag
     !
     vardesc_temp = vardesc("jvirloss_n_Di","Diazotroph nitrogen loss to viruses",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(DIAZO)%id_jvirloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jvirloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_n_Lg","Large phyto nitrogen loss to viruses",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(LARGE)%id_jvirloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jvirloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_n_Md","Medium phyto nitrogen loss to viruses",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(MEDIUM)%id_jvirloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jvirloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_n_Sm","Small phyto nitrogen loss to viruses",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(SMALL)%id_jvirloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jvirloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_p_Di","Diazotroph phosphorus loss to viruses",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(DIAZO)%id_jvirloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jvirloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_p_Lg","Large phyto phosphorus loss to viruses",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(LARGE)%id_jvirloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jvirloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_p_Md","Medium phyto phosphorus loss to viruses",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(MEDIUM)%id_jvirloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jvirloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_p_Sm","Small phyto phosphorus loss to viruses",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(SMALL)%id_jvirloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jvirloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_fe_Di","Diazotroph iron loss to viruses",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(DIAZO)%id_jvirloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jvirloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_fe_Lg","Large phyto iron loss to viruses",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(LARGE)%id_jvirloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jvirloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_fe_Md","Medium phyto iron loss to viruses",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(MEDIUM)%id_jvirloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jvirloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_fe_Sm","Small phyto iron loss to viruses",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(SMALL)%id_jvirloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jvirloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_sio2_Di","Diazotroph silica loss to viruses",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(DIAZO)%id_jvirloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jvirloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_sio2_Lg","Large phyto silica loss to viruses",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(LARGE)%id_jvirloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jvirloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_sio2_Md","Medium phyto silica loss to viruses",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(MEDIUM)%id_jvirloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jvirloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_sio2_Sm","Small phyto silica loss to viruses",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(SMALL)%id_jvirloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jvirloss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !
@@ -658,146 +658,146 @@ module COBALT_reg_diag
 
     vardesc_temp = vardesc("jmortloss_n_Di","Diazotroph nitrogen loss to mortality",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(DIAZO)%id_jmortloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jmortloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_n_Lg","Large phyto nitrogen loss to mortality",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(LARGE)%id_jmortloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jmortloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_n_Md","Medium phyto nitrogen loss to mortality",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(MEDIUM)%id_jmortloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jmortloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_n_Sm","Small phyto nitrogen loss to mortality",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(SMALL)%id_jmortloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jmortloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_p_Di","Diazotroph phosphorus loss to mortality",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(DIAZO)%id_jmortloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jmortloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_p_Lg","Large phyto phosphorus loss to mortality",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(LARGE)%id_jmortloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jmortloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_p_Md","Medium phyto phosphorus loss to mortality",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(MEDIUM)%id_jmortloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jmortloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_p_Sm","Small phyto phosphorus loss to mortality",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(SMALL)%id_jmortloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jmortloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_fe_Di","Diazotroph iron loss to mortality",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(DIAZO)%id_jmortloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jmortloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_fe_Lg","Large phyto iron loss to mortality",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(LARGE)%id_jmortloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jmortloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_fe_Md","Medium phyto iron loss to mortality",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(MEDIUM)%id_jmortloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jmortloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_fe_Sm","Small phyto iron loss to mortality",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(SMALL)%id_jmortloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jmortloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
     !
     ! Register diagnostics for phytoplankton silica dissolution from respiration and mortality
     !
     vardesc_temp = vardesc("jdissloss_si_Di","Diazotroph silica dissolution from respiration and mortality",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(DIAZO)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jdissloss_si_Lg","Large phyto silica dissolution from respiration and mortality",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(LARGE)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jdissloss_si_Md","Medium phyto silica dissolution from respiration and mortality",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(MEDIUM)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jdissloss_si_Sm","Small phyto silica dissolution from respiration and mortality",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(SMALL)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jdissloss_si = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
     !
     ! Register diagnostics for phytoplankton exudation
     !
     vardesc_temp = vardesc("jexuloss_n_Di","Diazotroph nitrogen loss via exudation",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(DIAZO)%id_jexuloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jexuloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_n_Lg","Large phyto nitrogen loss via exudation",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(LARGE)%id_jexuloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jexuloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_n_Md","Medium phyto nitrogen loss via exudation",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(MEDIUM)%id_jexuloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jexuloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_n_Sm","Small phyto nitrogen loss via exudation",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(SMALL)%id_jexuloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jexuloss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_p_Di","Diazotroph phosphorus loss via exudation",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(DIAZO)%id_jexuloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jexuloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_p_Lg","Large phyto phosphorus loss via exudation",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(LARGE)%id_jexuloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jexuloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_p_Md","Medium phyto phosphorus loss via exudation",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(MEDIUM)%id_jexuloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jexuloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_p_Sm","Small phyto phosphorus loss via exudation",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(SMALL)%id_jexuloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jexuloss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_fe_Di","Diazotroph iron loss via exudation",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(DIAZO)%id_jexuloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jexuloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_fe_Lg","Large phyto iron loss via exudation",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(LARGE)%id_jexuloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jexuloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_fe_Md","Medium phyto iron loss via exudation",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(MEDIUM)%id_jexuloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jexuloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_fe_Sm","Small phyto iron loss via exudation",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(SMALL)%id_jexuloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jexuloss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !
@@ -805,82 +805,82 @@ module COBALT_reg_diag
     !
     vardesc_temp = vardesc("jhploss_n_Di","Diazotroph nitrogen loss to higher predators",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(DIAZO)%id_jhploss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jhploss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_n_Lg","Large phyto nitrogen loss to higher predators",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(LARGE)%id_jhploss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jhploss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_n_Md","Medium phyto nitrogen loss to higher predators",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(MEDIUM)%id_jhploss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jhploss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_n_Sm","Small phyto nitrogen loss to higher predators",&
                            'h','L','s','mol N kg-1 s-1','f')
-    phyto(SMALL)%id_jhploss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jhploss_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_p_Di","Diazotroph phosphorus loss to higher predators",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(DIAZO)%id_jhploss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jhploss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_p_Lg","Large phyto phosphorus loss to higher predators",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(LARGE)%id_jhploss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jhploss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_p_Md","Medium phyto phosphorus loss to higher predators",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(MEDIUM)%id_jhploss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jhploss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_p_Sm","Small phyto phosphorus loss to higher predators",&
                            'h','L','s','mol P kg-1 s-1','f')
-    phyto(SMALL)%id_jhploss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jhploss_p = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_fe_Di","Diazotroph iron loss to higher predators",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(DIAZO)%id_jhploss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jhploss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_fe_Lg","Large phyto iron loss to higher predators",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(LARGE)%id_jhploss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jhploss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_fe_Md","Medium phyto iron loss to higher predators",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(MEDIUM)%id_jhploss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jhploss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_fe_Sm","Small phyto iron loss to higher predators",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(SMALL)%id_jhploss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jhploss_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_sio2_Di","Diazotroph silica loss to higher predators",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(DIAZO)%id_jhploss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jhploss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_sio2_Lg","Large phyto silica loss to higher predators",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(LARGE)%id_jhploss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jhploss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jploss_sio2_Md","Medium phyto silica loss to higher predators",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(MEDIUM)%id_jhploss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jhploss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jhploss_sio2_Sm","Small phyto silica loss to higher predators",&
                            'h','L','s','mol Si kg-1 s-1','f')
-    phyto(SMALL)%id_jhploss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jhploss_sio2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !
@@ -910,99 +910,99 @@ module COBALT_reg_diag
     !
 
     vardesc_temp = vardesc("juptake_n2_Di","Nitrogen fixation",'h','L','s','mol N kg-1 s-1','f')
-    phyto(DIAZO)%id_juptake_n2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_juptake_n2 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_fe_Di","Diaz. phyto. Fed uptake",'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(DIAZO)%id_juptake_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_juptake_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_fe_Lg","Large phyto. Fed uptake",'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(LARGE)%id_juptake_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_juptake_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_fe_Md","Medium phyto. Fed uptake",'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(MEDIUM)%id_juptake_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_juptake_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_fe_Sm","Small phyto. Fed uptake",&
                            'h','L','s','mol Fe kg-1 s-1','f')
-    phyto(SMALL)%id_juptake_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_juptake_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_nh4_Di","Diaz. phyto. NH4 uptake",'h','L','s','mol NH4 kg-1 s-1','f')
-    phyto(DIAZO)%id_juptake_nh4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_juptake_nh4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_nh4_Lg","Large phyto. NH4 uptake",'h','L','s','mol NH4 kg-1 s-1','f')
-    phyto(LARGE)%id_juptake_nh4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_juptake_nh4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_nh4_Md","Medium phyto. NH4 uptake",'h','L','s','mol NH4 kg-1 s-1','f')
-    phyto(MEDIUM)%id_juptake_nh4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_juptake_nh4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_nh4_Sm","Small phyto. NH4 uptake",&
                            'h','L','s','mol NH4 kg-1 s-1','f')
-    phyto(SMALL)%id_juptake_nh4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_juptake_nh4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_no3_Di","Diaz. phyto. NO3 uptake",'h','L','s','mol NO3 kg-1 s-1','f')
-    phyto(DIAZO)%id_juptake_no3 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_juptake_no3 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_no3_Lg","Large phyto. NO3 uptake",'h','L','s','mol NO3 kg-1 s-1','f')
-    phyto(LARGE)%id_juptake_no3 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_juptake_no3 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_no3_Md","Medium phyto. NO3 uptake",'h','L','s','mol NO3 kg-1 s-1','f')
-    phyto(MEDIUM)%id_juptake_no3 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_juptake_no3 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_no3_Sm","Small phyto. NO3 uptake",&
                            'h','L','s','mol NO3 kg-1 s-1','f')
-    phyto(SMALL)%id_juptake_no3 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_juptake_no3 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_po4_Di","Diaz. phyto. PO4 uptake",'h','L','s','mol PO4 kg-1 s-1','f')
-    phyto(DIAZO)%id_juptake_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_juptake_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_po4_Lg","Large phyto. PO4 uptake",'h','L','s','mol PO4 kg-1 s-1','f')
-    phyto(LARGE)%id_juptake_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_juptake_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_po4_Md","Medium phyto. PO4 uptake",'h','L','s','mol PO4 kg-1 s-1','f')
-    phyto(MEDIUM)%id_juptake_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_juptake_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_po4_Sm","Small phyto. PO4 uptake",&
                            'h','L','s','mol PO4 kg-1 s-1','f')
-    phyto(SMALL)%id_juptake_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_juptake_po4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("juptake_sio4_Lg","Large phyto. SiO4 uptake",'h','L','s','mol kg-1 s-1','f')
-    phyto(LARGE)%id_juptake_sio4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_juptake_sio4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
    vardesc_temp = vardesc("juptake_sio4_Md","Medium phyto. SiO4 uptake",'h','L','s','mol kg-1 s-1','f')
-    phyto(MEDIUM)%id_juptake_sio4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_juptake_sio4 = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_ndi","Diazotroph Nitrogen production",'h','L','s','mol kg-1 s-1','f')
-    phyto(DIAZO)%id_jprod_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(DIAZ)%id_jprod_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_nsmp","Small phyto. Nitrogen production",'h','L','s','mol kg-1 s-1','f')
-    phyto(SMALL)%id_jprod_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(SMP)%id_jprod_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_nmdp","Medium phyto. Nitrogen production",'h','L','s','mol kg-1 s-1','f')
-    phyto(MEDIUM)%id_jprod_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(MDP)%id_jprod_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_nlgp","Large phyto. Nitrogen production",'h','L','s','mol kg-1 s-1','f')
-    phyto(LARGE)%id_jprod_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
+    phyto(LGP)%id_jprod_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !
@@ -2134,19 +2134,19 @@ module COBALT_reg_diag
         init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("ffedi_btm","diazo Fe sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_ffe_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_ffe_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("ffelg_btm","large phyto Fe sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_ffe_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_ffe_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("ffemd_btm","medium phyto Fe sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_ffe_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_ffe_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("ffesm_btm","small phyto Fe sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(SMALL)%id_ffe_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_ffe_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("ffetot_btm","Total Fe sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
@@ -2174,19 +2174,19 @@ module COBALT_reg_diag
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fndi_btm","diazo N sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_fn_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_fn_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fnlg_btm","large phyto N sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_fn_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_fn_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fnmd_btm","medium phyto N sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_fn_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_fn_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fnsm_btm","small phyto N sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(SMALL)%id_fn_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_fn_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fntot_btm","Total N sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
@@ -2215,19 +2215,19 @@ module COBALT_reg_diag
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fpdi_btm","diazo P sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_fp_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_fp_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fplg_btm","large phyto P sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_fp_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_fp_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fpmd_btm","medium phyto P sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_fp_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_fp_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fpsm_btm","small phyto P sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(SMALL)%id_fp_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_fp_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fptot_btm","Total P sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
@@ -2239,11 +2239,11 @@ module COBALT_reg_diag
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fsilg_btm","large phyto Si sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_fsi_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_fsi_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fsimd_btm","medium phyto Si sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_fsi_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_fsi_btm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("fsitot_btm","Total Si sinking flux to bottom",'h','1','s','mol m-2 s-1','f')
@@ -2472,211 +2472,211 @@ module COBALT_reg_diag
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_nsmp","Surface small phyto. nitrogen",'h','1','s','mol kg-1','f')
-    phyto(SMALL)%id_sfc_f_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_f_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_nmdp","Surface medium phyto. nitrogen",'h','1','s','mol kg-1','f')
-    phyto(MEDIUM)%id_sfc_f_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_f_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_nlgp","Surface large phyto. nitrogen",'h','1','s','mol kg-1','f')
-    phyto(LARGE)%id_sfc_f_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_f_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_ndi","Surface diazotroph nitrogen",'h','1','s','mol kg-1','f')
-    phyto(DIAZO)%id_sfc_f_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_f_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_chl_smp","Surface small phyto. chlorophyll",'h','1','s','ug kg-1','f')
-    phyto(SMALL)%id_sfc_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_chl_mdp","Surface medium phyto. chlorophyll",'h','1','s','ug kg-1','f')
-    phyto(MEDIUM)%id_sfc_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_chl_lgp","Surface large phyto. chlorophyll",'h','1','s','ug kg-1','f')
-    phyto(LARGE)%id_sfc_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_chl_di","Surface diazotroph chlorophyll",'h','1','s','mol kg-1','f')
-    phyto(DIAZO)%id_sfc_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_chl = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_def_fe_smp","Surface small phyto. iron deficiency",'h','1','s','dimensionsless','f')
-    phyto(SMALL)%id_sfc_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_def_fe_mdp","Surface medium phyto. iron deficiency",'h','1','s','dimensionsless','f')
-    phyto(MEDIUM)%id_sfc_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_def_fe_lgp","Surface large phyto. iron deficiency",'h','1','s','dimensionless','f')
-    phyto(LARGE)%id_sfc_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_def_fe_di","Surface diazotroph iron deficiency",'h','1','s','dimensionless','f')
-    phyto(DIAZO)%id_sfc_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_def_fe = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_felim_smp","Surface small phyto. iron uptake limitation",'h','1','s','dimensionsless','f')
-    phyto(SMALL)%id_sfc_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_felim_mdp","Surface medium phyto. iron uptake limitation",'h','1','s','dimensionsless','f')
-    phyto(MEDIUM)%id_sfc_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_felim_lgp","Surface large phyto. iron uptake limitation",'h','1','s','dimensionless','f')
-    phyto(LARGE)%id_sfc_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_felim_di","Surface diazotroph iron uptake limitation",'h','1','s','dimensionless','f')
-    phyto(DIAZO)%id_sfc_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_felim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_q_fe_2_n_di","Surface diazotroph iron:nitrogen",'h','1','s','moles Fe (moles N)-1','f')
-    phyto(DIAZO)%id_sfc_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_q_fe_2_n_smp","Surface small phyto. iron:nitrogen",'h','1','s','moles Fe (moles N)-1','f')
-    phyto(SMALL)%id_sfc_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_q_fe_2_n_mdp","Surface medium phyto. iron:nitrogen",'h','1','s','moles Fe (moles N)-1','f')
-    phyto(MEDIUM)%id_sfc_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_q_fe_2_n_lgp","Surface large phyto. iron:nitrogen",'h','1','s','moles Fe (moles N)-1','f')
-    phyto(LARGE)%id_sfc_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_q_fe_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_q_p_2_n_di","Surface diazotroph P:N",'h','1','s','moles P (moles N)-1','f')
-    phyto(DIAZO)%id_sfc_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_q_p_2_n_smp","Surface small phyto. P:N",'h','1','s','moles P (moles N)-1','f')
-    phyto(SMALL)%id_sfc_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_q_p_2_n_mdp","Surface medium phyto. P:N",'h','1','s','moles P (moles N)-1','f')
-    phyto(MEDIUM)%id_sfc_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_q_p_2_n_lgp","Surface large phyto. P:N",'h','1','s','moles P (moles N)-1','f')
-    phyto(LARGE)%id_sfc_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_q_p_2_n = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_irrlim_smp","Surface small phyto. light limitation",'h','1','s','dimensionsless','f')
-    phyto(SMALL)%id_sfc_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_irrlim_mdp","Surface medium phyto. light limitation",'h','1','s','dimensionsless','f')
-    phyto(MEDIUM)%id_sfc_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_irrlim_lgp","Surface large phyto. light limitation",'h','1','s','dimensionless','f')
-    phyto(LARGE)%id_sfc_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_irrlim_di","Surface diazotroph light limitation",'h','1','s','dimensionless','f')
-    phyto(DIAZO)%id_sfc_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_irrlim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_theta_smp","Surface small phyto. Chl:C",'h','1','s','g Chl (g C)-1','f')
-    phyto(SMALL)%id_sfc_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_theta_mdp","Surface medium phyto. Chl:C",'h','1','s','g Chl (g C)-1','f')
-    phyto(MEDIUM)%id_sfc_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_theta_lgp","Surface large phyto. Chl:C",'h','1','s','g Chl (g C)-1','f')
-    phyto(LARGE)%id_sfc_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_theta_di","Surface diazotroph Chl:C",'h','1','s','g Chl (g C)-1','f')
-    phyto(DIAZO)%id_sfc_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_theta = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_pcmlim_aclm_smp","Surface small phyto. Temp*Nut Lim",'h','1','s','none','f')
-    phyto(SMALL)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_pcmlim_aclm_mdp","Surface medium phyto. Temp*Nut Lim",'h','1','s','none','f')
-    phyto(MEDIUM)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_pcmlim_aclm_lgp","Surface large phyto. Temp*Nut Lim",'h','1','s','none','f')
-    phyto(LARGE)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_pcmlim_aclm_di","Surface diazotroph Temp*Nut Lim",'h','1','s','none','f')
-    phyto(DIAZO)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_pcmlim_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_mu_smp","Surface small phyto. Chl:C",'h','1','s','sec-1','f')
-    phyto(SMALL)%id_sfc_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
    vardesc_temp = vardesc("sfc_mu_mdp","Surface medium phyto. Chl:C",'h','1','s','sec-1','f')
-    phyto(MEDIUM)%id_sfc_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_mu_lgp","Surface large phyto. Chl:C",'h','1','s','sec-1','f')
-    phyto(LARGE)%id_sfc_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_mu_di","Surface diazotroph growth rate",'h','1','s','sec-1','f')
-    phyto(DIAZO)%id_sfc_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_mu = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_no3lim_smp","Surface small phyto. nitrate limitation",'h','1','s','dimensionsless','f')
-    phyto(SMALL)%id_sfc_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_no3lim_mdp","Surface medium phyto. nitrate limitation",'h','1','s','dimensionsless','f')
-    phyto(MEDIUM)%id_sfc_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_no3lim_lgp","Surface large phyto. nitrate limitation",'h','1','s','dimensionless','f')
-    phyto(LARGE)%id_sfc_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_no3lim_di","Surface diazotroph nitrate limitation",'h','1','s','dimensionless','f')
-    phyto(DIAZO)%id_sfc_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_no3lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_nh4lim_smp","Surface small phyto. ammonia limitation",'h','1','s','dimensionsless','f')
-    phyto(SMALL)%id_sfc_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_nh4lim_mdp","Surface medium phyto. ammonia limitation",'h','1','s','dimensionsless','f')
-    phyto(MEDIUM)%id_sfc_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_nh4lim_lgp","Surface large phyto. ammonia limitation",'h','1','s','dimensionless','f')
-    phyto(LARGE)%id_sfc_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_nh4lim_di","Surface diazotroph ammonia limitation",'h','1','s','dimensionless','f')
-    phyto(DIAZO)%id_sfc_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_nh4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_po4lim_smp","Surface small phyto. phosphate limitation",'h','1','s','dimensionsless','f')
-    phyto(SMALL)%id_sfc_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_sfc_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_po4lim_mdp","Surface medium phyto. phosphate limitation",'h','1','s','dimensionsless','f')
-    phyto(MEDIUM)%id_sfc_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_sfc_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_po4lim_lgp","Surface large phyto. phosphate limitation",'h','1','s','dimensionless','f')
-    phyto(LARGE)%id_sfc_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_sfc_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("sfc_po4lim_di","Surface diazotroph phosphate limitation",'h','1','s','dimensionless','f')
-    phyto(DIAZO)%id_sfc_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_sfc_po4lim = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     !
@@ -2701,119 +2701,119 @@ module COBALT_reg_diag
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_ndi_100","Diazotroph nitrogen prim. prod. integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_jprod_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_jprod_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_nsmp_100","Small phyto. nitrogen  prim. prod. integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(SMALL)%id_jprod_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_jprod_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_nmdp_100","Medium phyto. nitrogen  prim. prod. integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_jprod_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_jprod_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_nlgp_100","Large phyto. nitrogen  prim. prod. integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_jprod_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_jprod_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_ndi_new_100","Diazotroph new (NO3-based) prim. prod. integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_jprod_n_new_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_jprod_n_new_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_nsmp_new_100","Small phyto. new (NO3-based) prim. prod. integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(SMALL)%id_jprod_n_new_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_jprod_n_new_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_nmdp_new_100","Medium phyto. new (NO3-based) prim. prod. integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_jprod_n_new_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_jprod_n_new_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_nlgp_new_100","Large phyto. new (NO3-based) prim. prod. integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_jprod_n_new_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_jprod_n_new_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_ndi_n2_100","Diazotroph nitrogen fixation in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_jprod_n_n2_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_jprod_n_n2_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_ndi_100","Diazotroph nitrogen loss to zooplankton integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_jzloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_jzloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_nsmp_100","Small phyto. nitrogen loss to zooplankton integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(SMALL)%id_jzloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_jzloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_nmdp_100","Medium phyto. nitrogen loss to zooplankton integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_jzloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_jzloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jzloss_nlgp_100","Large phyto. nitrogen loss to zooplankton integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_jzloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_jzloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
      vardesc_temp = vardesc("jaggloss_ndi_100","Diazotroph phyto. nitrogen aggregation loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_jaggloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_jaggloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_nsmp_100","Small phyto. nitrogen aggregation loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(SMALL)%id_jaggloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_jaggloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_nmdp_100","Medium phyto. nitrogen aggregation loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_jaggloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_jaggloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jaggloss_nlgp_100","Large phyto. nitrogen aggregation loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_jaggloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_jaggloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_ndi_100","Diazotroph nitrogen virus loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_jvirloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_jvirloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jvirloss_nsmp_100","Small phyto. nitrogen virus loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(SMALL)%id_jvirloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_jvirloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
      vardesc_temp = vardesc("jvirloss_nmdp_100","Medium phyto. nitrogen virus loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_jvirloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_jvirloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
      vardesc_temp = vardesc("jvirloss_nlgp_100","Large phyto. nitrogen virus loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_jvirloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_jvirloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
      vardesc_temp = vardesc("jmortloss_ndi_100","Diazotroph nitrogen mortality loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_jmortloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_jmortloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jmortloss_nsmp_100","Small phyto. nitrogen mortality loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(SMALL)%id_jmortloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_jmortloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
      vardesc_temp = vardesc("jmortloss_nmdp_100","Medium phyto. nitrogen mortality loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_jmortloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_jmortloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
      vardesc_temp = vardesc("jmortloss_nlgp_100","Large phyto. nitrogen mortality loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_jmortloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_jmortloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_ndi_100","Diazotroph nitrogen exudation loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(DIAZO)%id_jexuloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_jexuloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_nsmp_100","Small phyto. nitrogen exudation loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(SMALL)%id_jexuloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_jexuloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_nmdp_100","Medium phyto. nitrogen exudation loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(MEDIUM)%id_jexuloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_jexuloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jexuloss_nlgp_100","Large phyto. nitrogen exudation loss integral in upper 100m",'h','1','s','mol m-2 s-1','f')
-    phyto(LARGE)%id_jexuloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_jexuloss_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("jprod_nsmz_100","Small zooplankton nitrogen prod. integral in upper 100m",'h','1','s','mol m-2 s-1','f')
@@ -3071,19 +3071,19 @@ module COBALT_reg_diag
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("nsmp_100","Small phytoplankton nitrogen biomass in upper 100m",'h','1','s','mol m-2','f')
-    phyto(SMALL)%id_f_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(SMP)%id_f_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("nmdp_100","Medium phytoplankton nitrogen biomass in upper 100m",'h','1','s','mol m-2','f')
-    phyto(MEDIUM)%id_f_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(MDP)%id_f_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("nlgp_100","Large phytoplankton nitrogen biomass in upper 100m",'h','1','s','mol m-2','f')
-    phyto(LARGE)%id_f_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(LGP)%id_f_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("ndi_100","Diazotroph nitrogen biomass in upper 100m",'h','1','s','mol m-2','f')
-    phyto(DIAZO)%id_f_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
+    phyto(DIAZ)%id_f_n_100 = register_diag_field(package_name, vardesc_temp%name, axes(1:2),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
     vardesc_temp = vardesc("nsmz_100","Small zooplankton nitrogen biomass in upper 100m",'h','1','s','mol m-2','f')

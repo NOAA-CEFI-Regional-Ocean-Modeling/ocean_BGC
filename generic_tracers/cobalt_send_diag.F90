@@ -181,10 +181,10 @@ module COBALT_send_diag
               cobalt%co3_sol_arag(i,j,k) = cobalt%f_co3_ion(i,j,k) / max(cobalt%omega_arag(i,j,k),epsln)
               cobalt%co3_sol_calc(i,j,k) = cobalt%f_co3_ion(i,j,k) / max(cobalt%omega_calc(i,j,k),epsln)
               ! Update diatom and misc phytoplankton groups for diagnostics
-              cobalt%nlg_diatoms(i,j,k)=phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%silim(i,j,k)
-              cobalt%nmd_diatoms(i,j,k)=phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%silim(i,j,k)
-              cobalt%nlg_misc(i,j,k)=phyto(LARGE)%f_n(i,j,k) - phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%silim(i,j,k)
-              cobalt%nmd_misc(i,j,k)=phyto(MEDIUM)%f_n(i,j,k) - phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%silim(i,j,k)
+              cobalt%nlg_diatoms(i,j,k)=phyto(LGP)%f_n(i,j,k)*phyto(LGP)%silim(i,j,k)
+              cobalt%nmd_diatoms(i,j,k)=phyto(MDP)%f_n(i,j,k)*phyto(MDP)%silim(i,j,k)
+              cobalt%nlg_misc(i,j,k)=phyto(LGP)%f_n(i,j,k) - phyto(LGP)%f_n(i,j,k)*phyto(LGP)%silim(i,j,k)
+              cobalt%nmd_misc(i,j,k)=phyto(MDP)%f_n(i,j,k) - phyto(MDP)%f_n(i,j,k)*phyto(MDP)%silim(i,j,k)
             enddo; enddo ; enddo !} i,j,k
 
           endif !} recalculate carbon system properties
@@ -225,13 +225,13 @@ module COBALT_send_diag
             is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
           ! Surface tracers (could remove if instead extracted from 3D files in the diagnostic table?)
-          used = g_send_data(phyto(DIAZO)%id_sfc_f_n, cobalt%p_ndi(:,:,1,tau), &
+          used = g_send_data(phyto(DIAZ)%id_sfc_f_n, cobalt%p_ndi(:,:,1,tau), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-          used = g_send_data(phyto(LARGE)%id_sfc_f_n, cobalt%p_nlg(:,:,1,tau), &
+          used = g_send_data(phyto(LGP)%id_sfc_f_n, cobalt%p_nlg(:,:,1,tau), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-          used = g_send_data(phyto(MEDIUM)%id_sfc_f_n, cobalt%p_nmd(:,:,1,tau), &
+          used = g_send_data(phyto(MDP)%id_sfc_f_n, cobalt%p_nmd(:,:,1,tau), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-          used = g_send_data(phyto(SMALL)%id_sfc_f_n, cobalt%p_nsm(:,:,1,tau), &
+          used = g_send_data(phyto(SMP)%id_sfc_f_n, cobalt%p_nsm(:,:,1,tau), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_sfc_alk, cobalt%p_alk(:,:,1,tau), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
@@ -261,18 +261,18 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_sfc_temp, Temp(:,:,1), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-          used = g_send_data(phyto(DIAZO)%id_sfc_chl, cobalt%p_ndi(:,:,1,tau)*c2n*phyto(DIAZO)%theta(:,:,1), &
+          used = g_send_data(phyto(DIAZ)%id_sfc_chl, cobalt%p_ndi(:,:,1,tau)*c2n*phyto(DIAZ)%theta(:,:,1), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-          used = g_send_data(phyto(LARGE)%id_sfc_chl, cobalt%p_nlg(:,:,1,tau)*c2n*phyto(LARGE)%theta(:,:,1), &
+          used = g_send_data(phyto(LGP)%id_sfc_chl, cobalt%p_nlg(:,:,1,tau)*c2n*phyto(LGP)%theta(:,:,1), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-          used = g_send_data(phyto(MEDIUM)%id_sfc_chl, cobalt%p_nmd(:,:,1,tau)*c2n*phyto(MEDIUM)%theta(:,:,1), &
+          used = g_send_data(phyto(MDP)%id_sfc_chl, cobalt%p_nmd(:,:,1,tau)*c2n*phyto(MDP)%theta(:,:,1), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-          used = g_send_data(phyto(SMALL)%id_sfc_chl, cobalt%p_nsm(:,:,1,tau)*c2n*phyto(SMALL)%theta(:,:,1), &
+          used = g_send_data(phyto(SMP)%id_sfc_chl, cobalt%p_nsm(:,:,1,tau)*c2n*phyto(SMP)%theta(:,:,1), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_sfc_chl, (cobalt%p_ndi(:,:,1,tau)*c2n*phyto(DIAZO)%theta(:,:,1) + &
-            cobalt%p_nlg(:,:,1,tau)*c2n*phyto(LARGE)%theta(:,:,1) + &
-            cobalt%p_nmd(:,:,1,tau)*c2n*phyto(MEDIUM)%theta(:,:,1) + &
-            cobalt%p_nsm(:,:,1,tau)*c2n*phyto(SMALL)%theta(:,:,1)), &
+          used = g_send_data(cobalt%id_sfc_chl, (cobalt%p_ndi(:,:,1,tau)*c2n*phyto(DIAZ)%theta(:,:,1) + &
+            cobalt%p_nlg(:,:,1,tau)*c2n*phyto(LGP)%theta(:,:,1) + &
+            cobalt%p_nmd(:,:,1,tau)*c2n*phyto(MDP)%theta(:,:,1) + &
+            cobalt%p_nsm(:,:,1,tau)*c2n*phyto(SMP)%theta(:,:,1)), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_pco2surf, cobalt%pco2_csurf, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
@@ -426,28 +426,28 @@ module COBALT_send_diag
             cobalt%wsink  * grid_tmask(:,:,:), model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_ffetot_tp, (cobalt%p_fedet(:,:,:,tau)*cobalt%wsink + &
-            cobalt%p_fesm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + &
-            cobalt%p_femd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_felg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + &
-            cobalt%p_fedi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:))*cobalt%Rho_0*grid_tmask(:,:,:), &
+            cobalt%p_fesm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + &
+            cobalt%p_femd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_felg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + &
+            cobalt%p_fedi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:))*cobalt%Rho_0*grid_tmask(:,:,:), &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_fntot_tp, (cobalt%p_ndet(:,:,:,tau)*cobalt%wsink + &
 		    cobalt%p_ndet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_nsm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + &
-            cobalt%p_nmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_nlg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + &
-            cobalt%p_ndi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:))*cobalt%Rho_0*grid_tmask(:,:,:), &
+            cobalt%p_nsm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + &
+            cobalt%p_nmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_nlg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + &
+            cobalt%p_ndi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:))*cobalt%Rho_0*grid_tmask(:,:,:), &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_fptot_tp, (cobalt%p_pdet(:,:,:,tau)*cobalt%wsink + &
 		    cobalt%p_pdet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_psm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + &
-            cobalt%p_pmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_plg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + &
-            cobalt%p_pdi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:))*cobalt%Rho_0*grid_tmask(:,:,:), &
+            cobalt%p_psm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + &
+            cobalt%p_pmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_plg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + &
+            cobalt%p_pdi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:))*cobalt%Rho_0*grid_tmask(:,:,:), &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_fsitot_tp, (cobalt%p_sidet(:,:,:,tau)*cobalt%wsink + &
-            cobalt%p_simd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_silg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:))*cobalt%Rho_0*grid_tmask(:,:,:), &
+            cobalt%p_simd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_silg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:))*cobalt%Rho_0*grid_tmask(:,:,:), &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_nphyto_tot, (cobalt%p_ndi(:,:,:,tau) +  &
             cobalt%p_nlg(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau)), &
@@ -488,27 +488,27 @@ module COBALT_send_diag
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           ! total fluxes require sinking phytoplankton
           flux_i(:,:,2:nk+1) = (cobalt%p_fedet(:,:,:,tau)*cobalt%wsink + &
-            cobalt%p_fesm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_femd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_felg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_fedi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_fesm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_femd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_felg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_fedi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0
           used = g_send_data(cobalt%id_ffetot_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = (cobalt%p_ndet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_ndet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_nsm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_nlg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_nsm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_nlg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0
           used = g_send_data(cobalt%id_fntot_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = (cobalt%p_pdet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_pdet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_psm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_plg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_pdi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_psm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_plg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_pdi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0
           used = g_send_data(cobalt%id_fptot_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = (cobalt%p_sidet(:,:,:,tau)*cobalt%wsink + &
-            cobalt%p_simd(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_silg(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:))* &
+            cobalt%p_simd(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_silg(:,:,:,tau)*phyto(MDP)%vmove(:,:,:))* &
             cobalt%Rho_0
           deallocate(flux_i)
 
@@ -640,10 +640,10 @@ module COBALT_send_diag
             cobalt%f_fed_int_100(i,j) = cobalt%p_fed(i,j,1,tau) * rho_dzt(i,j,1)
             cobalt%f_po4_int_100(i,j) = cobalt%p_po4(i,j,1,tau) * rho_dzt(i,j,1)
             cobalt%f_sio4_int_100(i,j) = cobalt%p_sio4(i,j,1,tau) * rho_dzt(i,j,1)
-            phyto(DIAZO)%f_n_100(i,j) = cobalt%p_ndi(i,j,1,tau) * rho_dzt(i,j,1)
-            phyto(LARGE)%f_n_100(i,j) = cobalt%p_nlg(i,j,1,tau) * rho_dzt(i,j,1)
-            phyto(MEDIUM)%f_n_100(i,j) = cobalt%p_nmd(i,j,1,tau) * rho_dzt(i,j,1)
-            phyto(SMALL)%f_n_100(i,j) = cobalt%p_nsm(i,j,1,tau) * rho_dzt(i,j,1)
+            phyto(DIAZ)%f_n_100(i,j) = cobalt%p_ndi(i,j,1,tau) * rho_dzt(i,j,1)
+            phyto(LGP)%f_n_100(i,j) = cobalt%p_nlg(i,j,1,tau) * rho_dzt(i,j,1)
+            phyto(MDP)%f_n_100(i,j) = cobalt%p_nmd(i,j,1,tau) * rho_dzt(i,j,1)
+            phyto(SMP)%f_n_100(i,j) = cobalt%p_nsm(i,j,1,tau) * rho_dzt(i,j,1)
             zoo(SMZ)%f_n_100(i,j) = cobalt%p_nsmz(i,j,1,tau) * rho_dzt(i,j,1)
             zoo(MDZ)%f_n_100(i,j) = cobalt%p_nmdz(i,j,1,tau) * rho_dzt(i,j,1)
             zoo(LGZ)%f_n_100(i,j) = cobalt%p_nlgz(i,j,1,tau) * rho_dzt(i,j,1)
@@ -667,24 +667,24 @@ module COBALT_send_diag
             cobalt%fcadet_calc_100(i,j) = cobalt%p_cadet_calc(i,j,1,tau) * cobalt%Rho_0 * cobalt%wsink
             cobalt%fntot_100(i,j) = (cobalt%p_ndet(i,j,1,tau)*cobalt%wsink + &
               cobalt%p_ndet_fast(i,j,1,tau)*cobalt%wsink_fast + &
-              cobalt%p_nsm(i,j,1,tau)*phyto(SMALL)%vmove(i,j,1) + &
-              cobalt%p_nmd(i,j,1,tau)*phyto(MEDIUM)%vmove(i,j,1) + &
-              cobalt%p_nlg(i,j,1,tau)*phyto(LARGE)%vmove(i,j,1) + &
-              cobalt%p_ndi(i,j,1,tau)*phyto(DIAZO)%vmove(i,j,1))*cobalt%Rho_0
+              cobalt%p_nsm(i,j,1,tau)*phyto(SMP)%vmove(i,j,1) + &
+              cobalt%p_nmd(i,j,1,tau)*phyto(MDP)%vmove(i,j,1) + &
+              cobalt%p_nlg(i,j,1,tau)*phyto(LGP)%vmove(i,j,1) + &
+              cobalt%p_ndi(i,j,1,tau)*phyto(DIAZ)%vmove(i,j,1))*cobalt%Rho_0
             cobalt%fptot_100(i,j) = (cobalt%p_pdet(i,j,1,tau)*cobalt%wsink + &
               cobalt%p_pdet_fast(i,j,1,tau)*cobalt%wsink_fast + &
-              cobalt%p_psm(i,j,1,tau)*phyto(SMALL)%vmove(i,j,1) + &
-              cobalt%p_pmd(i,j,1,tau)*phyto(MEDIUM)%vmove(i,j,1) + &
-              cobalt%p_plg(i,j,1,tau)*phyto(LARGE)%vmove(i,j,1) + &
-              cobalt%p_pdi(i,j,1,tau)*phyto(DIAZO)%vmove(i,j,1))*cobalt%Rho_0
+              cobalt%p_psm(i,j,1,tau)*phyto(SMP)%vmove(i,j,1) + &
+              cobalt%p_pmd(i,j,1,tau)*phyto(MDP)%vmove(i,j,1) + &
+              cobalt%p_plg(i,j,1,tau)*phyto(LGP)%vmove(i,j,1) + &
+              cobalt%p_pdi(i,j,1,tau)*phyto(DIAZ)%vmove(i,j,1))*cobalt%Rho_0
             cobalt%ffetot_100(i,j) = (cobalt%p_fedet(i,j,1,tau)*cobalt%wsink + &
-              cobalt%p_fesm(i,j,1,tau)*phyto(SMALL)%vmove(i,j,1) + &
-              cobalt%p_femd(i,j,1,tau)*phyto(MEDIUM)%vmove(i,j,1) + &
-              cobalt%p_felg(i,j,1,tau)*phyto(LARGE)%vmove(i,j,1) + &
-              cobalt%p_fedi(i,j,1,tau)*phyto(DIAZO)%vmove(i,j,1))*cobalt%Rho_0
+              cobalt%p_fesm(i,j,1,tau)*phyto(SMP)%vmove(i,j,1) + &
+              cobalt%p_femd(i,j,1,tau)*phyto(MDP)%vmove(i,j,1) + &
+              cobalt%p_felg(i,j,1,tau)*phyto(LGP)%vmove(i,j,1) + &
+              cobalt%p_fedi(i,j,1,tau)*phyto(DIAZ)%vmove(i,j,1))*cobalt%Rho_0
             cobalt%fsitot_100(i,j) = (cobalt%p_sidet(i,j,1,tau)*cobalt%wsink + &
-              cobalt%p_simd(i,j,1,tau)*phyto(MEDIUM)%vmove(i,j,1) + &
-              cobalt%p_silg(i,j,1,tau)*phyto(LARGE)%vmove(i,j,1))*cobalt%Rho_0
+              cobalt%p_simd(i,j,1,tau)*phyto(MDP)%vmove(i,j,1) + &
+              cobalt%p_silg(i,j,1,tau)*phyto(LGP)%vmove(i,j,1))*cobalt%Rho_0
           enddo; enddo !} i,j
 
           do j = jsc, jec ; do i = isc, iec ; !{
@@ -700,10 +700,10 @@ module COBALT_send_diag
                 cobalt%f_fed_int_100(i,j) = cobalt%f_fed_int_100(i,j) + cobalt%p_fed(i,j,k,tau) * rho_dzt(i,j,k)
                 cobalt%f_po4_int_100(i,j) = cobalt%f_po4_int_100(i,j) + cobalt%p_po4(i,j,k,tau) * rho_dzt(i,j,k)
                 cobalt%f_sio4_int_100(i,j) = cobalt%f_sio4_int_100(i,j) + cobalt%p_sio4(i,j,k,tau) *  rho_dzt(i,j,k)
-                phyto(DIAZO)%f_n_100(i,j) = phyto(DIAZO)%f_n_100(i,j) + cobalt%p_ndi(i,j,k,tau) * rho_dzt(i,j,k)
-                phyto(LARGE)%f_n_100(i,j) = phyto(LARGE)%f_n_100(i,j) + cobalt%p_nlg(i,j,k,tau) * rho_dzt(i,j,k)
-                phyto(MEDIUM)%f_n_100(i,j) = phyto(MEDIUM)%f_n_100(i,j) + cobalt%p_nmd(i,j,k,tau) * rho_dzt(i,j,k)
-                phyto(SMALL)%f_n_100(i,j) = phyto(SMALL)%f_n_100(i,j) + cobalt%p_nsm(i,j,k,tau) * rho_dzt(i,j,k)
+                phyto(DIAZ)%f_n_100(i,j) = phyto(DIAZ)%f_n_100(i,j) + cobalt%p_ndi(i,j,k,tau) * rho_dzt(i,j,k)
+                phyto(LGP)%f_n_100(i,j) = phyto(LGP)%f_n_100(i,j) + cobalt%p_nlg(i,j,k,tau) * rho_dzt(i,j,k)
+                phyto(MDP)%f_n_100(i,j) = phyto(MDP)%f_n_100(i,j) + cobalt%p_nmd(i,j,k,tau) * rho_dzt(i,j,k)
+                phyto(SMP)%f_n_100(i,j) = phyto(SMP)%f_n_100(i,j) + cobalt%p_nsm(i,j,k,tau) * rho_dzt(i,j,k)
                 zoo(SMZ)%f_n_100(i,j) = zoo(SMZ)%f_n_100(i,j) + cobalt%p_nsmz(i,j,k,tau) * rho_dzt(i,j,k)
                 zoo(MDZ)%f_n_100(i,j) = zoo(MDZ)%f_n_100(i,j) + cobalt%p_nmdz(i,j,k,tau) * rho_dzt(i,j,k)
                 zoo(LGZ)%f_n_100(i,j) = zoo(LGZ)%f_n_100(i,j) + cobalt%p_nlgz(i,j,k,tau) * rho_dzt(i,j,k)
@@ -726,24 +726,24 @@ module COBALT_send_diag
                 cobalt%fcadet_calc_100(i,j) = cobalt%p_cadet_calc(i,j,k,tau) * cobalt%Rho_0 * cobalt%wsink
                 cobalt%fntot_100(i,j) = (cobalt%p_ndet(i,j,k,tau)*cobalt%wsink + &
                   cobalt%p_ndet_fast(i,j,k,tau)*cobalt%wsink_fast + &
-                  cobalt%p_nsm(i,j,k,tau)*phyto(SMALL)%vmove(i,j,k) + &
-                  cobalt%p_nmd(i,j,k,tau)*phyto(MEDIUM)%vmove(i,j,k) + &
-                  cobalt%p_nlg(i,j,k,tau)*phyto(LARGE)%vmove(i,j,k) + &
-                  cobalt%p_ndi(i,j,k,tau)*phyto(DIAZO)%vmove(i,j,k))*cobalt%Rho_0
+                  cobalt%p_nsm(i,j,k,tau)*phyto(SMP)%vmove(i,j,k) + &
+                  cobalt%p_nmd(i,j,k,tau)*phyto(MDP)%vmove(i,j,k) + &
+                  cobalt%p_nlg(i,j,k,tau)*phyto(LGP)%vmove(i,j,k) + &
+                  cobalt%p_ndi(i,j,k,tau)*phyto(DIAZ)%vmove(i,j,k))*cobalt%Rho_0
                 cobalt%fptot_100(i,j) = (cobalt%p_pdet(i,j,k,tau)*cobalt%wsink + &
                   cobalt%p_pdet_fast(i,j,k,tau)*cobalt%wsink_fast + &
-                  cobalt%p_psm(i,j,k,tau)*phyto(SMALL)%vmove(i,j,k) + &
-                  cobalt%p_pmd(i,j,k,tau)*phyto(MEDIUM)%vmove(i,j,k) + &
-                  cobalt%p_plg(i,j,k,tau)*phyto(LARGE)%vmove(i,j,k) + &
-                  cobalt%p_pdi(i,j,k,tau)*phyto(DIAZO)%vmove(i,j,k))*cobalt%Rho_0
+                  cobalt%p_psm(i,j,k,tau)*phyto(SMP)%vmove(i,j,k) + &
+                  cobalt%p_pmd(i,j,k,tau)*phyto(MDP)%vmove(i,j,k) + &
+                  cobalt%p_plg(i,j,k,tau)*phyto(LGP)%vmove(i,j,k) + &
+                  cobalt%p_pdi(i,j,k,tau)*phyto(DIAZ)%vmove(i,j,k))*cobalt%Rho_0
                 cobalt%ffetot_100(i,j) = (cobalt%p_fedet(i,j,k,tau)*cobalt%wsink + &
-                  cobalt%p_fesm(i,j,k,tau)*phyto(SMALL)%vmove(i,j,k) + &
-                  cobalt%p_femd(i,j,k,tau)*phyto(MEDIUM)%vmove(i,j,k) + &
-                  cobalt%p_felg(i,j,k,tau)*phyto(LARGE)%vmove(i,j,k) + &
-                  cobalt%p_fedi(i,j,k,tau)*phyto(DIAZO)%vmove(i,j,k))*cobalt%Rho_0
+                  cobalt%p_fesm(i,j,k,tau)*phyto(SMP)%vmove(i,j,k) + &
+                  cobalt%p_femd(i,j,k,tau)*phyto(MDP)%vmove(i,j,k) + &
+                  cobalt%p_felg(i,j,k,tau)*phyto(LGP)%vmove(i,j,k) + &
+                  cobalt%p_fedi(i,j,k,tau)*phyto(DIAZ)%vmove(i,j,k))*cobalt%Rho_0
                 cobalt%fsitot_100(i,j) = (cobalt%p_sidet(i,j,k,tau)*cobalt%wsink + &
-                  cobalt%p_simd(i,j,k,tau)*phyto(MEDIUM)%vmove(i,j,k) + &
-                  cobalt%p_silg(i,j,k,tau)*phyto(LARGE)%vmove(i,j,k))*cobalt%Rho_0
+                  cobalt%p_simd(i,j,k,tau)*phyto(MDP)%vmove(i,j,k) + &
+                  cobalt%p_silg(i,j,k,tau)*phyto(LGP)%vmove(i,j,k))*cobalt%Rho_0
               endif
             enddo  !} k
 
@@ -756,10 +756,10 @@ module COBALT_send_diag
               cobalt%f_fed_int_100(i,j) = cobalt%f_fed_int_100(i,j) + cobalt%p_fed(i,j,k_100,tau) * drho_dzt
               cobalt%f_po4_int_100(i,j) = cobalt%f_po4_int_100(i,j) + cobalt%p_po4(i,j,k_100,tau) * drho_dzt
               cobalt%f_sio4_int_100(i,j) = cobalt%f_sio4_int_100(i,j) + cobalt%p_sio4(i,j,k_100,tau) * drho_dzt
-              phyto(DIAZO)%f_n_100(i,j) = phyto(DIAZO)%f_n_100(i,j) + cobalt%p_ndi(i,j,k_100,tau) * drho_dzt
-              phyto(LARGE)%f_n_100(i,j) = phyto(LARGE)%f_n_100(i,j) + cobalt%p_nlg(i,j,k_100,tau) * drho_dzt
-              phyto(MEDIUM)%f_n_100(i,j) = phyto(MEDIUM)%f_n_100(i,j) + cobalt%p_nmd(i,j,k_100,tau) * drho_dzt
-              phyto(SMALL)%f_n_100(i,j) = phyto(SMALL)%f_n_100(i,j) + cobalt%p_nsm(i,j,k_100,tau) * drho_dzt
+              phyto(DIAZ)%f_n_100(i,j) = phyto(DIAZ)%f_n_100(i,j) + cobalt%p_ndi(i,j,k_100,tau) * drho_dzt
+              phyto(LGP)%f_n_100(i,j) = phyto(LGP)%f_n_100(i,j) + cobalt%p_nlg(i,j,k_100,tau) * drho_dzt
+              phyto(MDP)%f_n_100(i,j) = phyto(MDP)%f_n_100(i,j) + cobalt%p_nmd(i,j,k_100,tau) * drho_dzt
+              phyto(SMP)%f_n_100(i,j) = phyto(SMP)%f_n_100(i,j) + cobalt%p_nsm(i,j,k_100,tau) * drho_dzt
               zoo(SMZ)%f_n_100(i,j) = zoo(SMZ)%f_n_100(i,j) + cobalt%p_nsmz(i,j,k_100,tau) * drho_dzt
               zoo(MDZ)%f_n_100(i,j) = zoo(MDZ)%f_n_100(i,j) + cobalt%p_nmdz(i,j,k_100,tau) * drho_dzt
               zoo(LGZ)%f_n_100(i,j) = zoo(LGZ)%f_n_100(i,j) + cobalt%p_nlgz(i,j,k_100,tau) * drho_dzt
@@ -782,24 +782,24 @@ module COBALT_send_diag
               cobalt%fcadet_calc_100(i,j) = cobalt%p_cadet_calc(i,j,k_100,tau) * cobalt%Rho_0 * cobalt%wsink
               cobalt%fntot_100(i,j) = (cobalt%p_ndet(i,j,k_100,tau)*cobalt%wsink + &
                 cobalt%p_ndet_fast(i,j,k_100,tau)*cobalt%wsink_fast + &
-                cobalt%p_nsm(i,j,k_100,tau)*phyto(SMALL)%vmove(i,j,k_100) + &
-                cobalt%p_nmd(i,j,k_100,tau)*phyto(MEDIUM)%vmove(i,j,k_100) + &
-                cobalt%p_nlg(i,j,k_100,tau)*phyto(LARGE)%vmove(i,j,k_100) + &
-                cobalt%p_ndi(i,j,k_100,tau)*phyto(DIAZO)%vmove(i,j,k_100))*cobalt%Rho_0
+                cobalt%p_nsm(i,j,k_100,tau)*phyto(SMP)%vmove(i,j,k_100) + &
+                cobalt%p_nmd(i,j,k_100,tau)*phyto(MDP)%vmove(i,j,k_100) + &
+                cobalt%p_nlg(i,j,k_100,tau)*phyto(LGP)%vmove(i,j,k_100) + &
+                cobalt%p_ndi(i,j,k_100,tau)*phyto(DIAZ)%vmove(i,j,k_100))*cobalt%Rho_0
               cobalt%fptot_100(i,j) = (cobalt%p_pdet(i,j,k_100,tau)*cobalt%wsink + &
                 cobalt%p_pdet_fast(i,j,k_100,tau)*cobalt%wsink_fast + &
-                cobalt%p_psm(i,j,k_100,tau)*phyto(SMALL)%vmove(i,j,k_100) + &
-                cobalt%p_pmd(i,j,k_100,tau)*phyto(MEDIUM)%vmove(i,j,k_100) + &
-                cobalt%p_plg(i,j,k_100,tau)*phyto(LARGE)%vmove(i,j,k_100) + &
-                cobalt%p_pdi(i,j,k_100,tau)*phyto(DIAZO)%vmove(i,j,k_100))*cobalt%Rho_0
+                cobalt%p_psm(i,j,k_100,tau)*phyto(SMP)%vmove(i,j,k_100) + &
+                cobalt%p_pmd(i,j,k_100,tau)*phyto(MDP)%vmove(i,j,k_100) + &
+                cobalt%p_plg(i,j,k_100,tau)*phyto(LGP)%vmove(i,j,k_100) + &
+                cobalt%p_pdi(i,j,k_100,tau)*phyto(DIAZ)%vmove(i,j,k_100))*cobalt%Rho_0
               cobalt%ffetot_100(i,j) = (cobalt%p_fedet(i,j,k_100,tau)*cobalt%wsink + &
-                cobalt%p_fesm(i,j,k_100,tau)*phyto(SMALL)%vmove(i,j,k_100) + &
-                cobalt%p_femd(i,j,k_100,tau)*phyto(MEDIUM)%vmove(i,j,k_100) + &
-                cobalt%p_felg(i,j,k_100,tau)*phyto(LARGE)%vmove(i,j,k_100) + &
-                cobalt%p_fedi(i,j,k_100,tau)*phyto(DIAZO)%vmove(i,j,k_100))*cobalt%Rho_0
+                cobalt%p_fesm(i,j,k_100,tau)*phyto(SMP)%vmove(i,j,k_100) + &
+                cobalt%p_femd(i,j,k_100,tau)*phyto(MDP)%vmove(i,j,k_100) + &
+                cobalt%p_felg(i,j,k_100,tau)*phyto(LGP)%vmove(i,j,k_100) + &
+                cobalt%p_fedi(i,j,k_100,tau)*phyto(DIAZ)%vmove(i,j,k_100))*cobalt%Rho_0
               cobalt%fsitot_100(i,j) = (cobalt%p_sidet(i,j,k_100,tau)*cobalt%wsink + &
-                cobalt%p_simd(i,j,k_100,tau)*phyto(MEDIUM)%vmove(i,j,k_100) + &
-                cobalt%p_silg(i,j,k_100,tau)*phyto(LARGE)%vmove(i,j,k_100))*cobalt%Rho_0
+                cobalt%p_simd(i,j,k_100,tau)*phyto(MDP)%vmove(i,j,k_100) + &
+                cobalt%p_silg(i,j,k_100,tau)*phyto(LGP)%vmove(i,j,k_100))*cobalt%Rho_0
             endif
           enddo ; enddo  !} i,j
           deallocate(rho_dzt_100)
@@ -967,17 +967,17 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_chl_cmip, cobalt%f_chl * cobalt%Rho_0 / 1.0e9, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           ! Chlorophyll for other phytoplankton groups derived from biomass and Chl:C ratios
-          used = g_send_data(cobalt%id_chldiat, (phyto(LARGE)%theta * cobalt%nlg_diatoms + &
-            phyto(MEDIUM)%theta * cobalt%nmd_diatoms) * cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, &
+          used = g_send_data(cobalt%id_chldiat, (phyto(LGP)%theta * cobalt%nlg_diatoms + &
+            phyto(MDP)%theta * cobalt%nmd_diatoms) * cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_chldiaz,  phyto(DIAZO)%theta * cobalt%p_ndi(:,:,:,tau) * &
+          used = g_send_data(cobalt%id_chldiaz,  phyto(DIAZ)%theta * cobalt%p_ndi(:,:,:,tau) * &
             cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, &
             model_time, rmask = grid_tmask,is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_chlpico,  phyto(SMALL)%theta * cobalt%p_nsm(:,:,:,tau) * &
+          used = g_send_data(cobalt%id_chlpico,  phyto(SMP)%theta * cobalt%p_nsm(:,:,:,tau) * &
             cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_chlmisc, (phyto(LARGE)%theta * cobalt%nlg_misc + &
-            phyto(MEDIUM)%theta * cobalt%nmd_misc) * cobalt%c_2_n*cobalt%Rho_0*12.0e-3, &
+          used = g_send_data(cobalt%id_chlmisc, (phyto(LGP)%theta * cobalt%nlg_misc + &
+            phyto(MDP)%theta * cobalt%nmd_misc) * cobalt%c_2_n*cobalt%Rho_0*12.0e-3, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           ! Aggregate Particulate C, N, P, Fe and Si pools
           used = g_send_data(cobalt%id_poc, (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + &
@@ -1040,29 +1040,29 @@ module COBALT_send_diag
           !
           used = g_send_data(cobalt%id_expc_tp, (cobalt%p_ndet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_ndet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_nsm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_nlg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_nsm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_nlg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%c_2_n*cobalt%Rho_0*grid_tmask(:,:,:), model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_expn_tp, (cobalt%p_ndet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_ndet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_nsm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_nlg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_nsm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_nlg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:), model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_expp_tp, (cobalt%p_pdet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_pdet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_psm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_plg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_pdi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_psm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_plg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_pdi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:), model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_expfe_tp, (cobalt%p_fedet(:,:,:,tau)*cobalt%wsink + &
-            cobalt%p_fesm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_femd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_felg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_fedi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_fesm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_femd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_felg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_fedi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:), model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_expsi_tp, (cobalt%p_sidet(:,:,:,tau)*cobalt%wsink + &
-            cobalt%p_simd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:)+cobalt%p_silg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:)) * &
+            cobalt%p_simd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:)+cobalt%p_silg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:),model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_expcalc_tp, cobalt%p_cadet_calc(:,:,:,tau)*cobalt%Rho_0*cobalt%wsink, &
@@ -1078,8 +1078,8 @@ module COBALT_send_diag
           ! concentration and sinking velocity from the grid above.
           flux_i(:,:,2:nk+1) = (cobalt%p_ndet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_ndet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_nsm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_nlg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_nsm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_nlg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%c_2_n*cobalt%Rho_0*grid_tmask(:,:,:)
           used = g_send_data(cobalt%id_expc_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
@@ -1090,8 +1090,8 @@ module COBALT_send_diag
             is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = (cobalt%p_ndet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_ndet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_nsm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_nlg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_nsm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_nlg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:)
           used = g_send_data(cobalt%id_expn_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
@@ -1102,16 +1102,16 @@ module COBALT_send_diag
             cobalt%wc_vert_int_jnamx, model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = (cobalt%p_pdet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_pdet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_psm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_plg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_pdi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_psm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_plg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_pdi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:)
           used = g_send_data(cobalt%id_expp_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           used = g_send_data(cobalt%id_exppob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
             is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = (cobalt%p_fedet(:,:,:,tau)*cobalt%wsink + &
-            cobalt%p_fesm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_femd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
-            cobalt%p_felg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_fedi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%p_fesm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_femd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
+            cobalt%p_felg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_fedi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:)
           used = g_send_data(cobalt%id_expfe_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
@@ -1122,7 +1122,7 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_frfe, flux_i(:,:,nk+1), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = (cobalt%p_sidet(:,:,:,tau)*cobalt%wsink + &
-            cobalt%p_simd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + cobalt%p_silg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:)) * &
+            cobalt%p_simd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + cobalt%p_silg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:)
           used = g_send_data(cobalt%id_expsi_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
@@ -1203,17 +1203,17 @@ module COBALT_send_diag
           ! ug kg-1 * kg m-3 / 1.0e9 ug kg-1 = kg Chl m-3
           used = g_send_data(cobalt%id_chlos,  cobalt%f_chl(:,:,1) * cobalt%Rho_0 / 1.0e9, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_chldiatos,  (phyto(LARGE)%theta(:,:,1) * cobalt%nlg_diatoms(:,:,1) + &
-            phyto(MEDIUM)%theta(:,:,1) * cobalt%nmd_diatoms(:,:,1)) * cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, &
+          used = g_send_data(cobalt%id_chldiatos,  (phyto(LGP)%theta(:,:,1) * cobalt%nlg_diatoms(:,:,1) + &
+            phyto(MDP)%theta(:,:,1) * cobalt%nmd_diatoms(:,:,1)) * cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_chldiazos,  phyto(DIAZO)%theta(:,:,1) * cobalt%p_ndi(:,:,1,tau) * &
+          used = g_send_data(cobalt%id_chldiazos,  phyto(DIAZ)%theta(:,:,1) * cobalt%p_ndi(:,:,1,tau) * &
             cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, model_time, rmask = grid_tmask(:,:,1), &
             is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_chlpicoos,  phyto(SMALL)%theta(:,:,1) * cobalt%p_nsm(:,:,1,tau) * &
+          used = g_send_data(cobalt%id_chlpicoos,  phyto(SMP)%theta(:,:,1) * cobalt%p_nsm(:,:,1,tau) * &
             cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, model_time, rmask = grid_tmask(:,:,1), &
             is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_chlmiscos,  (phyto(LARGE)%theta(:,:,1) * cobalt%nlg_misc(:,:,1) + &
-            phyto(MEDIUM)%theta(:,:,1) * cobalt%nmd_misc(:,:,1)) * cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, &
+          used = g_send_data(cobalt%id_chlmiscos,  (phyto(LGP)%theta(:,:,1) * cobalt%nlg_misc(:,:,1) + &
+            phyto(MDP)%theta(:,:,1) * cobalt%nmd_misc(:,:,1)) * cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_ponos, (cobalt%p_ndi(:,:,1,tau) + cobalt%p_nlg(:,:,1,tau) + &
             cobalt%p_nmd(:,:,1,tau) + cobalt%p_nsm(:,:,1,tau) + cobalt%p_nbact(:,:,1,tau) + &
@@ -1455,7 +1455,7 @@ module COBALT_send_diag
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           enddo
 
-          used = g_send_data(phyto(DIAZO)%id_juptake_n2, phyto(DIAZO)%juptake_n2,   &
+          used = g_send_data(phyto(DIAZ)%id_juptake_n2, phyto(DIAZ)%juptake_n2,   &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
 
           !
@@ -1863,7 +1863,7 @@ module COBALT_send_diag
             used = g_send_data(phyto(n)%id_jaggloss_n_100, phyto(n)%jaggloss_n_100, &
               model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           enddo !} n
-          used = g_send_data(phyto(DIAZO)%id_jprod_n_n2_100, phyto(DIAZO)%jprod_n_n2_100, &
+          used = g_send_data(phyto(DIAZ)%id_jprod_n_n2_100, phyto(DIAZ)%jprod_n_n2_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           !
           ! Zooplankton 100m flux integrals - generalized to define production terms for all zooplankton regardless of
@@ -2014,19 +2014,19 @@ module COBALT_send_diag
           ! CMIP marine biogeochemical fluxes and other fields
           !
           ! Note: *rho_dzt/dzt in unescessarily complex, now just multiply by cobalt%Rho_0
-          used = g_send_data(cobalt%id_pp,  (phyto(DIAZO)%jprod_n +  phyto(LARGE)%jprod_n + &
-            phyto(MEDIUM)%jprod_n + phyto(SMALL)%jprod_n) * cobalt%Rho_0 * cobalt%c_2_n, &
+          used = g_send_data(cobalt%id_pp,  (phyto(DIAZ)%jprod_n +  phyto(LGP)%jprod_n + &
+            phyto(MDP)%jprod_n + phyto(SMP)%jprod_n) * cobalt%Rho_0 * cobalt%c_2_n, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_pnitrate,  (phyto(DIAZO)%juptake_no3 +  phyto(LARGE)%juptake_no3 + &
-            phyto(MEDIUM)%juptake_no3 + phyto(SMALL)%juptake_no3) * cobalt%Rho_0 * cobalt%c_2_n, &
+          used = g_send_data(cobalt%id_pnitrate,  (phyto(DIAZ)%juptake_no3 +  phyto(LGP)%juptake_no3 + &
+            phyto(MDP)%juptake_no3 + phyto(SMP)%juptake_no3) * cobalt%Rho_0 * cobalt%c_2_n, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_pphosphate,  (phyto(DIAZO)%juptake_po4 +  phyto(LARGE)%juptake_po4 + &
-            phyto(MEDIUM)%juptake_po4 + phyto(SMALL)%juptake_po4) *  cobalt%Rho_0 * cobalt%c_2_n, &
+          used = g_send_data(cobalt%id_pphosphate,  (phyto(DIAZ)%juptake_po4 +  phyto(LGP)%juptake_po4 + &
+            phyto(MDP)%juptake_po4 + phyto(SMP)%juptake_po4) *  cobalt%Rho_0 * cobalt%c_2_n, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_pbfe,  (phyto(DIAZO)%juptake_fe +  phyto(LARGE)%juptake_fe + &
-            phyto(MEDIUM)%juptake_fe + phyto(SMALL)%juptake_fe) * cobalt%Rho_0, &
+          used = g_send_data(cobalt%id_pbfe,  (phyto(DIAZ)%juptake_fe +  phyto(LGP)%juptake_fe + &
+            phyto(MDP)%juptake_fe + phyto(SMP)%juptake_fe) * cobalt%Rho_0, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_pbsi, (phyto(LARGE)%juptake_sio4 + phyto(MEDIUM)%juptake_sio4) * cobalt%Rho_0, &
+          used = g_send_data(cobalt%id_pbsi, (phyto(LGP)%juptake_sio4 + phyto(MDP)%juptake_sio4) * cobalt%Rho_0, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_pcalc, cobalt%jprod_cadet_calc * cobalt%Rho_0, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -2038,15 +2038,15 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_darag,  cobalt%jdiss_cadet_arag_plus_btm*cobalt%Rho_0, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_ppdiat, (phyto(LARGE)%jprod_n * phyto(LARGE)%silim + &
-            phyto(MEDIUM)%jprod_n * phyto(MEDIUM)%silim) * cobalt%Rho_0 * cobalt%c_2_n,  &
+          used = g_send_data(cobalt%id_ppdiat, (phyto(LGP)%jprod_n * phyto(LGP)%silim + &
+            phyto(MDP)%jprod_n * phyto(MDP)%silim) * cobalt%Rho_0 * cobalt%c_2_n,  &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_ppdiaz,  phyto(DIAZO)%jprod_n * cobalt%Rho_0 * cobalt%c_2_n,  &
+          used = g_send_data(cobalt%id_ppdiaz,  phyto(DIAZ)%jprod_n * cobalt%Rho_0 * cobalt%c_2_n,  &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_pppico,  phyto(SMALL)%jprod_n *  cobalt%Rho_0 * cobalt%c_2_n,  &
+          used = g_send_data(cobalt%id_pppico,  phyto(SMP)%jprod_n *  cobalt%Rho_0 * cobalt%c_2_n,  &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_ppmisc, ((phyto(LARGE)%jprod_n * (1.0 - phyto(LARGE)%silim)) + &
-            (phyto(MEDIUM)%jprod_n * (1.0 - phyto(MEDIUM)%silim))) * cobalt%Rho_0 * cobalt%c_2_n,  &
+          used = g_send_data(cobalt%id_ppmisc, ((phyto(LGP)%jprod_n * (1.0 - phyto(LGP)%silim)) + &
+            (phyto(MDP)%jprod_n * (1.0 - phyto(MDP)%silim))) * cobalt%Rho_0 * cobalt%c_2_n,  &
             model_time, rmask = grid_tmask,  is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_bddtdic, cobalt%jdic_plus_btm * cobalt%Rho_0, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -2064,8 +2064,8 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_fediss, cobalt%jremin_fedet * cobalt%Rho_0, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          used = g_send_data(cobalt%id_graz, (phyto(DIAZO)%jzloss_n + phyto(LARGE)%jzloss_n + &
-            phyto(MEDIUM)%jzloss_n + phyto(SMALL)%jzloss_n) * cobalt%c_2_n  * cobalt%Rho_0,  &
+          used = g_send_data(cobalt%id_graz, (phyto(DIAZ)%jzloss_n + phyto(LGP)%jzloss_n + &
+            phyto(MDP)%jzloss_n + phyto(SMP)%jzloss_n) * cobalt%c_2_n  * cobalt%Rho_0,  &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           !
           ! CMIP 100m biomass-weighted limitation terms
@@ -2074,86 +2074,86 @@ module COBALT_send_diag
           allocate( field_2d(isd:ied,jsd:jed) )
           ! biomass-weighted diatom nitrogen limitation (contributions from medium and large)
           field_2d(:,:) = &
-            ( phyto(MEDIUM)%nlim_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%nlim_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
-            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
+            ( phyto(MDP)%nlim_bw_100(:,:)*phyto(MDP)%silim_bw_100(:,:)*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%nlim_bw_100(:,:)*phyto(LGP)%silim_bw_100(:,:)*phyto(LGP)%f_n_100(:,:) ) / &
+            max(epsln, phyto(MDP)%silim_bw_100(:,:)*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%silim_bw_100(:,:)*phyto(LGP)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limndiat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           ! Not outputting/serving limndiaz because diazotrophs are not N limited
-          ! used = g_send_data(cobalt%id_limndiaz, phyto(DIAZO)%nlim_bw_100, &
+          ! used = g_send_data(cobalt%id_limndiaz, phyto(DIAZ)%nlim_bw_100, &
           !  model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limnpico, phyto(SMALL)%nlim_bw_100, &
+          used = g_send_data(cobalt%id_limnpico, phyto(SMP)%nlim_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           ! biomass-weighted misc nitrogen limitation (contributions from medium and large)
           field_2d(:,:) = &
-            ( phyto(MEDIUM)%nlim_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%nlim_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
-            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
-              (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
+            ( phyto(MDP)%nlim_bw_100(:,:)*(1.0 - phyto(MDP)%silim_bw_100(:,:))*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%nlim_bw_100(:,:)*(1.0 - phyto(LGP)%silim_bw_100(:,:))*phyto(LGP)%f_n_100(:,:) ) / &
+            max(epsln, (1.0 - phyto(MDP)%silim_bw_100(:,:))*phyto(MDP)%f_n_100(:,:) + &
+              (1.0 - phyto(LGP)%silim_bw_100(:,:))*phyto(LGP)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limnmisc, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
           ! biomass-weighted diatom irradiance limitation (contributions from medium and large)
           field_2d(:,:) = &
-            ( phyto(MEDIUM)%irrlim_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%irrlim_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
-            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
+            ( phyto(MDP)%irrlim_bw_100(:,:)*phyto(MDP)%silim_bw_100(:,:)*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%irrlim_bw_100(:,:)*phyto(LGP)%silim_bw_100(:,:)*phyto(LGP)%f_n_100(:,:) ) / &
+            max(epsln, phyto(MDP)%silim_bw_100(:,:)*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%silim_bw_100(:,:)*phyto(LGP)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limirrdiat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limirrdiaz, phyto(DIAZO)%irrlim_bw_100, &
+          used = g_send_data(cobalt%id_limirrdiaz, phyto(DIAZ)%irrlim_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limirrpico, phyto(SMALL)%irrlim_bw_100, &
+          used = g_send_data(cobalt%id_limirrpico, phyto(SMP)%irrlim_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           ! biomass-weighted misc irradiance limitation (contributions from medium and large)
           field_2d(:,:) = &
-            ( phyto(MEDIUM)%irrlim_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%irrlim_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
-            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
-              (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
+            ( phyto(MDP)%irrlim_bw_100(:,:)*(1.0 - phyto(MDP)%silim_bw_100(:,:))*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%irrlim_bw_100(:,:)*(1.0 - phyto(LGP)%silim_bw_100(:,:))*phyto(LGP)%f_n_100(:,:) ) / &
+            max(epsln, (1.0 - phyto(MDP)%silim_bw_100(:,:))*phyto(MDP)%f_n_100(:,:) + &
+              (1.0 - phyto(LGP)%silim_bw_100(:,:))*phyto(LGP)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limirrmisc, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
           ! biomass-weighted diatom iron limitation (contributions from medium and large)
           field_2d(:,:) = &
-            ( phyto(MEDIUM)%def_fe_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%def_fe_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
-            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
+            ( phyto(MDP)%def_fe_bw_100(:,:)*phyto(MDP)%silim_bw_100(:,:)*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%def_fe_bw_100(:,:)*phyto(LGP)%silim_bw_100(:,:)*phyto(LGP)%f_n_100(:,:) ) / &
+            max(epsln, phyto(MDP)%silim_bw_100(:,:)*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%silim_bw_100(:,:)*phyto(LGP)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limfediat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limfediaz, phyto(DIAZO)%def_fe_bw_100, &
+          used = g_send_data(cobalt%id_limfediaz, phyto(DIAZ)%def_fe_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limfepico, phyto(SMALL)%def_fe_bw_100, &
+          used = g_send_data(cobalt%id_limfepico, phyto(SMP)%def_fe_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           ! biomass-weighted misc iron limitation (contributions from medium and large)
           field_2d(:,:) = &
-            ( phyto(MEDIUM)%def_fe_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%def_fe_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
-            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
-              (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
+            ( phyto(MDP)%def_fe_bw_100(:,:)*(1.0 - phyto(MDP)%silim_bw_100(:,:))*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%def_fe_bw_100(:,:)*(1.0 - phyto(LGP)%silim_bw_100(:,:))*phyto(LGP)%f_n_100(:,:) ) / &
+            max(epsln, (1.0 - phyto(MDP)%silim_bw_100(:,:))*phyto(MDP)%f_n_100(:,:) + &
+              (1.0 - phyto(LGP)%silim_bw_100(:,:))*phyto(LGP)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limfemisc, field_2d,  &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
           ! biomass-weighted diatom phosphorus limitation (contributions from medium and large)
           field_2d(:,:) = &
-            ( phyto(MEDIUM)%plim_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%plim_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
-            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
+            ( phyto(MDP)%plim_bw_100(:,:)*phyto(MDP)%silim_bw_100(:,:)*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%plim_bw_100(:,:)*phyto(LGP)%silim_bw_100(:,:)*phyto(LGP)%f_n_100(:,:) ) / &
+            max(epsln, phyto(MDP)%silim_bw_100(:,:)*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%silim_bw_100(:,:)*phyto(LGP)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limpdiat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limpdiaz, phyto(DIAZO)%plim_bw_100, &
+          used = g_send_data(cobalt%id_limpdiaz, phyto(DIAZ)%plim_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limppico, phyto(SMALL)%plim_bw_100, &
+          used = g_send_data(cobalt%id_limppico, phyto(SMP)%plim_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           ! biomass-weighted misc phosphorus limitation (contributions from medium and large)
           field_2d(:,:) = &
-            ( phyto(MEDIUM)%plim_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
-              phyto(LARGE)%plim_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
-            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
-              (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
+            ( phyto(MDP)%plim_bw_100(:,:)*(1.0 - phyto(MDP)%silim_bw_100(:,:))*phyto(MDP)%f_n_100(:,:) + &
+              phyto(LGP)%plim_bw_100(:,:)*(1.0 - phyto(LGP)%silim_bw_100(:,:))*phyto(LGP)%f_n_100(:,:) ) / &
+            max(epsln, (1.0 - phyto(MDP)%silim_bw_100(:,:))*phyto(MDP)%f_n_100(:,:) + &
+              (1.0 - phyto(LGP)%silim_bw_100(:,:))*phyto(LGP)%f_n_100(:,:) )
           used = g_send_data(cobalt%id_limpmisc, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           deallocate(field_2d)
