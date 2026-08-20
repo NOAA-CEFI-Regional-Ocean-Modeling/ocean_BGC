@@ -3166,8 +3166,7 @@ contains
     real, dimension(:,:),   Allocatable :: neritic_cased_burial
     ! >>
 
-    real, dimension(:,:),   Allocatable :: ztop
-    real, dimension(:,:,:), Allocatable :: zmid, zbot
+    real, dimension(:,:), Allocatable :: zmid_nk ! z-coordinate at the middle of the last vertical layer
     real, dimension(:,:,:), Allocatable :: pre_totn, net_srcn
     real, dimension(:,:,:), Allocatable :: pre_totp, net_srcp
     real, dimension(:,:,:), Allocatable :: pre_totsi
@@ -3204,24 +3203,16 @@ contains
     !
     ! Calculate some thickness/vertical reference points for later calculations
     !
-    allocate(ztop(isc:iec,jsc:jec))
-    allocate(zmid(isc:iec,jsc:jec,1:nk))
-    allocate(zbot(isc:iec,jsc:jec,1:nk))
+    allocate(zmid_nk(isc:iec,jsc:jec))
     do j = jsc, jec ; do i = isc, iec   !{
        cobalt%zt(i,j,1) = dzt(i,j,1)
-       ztop(i,j) = 0.0
-       zmid(i,j,1) = 0.5*dzt(i,j,1)
-       zbot(i,j,1) = dzt(i,j,1)
     enddo; enddo !} i,j
 
     do k = 2, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%zt(i,j,k) = cobalt%zt(i,j,k-1) + dzt(i,j,k)
-       ztop(i,j) = zbot(i,j,k-1)
-       zmid(i,j,k) = ztop(i,j) + 0.5*dzt(i,j,k)
-       zbot(i,j,k) = ztop(i,j) + dzt(i,j,k)
     enddo; enddo ; enddo !} i,j,k
 
-    deallocate(ztop)
+    zmid_nk = cobalt%zt(:,:,max(1,nk-1)) + 0.5*dzt(:,:,nk)
 
     !---------------------------------------------------------------------
     !Calculate co3_ion
@@ -3647,7 +3638,7 @@ contains
              ! Issue: This code currently includes an option to increase opacity in shallow/fresh
              ! water.  This should be moved to a namelist (and eventually replaced with a more
              ! robust coastal optics model with full feedbacks to the physics)
-             if ((zmid(i,j,nk).le.cobalt%case2_depth).or.(Salt(i,j,k).le.cobalt%case2_salt)) then
+             if ((zmid_nk(i,j).le.cobalt%case2_depth).or.(Salt(i,j,k).le.cobalt%case2_salt)) then
                tmp_opacity = opacity_band(nb,i,j,k) + cobalt%case2_opac_add
              else
                tmp_opacity = opacity_band(nb,i,j,k)
@@ -3710,7 +3701,7 @@ contains
     enddo;  enddo !} i,j
 
     deallocate(tmp_irr_band)
-    deallocate(zmid)
+    deallocate(zmid_nk)
     !
     ! Calculate the final photoacclimation irradiance using the standard relaxation
     ! scheme (I_aclm(t+1) = I_aclm(t) + (I*(24/daylength)-I_aclm(t))*gamma*dt).
@@ -4971,7 +4962,7 @@ contains
        ! Calculate remineralization under aerobic remineralization
        if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then  !{
           cobalt%jremin_ndet(i,j,k) = cobalt%gamma_ndet * cobalt%expkreminT(i,j,k) * &
-               zbot(i,j,k)/(zbot(i,j,k) + cobalt%remin_ramp_scale) * cobalt%f_o2(i,j,k) / &
+               cobalt%zt(i,j,k)/(cobalt%zt(i,j,k) + cobalt%remin_ramp_scale) * cobalt%f_o2(i,j,k) / &
                ( cobalt%k_o2 + cobalt%f_o2(i,j,k) )*max( 0.0, cobalt%f_ndet(i,j,k) - &
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
@@ -5021,8 +5012,6 @@ contains
 
        cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jremin_fedet(i,j,k)
     enddo; enddo; enddo  !} i,j,k
-
-    deallocate(zbot)
 
     ! << Enhanced CaCO3 dissolution driven by localized undersaturation around sinking particles >>
     ! Add CaCO3 dissolution enhancement associated with organic matter (OM) decomposition
