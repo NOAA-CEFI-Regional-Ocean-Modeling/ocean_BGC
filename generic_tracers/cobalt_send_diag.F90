@@ -296,8 +296,6 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
           ! Calculate bottom averaged diagnostics.
-          ! Note that averages for btm_o2, btm_no3, btm_co3_ion, and btm_co3_sol_calc
-          ! were already calculated in generic_COBALT_update_from_source.
           call generic_bld_average(cobalt%bld, cobalt%p_alk(:,:,:,tau), cobalt%btm_alk)
           call generic_bld_average(cobalt%bld, cobalt%p_dic(:,:,:,tau), cobalt%btm_dic)
           call generic_bld_average(cobalt%bld, Temp(:,:,:), cobalt%btm_temp)
@@ -311,6 +309,12 @@ module COBALT_send_diag
             call generic_bld_average(cobalt%bld, cobalt%f_co3_ion, cobalt%btm_co3_ion)
             call generic_bld_average(cobalt%bld, cobalt%co3_sol_calc, cobalt%btm_co3_sol_calc)
           endif
+
+          ! btm_o2 and btm_no3 were calculated during the update from source, 
+          ! but we always need to recalculate them here because their fields are changed
+          ! later in that routine.
+          call generic_bld_average(cobalt%bld, cobalt%p_o2(:,:,:,tau), cobalt%btm_o2)
+          call generic_bld_average(cobalt%bld, cobalt%p_no3(:,:,:,tau), cobalt%btm_no3)
 
           do j = jsc, jec ; do i = isc, iec
             cobalt%btm_omega_calc(i,j) = 0.0
