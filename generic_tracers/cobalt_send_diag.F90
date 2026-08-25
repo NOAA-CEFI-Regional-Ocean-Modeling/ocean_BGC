@@ -20,6 +20,7 @@ module COBALT_send_diag
 
   use g_tracer_utils, only : g_send_data,g_tracer_get_pointer,g_tracer_set_values
   use g_tracer_utils, only : g_tracer_type, g_tracer_get_common
+  use generic_bottom_layer_diags, only : generic_bld, generic_bld_average
   use FMS_co2calc_mod, only : FMS_co2calc, CO2_dope_vector
 
   implicit none; private
@@ -49,8 +50,7 @@ module COBALT_send_diag
       real :: drho_dzt
       real, dimension(:,:,:) ,pointer :: grid_tmask
       integer, dimension(:,:),pointer :: mask_coast,grid_kmt
-      integer, dimension(:,:), Allocatable :: k_bot
-      real, dimension(:,:), Allocatable :: rho_dzt_100,rho_dzt_200,rho_dzt_bot
+      real, dimension(:,:), Allocatable :: rho_dzt_100,rho_dzt_200
       integer :: k_100,k_200
       real, dimension(:,:), Allocatable :: field_2d !used to calculate some 2d fields before saving
       real, dimension(:,:,:), Allocatable :: flux_i !used to save fluxes at the interfaces
@@ -295,75 +295,45 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_sfc_co3_sol_calc, cobalt%co3_sol_calc(:,:,1),  &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
-          ! Calculate bottom layer values over a thickness defined by cobalt%bottom_thickness
-          ! rather than the bottom-most layer as in MOM4/5.  This avoids numerical issues
-          ! generated in "vanishing" layers that overlie the benthos in most regions.
-          allocate(rho_dzt_bot(isc:iec,jsc:jec))
-          allocate(k_bot(isc:iec,jsc:jec))
-          do j = jsc, jec ; do i = isc, iec  !{
-            rho_dzt_bot(i,j) = 0.0
-            cobalt%btm_temp(i,j) = 0.0
-            cobalt%btm_o2(i,j) = 0.0
-            cobalt%btm_dic(i,j) = 0.0
-            cobalt%btm_alk(i,j) = 0.0
-            cobalt%btm_htotal(i,j) = 0.0
-            cobalt%btm_co3_sol_arag(i,j) = 0.0
-            cobalt%btm_co3_sol_calc(i,j) = 0.0
-            cobalt%btm_co3_ion(i,j) = 0.0
+          ! Calculate bottom averaged diagnostics.
+          call generic_bld_average(cobalt%bld, cobalt%p_alk(:,:,:,tau), cobalt%btm_alk)
+          call generic_bld_average(cobalt%bld, cobalt%p_dic(:,:,:,tau), cobalt%btm_dic)
+          call generic_bld_average(cobalt%bld, Temp(:,:,:), cobalt%btm_temp)
+          call generic_bld_average(cobalt%bld, cobalt%f_htotal(:,:,:), cobalt%btm_htotal)
+          call generic_bld_average(cobalt%bld, cobalt%co3_sol_arag(:,:,:), cobalt%btm_co3_sol_arag)
+
+          ! Because the averages for btm_co3_ion and btm_co3_sol_calc were already calculated during
+          ! generic_COBALT_update_from_source, we only need to re-average them if the
+          ! carbon system was recalculated above.
+          if (cobalt%recalculate_carbon) then
+            call generic_bld_average(cobalt%bld, cobalt%f_co3_ion, cobalt%btm_co3_ion)
+            call generic_bld_average(cobalt%bld, cobalt%co3_sol_calc, cobalt%btm_co3_sol_calc)
+          endif
+
+          ! btm_o2 and btm_no3 were calculated during the update from source, 
+          ! but we always need to recalculate them here because their fields are changed
+          ! later in that routine.
+          call generic_bld_average(cobalt%bld, cobalt%p_o2(:,:,:,tau), cobalt%btm_o2)
+          call generic_bld_average(cobalt%bld, cobalt%p_no3(:,:,:,tau), cobalt%btm_no3)
+
+          do j = jsc, jec ; do i = isc, iec
             cobalt%btm_omega_calc(i,j) = 0.0
             cobalt%btm_omega_arag(i,j) = 0.0
-            k_bot(i,j) = 0
             k = grid_kmt(i,j)
-            if (k .gt. 0) then !{
+            if (k .gt. 0) then
               cobalt%grid_kmt_diag(i,j) = float(k)
               cobalt%rho_dzt_kmt_diag(i,j) = rho_dzt(i,j,k)
-              do k = grid_kmt(i,j),1,-1   !{
-                if (rho_dzt_bot(i,j).lt.cobalt%Rho_0*cobalt%bottom_thickness) then
-                  k_bot(i,j) = k
-                  rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
-                  cobalt%k_bot_diag(i,j) = grid_kmt(i,j)-float(k)+1.0
-                  cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%p_o2(i,j,k,tau)*rho_dzt(i,j,k)
-                  cobalt%btm_alk(i,j) = cobalt%btm_alk(i,j) + cobalt%p_alk(i,j,k,tau)*rho_dzt(i,j,k)
-                  cobalt%btm_dic(i,j) = cobalt%btm_dic(i,j) + cobalt%p_dic(i,j,k,tau)*rho_dzt(i,j,k)
-                  cobalt%btm_temp(i,j) = cobalt%btm_temp(i,j) + Temp(i,j,k)*rho_dzt(i,j,k)
-                  cobalt%btm_htotal(i,j) = cobalt%btm_htotal(i,j) + cobalt%f_htotal(i,j,k)*rho_dzt(i,j,k)
-                  cobalt%btm_co3_sol_arag(i,j) = cobalt%btm_co3_sol_arag(i,j) + &
-                    cobalt%co3_sol_arag(i,j,k)*rho_dzt(i,j,k)
-                  cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + &
-                    cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k)
-                  cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k)
-                endif
-              enddo
               ! diagnostic to assess how far up into the water column info is being drawn from
-              cobalt%rho_dzt_bot_diag(i,j) = rho_dzt_bot(i,j)
-              ! calculate overshoot and subtract off
-              drho_dzt = rho_dzt_bot(i,j) - cobalt%Rho_0*cobalt%bottom_thickness
-              cobalt%btm_temp(i,j)=cobalt%btm_temp(i,j)-Temp(i,j,k_bot(i,j))*drho_dzt
-              cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)-cobalt%p_o2(i,j,k_bot(i,j),tau)*drho_dzt
-              cobalt%btm_alk(i,j)=cobalt%btm_alk(i,j)-cobalt%p_alk(i,j,k_bot(i,j),tau)*drho_dzt
-              cobalt%btm_dic(i,j)=cobalt%btm_dic(i,j)-cobalt%p_dic(i,j,k_bot(i,j),tau)*drho_dzt
-              cobalt%btm_htotal(i,j)=cobalt%btm_htotal(i,j)-cobalt%f_htotal(i,j,k_bot(i,j))*drho_dzt
-              cobalt%btm_co3_sol_arag(i,j)=cobalt%btm_co3_sol_arag(i,j)-cobalt%co3_sol_arag(i,j,k_bot(i,j))*drho_dzt
-              cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)-cobalt%co3_sol_calc(i,j,k_bot(i,j))*drho_dzt
-              cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)-cobalt%f_co3_ion(i,j,k_bot(i,j))*drho_dzt
-              ! convert back to moles kg-1
-              cobalt%btm_temp(i,j)=cobalt%btm_temp(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_alk(i,j)=cobalt%btm_alk(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_dic(i,j)=cobalt%btm_dic(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_htotal(i,j)=cobalt%btm_htotal(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_co3_sol_arag(i,j)=cobalt%btm_co3_sol_arag(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              ! calculate bottom saturation states
+              cobalt%rho_dzt_bot_diag(i,j) = cobalt%bld%rho_dzt_bot(i,j)
+              cobalt%k_bot_diag(i,j) = k - float(cobalt%bld%k_bot(i,j)) + 1.0
+              ! Always recompute omega_calc in case it was changed above
+              ! (when cobalt%recalculate_carbon is .true.)
               cobalt%btm_omega_calc(i,j) = cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
               cobalt%btm_omega_arag(i,j) = cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_arag(i,j)
              endif
           enddo; enddo
-          deallocate(rho_dzt_bot)
-          deallocate(k_bot)
 
-          ! CALCULATE BOTTOM PROGNOSTIC TRACERS
+          ! Send bottom diagnostics
           used = g_send_data(cobalt%id_btm_temp, cobalt%btm_temp, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_btm_o2, cobalt%btm_o2, &

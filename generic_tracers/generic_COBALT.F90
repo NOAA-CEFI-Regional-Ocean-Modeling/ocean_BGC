@@ -150,6 +150,9 @@ module generic_COBALT
   use g_tracer_utils, only : g_send_data, is_root_pe
   use g_tracer_utils, only : g_tracer_is_prog, g_tracer_vertfill, g_tracer_get_next
 
+  use generic_bottom_layer_diags, only: generic_bld, generic_bld_alloc, generic_bld_update
+  use generic_bottom_layer_diags, only: generic_bld_average, generic_bld_dealloc
+
   use cobalt_types
   use cobalt_send_diag, only : cobalt_send_diagnostics
   use cobalt_reg_diag, only : cobalt_reg_diagnostics
@@ -3087,7 +3090,8 @@ contains
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
 
     type(g_tracer_type),            pointer    :: tracer_list
-    real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,Salt,rho_dzt,dzt
+    real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,Salt,dzt
+    real, dimension(ilb:,jlb:,:), target, intent(in) :: rho_dzt
     real, dimension(ilb:,jlb:),     intent(in) :: hblt_depth
     integer,                        intent(in) :: ilb,jlb,tau
     real,                           intent(in) :: dt
@@ -3184,6 +3188,8 @@ contains
 
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
          grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt)
+
+    call generic_bld_update(cobalt%bld, rho_dzt, grid_kmt)
 
     call mpp_clock_begin(id_clock_carbon_calculations)
     !Get necessary fields
@@ -5132,14 +5138,12 @@ contains
        endif !}
     enddo; enddo  !} i,j
 
-    ! Calculate the bottom conditions and the fluxes to the bottom for diagnostics and benthic flux calculations.
-    ! MOM4/5 used the bottom grid cell, but MOM6 often has a number of vanishingly thin layers overlying the bottom.
-    ! Grid scale noise in these layers can occur, particularly for quantities with large bottom fluxes.  COBALT thus
-    ! uses conditions over a specified bottom layer thickness (cobalt%bottom_thickness, default = 1m) for bottom calcs.
-
-    ! Local variables used to determine the layers falling within the bottom thickness
-    allocate(rho_dzt_bot(isc:iec,jsc:jec))
-    allocate(k_bot(isc:iec,jsc:jec))
+    ! The following bottom averages need to be calculated now because they're used in other calculations.
+    ! All other bottom averages should be calculated in cobalt_send_diagnostics.
+    call generic_bld_average(cobalt%bld, cobalt%f_o2, cobalt%btm_o2)
+    call generic_bld_average(cobalt%bld, cobalt%f_no3, cobalt%btm_no3)
+    call generic_bld_average(cobalt%bld, cobalt%f_co3_ion, cobalt%btm_co3_ion)
+    call generic_bld_average(cobalt%bld, cobalt%co3_sol_calc, cobalt%btm_co3_sol_calc)
 
     do j = jsc, jec; do i = isc, iec  !{
        if (grid_kmt(i,j) .gt. 0) then !{
@@ -5154,39 +5158,6 @@ contains
           cobalt%fsitot_btm(i,j) = cobalt%f_sidet_btf(i,j,1) + cobalt%f_silg_btf(i,j,1) + &
             cobalt%f_simd_btf(i,j,1)
 
-          ! Calculate the values of tracers influencing the sedimentary transformations
-          ! and fluxes over a layer defined by "bottom_thickess".
-          rho_dzt_bot(i,j) = 0.0
-          cobalt%btm_o2(i,j) = 0.0
-          cobalt%btm_no3(i,j) = 0.0
-          cobalt%btm_co3_sol_calc(i,j) = 0.0
-          cobalt%btm_co3_ion(i,j) = 0.0
-          cobalt%btm_omega_calc(i,j) = 0.0
-          k_bot(i,j) = 0
-          ! Note that grid_kmt is always the total number of layers in MOM6
-          do k = grid_kmt(i,j),1,-1   !{
-            ! Check if the top of layer k is within the bottom thickness.  If so, include its properties in the bottom
-            ! layer averages.  Overshoots will be subtracted off later.
-            if (rho_dzt_bot(i,j).lt.(cobalt%Rho_0*cobalt%bottom_thickness)) then
-              k_bot(i,j) = k
-              rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
-              cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%f_o2(i,j,k)*rho_dzt(i,j,k)
-              cobalt%btm_no3(i,j) = cobalt%btm_no3(i,j) + cobalt%f_no3(i,j,k)*rho_dzt(i,j,k)
-              cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k)
-              cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k)
-            endif
-          enddo
-          ! Subtract off overshoot
-          drho_dzt = rho_dzt_bot(i,j) - cobalt%Rho_0*cobalt%bottom_thickness
-          cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)-cobalt%f_o2(i,j,k_bot(i,j))*drho_dzt
-          cobalt%btm_no3(i,j)=cobalt%btm_no3(i,j)-cobalt%f_no3(i,j,k_bot(i,j))*drho_dzt
-          cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)-cobalt%co3_sol_calc(i,j,k_bot(i,j))*drho_dzt
-          cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)-cobalt%f_co3_ion(i,j,k_bot(i,j))*drho_dzt
-          ! convert back to moles kg-1
-          cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-          cobalt%btm_no3(i,j)=cobalt%btm_no3(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-          cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-          cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
           ! calculate the saturation state with respect to calcite for subsequent calculations
           cobalt%btm_omega_calc(i,j)=cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
 
@@ -5431,8 +5402,6 @@ contains
 
        endif !}
     enddo; enddo  !} i, j
-    deallocate(rho_dzt_bot)
-    deallocate(k_bot)
 
     do k = 2, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%f_cased(i,j,k) = 0.0
@@ -7391,6 +7360,8 @@ contains
 
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau)
 
+    call generic_bld_alloc(cobalt%bld, isc, iec, jsc, jec, cobalt%Rho_0, cobalt%bottom_thickness)
+
     !Allocate all the private arrays.
 
     !Used in FMS_co2calc
@@ -8009,6 +7980,7 @@ contains
   subroutine user_deallocate_arrays
     integer n
 
+    call generic_bld_dealloc(cobalt%bld)
     deallocate(cobalt%htotalhi,cobalt%htotallo)
 
     do n = 1, NUM_PHYTO
