@@ -749,6 +749,11 @@ contains
                    "maximum chlorophyll to carbon ratio for medium phytoplankton", units="g chl g C-1", default=0.045)
     call get_param(param_file, "generic_COBALT", "thetamax_Sm", phyto(SMP)%thetamax, &
                    "maximum chlorophyll to carbon ratio for small phytoplankton", units="g chl g C-1", default=0.035)
+    ! Parameters for the limiting effect of iron on the chlorophyll to carbon ratio
+    call get_param(param_file, "generic_COBALT", "felim_photo_min", cobalt%felim_photo_min, &
+                   "minimum iron limitation on photoacclimation via Geider's regulatory ratio", units="none",default=1.0)
+    call get_param(param_file, "generic_COBALT", "felim_photo_pow", cobalt%felim_photo_pow, &
+                   "exponent controlling the shape of iron limitation on photoacclimation", units="none",default=1.0)
     ! basal respiration rates
     call get_param(param_file, "generic_COBALT", "bresp_frac_mixed_Di", phyto(DIAZ)%bresp_frac_mixed, &
                    "diazotroph basal respiration rate in mixed layer as fraction of max photosynthesis", &
@@ -3151,7 +3156,7 @@ contains
     real :: alpha_temp, alpha_step
     real :: P_C_max_temp, P_C_max_step, bresp_temp
     real :: theta_temp, theta_step, irrlim_temp, P_C_m_aclm, P_C_m
-    real :: mu_temp, mu_opt
+    real :: mu_temp, mu_opt, felim_photo
     integer :: yearday
     real :: rev_angle, dec_angle, temp_arg
 
@@ -3735,7 +3740,6 @@ contains
     enddo;  enddo ; enddo !} i,j,k
     end if
 
-
     !
     ! Calculate the phytoplankton growth rate calculation based on Geider et al. (1997).
     ! This section also allows for low- and high-light adapted "ecotypes" (e.g., Moore
@@ -3770,6 +3774,27 @@ contains
           ! adjust basal respiration to maintain small refuge
           bresp_temp = bresp_temp*phyto(n)%f_n(i,j,k)/(cobalt%refuge_conc+phyto(n)%f_n(i,j,k))
 
+          ! Iron limiter applied to photoacclimation.  Unlike macronutrients, iron plays a crucial role in both
+          ! chlorophyll synthesis and the electron transport chain.  Under iron limited states, this parameterization
+          ! assumes that phytoplankton have more difficulty using energy supplied from photosynthesis and meeting
+          ! chlorophyll production demands.  This is parameterized by modifying the numerator of Geider's "regulatory
+          ! ratio", which balances growth and light harvesting, by an iron limitation factor (< 1).  The
+          ! parameterization can consider a minimum value, felim_photo_min, and an power, felim_photo_pow, to control
+          ! the shape of the response.
+          !
+          ! The parameterization is off by default (felim_photo_min = 1).  To activate in a standard way, set 
+          ! cobalt%felim_photo_min = 0 and cobalt%felim_photo_pow = 1 
+          !
+          felim_photo = max(phyto(n)%def_fe(i,j,k),phyto(n)%felim(i,j,k))
+          ! apply factor only when the system is iron limited
+          if (felim_photo.gt.phyto(n)%liebig_lim(i,j,k)) then
+             felim_photo = 1.0
+          else
+             ! apply exponential to modulate the shape of the response
+             ! < 1 generates a gentler penalty, > 1 generates a harsher penalty
+             felim_photo = max(felim_photo**cobalt%felim_photo_pow,cobalt%felim_photo_min)
+          endif
+
           ! Loop through the ecotypes to find the most competitive.  This is essentially a Geider growth
           ! rate calculation for each ecotype using the acclimation irradiance.
           mu_opt = -999.0 ! arbitrarily low value
@@ -3786,8 +3811,9 @@ contains
             if (cobalt%photoaclm_opt.eq.0) then
               P_C_m_aclm =max(phyto(n)%liebig_lim(i,j,k)*P_C_max_temp*cobalt%expkT(i,j,k),epsln)
             endif
-            theta_temp = max(phyto(n)%thetamax/(1.0 + phyto(n)%thetamax*alpha_temp*cobalt%f_irr_aclm(i,j,k)*0.5/P_C_m_aclm), &
-                             cobalt%thetamin)
+            theta_temp = max(phyto(n)%thetamax/ &
+              (1.0 + phyto(n)%thetamax*alpha_temp*cobalt%f_irr_aclm(i,j,k)*0.5/(felim_photo*P_C_m_aclm) ), &
+              cobalt%thetamin)
             irrlim_temp = 1.0-exp(-alpha_temp*cobalt%f_irr_aclm(i,j,k)*theta_temp/P_C_m_aclm)
             mu_temp = P_C_m_aclm/(1.0 + cobalt%zeta)*irrlim_temp - bresp_temp*P_C_max_temp
             ! test to see if the latest ecotype is better than the current optimum.  If so, replace the
