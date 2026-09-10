@@ -47,7 +47,7 @@
 !  improve seasonal dynamics.
 !
 !  COBALTv3 now includes 42 prognostic state variables:
-!  
+!
 !       alk: alkalinity
 !       cadet_arag: calcium carbonate detritus (aragonite)
 !       cadet_calc: calcium carbonate detritus (calcite)
@@ -74,10 +74,10 @@
 !       o2: oxygen
 !       pdet: phosphorous detritus
 !       pdet_fast: fast-sinking phosphorous detritus
-!       pdi: diazotroph phosphorus 
-!       plg: large phytoplankton phosphorus 
-!       pmd: medium phytoplankton phosphorus 
-!       psm: small phytoplankton phosphorus 
+!       pdi: diazotroph phosphorus
+!       plg: large phytoplankton phosphorus
+!       pmd: medium phytoplankton phosphorus
+!       psm: small phytoplankton phosphorus
 !       po4: phosphate
 !       srdon: semi-refractory dissolved organic nitrogen
 !       srdop: semi-refractory dissolved organic phosphorous
@@ -128,7 +128,7 @@
 module generic_COBALT
 
   use coupler_types_mod, only: coupler_2d_bc_type
-  use field_manager_mod, only: fm_string_len, fm_path_name_len
+  use field_manager_mod, only: fm_string_len
   use mpp_mod,           only: mpp_clock_id, mpp_clock_begin, mpp_clock_end
   use mpp_mod,           only: CLOCK_COMPONENT, CLOCK_SUBCOMPONENT, CLOCK_MODULE
   use mpp_mod,           only: input_nml_file, mpp_error, stdlog, NOTE, WARNING, FATAL, stdout, mpp_chksum
@@ -138,7 +138,6 @@ module generic_COBALT
   use data_override_mod, only: data_override
   use fms_mod,           only: write_version_number, FATAL, WARNING, stdout, stdlog,mpp_pe,mpp_root_pe
   use fms_mod,           only: check_nml_error
-  use MOM_EOS,           only: calculate_density, EOS_type
 
   use g_tracer_utils, only : g_tracer_type,g_tracer_start_param_list,g_tracer_end_param_list
   use g_tracer_utils, only : g_tracer_add,g_tracer_add_param, g_tracer_set_files
@@ -150,6 +149,9 @@ module generic_COBALT
   use g_tracer_utils, only : register_diag_field=>g_register_diag_field
   use g_tracer_utils, only : g_send_data, is_root_pe
   use g_tracer_utils, only : g_tracer_is_prog, g_tracer_vertfill, g_tracer_get_next
+
+  use generic_bottom_layer_diags, only: generic_bld, generic_bld_alloc, generic_bld_update
+  use generic_bottom_layer_diags, only: generic_bld_average, generic_bld_dealloc
 
   use cobalt_types
   use cobalt_send_diag, only : cobalt_send_diagnostics
@@ -184,7 +186,7 @@ module generic_COBALT
                                              !! in generic_COBALT_nml.
 
   namelist /generic_COBALT_nml/ co2_calc, do_14c, do_nh3_atm_ocean_exchange, scheme_nitrif, debug, &
-     do_vertfill_pre,imbalance_tolerance,as_param_cobalt
+     imbalance_tolerance,as_param_cobalt
 
   !
   ! Array allocations and flux calculations assume that phyto(1) is the
@@ -1042,6 +1044,13 @@ contains
     call get_param(param_file, "generic_COBALT", "mort_Md", phyto(MEDIUM)%mort, &
                    "mortality (cell death) rate constant for medium phytoplankton @ 0 deg. C", &
                    units="day-1", default=0.0, scale=I_sperd)
+    ! Diatom silica exudation or loss due to mortality and basal respiration
+    call get_param(param_file, "generic_COBALT", "phi_sidiss_mort_Md", phyto(MEDIUM)%phi_sidiss_mort, &
+                   "fraction of medium diatom silica dissolved during respiration and mortality", &
+                   units="none", default=0.0)
+    call get_param(param_file, "generic_COBALT", "phi_sidiss_mort_Lg", phyto(LARGE)%phi_sidiss_mort, &
+                   "fraction of larger diatom silica dissolved during respiration and mortality", &
+                   units="none", default=0.0)
     !
     ! Phytoplankton loss of organic carbon to exudation is assumed to be a constant fraction of NPP following Baines
     ! and Pace (1991) (https://aslopubs.onlinelibrary.wiley.com/doi/abs/10.4319/lo.1991.36.6.1078)
@@ -1362,7 +1371,14 @@ contains
     call get_param(param_file, "generic_COBALT", "phi_sldop_lgz", zoo(3)%phi_sldop, &
                    "fraction of P ingestion by large zooplankton to semi-labile dissolved organic phosphorus", &
                    units="none", default=0.3*(0.30-zoo(3)%phi_det))
-    !
+    ! Partitioning of silica detritus production from zooplankton is by default the same as organic matter detritus
+    call get_param(param_file, "generic_COBALT", "phi_det_si_smz", zoo(1)%phi_det_si, &
+                   "fraction of silica ingestion by small zooplankton to si detritus", units="none", default=0.0)
+    call get_param(param_file, "generic_COBALT", "phi_det_si_mdz", zoo(2)%phi_det_si, &
+                   "fraction of silica ingestion by medium zooplankton to si detritus", units="none", default=0.15)
+    call get_param(param_file, "generic_COBALT", "phi_det_si_lgz", zoo(3)%phi_det_si, &
+                   "fraction of silica ingestion by large zooplankton to si detritus", units="none", default=0.30)
+	!
     !----------------------------------------------------------------------
     ! Partitioning of viral losses to various dissolved pools
     !----------------------------------------------------------------------
@@ -1441,6 +1457,9 @@ contains
     call get_param(param_file, "generic_COBALT", "hp_phi_det", cobalt%hp_phi_det, &
                    "fraction of ingestion by higher predators to detritus", units="none", default=0.35)
 
+    call get_param(param_file, "generic_COBALT", "frac_fastsinking", cobalt%frac_fastsinking, &
+                   "Fraction of N and P detritus higher predators that is fast-sinking", units="none", default=1.0)
+
     ! Radiocarbon
     call get_param(param_file, "generic_COBALT", "half_life_14c", cobalt%half_life_14c, "half_life_14c", units="s", default= 5730.0 )                  ! s
     call get_param(param_file, "generic_COBALT", "lambda_14c",    cobalt%lambda_14c,    "lambda_14c",    units="-s", &
@@ -1491,10 +1510,10 @@ contains
     ! << Respiration-driven CaCO3 dissolution ratios from param file
     call get_param(param_file, "generic_COBALT", "resp_ca_2_n_arag", cobalt%resp_ca_2_n_arag, &
                    "ratio of aragonite dissolution to organic matter remineralization (respiration-driven)", &
-                   units="mol dissolved arag mol org. C-1", default = 0.0, scale = c2n)
+                   units="kg (mol N)-1", default = 0.0, scale = c2n)
     call get_param(param_file, "generic_COBALT", "resp_ca_2_n_calc", cobalt%resp_ca_2_n_calc, &
                    "ratio of calcite dissolution to organic matter remineralization (respiration-driven)", &
-                   units="mol dissolved calc mol org. C-1", default = 0.0, scale = c2n)
+                   units="kg (mol N)-1", default = 0.0, scale = c2n)
     ! >>
 
     ! Organic matter remineralization: Oxygen and temperature dependence follows Laufkotter et al. (2017).
@@ -1508,12 +1527,16 @@ contains
                    "Temperature dependence of remineralization", units="deg C-1", default=0.063)
     call get_param(param_file, "generic_COBALT", "remin_ramp_scale", cobalt%remin_ramp_scale, &
                    "depth scale from the surface over which remineralization ramps up", units="m", default= 50.0)
-    ! gamma_ndet is set to produce a Martin-curve like remineralization length scale at temperatures ~10 deg. C
+    ! gamma_ndet is set to produce a e-folding length scale for fresh (unprotected) organic matter of ~190m at ~10 deg. C,
+    ! consistent with the Martin curve. The value has been defined as a function of the sinking rate for "standard detritus
+    ! (i.e., zooplankton fecal pellets/phytoplankton aggregates) so that the remineralization length-scale is preserved even
+    ! if the sinking rate changed. Once established, gamma_ndet is also used for fast sinking detritus
+    ! (i.e., unprotected organic matter is assumed to decay at similar rates regardless of whether it sinking slowly or quickly).
+    ! This means that the ratio of the remineralization length-scale for unprotected fast sinking detritus relative to that for
+    ! unprotected standard detritus equal the ratio of their sinking speeds (wsink_fast/wsink).
     call get_param(param_file, "generic_COBALT", "gamma_ndet", cobalt%gamma_ndet, &
                    "Remineralization rate for unprotected organic matter", units="s-1", default=cobalt%wsink/350.0)
-    call get_param(param_file, "generic_COBALT", "gamma_ndet_fast", cobalt%gamma_ndet_fast, &
-                   "Remineralization rate for fast-sinking unprotected organic matter", units="s-1", default=cobalt%wsink_fast/3500.0)
-    ! mineral ballasting after Klaas and Archer (2002) and Dunne et al. (2007) (see p. 3) 
+    ! mineral ballasting after Klaas and Archer (2002) and Dunne et al. (2007) (see p. 3)
     ! conversion is 0.070 g C (g Ca)-1 to moles N (mole Ca)-1; Similar conversions below, but lith remains per gram
     call get_param(param_file, "generic_COBALT", "rpcaco3", cobalt%rpcaco3, "Organic matter protection from CaCO3", &
                    units="mol N mol Ca-1", default= 0.070/12.0*16.0/106.0*100.0)
@@ -1673,9 +1696,11 @@ contains
     call get_param(param_file, "generic_COBALT", "gamma_sldop", cobalt%gamma_sldop, &
                   "rate constant for converting semi-labile DOP to labile DOP at 0 deg. C", units="day-1", &
                   default=1.0/90.0, scale =I_sperd)
-    ! background concentration of refractory DOC used for diagnostics that request and estimate of the total DOC
+    ! Background concentration of refractory DOC used for diagnostics that request and estimate of the total DOC
+    ! Changed default to 0 from 4.0e-5 because CMIP7 requested explicit pools only.  If you want to get a better
+    ! estimate of the total doc pool, a constant value of ~4.0e5 for the refractory pool could be added
     call get_param(param_file, "generic_COBALT", "doc_background", cobalt%doc_background, &
-                  "background refractory dissolved organic carbon concentration", units="moles kg-1", default=4.0e-5)
+                  "background refractory dissolved organic carbon concentration", units="moles kg-1", default=0.0)
     !
     !-----------------------------------------------------------------------
     ! Nitrification / Anammox
@@ -3067,7 +3092,8 @@ contains
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
 
     type(g_tracer_type),            pointer    :: tracer_list
-    real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,Salt,rho_dzt,dzt
+    real, dimension(ilb:,jlb:,:),   intent(in) :: Temp,Salt,dzt
+    real, dimension(ilb:,jlb:,:), target, intent(in) :: rho_dzt
     real, dimension(ilb:,jlb:),     intent(in) :: hblt_depth
     integer,                        intent(in) :: ilb,jlb,tau
     real,                           intent(in) :: dt
@@ -3159,23 +3185,12 @@ contains
     type(g_tracer_type), pointer :: g_tracer,g_tracer_next
     real :: KD_SMOOTH = 1.0E-05
 
-    if(do_vertfill_pre) then
-      g_tracer => tracer_list
-      do
-       if(g_tracer_is_prog(g_tracer)) then
-         call g_tracer_vertfill(g_tracer, dzt, KD_SMOOTH*dt, tau=1)
-       endif
-       !traverse the linked list till hit NULL
-       call g_tracer_get_next(g_tracer, g_tracer_next)
-       if(.NOT. associated(g_tracer_next)) exit
-       g_tracer=>g_tracer_next
-      enddo
-    endif
-
     r_dt = 1.0 / dt
 
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
          grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt)
+
+    call generic_bld_update(cobalt%bld, rho_dzt, grid_kmt)
 
     call mpp_clock_begin(id_clock_carbon_calculations)
     !Get necessary fields
@@ -3517,7 +3532,7 @@ contains
     if (present(photo_acc_dpth)) then
       pha_all_same = all(photo_acc_dpth == photo_acc_dpth(isc,jsc))
       if (pha_all_same) then
-        call mpp_error(WARNING, "Using uniform photoacclimation MLD in COBALTv3 which is not reccomended."//&
+        call mpp_error(FATAL, "Using uniform photoacclimation MLD in COBALTv3 which is not reccomended."//&
                                 "Check that PHA_MLD_CALC is true in the MOM paramter files or you "//&
                                 "may be using an unrealistic constant value!")
       endif
@@ -3614,7 +3629,7 @@ contains
        tmp_irrad_aclm = 0.0  ! integrates the irradiance in the surface photoacclimation layer
        tmp_zaclm = 0.0       ! tracks depth of top of the curent layer photoacclimation layer calcs
        do n = 1,NUM_PHYTO
-         ! Tracks the temp*nutrient limitation of light-saturated photosynthesis in the mixed layer 
+         ! Tracks the temp*nutrient limitation of light-saturated photosynthesis in the mixed layer
          phyto(n)%tmp_pcmlim_aclm_ML = 0.0
        enddo
        ! Define the irradiance threshold for a "deep" mixed layer for photoacclimation
@@ -3784,8 +3799,7 @@ contains
             endif
           enddo
 
-          ! Calculate the chlorophyll.  Coversions give mg Chl (1000 kg)-1 ~ mg Chl m-3
-          ! Note: Better to make this c_2_n*12*cobalt%Rho_0*1000*theta*f_n?  ~3.5% difference
+          ! Calculate the chlorophyll in micrograms Chl kg-1; 12.0e6 = 12 gC molC-1 * 1e6 ugC gC-1
           phyto(n)%chl(i,j,k) = cobalt%c_2_n*12.0e6*phyto(n)%theta(i,j,k)*phyto(n)%f_n(i,j,k)
           cobalt%f_chl(i,j,k) = cobalt%f_chl(i,j,k)+phyto(n)%chl(i,j,k)
 
@@ -3909,16 +3923,25 @@ contains
     ! Silicate uptake
     !
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec   !{
+	   ! Diatoms are modeled as the fraction of the medium and large phytoplankton based on silica limitation
        cobalt%nlg_diatoms(i,j,k)=phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%silim(i,j,k)
        cobalt%nmd_diatoms(i,j,k)=phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%silim(i,j,k)
        cobalt%nlg_misc(i,j,k)=phyto(LARGE)%f_n(i,j,k) - phyto(LARGE)%f_n(i,j,k)*phyto(LARGE)%silim(i,j,k)
        cobalt%nmd_misc(i,j,k)=phyto(MEDIUM)%f_n(i,j,k) - phyto(MEDIUM)%f_n(i,j,k)*phyto(MEDIUM)%silim(i,j,k)
+
+	   ! silim present in here twice first to find the fraction of nitrogen uptake attributed to diatoms,
+	   ! and then to scale the Si:N ratio of that uptake
        phyto(LARGE)%juptake_sio4(i,j,k) = &
              max(phyto(LARGE)%juptake_no3(i,j,k)+phyto(LARGE)%juptake_nh4(i,j,k),0.0)*phyto(LARGE)%silim(i,j,k)* &
              phyto(LARGE)%silim(i,j,k)*phyto(LARGE)%si_2_n_max
        phyto(MEDIUM)%juptake_sio4(i,j,k) = &
              max(phyto(MEDIUM)%juptake_no3(i,j,k)+phyto(MEDIUM)%juptake_nh4(i,j,k),0.0)*phyto(MEDIUM)%silim(i,j,k)* &
              phyto(MEDIUM)%silim(i,j,k)*phyto(MEDIUM)%si_2_n_max
+
+       ! If growth is negative, silica gets lost via dissolution similar to the other elements
+	   ! This term is multiplied by a conversion efficiency that determines the fraction of the silica shell left over in silg and simd
+	   phyto(MEDIUM)%jdissloss_si(i,j,k) = -1.0 * min(0.0,phyto(MEDIUM)%mu(i,j,k)*cobalt%f_simd(i,j,k)*phyto(MEDIUM)%phi_sidiss_mort)
+	   phyto(LARGE)%jdissloss_si(i,j,k) = -1.0 * min(0.0,phyto(LARGE)%mu(i,j,k)*cobalt%f_silg(i,j,k)*phyto(LARGE)%phi_sidiss_mort)
 
        ! Note that this is si_2_n in large phytoplankton pool, not in diatoms themselves (q_si_2_n_lg_diatoms)
        phyto(LARGE)%q_si_2_n(i,j,k) = cobalt%f_silg(i,j,k)/(phyto(LARGE)%f_n(i,j,k)+epsln)
@@ -4007,8 +4030,15 @@ contains
        ! anaerobic remineralization.
        bact(1)%o2lim(i,j,k) = max(cobalt%f_o2(i,j,k),cobalt%o2_min)/  &
                               (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))
+       ! Note that nitrate availability affects the anaerobic remineralization of dissolved organic material
+       ! as that of particulate organic material
+       if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then !{
+          bact(1)%no3lim(i,j,k) = 1.0
+       else
+          bact(1)%no3lim(i,j,k) = max(0.0, cobalt%f_no3(i,j,k)/(cobalt%k_no3_denit + cobalt%f_no3(i,j,k)))
+       endif
        bact(1)%juptake_ldon(i,j,k) = vmax_bact*bact(1)%temp_lim(i,j,k)*bact(1)%ldonlim(i,j,k)* &
-               bact(1)%o2lim(i,j,k)*bact(1)%f_n(i,j,k)
+               bact(1)%o2lim(i,j,k)*bact(1)%no3lim(i,j,k)*bact(1)%f_n(i,j,k)
        bact_uptake_ratio = ( cobalt%f_ldop(i,j,k)/max(cobalt%f_ldon(i,j,k),epsln) )
        bact(1)%juptake_ldop(i,j,k) = bact(1)%juptake_ldon(i,j,k)*bact_uptake_ratio
        ! calculate bacteria production if N-limited, adjust down if P-limited
@@ -4480,7 +4510,10 @@ contains
                    phyto(n)%f_n(i,j,k)/(cobalt%refuge_conc + phyto(n)%f_n(i,j,k))
             phyto(n)%jmortloss_p(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_p_2_n(i,j,k)
             phyto(n)%jmortloss_fe(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_fe_2_n(i,j,k)
-            phyto(n)%jmortloss_sio2(i,j,k) = phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
+            ! silica dissolution from phytoplankton mortality is also multiplied by a scaling factor that
+            ! determines the amount of silica test left over as the phytoplankton dies
+            phyto(n)%jdissloss_si(i,j,k) = phyto(n)%jdissloss_si(i,j,k) + &
+                    phyto(n)%phi_sidiss_mort*phyto(n)%jmortloss_n(i,j,k)*phyto(n)%q_si_2_n(i,j,k)
             ! calculate the vertical sinking
             phyto(n)%vmove(i,j,k) = phyto(n)%sink_max*phyto(n)%stress_fac(i,j,k)
        enddo !} n
@@ -4589,8 +4622,8 @@ contains
            zoo(m)%jprod_ldop(i,j,k) = zoo(m)%phi_ldop*zoo(m)%jingest_p(i,j,k)
            zoo(m)%jprod_srdop(i,j,k) = zoo(m)%phi_srdop*zoo(m)%jingest_p(i,j,k)
            zoo(m)%jprod_fedet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_fe(i,j,k)
-           zoo(m)%jprod_sidet(i,j,k) = zoo(m)%phi_det*zoo(m)%jingest_sio2(i,j,k)
-		   
+           zoo(m)%jprod_sidet(i,j,k) = zoo(m)%phi_det_si*zoo(m)%jingest_sio2(i,j,k)
+
            ! augment cumulative production variables for detritus and dissolved organics
            cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + zoo(m)%jprod_ndet(i,j,k)
            cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + zoo(m)%jprod_pdet(i,j,k)
@@ -4606,9 +4639,16 @@ contains
 
        ! Production of detritus and dissolved organic material from higher predator egestion
        if (cobalt%do_fastsinking) then
-          ! Assume all the egestion from higher predators will sink quickly and go to fast-sinking detritus
-          cobalt%jprod_ndet_fast(i,j,k) = cobalt%jprod_ndet_fast(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
-          cobalt%jprod_pdet_fast(i,j,k) = cobalt%jprod_pdet_fast(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
+          ! A portion of the egestion (determined by frac_fastsinking) from higher predators will sink quickly and go to fast-sinking detritus
+          cobalt%jprod_ndet_fast(i,j,k) = cobalt%jprod_ndet_fast(i,j,k) + &
+	                                  cobalt%frac_fastsinking*cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
+          cobalt%jprod_pdet_fast(i,j,k) = cobalt%jprod_pdet_fast(i,j,k) + &
+	                                  cobalt%frac_fastsinking*cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
+
+          cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + &
+                                     (1.0-cobalt%frac_fastsinking)*cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
+          cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + &
+                                     (1.0-cobalt%frac_fastsinking)*cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
        else
           ! Just add the HP ndet to the cumulative total. Calculate from phi_det and hp_jingest.
           cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
@@ -4644,9 +4684,9 @@ contains
            cobalt%jprod_srdop(i,j,k) = cobalt%jprod_srdop(i,j,k) + cobalt%lysis_phi_srdop* &
                    (phyto(m)%jvirloss_p(i,j,k) + phyto(m)%jmortloss_p(i,j,k))
            cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k)   + phyto(m)%jvirloss_fe(i,j,k) + &
-                                       phyto(m)%jmortloss_fe(i,j,k) + phyto(m)%jexuloss_fe(i,j,k)
+                   phyto(m)%jmortloss_fe(i,j,k) + phyto(m)%jexuloss_fe(i,j,k)
            cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + phyto(m)%jvirloss_sio2(i,j,k) + &
-                                      phyto(m)%jmortloss_sio2(i,j,k)
+		           phyto(m)%jdissloss_si(i,j,k)
        enddo !} m
 
        ! Sources of dissolved organic material from viral lysis due to bacteria
@@ -4747,7 +4787,7 @@ contains
           cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + zoo(m)%jprod_fed(i,j,k)
 
           ! Ingested opal not allocated to detritus undergoes rapid dissolution to dissolved silica
-          zoo(m)%jprod_sio4(i,j,k) = (1.0 - zoo(m)%phi_det)*zoo(m)%jingest_sio2(i,j,k)
+          zoo(m)%jprod_sio4(i,j,k) = (1.0 - zoo(m)%phi_det_si)*zoo(m)%jingest_sio2(i,j,k)
           cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + zoo(m)%jprod_sio4(i,j,k)
        enddo !} m
 
@@ -4810,7 +4850,7 @@ contains
     ! << Enable neritic CaCO3 burial in shallow regions (depth <= 150m)
     ! Read 'neritic_cased_burial' from netCDF file (O'Mara & Dunne, 2019) to apply spatial pattern
     if (cobalt%do_ner_ca_bur) then
-        allocate(neritic_cased_burial(isd:ied,jsd:jed))
+        allocate(neritic_cased_burial(isd:ied,jsd:jed)); neritic_cased_burial = 0.0
         ! 'neritic_cased_burial' is the 2-D burial field saved in netCDF
         ! data_override is intended to replace internal model fields with externally specified data
         call data_override('OCN', 'neritic_cased_burial', neritic_cased_burial(isc:iec,jsc:jec), model_time,override=neritic_override)
@@ -4928,7 +4968,8 @@ contains
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
 	      ! Adding in the remineralization from fast sinking detritus
-	      cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet_fast * cobalt%expkreminT(i,j,k) * &
+          ! Unprotected organic matter assumed to decay at the same rate (gamma_ndet) whether it sinks quickly or not
+	      cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet * cobalt%expkreminT(i,j,k) * &
 		        cobalt%f_ndet_fast(i,j,k) * (cobalt%f_o2(i,j,k) / (cobalt%k_o2 + cobalt%f_o2(i,j,k)))
           ! Augment total nh4 production and o2 consumption
           cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + cobalt%jremin_ndet(i,j,k) + cobalt%jremin_ndet_fast(i,j,k)
@@ -4944,9 +4985,9 @@ contains
                cobalt%rpcaco3*(cobalt%f_cadet_arag(i,j,k) + cobalt%f_cadet_calc(i,j,k)) - &
                cobalt%rplith*cobalt%f_lithdet(i,j,k) - cobalt%rpsio2*cobalt%f_sidet(i,j,k) )
           ! Adding in the remineralization from fast sinking detritus
-          cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet_fast * cobalt%f_ndet_fast(i,j,k) * &
+          cobalt%jremin_ndet_fast(i,j,k) = cobalt%gamma_ndet * cobalt%f_ndet_fast(i,j,k) * &
                (cobalt%o2_min / (cobalt%k_o2 + cobalt%o2_min)) * &
-               (cobalt%f_no3(i,j,k) / (cobalt%k_no3_denit + cobalt%f_no3(i,j,k))) 
+               (cobalt%f_no3(i,j,k) / (cobalt%k_no3_denit + cobalt%f_no3(i,j,k)))
           ! Augment total nh4 production and no3 consumption
           cobalt%jno3denit_wc(i,j,k) = cobalt%jno3denit_wc(i,j,k) + &
 		       (cobalt%jremin_ndet(i,j,k) + cobalt%jremin_ndet_fast(i,j,k)) * cobalt%n_2_n_denit
@@ -4969,7 +5010,7 @@ contains
        cobalt%jremin_fedet(i,j,k) = (cobalt%jremin_ndet(i,j,k) + cobalt%jremin_ndet_fast(i,j,k)) * &
          (cobalt%k_o2 + max(cobalt%f_o2(i,j,k),cobalt%o2_min))/max(cobalt%f_o2(i,j,k),cobalt%o2_min) / &
          (cobalt%f_ndet(i,j,k) + cobalt%f_ndet_fast(i,j,k) + epsln) * cobalt%remin_eff_fedet*cobalt%f_fedet(i,j,k)
-		 
+
        cobalt%jprod_fed(i,j,k) = cobalt%jprod_fed(i,j,k) + cobalt%jremin_fedet(i,j,k)
     enddo; enddo; enddo  !} i,j,k
 
@@ -4980,9 +5021,11 @@ contains
     if (cobalt%do_resp_ca_diss) then
         do k=1,nk ; do j=jsc,jec ; do i=isc,iec  !{
            cobalt%jdiss_cadet_arag(i,j,k) = cobalt%jdiss_cadet_arag(i,j,k) + &
-                                            cobalt%resp_ca_2_n_arag * cobalt%jremin_ndet(i,j,k)
+                                            cobalt%resp_ca_2_n_arag * cobalt%f_cadet_arag(i,j,k) * &
+                                            cobalt%jremin_ndet(i,j,k)
            cobalt%jdiss_cadet_calc(i,j,k) = cobalt%jdiss_cadet_calc(i,j,k) + &
-                                            cobalt%resp_ca_2_n_calc * cobalt%jremin_ndet(i,j,k)
+                                            cobalt%resp_ca_2_n_calc * cobalt%f_cadet_calc(i,j,k) * &
+                                            cobalt%jremin_ndet(i,j,k)
         enddo; enddo; enddo  !} i,j,k
     endif
     ! >>
@@ -5070,11 +5113,12 @@ contains
 !-------------------------------------------------------------------------------------------------
 !
 
-    ! Nutrient inputs associated with icebergs/frozen runoff.  This is currently entered as a surface flux.  The
+    ! Nutrient inputs associated with icebergs/frozen runoff.  This is currently entered in the top grid cell.  The
     ! parameters "jfe_iceberg_ratio", "jno3_iceberg_ratio" and "jpo4_iceberg_ratio" are the ratios of nutrient input
     ! per kg of runoff.  For iron, values can be set within the broad ranges discussed in Laufkotter et al. (2018).
-    ! These inputs are currently entered at the ocean surface, but they have defined within a 3D array to allow
+    ! While inputs are currently entered at the ocean surface, they have defined within a 3D array to allow
     ! eventual consideration of depth-dependent inputs.
+    ! frunoff units are kg m-2 sec-1; jfe_iceberg_ratio = mol Fe kg-1 melt; rho_dzt = kg m-2
     do j = jsc, jec ; do i = isc, iec !{
        ! CAS: Is this check relevant for MOM6?
        if (grid_kmt(i,j) .gt. 0) then !{
@@ -5084,18 +5128,16 @@ contains
        endif !}
     enddo; enddo  !} i,j
 
-    ! Calculate the bottom conditions and the fluxes to the bottom for diagnostics and benthic flux calculations.
-    ! MOM4/5 used the bottom grid cell, but MOM6 often has a number of vanishingly thin layers overlying the bottom.
-    ! Grid scale noise in these layers can occur, particularly for quantities with large bottom fluxes.  COBALT thus
-    ! uses conditions over a specified bottom layer thickness (cobalt%bottom_thickness, default = 1m) for bottom calcs.
-
-    ! Local variables used to determine the layers falling within the bottom thickness
-    allocate(rho_dzt_bot(isc:iec,jsc:jec))
-    allocate(k_bot(isc:iec,jsc:jec))
+    ! The following bottom averages need to be calculated now because they're used in other calculations.
+    ! All other bottom averages should be calculated in cobalt_send_diagnostics.
+    call generic_bld_average(cobalt%bld, cobalt%f_o2, cobalt%btm_o2)
+    call generic_bld_average(cobalt%bld, cobalt%f_no3, cobalt%btm_no3)
+    call generic_bld_average(cobalt%bld, cobalt%f_co3_ion, cobalt%btm_co3_ion)
+    call generic_bld_average(cobalt%bld, cobalt%co3_sol_calc, cobalt%btm_co3_sol_calc)
 
     do j = jsc, jec; do i = isc, iec  !{
        if (grid_kmt(i,j) .gt. 0) then !{
-		   
+
           ! Add the phytoplankton fluxes to the detritus fluxes to get total flux to benthos
           cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j,1) + cobalt%f_ndet_fast_btf(i,j,1) + cobalt%f_ndi_btf(i,j,1) + &
             cobalt%f_nsm_btf(i,j,1) + cobalt%f_nmd_btf(i,j,1) + cobalt%f_nlg_btf(i,j,1)
@@ -5106,39 +5148,6 @@ contains
           cobalt%fsitot_btm(i,j) = cobalt%f_sidet_btf(i,j,1) + cobalt%f_silg_btf(i,j,1) + &
             cobalt%f_simd_btf(i,j,1)
 
-          ! Calculate the values of tracers influencing the sedimentary transformations
-          ! and fluxes over a layer defined by "bottom_thickess".
-          rho_dzt_bot(i,j) = 0.0
-          cobalt%btm_o2(i,j) = 0.0
-          cobalt%btm_no3(i,j) = 0.0
-          cobalt%btm_co3_sol_calc(i,j) = 0.0
-          cobalt%btm_co3_ion(i,j) = 0.0
-          cobalt%btm_omega_calc(i,j) = 0.0
-          k_bot(i,j) = 0
-          ! Note that grid_kmt is always the total number of layers in MOM6
-          do k = grid_kmt(i,j),1,-1   !{
-            ! Check if the top of layer k is within the bottom thickness.  If so, include its properties in the bottom
-            ! layer averages.  Overshoots will be subtracted off later.
-            if (rho_dzt_bot(i,j).lt.(cobalt%Rho_0*cobalt%bottom_thickness)) then
-              k_bot(i,j) = k
-              rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
-              cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%f_o2(i,j,k)*rho_dzt(i,j,k)
-              cobalt%btm_no3(i,j) = cobalt%btm_no3(i,j) + cobalt%f_no3(i,j,k)*rho_dzt(i,j,k)
-              cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k)
-              cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k)
-            endif
-          enddo
-          ! Subtract off overshoot
-          drho_dzt = rho_dzt_bot(i,j) - cobalt%Rho_0*cobalt%bottom_thickness
-          cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)-cobalt%f_o2(i,j,k_bot(i,j))*drho_dzt
-          cobalt%btm_no3(i,j)=cobalt%btm_no3(i,j)-cobalt%f_no3(i,j,k_bot(i,j))*drho_dzt
-          cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)-cobalt%co3_sol_calc(i,j,k_bot(i,j))*drho_dzt
-          cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)-cobalt%f_co3_ion(i,j,k_bot(i,j))*drho_dzt
-          ! convert back to moles kg-1
-          cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-          cobalt%btm_no3(i,j)=cobalt%btm_no3(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-          cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-          cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
           ! calculate the saturation state with respect to calcite for subsequent calculations
           cobalt%btm_omega_calc(i,j)=cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
 
@@ -5383,8 +5392,6 @@ contains
 
        endif !}
     enddo; enddo  !} i, j
-    deallocate(rho_dzt_bot)
-    deallocate(k_bot)
 
     do k = 2, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%f_cased(i,j,k) = 0.0
@@ -5408,9 +5415,9 @@ contains
 !-----------------------------------------------------------------------
 !
     !
-    !-------------------------------------------------------------------
-    ! 6.1: Update the prognostics tracer fields via their pointers.
-    !-------------------------------------------------------------------
+    !---------------------------------------------------------------------------
+    ! 6.1: Get the pointers to the full tracer values before source/sink update
+    !---------------------------------------------------------------------------
     !
     call g_tracer_get_pointer(tracer_list,'alk'    ,'field',cobalt%p_alk    )
     call g_tracer_get_pointer(tracer_list,'cadet_arag','field',cobalt%p_cadet_arag)
@@ -5610,7 +5617,7 @@ contains
        cobalt%jsilg(i,j,k) = phyto(LARGE)%juptake_sio4(i,j,k) - &
                              phyto(LARGE)%jzloss_sio2(i,j,k) - phyto(LARGE)%jhploss_sio2(i,j,k) - &
                              phyto(LARGE)%jaggloss_sio2(i,j,k) - phyto(LARGE)%jvirloss_sio2(i,j,k) - &
-                             phyto(LARGE)%jmortloss_sio2(i,j,k)
+                             phyto(LARGE)%jdissloss_si(i,j,k)
        cobalt%p_silg(i,j,k,tau) = cobalt%p_silg(i,j,k,tau) + cobalt%jsilg(i,j,k)*dt*grid_tmask(i,j,k)
        !
        ! Medium Phytoplankton Silicon
@@ -5618,7 +5625,7 @@ contains
        cobalt%jsimd(i,j,k) = phyto(MEDIUM)%juptake_sio4(i,j,k) - &
                              phyto(MEDIUM)%jzloss_sio2(i,j,k) - phyto(MEDIUM)%jhploss_sio2(i,j,k) - &
                              phyto(MEDIUM)%jaggloss_sio2(i,j,k) - phyto(MEDIUM)%jvirloss_sio2(i,j,k) - &
-                             phyto(MEDIUM)%jmortloss_sio2(i,j,k)
+                             phyto(MEDIUM)%jdissloss_si(i,j,k)
        cobalt%p_simd(i,j,k,tau) = cobalt%p_simd(i,j,k,tau) + cobalt%jsimd(i,j,k)*dt*grid_tmask(i,j,k)
        !
        ! Diazotrophic Phytoplankton Iron
@@ -5700,6 +5707,7 @@ contains
                              phyto(LARGE)%juptake_no3(i,j,k) - phyto(MEDIUM)%juptake_no3(i,j,k) - &
                              phyto(SMALL)%juptake_no3(i,j,k) - &
                              cobalt%jno3denit_wc(i,j,k) - cobalt%juptake_no3amx(i,j,k)
+       cobalt%jno3h(i,j,k) = cobalt%jno3(i,j,k) * dzt(i,j,k)
        cobalt%p_no3(i,j,k,tau) = cobalt%p_no3(i,j,k,tau) + &
                (cobalt%jno3(i,j,k)+cobalt%jno3_iceberg(i,j,k))*dt*grid_tmask(i,j,k)
     enddo; enddo ; enddo  !} i,j,k
@@ -5714,6 +5722,7 @@ contains
                             phyto(LARGE)%juptake_nh4(i,j,k) - phyto(MEDIUM)%juptake_nh4(i,j,k) - &
                             phyto(SMALL)%juptake_nh4(i,j,k) - &
                             cobalt%juptake_nh4nitrif(i,j,k) - cobalt%juptake_nh4amx(i,j,k)
+       cobalt%jnh4h(i,j,k) = cobalt%jnh4(i,j,k) * dzt(i,j,k)
        cobalt%p_nh4(i,j,k,tau) = cobalt%p_nh4(i,j,k,tau) + cobalt%jnh4(i,j,k) * dt * grid_tmask(i,j,k)
        !
        ! PO4
@@ -5721,6 +5730,7 @@ contains
        cobalt%jpo4(i,j,k) = cobalt%jprod_po4(i,j,k) - phyto(DIAZO)%juptake_po4(i,j,k) - &
                             phyto(LARGE)%juptake_po4(i,j,k) - phyto(MEDIUM)%juptake_po4(i,j,k) - &
                             phyto(SMALL)%juptake_po4(i,j,k)
+       cobalt%jpo4h(i,j,k) = cobalt%jpo4(i,j,k) * dzt(i,j,k)
        cobalt%p_po4(i,j,k,tau) = cobalt%p_po4(i,j,k,tau) + &
               (cobalt%jpo4(i,j,k)+cobalt%jpo4_iceberg(i,j,k)) * dt * grid_tmask(i,j,k)
        !
@@ -5728,10 +5738,10 @@ contains
        !
        cobalt%jsio4(i,j,k) = cobalt%jprod_sio4(i,j,k) - phyto(LARGE)%juptake_sio4(i,j,k) - &
                              phyto(MEDIUM)%juptake_sio4(i,j,k)
+       cobalt%jsio4h(i,j,k) = cobalt%jsio4(i,j,k) * dzt(i,j,k)
        cobalt%p_sio4(i,j,k,tau) = cobalt%p_sio4(i,j,k,tau) + cobalt%jsio4(i,j,k) * dt * grid_tmask(i,j,k)
     enddo; enddo ; enddo  !} i,j,k
 
-    ! 2016/06/13 JGJ: keep original Fed calculation
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec  !{
        !
        ! Fed
@@ -5773,6 +5783,7 @@ contains
        cobalt%jndet(i,j,k) = cobalt%jprod_ndet(i,j,k) - cobalt%jremin_ndet(i,j,k) - &
                              cobalt%det_jzloss_n(i,j,k) - cobalt%det_jhploss_n(i,j,k)
        cobalt%jndet_fast(i,j,k) = cobalt%jprod_ndet_fast(i,j,k) - cobalt%jremin_ndet_fast(i,j,k)
+       cobalt%jndeth(i,j,k) = cobalt%jndet(i,j,k) * dzt(i,j,k)
        cobalt%p_ndet(i,j,k,tau) = cobalt%p_ndet(i,j,k,tau) + cobalt%jndet(i,j,k)*dt*grid_tmask(i,j,k)
        cobalt%p_ndet_fast(i,j,k,tau) = cobalt%p_ndet_fast(i,j,k,tau) + cobalt%jndet_fast(i,j,k)*dt*grid_tmask(i,j,k)
        !
@@ -5781,7 +5792,7 @@ contains
        cobalt%jpdet(i,j,k) = cobalt%jprod_pdet(i,j,k) - cobalt%jremin_pdet(i,j,k) - &
                              cobalt%det_jzloss_p(i,j,k) - cobalt%det_jhploss_p(i,j,k)
        cobalt%jpdet_fast(i,j,k) = cobalt%jprod_pdet_fast(i,j,k) - cobalt%jremin_pdet_fast(i,j,k)
-       cobalt%p_pdet(i,j,k,tau) = cobalt%p_pdet(i,j,k,tau) + cobalt%jpdet(i,j,k)*dt*grid_tmask(i,j,k)	   
+       cobalt%p_pdet(i,j,k,tau) = cobalt%p_pdet(i,j,k,tau) + cobalt%jpdet(i,j,k)*dt*grid_tmask(i,j,k)
        cobalt%p_pdet_fast(i,j,k,tau) = cobalt%p_pdet_fast(i,j,k,tau) + cobalt%jpdet_fast(i,j,k)*dt*grid_tmask(i,j,k)
        !
        ! Sidet
@@ -5792,7 +5803,6 @@ contains
        cobalt%p_sidet(i,j,k,tau) = cobalt%p_sidet(i,j,k,tau) + cobalt%jsidet(i,j,k)*dt*grid_tmask(i,j,k)
     enddo; enddo ; enddo  !} i,j,k
 
-    ! 2016/06/13 JGJ: keep original jfedet calculation
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec  !{
        !
        ! Fedet
@@ -5861,6 +5871,7 @@ contains
             phyto(MEDIUM)%juptake_nh4(i,j,k) + phyto(SMALL)%juptake_nh4(i,j,k)) + &
             cobalt%o2_2_nfix*phyto(DIAZO)%juptake_n2(i,j,k)) * grid_tmask(i,j,k)
        cobalt%jo2(i,j,k) = cobalt%jo2(i,j,k) - cobalt%jo2resp_wc(i,j,k)
+       cobalt%jo2h(i,j,k) = cobalt%jo2(i,j,k) * dzt(i,j,k)
        cobalt%p_o2(i,j,k,tau) = cobalt%p_o2(i,j,k,tau) + cobalt%jo2(i,j,k) * dt * grid_tmask(i,j,k)
     enddo; enddo ; enddo  !} i,j,k
     !
@@ -5887,6 +5898,7 @@ contains
           phyto(MEDIUM)%juptake_nh4(i,j,k) - &
           phyto(SMALL)%juptake_nh4(i,j,k) - 2.0 * cobalt%juptake_nh4nitrif(i,j,k)
 
+       cobalt%jalkh(i,j,k) = cobalt%jalk(i,j,k) * dzt(i,j,k)
        cobalt%p_alk(i,j,k,tau) = cobalt%p_alk(i,j,k,tau) + cobalt%jalk(i,j,k) * dt * grid_tmask(i,j,k)
        !
        ! Dissolved Inorganic Carbon
@@ -5901,7 +5913,7 @@ contains
           cobalt%jdiss_cadet_arag(i,j,k) + cobalt%jdiss_cadet_calc(i,j,k) - &
           cobalt%jprod_cadet_arag(i,j,k) - cobalt%jprod_cadet_calc(i,j,k) - &
           cobalt%jdic_caco3_nerbur(i,j,k))
-
+       cobalt%jdich(i,j,k) = cobalt%jdic(i,j,k) * dzt(i,j,k)
        cobalt%p_dic(i,j,k,tau) = cobalt%p_dic(i,j,k,tau) + cobalt%jdic(i,j,k) * dt * grid_tmask(i,j,k)
     enddo; enddo ; enddo !} i,j,k
 !
@@ -6170,7 +6182,7 @@ contains
     end if
     !
     !-----------------------------------------------------------------------
-    ! 6: Source/sink diagnostic calculations
+    ! 7: Source/sink diagnostic calculations
     !-----------------------------------------------------------------------
     !
 
@@ -6303,15 +6315,27 @@ contains
        cobalt%wc_vert_int_alk(i,j) = 0.0
        ! Fluxes
        cobalt%wc_vert_int_npp(i,j) = 0.0              ! wc integrated net primary production
+       ! Include breakdowns by functional group and by size to support CMIP7/FISH-MIP
+       cobalt%wc_vert_int_npp_diat(i,j) = 0.0         ! wc integrated net primary production, diatoms
+       cobalt%wc_vert_int_npp_diaz(i,j) = 0.0         ! wc integrated net primary production, diazotrophs
+       cobalt%wc_vert_int_npp_misc(i,j) = 0.0         ! wc integrated net primary production, misc
+       cobalt%wc_vert_int_npp_pico(i,j) = 0.0         ! wc integrated net primary production, picophytoplankton
+       cobalt%wc_vert_int_npp_nano(i,j) = 0.0         ! wc integrated net primary production, nanophytoplankton
+       cobalt%wc_vert_int_npp_micro(i,j) = 0.0        ! wc integrated net primary production, microphytoplankton
        cobalt%wc_vert_int_jdiss_sidet(i,j) = 0.0      ! wc integrated dissolution of silica detritus
        cobalt%wc_vert_int_jdiss_cadet(i,j) = 0.0      ! wc integrated dissolution of calcite detritus
        cobalt%wc_vert_int_jo2resp(i,j) = 0.0          ! wc integrated oxygen consumption
        cobalt%wc_vert_int_jprod_cadet(i,j) = 0.0      ! wc integrated production of calcite detritus
+       cobalt%wc_vert_int_jprod_cadet_arag(i,j) = 0.0 ! wc integrated production of calcite detritus
+       cobalt%wc_vert_int_jprod_cadet_calc(i,j) = 0.0 ! wc integrated production of calcite detritus
        cobalt%wc_vert_int_jno3denit(i,j) = 0.0        ! wc integrated nitrate use in denitrification
        cobalt%wc_vert_int_jprod_no3nitrif(i,j) = 0.0  ! wc integrated nitrate production in nitrification
        cobalt%wc_vert_int_juptake_nh4(i,j) = 0.0      ! wc integrated nh4 uptake by phytoplankton (recycled production)
        cobalt%wc_vert_int_jprod_nh4(i,j) = 0.0        ! wc integrated production of nh4 through remineralization
        cobalt%wc_vert_int_juptake_no3(i,j) = 0.0      ! wc integrated no3 uptake by phytoplankton (new production)
+       cobalt%wc_vert_int_juptake_po4(i,j) = 0.0      ! wc integrated po4 uptake by phytoplankton
+       cobalt%wc_vert_int_juptake_si(i,j) = 0.0       ! wc integrated si uptake by phytoplankton
+       cobalt%wc_vert_int_juptake_fe(i,j) = 0.0       ! wc integrated fe uptake by phytoplankton
        cobalt%wc_vert_int_nfix(i,j) = 0.0             ! wc integrated nitrogen fixation
        cobalt%wc_vert_int_jnamx(i,j) = 0.0            ! wc integrated N lost to N2 via anammox
        cobalt%wc_vert_int_jfe_iceberg(i,j) = 0.0      ! wc integrated iron additions from icebergs
@@ -6335,6 +6359,20 @@ contains
           cobalt%wc_vert_int_npp(i,j) = cobalt%wc_vert_int_npp(i,j) + (phyto(SMALL)%jprod_n(i,j,k) + &
               phyto(MEDIUM)%jprod_n(i,j,k) + phyto(LARGE)%jprod_n(i,j,k) + phyto(DIAZO)%jprod_n(i,j,k))* &
               rho_dzt(i,j,k)*grid_tmask(i,j,k)
+          cobalt%wc_vert_int_npp_diat(i,j) = cobalt%wc_vert_int_npp_diat(i,j) + &
+              (phyto(MEDIUM)%jprod_n(i,j,k)*phyto(MEDIUM)%silim(i,j,k) + &
+               phyto(LARGE)%jprod_n(i,j,k)*phyto(LARGE)%silim(i,j,k))*rho_dzt(i,j,k)*grid_tmask(i,j,k)
+          cobalt%wc_vert_int_npp_diaz(i,j) = cobalt%wc_vert_int_npp_diaz(i,j) +  phyto(DIAZO)%jprod_n(i,j,k) * &
+               rho_dzt(i,j,k)*grid_tmask(i,j,k)
+          cobalt%wc_vert_int_npp_misc(i,j) = cobalt%wc_vert_int_npp_misc(i,j) + &
+              (phyto(MEDIUM)%jprod_n(i,j,k)*(1.0 - phyto(MEDIUM)%silim(i,j,k)) + &
+               phyto(LARGE)%jprod_n(i,j,k)*(1.0 - phyto(LARGE)%silim(i,j,k)))*rho_dzt(i,j,k)*grid_tmask(i,j,k)
+          cobalt%wc_vert_int_npp_pico(i,j) = cobalt%wc_vert_int_npp_pico(i,j) +  phyto(SMALL)%jprod_n(i,j,k) * &
+               rho_dzt(i,j,k)*grid_tmask(i,j,k)
+          cobalt%wc_vert_int_npp_nano(i,j) = cobalt%wc_vert_int_npp_nano(i,j) +  phyto(MEDIUM)%jprod_n(i,j,k) * &
+               rho_dzt(i,j,k)*grid_tmask(i,j,k)
+          cobalt%wc_vert_int_npp_micro(i,j) = cobalt%wc_vert_int_npp_micro(i,j) +  (phyto(LARGE)%jprod_n(i,j,k) + &
+               phyto(DIAZO)%jprod_n(i,j,k))*rho_dzt(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_jdiss_sidet(i,j) = cobalt%wc_vert_int_jdiss_sidet(i,j) + &
              cobalt%jdiss_sidet(i,j,k) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_jdiss_cadet(i,j) = cobalt%wc_vert_int_jdiss_cadet(i,j) + &
@@ -6343,6 +6381,11 @@ contains
              cobalt%jo2resp_wc(i,j,k) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_jprod_cadet(i,j) = cobalt%wc_vert_int_jprod_cadet(i,j) + &
              (cobalt%jprod_cadet_calc(i,j,k)+cobalt%jprod_cadet_arag(i,j,k))*rho_dzt(i,j,k)*grid_tmask(i,j,k)
+          ! separate out calciate and aragonite production for CMIP7 diagnostics
+          cobalt%wc_vert_int_jprod_cadet_arag(i,j) = cobalt%wc_vert_int_jprod_cadet_arag(i,j) + &
+             cobalt%jprod_cadet_arag(i,j,k)*rho_dzt(i,j,k)*grid_tmask(i,j,k)
+          cobalt%wc_vert_int_jprod_cadet_calc(i,j) = cobalt%wc_vert_int_jprod_cadet_calc(i,j) + &
+             cobalt%jprod_cadet_calc(i,j,k)*rho_dzt(i,j,k)*grid_tmask(i,j,k)
           cobalt%wc_vert_int_jno3denit(i,j) = cobalt%wc_vert_int_jno3denit(i,j) + &
              cobalt%jno3denit_wc(i,j,k) * rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_jprod_no3nitrif(i,j) = cobalt%wc_vert_int_jprod_no3nitrif(i,j) + &
@@ -6355,6 +6398,14 @@ contains
           cobalt%wc_vert_int_juptake_no3(i,j) = cobalt%wc_vert_int_juptake_no3(i,j) + &
              (phyto(SMALL)%juptake_no3(i,j,k) + phyto(MEDIUM)%juptake_no3(i,j,k) + phyto(LARGE)%juptake_no3(i,j,k) + &
               phyto(DIAZO)%juptake_no3(i,j,k))*rho_dzt(i,j,k) * grid_tmask(i,j,k)
+          cobalt%wc_vert_int_juptake_po4(i,j) = cobalt%wc_vert_int_juptake_po4(i,j) + &
+             (phyto(SMALL)%juptake_po4(i,j,k) + phyto(MEDIUM)%juptake_po4(i,j,k) + phyto(LARGE)%juptake_po4(i,j,k) + &
+              phyto(DIAZO)%juptake_po4(i,j,k))*rho_dzt(i,j,k) * grid_tmask(i,j,k)
+          cobalt%wc_vert_int_juptake_fe(i,j) = cobalt%wc_vert_int_juptake_fe(i,j) + &
+             (phyto(SMALL)%juptake_fe(i,j,k) + phyto(MEDIUM)%juptake_fe(i,j,k) + phyto(LARGE)%juptake_fe(i,j,k) + &
+              phyto(DIAZO)%juptake_fe(i,j,k))*rho_dzt(i,j,k) * grid_tmask(i,j,k)
+          cobalt%wc_vert_int_juptake_si(i,j) = cobalt%wc_vert_int_juptake_si(i,j) + &
+             (phyto(MEDIUM)%juptake_sio4(i,j,k) + phyto(LARGE)%juptake_sio4(i,j,k))*rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_nfix(i,j) = cobalt%wc_vert_int_nfix(i,j) + phyto(DIAZO)%juptake_n2(i,j,k) * &
              rho_dzt(i,j,k) * grid_tmask(i,j,k)
           cobalt%wc_vert_int_jnamx(i,j)=cobalt%wc_vert_int_jnamx(i,j)+cobalt%jnamx(i,j,k)* &
@@ -6467,12 +6518,16 @@ contains
        phyto(DIAZO)%jprod_n_n2_100(i,j) = phyto(DIAZO)%juptake_n2(i,j,1) * rho_dzt(i,j,1)
        cobalt%jprod_diat_100(i,j) = (phyto(LARGE)%jprod_n(i,j,1)*phyto(LARGE)%silim(i,j,1) + &
                              phyto(MEDIUM)%jprod_n(i,j,1)*phyto(MEDIUM)%silim(i,j,1)) *rho_dzt(i,j,1)
-       ! May need to add these to update the biomass-weighted limitation terms for COBALTv3
-       !cobalt%nmd_diat_100(i,j) =
-       !cobalt%nlg_diat_100(i,j) =
-       !cobalt%nmd_misc_100(i,j) =
-       !cobalt%nlg_misc_100(i,j) =
        phyto(LARGE)%juptake_sio4_100(i,j) = phyto(LARGE)%juptake_sio4(i,j,1) * rho_dzt(i,j,1)
+       phyto(MEDIUM)%juptake_sio4_100(i,j) = phyto(MEDIUM)%juptake_sio4(i,j,1) * rho_dzt(i,j,1)
+
+       ! Biomass diagnostics are calculated after the tri-diagonal solver, but we need an estimate
+       ! of these now as well to calculate the biomass-weighted nutrient limitation terms for CMIP
+       phyto(DIAZO)%f_n_100(i,j) = cobalt%p_ndi(i,j,1,tau) * rho_dzt(i,j,1)
+       phyto(LARGE)%f_n_100(i,j) = cobalt%p_nlg(i,j,1,tau) * rho_dzt(i,j,1)
+       phyto(MEDIUM)%f_n_100(i,j) = cobalt%p_nmd(i,j,1,tau) * rho_dzt(i,j,1)
+       phyto(SMALL)%f_n_100(i,j) = cobalt%p_nsm(i,j,1,tau) * rho_dzt(i,j,1)
+
        do n = 1, NUM_ZOO  !{
           zoo(n)%jprod_n_100(i,j) = zoo(n)%jprod_n(i,j,1) * rho_dzt(i,j,1)
           zoo(n)%jingest_n_100(i,j) = zoo(n)%jingest_n(i,j,1) * rho_dzt(i,j,1)
@@ -6549,6 +6604,13 @@ contains
                  phyto(LARGE)%juptake_sio4(i,j,k)*rho_dzt(i,j,k)
              phyto(MEDIUM)%juptake_sio4_100(i,j) = phyto(MEDIUM)%juptake_sio4_100(i,j) + &
                  phyto(MEDIUM)%juptake_sio4(i,j,k)*rho_dzt(i,j,k)
+
+             ! Biomass diagnostics are calculated after the tri-diagonal solver, but we need an estimate
+             ! of these now as well to calculate the biomass-weighted nutrient limitation terms for CMIP
+             phyto(DIAZO)%f_n_100(i,j) = phyto(DIAZO)%f_n_100(i,j) + cobalt%p_ndi(i,j,k,tau) * rho_dzt(i,j,k)
+             phyto(LARGE)%f_n_100(i,j) = phyto(LARGE)%f_n_100(i,j) + cobalt%p_nlg(i,j,k,tau) * rho_dzt(i,j,k)
+             phyto(MEDIUM)%f_n_100(i,j) = phyto(MEDIUM)%f_n_100(i,j) + cobalt%p_nmd(i,j,k,tau) * rho_dzt(i,j,k)
+             phyto(SMALL)%f_n_100(i,j) = phyto(SMALL)%f_n_100(i,j) + cobalt%p_nsm(i,j,k,tau) * rho_dzt(i,j,k)
 
              do n = 1, NUM_ZOO !{
                 zoo(n)%jprod_n_100(i,j) = zoo(n)%jprod_n_100(i,j) + zoo(n)%jprod_n(i,j,k)* &
@@ -6632,6 +6694,13 @@ contains
            phyto(MEDIUM)%juptake_sio4_100(i,j) = phyto(MEDIUM)%juptake_sio4_100(i,j) + &
                phyto(MEDIUM)%juptake_sio4(i,j,k_100)*drho_dzt
 
+           ! Biomass diagnostics are calculated after the tri-diagonal solver, but we need an estimate
+           ! of these now as well to calculate the biomass-weighted nutrient limitation terms for CMIP
+           phyto(DIAZO)%f_n_100(i,j) = phyto(DIAZO)%f_n_100(i,j) + cobalt%p_ndi(i,j,k_100,tau) * drho_dzt
+           phyto(LARGE)%f_n_100(i,j) = phyto(LARGE)%f_n_100(i,j) + cobalt%p_nlg(i,j,k_100,tau) * drho_dzt
+           phyto(MEDIUM)%f_n_100(i,j) = phyto(MEDIUM)%f_n_100(i,j) + cobalt%p_nmd(i,j,k_100,tau) * drho_dzt
+           phyto(SMALL)%f_n_100(i,j) = phyto(SMALL)%f_n_100(i,j) + cobalt%p_nsm(i,j,k_100,tau) * drho_dzt
+
            do n = 1, NUM_ZOO !{
                zoo(n)%jprod_n_100(i,j) = zoo(n)%jprod_n_100(i,j) + zoo(n)%jprod_n(i,j,k_100)* &
                  drho_dzt
@@ -6709,6 +6778,10 @@ contains
           phyto(n)%irrlim_bw_100(i,j) = phyto(n)%irrlim(i,j,1)* &
                 phyto(n)%f_n(i,j,1)*rho_dzt(i,j,1)/(phyto(n)%f_n_100(i,j)+epsln)
        enddo   !} n
+       phyto(MEDIUM)%silim_bw_100(i,j) = phyto(MEDIUM)%silim(i,j,1)* &
+             phyto(MEDIUM)%f_n(i,j,1)*rho_dzt(i,j,1)/(phyto(MEDIUM)%f_n_100(i,j)+epsln)
+       phyto(LARGE)%silim_bw_100(i,j) = phyto(LARGE)%silim(i,j,1)* &
+             phyto(LARGE)%f_n(i,j,1)*rho_dzt(i,j,1)/(phyto(LARGE)%f_n_100(i,j)+epsln)
     enddo; enddo  !} i, j
 
     do j = jsc, jec ; do i = isc, iec ; !{
@@ -6729,6 +6802,10 @@ contains
                 phyto(n)%irrlim_bw_100(i,j) = phyto(n)%irrlim_bw_100(i,j) + phyto(n)%irrlim(i,j,k)* &
                    phyto(n)%f_n(i,j,k)*rho_dzt(i,j,k)/(phyto(n)%f_n_100(i,j)+epsln)
              enddo
+             phyto(MEDIUM)%silim_bw_100(i,j) = phyto(MEDIUM)%silim_bw_100(i,j) + phyto(MEDIUM)%silim(i,j,k)* &
+                   phyto(MEDIUM)%f_n(i,j,k)*rho_dzt(i,j,k)/(phyto(MEDIUM)%f_n_100(i,j)+epsln)
+             phyto(LARGE)%silim_bw_100(i,j) = phyto(LARGE)%silim_bw_100(i,j) + phyto(LARGE)%silim(i,j,k)* &
+                   phyto(LARGE)%f_n(i,j,k)*rho_dzt(i,j,k)/(phyto(LARGE)%f_n_100(i,j)+epsln)
           endif
        enddo  !} k
 
@@ -6746,6 +6823,10 @@ contains
              phyto(n)%irrlim_bw_100(i,j) = phyto(n)%irrlim_bw_100(i,j) + phyto(n)%irrlim(i,j,k_100)* &
                 phyto(n)%f_n(i,j,k_100)*drho_dzt/(phyto(n)%f_n_100(i,j)+epsln)
           enddo
+          phyto(MEDIUM)%silim_bw_100(i,j) = phyto(MEDIUM)%silim_bw_100(i,j) + phyto(MEDIUM)%silim(i,j,k_100)* &
+                phyto(MEDIUM)%f_n(i,j,k_100)*drho_dzt/(phyto(MEDIUM)%f_n_100(i,j)+epsln)
+          phyto(LARGE)%silim_bw_100(i,j) = phyto(LARGE)%silim_bw_100(i,j) + phyto(LARGE)%silim(i,j,k_100)* &
+                phyto(LARGE)%f_n(i,j,k_100)*drho_dzt/(phyto(LARGE)%f_n_100(i,j)+epsln)
         endif
     enddo; enddo  !} i, j
     deallocate(rho_dzt_100)
@@ -6845,7 +6926,6 @@ contains
     call g_tracer_get_values(tracer_list,'ldop','runoff_tracer_flux',cobalt%runoff_flux_ldop,isd,jsd)
     call g_tracer_get_values(tracer_list,'sldop','runoff_tracer_flux',cobalt%runoff_flux_sldop,isd,jsd)
     call g_tracer_get_values(tracer_list,'srdop','runoff_tracer_flux',cobalt%runoff_flux_srdop,isd,jsd)
-! JGJ: Added for CMIP6
     call g_tracer_get_values(tracer_list,'dic','stf_gas',cobalt%stf_gas_dic,isd,jsd)
     call g_tracer_get_values(tracer_list,'o2','stf_gas',cobalt%stf_gas_o2,isd,jsd)
     call g_tracer_get_values(tracer_list,'dic','deltap',cobalt%deltap_dic,isd,jsd)
@@ -7260,6 +7340,8 @@ contains
 
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau)
 
+    call generic_bld_alloc(cobalt%bld, isc, iec, jsc, jec, cobalt%Rho_0, cobalt%bottom_thickness)
+
     !Allocate all the private arrays.
 
     !Used in FMS_co2calc
@@ -7300,7 +7382,7 @@ contains
        allocate(phyto(n)%jmortloss_fe(isd:ied,jsd:jed,nk))  ; phyto(n)%jmortloss_fe    = 0.0
        allocate(phyto(n)%jmortloss_n(isd:ied,jsd:jed,nk))   ; phyto(n)%jmortloss_n     = 0.0
        allocate(phyto(n)%jmortloss_p(isd:ied,jsd:jed,nk))   ; phyto(n)%jmortloss_p     = 0.0
-       allocate(phyto(n)%jmortloss_sio2(isd:ied,jsd:jed,nk)); phyto(n)%jmortloss_sio2  = 0.0
+       allocate(phyto(n)%jdissloss_si(isd:ied,jsd:jed,nk)) ; phyto(n)%jdissloss_si  = 0.0
        allocate(phyto(n)%jexuloss_fe(isd:ied,jsd:jed,nk))  ; phyto(n)%jexuloss_fe    = 0.0
        allocate(phyto(n)%jexuloss_n(isd:ied,jsd:jed,nk))   ; phyto(n)%jexuloss_n     = 0.0
        allocate(phyto(n)%jexuloss_p(isd:ied,jsd:jed,nk))   ; phyto(n)%jexuloss_p     = 0.0
@@ -7358,6 +7440,7 @@ contains
     allocate(bact(1)%o2lim(isd:ied,jsd:jed,nk))            ; bact(1)%o2lim           = 0.0
     allocate(bact(1)%ldonlim(isd:ied,jsd:jed,nk))          ; bact(1)%ldonlim         = 0.0
     allocate(bact(1)%temp_lim(isd:ied,jsd:jed,nk))         ; bact(1)%temp_lim        = 0.0
+    allocate(bact(1)%no3lim(isd:ied,jsd:jed,nk))           ; bact(1)%no3lim          = 0.0
     !
     ! CAS: allocate and initialize array elements for all zooplankton groups
     !
@@ -7425,7 +7508,7 @@ contains
     allocate(cobalt%co3_sol_arag(isd:ied, jsd:jed, 1:nk)) ; cobalt%co3_sol_arag=0.0
     allocate(cobalt%co3_sol_calc(isd:ied, jsd:jed, 1:nk)) ; cobalt%co3_sol_calc=0.0
     allocate(cobalt%f_chl(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_chl=0.0
-    allocate(cobalt%f_nh3(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_nh3=0.0    
+    allocate(cobalt%f_nh3(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_nh3=0.0
     allocate(cobalt%f_co3_ion(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_co3_ion=0.0
     allocate(cobalt%f_htotal(isd:ied, jsd:jed, 1:nk))     ; cobalt%f_htotal=0.0
     allocate(cobalt%f_irr_aclm(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_irr_aclm=0.0
@@ -7469,10 +7552,12 @@ contains
     allocate(cobalt%jnmdz(isd:ied, jsd:jed, 1:nk))        ; cobalt%jnmdz=0.0
     allocate(cobalt%jnlgz(isd:ied, jsd:jed, 1:nk))        ; cobalt%jnlgz=0.0
     allocate(cobalt%jalk(isd:ied, jsd:jed, 1:nk))         ; cobalt%jalk=0.0
+    allocate(cobalt%jalkh(isd:ied, jsd:jed, 1:nk))        ; cobalt%jalkh=0.0
     allocate(cobalt%jalk_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jalk_plus_btm=0.0
     allocate(cobalt%jcadet_arag(isd:ied, jsd:jed, 1:nk))  ; cobalt%jcadet_arag=0.0
     allocate(cobalt%jcadet_calc(isd:ied, jsd:jed, 1:nk))  ; cobalt%jcadet_calc=0.0
     allocate(cobalt%jdic(isd:ied, jsd:jed, 1:nk))         ; cobalt%jdic=0.0
+    allocate(cobalt%jdich(isd:ied, jsd:jed, 1:nk))        ; cobalt%jdich=0.0
     allocate(cobalt%jdic_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jdic_plus_btm=0.0
     allocate(cobalt%jdin_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jdin_plus_btm=0.0
     allocate(cobalt%jfed(isd:ied, jsd:jed, 1:nk))         ; cobalt%jfed=0.0
@@ -7487,16 +7572,21 @@ contains
     allocate(cobalt%jlith(isd:ied, jsd:jed, 1:nk))        ; cobalt%jlith=0.0
     allocate(cobalt%jlithdet(isd:ied, jsd:jed, 1:nk))     ; cobalt%jlithdet=0.0
     allocate(cobalt%jndet(isd:ied, jsd:jed, 1:nk))        ; cobalt%jndet=0.0
+    allocate(cobalt%jndeth(isd:ied, jsd:jed, 1:nk))       ; cobalt%jndeth=0.0
     allocate(cobalt%jndet_fast(isd:ied, jsd:jed, 1:nk))   ; cobalt%jndet_fast=0.0
     allocate(cobalt%jnh4(isd:ied, jsd:jed, 1:nk))         ; cobalt%jnh4=0.0
+    allocate(cobalt%jnh4h(isd:ied, jsd:jed, 1:nk))        ; cobalt%jnh4h=0.0
     allocate(cobalt%jnh4_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jnh4_plus_btm=0.0
     allocate(cobalt%jno3(isd:ied, jsd:jed, 1:nk))         ; cobalt%jno3=0.0
+    allocate(cobalt%jno3h(isd:ied, jsd:jed, 1:nk))        ; cobalt%jno3h=0.0
     allocate(cobalt%jno3_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jno3_plus_btm=0.0
     allocate(cobalt%jo2(isd:ied, jsd:jed, 1:nk))          ; cobalt%jo2=0.0
+    allocate(cobalt%jo2h(isd:ied, jsd:jed, 1:nk))         ; cobalt%jo2h=0.0
     allocate(cobalt%jo2_plus_btm(isd:ied, jsd:jed, 1:nk)) ; cobalt%jo2_plus_btm=0.0
     allocate(cobalt%jpdet(isd:ied, jsd:jed, 1:nk))        ; cobalt%jpdet=0.0
     allocate(cobalt%jpdet_fast(isd:ied, jsd:jed, 1:nk))   ; cobalt%jpdet_fast=0.0
     allocate(cobalt%jpo4(isd:ied, jsd:jed, 1:nk))         ; cobalt%jpo4=0.0
+    allocate(cobalt%jpo4h(isd:ied, jsd:jed, 1:nk))        ; cobalt%jpo4h=0.0
     allocate(cobalt%jpo4_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jpo4_plus_btm=0.0
     allocate(cobalt%jsrdon(isd:ied, jsd:jed, 1:nk))       ; cobalt%jsrdon=0.0
     allocate(cobalt%jsrdop(isd:ied, jsd:jed, 1:nk))       ; cobalt%jsrdop=0.0
@@ -7506,6 +7596,7 @@ contains
     allocate(cobalt%jsilg(isd:ied, jsd:jed, 1:nk))        ; cobalt%jsilg=0.0
     allocate(cobalt%jsimd(isd:ied, jsd:jed, 1:nk))        ; cobalt%jsimd=0.0
     allocate(cobalt%jsio4(isd:ied, jsd:jed, 1:nk))        ; cobalt%jsio4=0.0
+    allocate(cobalt%jsio4h(isd:ied, jsd:jed, 1:nk))        ; cobalt%jsio4h=0.0
     allocate(cobalt%jsio4_plus_btm(isd:ied, jsd:jed, 1:nk)); cobalt%jsio4_plus_btm=0.0
     allocate(cobalt%jprod_fed(isd:ied, jsd:jed, 1:nk))    ; cobalt%jprod_fed=0.0
     allocate(cobalt%jprod_fedet(isd:ied, jsd:jed, 1:nk))  ; cobalt%jprod_fedet=0.0
@@ -7621,7 +7712,6 @@ contains
     allocate(cobalt%cased_redis_delz(isd:ied, jsd:jed))   ; cobalt%cased_redis_delz=0.0
     allocate(cobalt%ffe_sed(isd:ied, jsd:jed))            ; cobalt%ffe_sed=0.0
     allocate(cobalt%ffe_geotherm(isd:ied, jsd:jed))       ; cobalt%ffe_geotherm=0.0
-    allocate(cobalt%ffe_iceberg(isd:ied, jsd:jed))        ; cobalt%ffe_iceberg=0.0
     allocate(cobalt%fnso4red_sed(isd:ied, jsd:jed))       ; cobalt%fnso4red_sed=0.0
     allocate(cobalt%fno3denit_sed(isd:ied, jsd:jed))      ; cobalt%fno3denit_sed=0.0
     allocate(cobalt%fnoxic_sed(isd:ied, jsd:jed))         ; cobalt%fnoxic_sed=0.0
@@ -7659,17 +7749,28 @@ contains
     allocate(cobalt%wc_vert_int_si(isd:ied, jsd:jed))         ; cobalt%wc_vert_int_si=0.0
     allocate(cobalt%wc_vert_int_o2(isd:ied, jsd:jed))         ; cobalt%wc_vert_int_o2=0.0
     allocate(cobalt%wc_vert_int_alk(isd:ied, jsd:jed))        ; cobalt%wc_vert_int_alk=0.0
-    allocate(cobalt%wc_vert_int_npp(isd:ied, jsd:jed))     ; cobalt%wc_vert_int_npp=0.0
+    allocate(cobalt%wc_vert_int_npp(isd:ied, jsd:jed))        ; cobalt%wc_vert_int_npp=0.0
+    allocate(cobalt%wc_vert_int_npp_diat(isd:ied, jsd:jed))   ; cobalt%wc_vert_int_npp_diat=0.0
+    allocate(cobalt%wc_vert_int_npp_diaz(isd:ied, jsd:jed))   ; cobalt%wc_vert_int_npp_diaz=0.0
+    allocate(cobalt%wc_vert_int_npp_misc(isd:ied, jsd:jed))   ; cobalt%wc_vert_int_npp_misc=0.0
+    allocate(cobalt%wc_vert_int_npp_pico(isd:ied, jsd:jed))   ; cobalt%wc_vert_int_npp_pico=0.0
+    allocate(cobalt%wc_vert_int_npp_nano(isd:ied, jsd:jed))   ; cobalt%wc_vert_int_npp_nano=0.0
+    allocate(cobalt%wc_vert_int_npp_micro(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_npp_micro=0.0
     allocate(cobalt%wc_vert_int_jdiss_sidet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jdiss_sidet=0.0
     allocate(cobalt%wc_vert_int_jdiss_cadet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jdiss_cadet=0.0
     allocate(cobalt%wc_vert_int_jo2resp(isd:ied, jsd:jed))      ; cobalt%wc_vert_int_jo2resp=0.0
     allocate(cobalt%wc_vert_int_jprod_cadet(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jprod_cadet=0.0
+    allocate(cobalt%wc_vert_int_jprod_cadet_arag(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jprod_cadet_arag=0.0
+    allocate(cobalt%wc_vert_int_jprod_cadet_calc(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jprod_cadet_calc=0.0
     allocate(cobalt%wc_vert_int_jno3denit(isd:ied, jsd:jed))    ; cobalt%wc_vert_int_jno3denit=0.0
     allocate(cobalt%wc_vert_int_jprod_no3nitrif(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_jprod_no3nitrif=0.0
     allocate(cobalt%wc_vert_int_jnamx(isd:ied, jsd:jed)) ; cobalt%wc_vert_int_jnamx=0.0
     allocate(cobalt%wc_vert_int_juptake_nh4(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_juptake_nh4=0.0
     allocate(cobalt%wc_vert_int_jprod_nh4(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jprod_nh4=0.0
     allocate(cobalt%wc_vert_int_juptake_no3(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_juptake_no3=0.0
+    allocate(cobalt%wc_vert_int_juptake_po4(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_juptake_po4=0.0
+    allocate(cobalt%wc_vert_int_juptake_fe(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_juptake_fe=0.0
+    allocate(cobalt%wc_vert_int_juptake_si(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_juptake_si=0.0
     allocate(cobalt%wc_vert_int_nfix(isd:ied, jsd:jed))         ; cobalt%wc_vert_int_nfix=0.0
     allocate(cobalt%wc_vert_int_jfe_iceberg(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jfe_iceberg=0.0
     allocate(cobalt%wc_vert_int_jno3_iceberg(isd:ied, jsd:jed))  ; cobalt%wc_vert_int_jno3_iceberg=0.0
@@ -7694,6 +7795,7 @@ contains
        allocate(phyto(n)%plim_bw_100(isd:ied,jsd:jed)) ; phyto(n)%plim_bw_100 = 0.0
        allocate(phyto(n)%irrlim_bw_100(isd:ied,jsd:jed)) ; phyto(n)%irrlim_bw_100 = 0.0
        allocate(phyto(n)%def_fe_bw_100(isd:ied,jsd:jed)) ; phyto(n)%def_fe_bw_100 = 0.0
+       allocate(phyto(n)%silim_bw_100(isd:ied,jsd:jed)) ; phyto(n)%silim_bw_100 = 0.0
        ! sinking fluxes
        allocate(phyto(n)%fn_btm(isd:ied,jsd:jed)) ; phyto(n)%fn_btm = 0.0
        allocate(phyto(n)%fp_btm(isd:ied,jsd:jed)) ; phyto(n)%fp_btm = 0.0
@@ -7858,6 +7960,7 @@ contains
   subroutine user_deallocate_arrays
     integer n
 
+    call generic_bld_dealloc(cobalt%bld)
     deallocate(cobalt%htotalhi,cobalt%htotallo)
 
     do n = 1, NUM_PHYTO
@@ -7885,7 +7988,7 @@ contains
        deallocate(phyto(n)%jmortloss_n)
        deallocate(phyto(n)%jmortloss_p)
        deallocate(phyto(n)%jmortloss_fe)
-       deallocate(phyto(n)%jmortloss_sio2)
+       deallocate(phyto(n)%jdissloss_si)
        deallocate(phyto(n)%jexuloss_n)
        deallocate(phyto(n)%jexuloss_p)
        deallocate(phyto(n)%jexuloss_fe)
@@ -7919,6 +8022,7 @@ contains
        deallocate(phyto(n)%nlim_bw_100)
        deallocate(phyto(n)%plim_bw_100)
        deallocate(phyto(n)%irrlim_bw_100)
+       deallocate(phyto(n)%silim_bw_100)
        deallocate(phyto(n)%def_fe_bw_100)
     enddo
     deallocate(phyto(DIAZO)%juptake_n2)
@@ -7946,6 +8050,7 @@ contains
     deallocate(bact(1)%o2lim)
     deallocate(bact(1)%ldonlim)
     deallocate(bact(1)%temp_lim)
+    deallocate(bact(1)%no3lim)
 
     ! zooplankton
     do n = 1, NUM_ZOO
@@ -8049,10 +8154,12 @@ contains
     deallocate(cobalt%jnmdz)
     deallocate(cobalt%jnlgz)
     deallocate(cobalt%jalk)
+    deallocate(cobalt%jalkh)
     deallocate(cobalt%jalk_plus_btm)
     deallocate(cobalt%jcadet_arag)
     deallocate(cobalt%jcadet_calc)
     deallocate(cobalt%jdic)
+    deallocate(cobalt%jdich)
     deallocate(cobalt%jdic_plus_btm)
     deallocate(cobalt%jdin_plus_btm)
     deallocate(cobalt%jfed)
@@ -8067,16 +8174,21 @@ contains
     deallocate(cobalt%jlith)
     deallocate(cobalt%jlithdet)
     deallocate(cobalt%jndet)
+    deallocate(cobalt%jndeth)
     deallocate(cobalt%jndet_fast)
     deallocate(cobalt%jnh4)
+    deallocate(cobalt%jnh4h)
     deallocate(cobalt%jnh4_plus_btm)
     deallocate(cobalt%jno3)
+    deallocate(cobalt%jno3h)
     deallocate(cobalt%jno3_plus_btm)
     deallocate(cobalt%jo2)
+    deallocate(cobalt%jo2h)
     deallocate(cobalt%jo2_plus_btm)
     deallocate(cobalt%jpdet)
     deallocate(cobalt%jpdet_fast)
     deallocate(cobalt%jpo4)
+    deallocate(cobalt%jpo4h)
     deallocate(cobalt%jpo4_plus_btm)
     deallocate(cobalt%jsrdon)
     deallocate(cobalt%jsrdop)
@@ -8086,6 +8198,7 @@ contains
     deallocate(cobalt%jsilg)
     deallocate(cobalt%jsimd)
     deallocate(cobalt%jsio4)
+    deallocate(cobalt%jsio4h)
     deallocate(cobalt%jsio4_plus_btm)
     deallocate(cobalt%jprod_ndet)
     deallocate(cobalt%jprod_ndet_fast)
@@ -8215,7 +8328,6 @@ contains
     deallocate(cobalt%cased_redis_delz)
     deallocate(cobalt%ffe_sed)
     deallocate(cobalt%ffe_geotherm)
-    deallocate(cobalt%ffe_iceberg)
     deallocate(cobalt%fnso4red_sed)
     deallocate(cobalt%fno3denit_sed)
     deallocate(cobalt%fnoxic_sed)
@@ -8306,16 +8418,27 @@ contains
     deallocate(cobalt%wc_vert_int_o2)
     deallocate(cobalt%wc_vert_int_alk)
     deallocate(cobalt%wc_vert_int_npp)
+    deallocate(cobalt%wc_vert_int_npp_diat)
+    deallocate(cobalt%wc_vert_int_npp_diaz)
+    deallocate(cobalt%wc_vert_int_npp_misc)
+    deallocate(cobalt%wc_vert_int_npp_pico)
+    deallocate(cobalt%wc_vert_int_npp_nano)
+    deallocate(cobalt%wc_vert_int_npp_micro)
     deallocate(cobalt%wc_vert_int_jdiss_sidet)
     deallocate(cobalt%wc_vert_int_jdiss_cadet)
     deallocate(cobalt%wc_vert_int_jo2resp)
     deallocate(cobalt%wc_vert_int_jprod_cadet)
+    deallocate(cobalt%wc_vert_int_jprod_cadet_arag)
+    deallocate(cobalt%wc_vert_int_jprod_cadet_calc)
     deallocate(cobalt%wc_vert_int_jno3denit)
     deallocate(cobalt%wc_vert_int_jprod_no3nitrif)
     deallocate(cobalt%wc_vert_int_jnamx)
     deallocate(cobalt%wc_vert_int_juptake_nh4)
     deallocate(cobalt%wc_vert_int_jprod_nh4)
     deallocate(cobalt%wc_vert_int_juptake_no3)
+    deallocate(cobalt%wc_vert_int_juptake_po4)
+    deallocate(cobalt%wc_vert_int_juptake_fe)
+    deallocate(cobalt%wc_vert_int_juptake_si)
     deallocate(cobalt%wc_vert_int_nfix)
     deallocate(cobalt%wc_vert_int_jfe_iceberg)
     deallocate(cobalt%wc_vert_int_jno3_iceberg)

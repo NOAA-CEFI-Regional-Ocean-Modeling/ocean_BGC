@@ -33,9 +33,8 @@ use MOM_ALE_sponge, only : set_up_ALE_sponge_field, ALE_sponge_CS
 use MOM_ALE_sponge, only : ALE_sponge_CS, initialize_ALE_sponge
 use MOM_coms, only : EFP_type, max_across_PEs, min_across_PEs, PE_here
 use MOM_diagnose_mld,  only : diagnoseMLDbyDensityDifference, diagnoseMLDbyEnergy
-use MOM_diag_mediator, only : post_data, register_diag_field, safe_alloc_ptr
 use MOM_diag_mediator, only : diag_ctrl, get_diag_time_end
-use MOM_error_handler, only : MOM_error, FATAL, WARNING, NOTE, is_root_pe
+use MOM_error_handler, only : MOM_error, FATAL, WARNING, NOTE
 use MOM_file_parser, only : get_param, log_param, log_version, param_file_type
 use MOM_forcing_type, only : forcing, optics_type
 use MOM_grid, only : ocean_grid_type
@@ -47,9 +46,9 @@ use MOM_open_boundary, only : register_obgc_segments, fill_obgc_segments
 use MOM_open_boundary, only : set_obgc_segments_props
 use MOM_restart, only : register_restart_field, query_initialized, set_initialized, MOM_restart_CS
 use MOM_spatial_means, only : global_area_mean, global_mass_int_EFP, array_global_min_max
-use MOM_sponge, only : set_up_sponge_field, sponge_CS
+use MOM_sponge, only : sponge_CS
 use MOM_time_manager, only : time_type, set_time
-use MOM_tracer_diabatic, only : tracer_vertdiff, applyTracerBoundaryFluxesInOut
+use MOM_tracer_diabatic, only : applyTracerBoundaryFluxesInOut
 use MOM_tracer_registry, only : register_tracer, tracer_registry_type
 use MOM_tracer_Z_init, only : tracer_Z_init
 use MOM_tracer_initialization_from_Z, only : MOM_initialize_tracer_from_Z
@@ -460,6 +459,7 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
                    "The density difference for a density difference based photoacclimation MLD [kg m-3].", &
                     units='kg/m3', default=0.03, scale=US%kg_m3_to_R, do_not_log=.not.CS%mld_pha_use_delta_rho)
     elseif (CS%mld_pha_use_delta_eng) then
+      call MOM_error(FATAL, "Photoacclimation MLD using delta energy MLD not supported") 
       call get_param(param_file, "MOM", "PHA_MLD_DENG", CS%mld_pha_deng, &
                    "The energy for an energy difference based photoacclimation MLD.", default=25.0, &
                    units='J/m2',scale=US%W_m2_to_RZ3_T3*US%s_to_T, do_not_log=.not.CS%mld_pha_use_delta_eng)
@@ -731,9 +731,15 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
       call g_tracer_get_pointer(g_tracer,g_tracer_name,'stf',   stf_array)
       call g_tracer_get_pointer(g_tracer,g_tracer_name,'trunoff',trunoff_array)
       call g_tracer_get_pointer(g_tracer,g_tracer_name,'runoff_tracer_flux',runoff_tracer_flux_array)
-      !nnz: Why is fluxes%river = 0?
-      runoff_tracer_flux_array(:,:) = trunoff_array(:,:) * &
-               US%RZ_T_to_kg_m2s*fluxes%lrunoff(:,:)
+      runoff_tracer_flux_array(:,:) = trunoff_array(:,:) * US%RZ_T_to_kg_m2s*fluxes%lrunoff(:,:)
+      !Add to the geological runoff fluxes the contemporary values calculated by land model for tracers that have them.
+      !Currently 'dic' from GIMICS
+      !We put the association check so that we can run models that use an older version of SIS2. 
+      !This associated() check could be removed in future once the new SIS2 becomed default.
+      if(trim(g_tracer_name) == 'dic') then; if(associated(fluxes%carbon_content_lrunoff)) then
+        !*1000./12. converts from KgC/m2/s to MoleC/m2/s
+        runoff_tracer_flux_array(:,:) = runoff_tracer_flux_array(:,:) + fluxes%carbon_content_lrunoff(:,:)*1000./12.
+      endif; endif
       stf_array = stf_array + runoff_tracer_flux_array
       g_tracer%runoff_added_to_stf = .true.
     endif
@@ -774,8 +780,9 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
       call diagnoseMLDbyDensityDifference(-1, h_old, tv, CS%mld_pha_drho, G, GV, US, CS%diag, &
               CS%mld_pha_href, id_ref_z=-1, id_ref_rho=-1, MLD_out=mld_pha)
     elseif (CS%mld_pha_use_delta_eng) then
-      call diagnoseMLDbyEnergy((/-1, -1, -1/), h_old, tv, G, GV, US, (/CS%mld_pha_deng, &
-              CS%mld_pha_deng, CS%mld_pha_deng/), CS%diag, MLD_out=mld_pha)
+      !call diagnoseMLDbyEnergy((/-1, -1, -1/), h_old, tv, G, GV, US, (/CS%mld_pha_deng, &
+      !        CS%mld_pha_deng, CS%mld_pha_deng/), CS%diag, MLD_out=mld_pha)
+      call MOM_error(FATAL, "Photoacclimation MLD using delta energy MLD not supported") 
     endif
   endif
 

@@ -20,6 +20,7 @@ module COBALT_send_diag
 
   use g_tracer_utils, only : g_send_data,g_tracer_get_pointer,g_tracer_set_values
   use g_tracer_utils, only : g_tracer_type, g_tracer_get_common
+  use generic_bottom_layer_diags, only : generic_bld, generic_bld_average
   use FMS_co2calc_mod, only : FMS_co2calc, CO2_dope_vector
 
   implicit none; private
@@ -29,7 +30,7 @@ module COBALT_send_diag
 
   contains
 
-    !> subroutine that handles send_diag calls for COBALT phyto, zoo, and bact      
+    !> subroutine that handles send_diag calls for COBALT phyto, zoo, and bact
     subroutine cobalt_send_diagnostics(tracer_list,model_time,grid_tmask,Temp,Salt,rho_dzt,dzt,&
                                  ilb,jlb,tau,phyto,zoo,bact,cobalt,&
                                  post_vertdiff)
@@ -44,14 +45,14 @@ module COBALT_send_diag
       logical,                                   intent(in), optional :: post_vertdiff
       !> local variables
       integer :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,n,i,j,k
-      logical :: used  
+      logical :: used
       logical :: is_post_vertdiff
       real :: drho_dzt
       real, dimension(:,:,:) ,pointer :: grid_tmask
-      integer, dimension(:,:),pointer :: mask_coast,grid_kmt      
-      integer, dimension(:,:), Allocatable :: k_bot
-      real, dimension(:,:), Allocatable :: rho_dzt_100,rho_dzt_200,rho_dzt_bot    
+      integer, dimension(:,:),pointer :: mask_coast,grid_kmt
+      real, dimension(:,:), Allocatable :: rho_dzt_100,rho_dzt_200
       integer :: k_100,k_200
+      real, dimension(:,:), Allocatable :: field_2d !used to calculate some 2d fields before saving
       real, dimension(:,:,:), Allocatable :: flux_i !used to save fluxes at the interfaces
 
 
@@ -75,7 +76,7 @@ module COBALT_send_diag
       select case (is_post_vertdiff)
         case (.true.)     ! Saving prognostic tracers after update from vertical diffusion and sinking
 
-          ! Get prognostics tracer fields via their pointers 
+          ! Get prognostics tracer fields via their pointers
           call g_tracer_get_pointer(tracer_list,'alk'    ,'field',cobalt%p_alk    )
           call g_tracer_get_pointer(tracer_list,'cadet_arag','field',cobalt%p_cadet_arag)
           call g_tracer_get_pointer(tracer_list,'cadet_calc','field',cobalt%p_cadet_calc)
@@ -294,75 +295,45 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_sfc_co3_sol_calc, cobalt%co3_sol_calc(:,:,1),  &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
-          ! Calculate bottom layer values over a thickness defined by cobalt%bottom_thickness
-          ! rather than the bottom-most layer as in MOM4/5.  This avoids numerical issues
-          ! generated in "vanishing" layers that overlie the benthos in most regions.
-          allocate(rho_dzt_bot(isc:iec,jsc:jec))
-          allocate(k_bot(isc:iec,jsc:jec))
-          do j = jsc, jec ; do i = isc, iec  !{
-            rho_dzt_bot(i,j) = 0.0
-            cobalt%btm_temp(i,j) = 0.0
-            cobalt%btm_o2(i,j) = 0.0
-            cobalt%btm_dic(i,j) = 0.0
-            cobalt%btm_alk(i,j) = 0.0
-            cobalt%btm_htotal(i,j) = 0.0
-            cobalt%btm_co3_sol_arag(i,j) = 0.0
-            cobalt%btm_co3_sol_calc(i,j) = 0.0
-            cobalt%btm_co3_ion(i,j) = 0.0
+          ! Calculate bottom averaged diagnostics.
+          call generic_bld_average(cobalt%bld, cobalt%p_alk(:,:,:,tau), cobalt%btm_alk)
+          call generic_bld_average(cobalt%bld, cobalt%p_dic(:,:,:,tau), cobalt%btm_dic)
+          call generic_bld_average(cobalt%bld, Temp(:,:,:), cobalt%btm_temp)
+          call generic_bld_average(cobalt%bld, cobalt%f_htotal(:,:,:), cobalt%btm_htotal)
+          call generic_bld_average(cobalt%bld, cobalt%co3_sol_arag(:,:,:), cobalt%btm_co3_sol_arag)
+
+          ! Because the averages for btm_co3_ion and btm_co3_sol_calc were already calculated during
+          ! generic_COBALT_update_from_source, we only need to re-average them if the
+          ! carbon system was recalculated above.
+          if (cobalt%recalculate_carbon) then
+            call generic_bld_average(cobalt%bld, cobalt%f_co3_ion, cobalt%btm_co3_ion)
+            call generic_bld_average(cobalt%bld, cobalt%co3_sol_calc, cobalt%btm_co3_sol_calc)
+          endif
+
+          ! btm_o2 and btm_no3 were calculated during the update from source, 
+          ! but we always need to recalculate them here because their fields are changed
+          ! later in that routine.
+          call generic_bld_average(cobalt%bld, cobalt%p_o2(:,:,:,tau), cobalt%btm_o2)
+          call generic_bld_average(cobalt%bld, cobalt%p_no3(:,:,:,tau), cobalt%btm_no3)
+
+          do j = jsc, jec ; do i = isc, iec
             cobalt%btm_omega_calc(i,j) = 0.0
             cobalt%btm_omega_arag(i,j) = 0.0
-            k_bot(i,j) = 0
             k = grid_kmt(i,j)
-            if (k .gt. 0) then !{
+            if (k .gt. 0) then
               cobalt%grid_kmt_diag(i,j) = float(k)
               cobalt%rho_dzt_kmt_diag(i,j) = rho_dzt(i,j,k)
-              do k = grid_kmt(i,j),1,-1   !{
-                if (rho_dzt_bot(i,j).lt.cobalt%Rho_0*cobalt%bottom_thickness) then
-                  k_bot(i,j) = k
-                  rho_dzt_bot(i,j) = rho_dzt_bot(i,j) + rho_dzt(i,j,k)
-                  cobalt%k_bot_diag(i,j) = grid_kmt(i,j)-float(k)+1.0
-                  cobalt%btm_o2(i,j) = cobalt%btm_o2(i,j) + cobalt%p_o2(i,j,k,tau)*rho_dzt(i,j,k)
-                  cobalt%btm_alk(i,j) = cobalt%btm_alk(i,j) + cobalt%p_alk(i,j,k,tau)*rho_dzt(i,j,k)
-                  cobalt%btm_dic(i,j) = cobalt%btm_dic(i,j) + cobalt%p_dic(i,j,k,tau)*rho_dzt(i,j,k)
-                  cobalt%btm_temp(i,j) = cobalt%btm_temp(i,j) + Temp(i,j,k)*rho_dzt(i,j,k)
-                  cobalt%btm_htotal(i,j) = cobalt%btm_htotal(i,j) + cobalt%f_htotal(i,j,k)*rho_dzt(i,j,k)
-                  cobalt%btm_co3_sol_arag(i,j) = cobalt%btm_co3_sol_arag(i,j) + &
-                    cobalt%co3_sol_arag(i,j,k)*rho_dzt(i,j,k)
-                  cobalt%btm_co3_sol_calc(i,j) = cobalt%btm_co3_sol_calc(i,j) + &
-                    cobalt%co3_sol_calc(i,j,k)*rho_dzt(i,j,k)
-                  cobalt%btm_co3_ion(i,j) = cobalt%btm_co3_ion(i,j) + cobalt%f_co3_ion(i,j,k)*rho_dzt(i,j,k)
-                endif
-              enddo
               ! diagnostic to assess how far up into the water column info is being drawn from
-              cobalt%rho_dzt_bot_diag(i,j) = rho_dzt_bot(i,j)
-              ! calculate overshoot and subtract off
-              drho_dzt = rho_dzt_bot(i,j) - cobalt%Rho_0*cobalt%bottom_thickness
-              cobalt%btm_temp(i,j)=cobalt%btm_temp(i,j)-Temp(i,j,k_bot(i,j))*drho_dzt
-              cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)-cobalt%p_o2(i,j,k_bot(i,j),tau)*drho_dzt
-              cobalt%btm_alk(i,j)=cobalt%btm_alk(i,j)-cobalt%p_alk(i,j,k_bot(i,j),tau)*drho_dzt
-              cobalt%btm_dic(i,j)=cobalt%btm_dic(i,j)-cobalt%p_dic(i,j,k_bot(i,j),tau)*drho_dzt
-              cobalt%btm_htotal(i,j)=cobalt%btm_htotal(i,j)-cobalt%f_htotal(i,j,k_bot(i,j))*drho_dzt
-              cobalt%btm_co3_sol_arag(i,j)=cobalt%btm_co3_sol_arag(i,j)-cobalt%co3_sol_arag(i,j,k_bot(i,j))*drho_dzt
-              cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)-cobalt%co3_sol_calc(i,j,k_bot(i,j))*drho_dzt
-              cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)-cobalt%f_co3_ion(i,j,k_bot(i,j))*drho_dzt
-              ! convert back to moles kg-1
-              cobalt%btm_temp(i,j)=cobalt%btm_temp(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_o2(i,j)=cobalt%btm_o2(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_alk(i,j)=cobalt%btm_alk(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_dic(i,j)=cobalt%btm_dic(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_htotal(i,j)=cobalt%btm_htotal(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_co3_sol_arag(i,j)=cobalt%btm_co3_sol_arag(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_co3_sol_calc(i,j)=cobalt%btm_co3_sol_calc(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              cobalt%btm_co3_ion(i,j)=cobalt%btm_co3_ion(i,j)/(cobalt%bottom_thickness*cobalt%Rho_0)
-              ! calculate bottom saturation states
+              cobalt%rho_dzt_bot_diag(i,j) = cobalt%bld%rho_dzt_bot(i,j)
+              cobalt%k_bot_diag(i,j) = k - float(cobalt%bld%k_bot(i,j)) + 1.0
+              ! Always recompute omega_calc in case it was changed above
+              ! (when cobalt%recalculate_carbon is .true.)
               cobalt%btm_omega_calc(i,j) = cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
               cobalt%btm_omega_arag(i,j) = cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_arag(i,j)
              endif
           enddo; enddo
-          deallocate(rho_dzt_bot)
-          deallocate(k_bot)
 
-          ! CALCULATE BOTTOM PROGNOSTIC TRACERS
+          ! Send bottom diagnostics
           used = g_send_data(cobalt%id_btm_temp, cobalt%btm_temp, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_btm_o2, cobalt%btm_o2, &
@@ -481,7 +452,7 @@ module COBALT_send_diag
           flux_i(:,:,2:nk+1) = cobalt%p_pdet_fast(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink_fast
           used = g_send_data(cobalt%id_fpdet_fast_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
-		  
+
           flux_i(:,:,2:nk+1) = cobalt%p_sidet(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink
           used = g_send_data(cobalt%id_fsidet_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
@@ -513,15 +484,15 @@ module COBALT_send_diag
 
 
           ! The carbon layer integral (organic + inorganic).  Note that this can be calculated with or without a constant
-          ! background level of recalcitrant dissolved organic carbon by setting cobalt%doc_background.  This is included
-          ! at a level of 40 micromoles kg-1 by default.
+          ! background level of recalcitrant dissolved organic carbon by setting cobalt%doc_background. Since CMIP7 requested
+          ! explicit pools only, the default was set to 0 from previous values ~40 micromoles kg-1.
           cobalt%tot_layer_int_c(:,:,:) = (cobalt%p_dic(:,:,:,tau) + cobalt%doc_background + cobalt%p_cadet_arag(:,:,:,tau) +&
             cobalt%p_cadet_calc(:,:,:,tau) + cobalt%c_2_n * (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + &
             cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + cobalt%p_ldon(:,:,:,tau) + &
             cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_ndet_fast(:,:,:,tau) + &
             cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau))) * rho_dzt(:,:,:)
 
-          ! dissolved organic component also includes an optional background doc
+          ! dissolved organic component also includes an optional background doc (0 by default)
           cobalt%tot_layer_int_doc(:,:,:) = (cobalt%c_2_n * (cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) + &
             cobalt%p_srdon(:,:,:,tau)) + cobalt%doc_background) * rho_dzt(:,:,:)
 
@@ -653,7 +624,8 @@ module COBALT_send_diag
               rho_dzt(i,j,1)
             cobalt%f_silg_100(i,j) = cobalt%p_silg(i,j,1,tau)*rho_dzt(i,j,1)
             cobalt%f_simd_100(i,j) = cobalt%p_simd(i,j,1,tau)*rho_dzt(i,j,1)
-            ! sinking fluxes (should we just handle these with by remapping the appropriate 3D variable onto 100m?)
+            ! sinking fluxes (should handle these with by remapping the appropriate 3D variable onto 100m)
+            ! need to add fast sinking detritus
             cobalt%fndet_100(i,j) = cobalt%p_ndet(i,j,1,tau) * cobalt%Rho_0 * cobalt%wsink
             cobalt%fndet_fast_100(i,j) = cobalt%p_ndet_fast(i,j,1,tau) * cobalt%Rho_0 * cobalt%wsink_fast
             cobalt%fpdet_100(i,j) = cobalt%p_pdet(i,j,1,tau) * cobalt%Rho_0 * cobalt%wsink
@@ -916,9 +888,10 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_detoc, (cobalt%p_ndet(:,:,:,tau) + cobalt%p_ndet_fast(:,:,:,tau)) * cobalt%c_2_n * cobalt%Rho_0, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-          ! Includes on calcite and aragonite detritus, not comparable to total calcite/aragonite st surface
+          ! Includes only calcite detritus, so concentration will be small relative to total particulate calcite
           used = g_send_data(cobalt%id_calc,  cobalt%p_cadet_calc(:,:,:,tau) * cobalt%Rho_0, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          ! Includes only aragonite detritus, so concentration will be small relative to total particulate aragonite
           used = g_send_data(cobalt%id_arag,  cobalt%p_cadet_arag(:,:,:,tau) * cobalt%Rho_0, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_phydiat, (cobalt%nlg_diatoms+cobalt%nmd_diatoms)*cobalt%c_2_n*cobalt%Rho_0, &
@@ -963,6 +936,7 @@ module COBALT_send_diag
           ! Chlorophyll: CMIP asks for in kg Chl m-3
           used = g_send_data(cobalt%id_chl_cmip, cobalt%f_chl * cobalt%Rho_0 / 1.0e9, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          ! Chlorophyll for other phytoplankton groups derived from biomass and Chl:C ratios
           used = g_send_data(cobalt%id_chldiat, (phyto(LARGE)%theta * cobalt%nlg_diatoms + &
             phyto(MEDIUM)%theta * cobalt%nmd_diatoms) * cobalt%c_2_n * cobalt%Rho_0 * 12.0e-3, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1048,9 +1022,9 @@ module COBALT_send_diag
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_expp_tp, (cobalt%p_pdet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_pdet_fast(:,:,:,tau)*cobalt%wsink_fast + &
-            cobalt%p_psm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + & 
-            cobalt%p_plg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_pdi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * & 
-            cobalt%Rho_0*grid_tmask(:,:,:), model_time, rmask = grid_tmask, & 
+            cobalt%p_psm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
+            cobalt%p_plg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_pdi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
+            cobalt%Rho_0*grid_tmask(:,:,:), model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_expfe_tp, (cobalt%p_fedet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_fesm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_femd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
@@ -1079,6 +1053,11 @@ module COBALT_send_diag
             cobalt%c_2_n*cobalt%Rho_0*grid_tmask(:,:,:)
           used = g_send_data(cobalt%id_expc_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
+          ! Bottom flux added for CMIP7, grid_tmask for nk corresponds to bottom flux at nk+1
+          used = g_send_data(cobalt%id_expcob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
+            is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+          used = g_send_data(cobalt%id_froc, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
+            is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = (cobalt%p_ndet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_ndet_fast(:,:,:,tau)*cobalt%wsink_fast + &
             cobalt%p_nsm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
@@ -1086,6 +1065,11 @@ module COBALT_send_diag
             cobalt%Rho_0*grid_tmask(:,:,:)
           used = g_send_data(cobalt%id_expn_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
+          used = g_send_data(cobalt%id_expnob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
+            is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+          ! minus_tendency_of_ocean_mole_content_of_elemental_nitrogen_due_to_denitrification_and_sedimentation
+          used = g_send_data(cobalt%id_frn,  flux_i(:,:,nk+1) + cobalt%fno3denit_sed + cobalt%wc_vert_int_jno3denit + &
+            cobalt%wc_vert_int_jnamx, model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = (cobalt%p_pdet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_pdet_fast(:,:,:,tau)*cobalt%wsink_fast + &
             cobalt%p_psm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
@@ -1093,23 +1077,41 @@ module COBALT_send_diag
             cobalt%Rho_0*grid_tmask(:,:,:)
           used = g_send_data(cobalt%id_expp_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
+          used = g_send_data(cobalt%id_exppob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
+            is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = (cobalt%p_fedet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_fesm(:,:,:,tau)*phyto(SMALL)%vmove(:,:,:) + cobalt%p_femd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + &
             cobalt%p_felg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:) + cobalt%p_fedi(:,:,:,tau)*phyto(DIAZO)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:)
           used = g_send_data(cobalt%id_expfe_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
+          used = g_send_data(cobalt%id_expfeob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
+            is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+          ! Iron loss to the sediments; minus_tendency_of_ocean_mole_content_of_iron_due_to_sedimentation
+          ! Interpreting this as the outward rather than net flux because fsfe contains sediment dissolution
+          used = g_send_data(cobalt%id_frfe, flux_i(:,:,nk+1), &
+            model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = (cobalt%p_sidet(:,:,:,tau)*cobalt%wsink + &
-            cobalt%p_femd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + cobalt%p_felg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:)) * &
+            cobalt%p_simd(:,:,:,tau)*phyto(MEDIUM)%vmove(:,:,:) + cobalt%p_silg(:,:,:,tau)*phyto(LARGE)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:)
           used = g_send_data(cobalt%id_expsi_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
+          used = g_send_data(cobalt%id_expsiob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
+            is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = cobalt%p_cadet_calc(:,:,:,tau)*cobalt%Rho_0*cobalt%wsink
           used = g_send_data(cobalt%id_expcalc_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
+          used = g_send_data(cobalt%id_expcalcob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
+            is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = cobalt%p_cadet_arag(:,:,:,tau)*cobalt%Rho_0*cobalt%wsink
           used = g_send_data(cobalt%id_exparag_i, flux_i, model_time, rmask = grid_tmask, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
+          used = g_send_data(cobalt%id_exparagob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
+            is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+          ! minus_tendency_of_ocean_mole_content_of_inorganic_carbon_due_to_sedimentation
+          ! Include calcite and aragonite sinking; icfriver include dissolution from the sediment and other sources
+          used = g_send_data(cobalt%id_fric, (cobalt%p_cadet_arag(:,:,nk,tau) + cobalt%p_cadet_calc(:,:,nk,tau))* &
+            cobalt%Rho_0*cobalt%wsink, model_time, rmask=grid_tmask(:,:,nk), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           deallocate(flux_i)
           !
           ! Surface CMIP variables (extract directly at specified depth from 3D fields?)
@@ -1128,8 +1130,10 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_detocos, (cobalt%p_ndet(:,:,1,tau) + cobalt%p_ndet_fast(:,:,1,tau)) * cobalt%c_2_n * cobalt%Rho_0,  &
             model_time, rmask = grid_tmask(:,:,1),is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          ! Includes only calcite detritus, so concentration will be small relative to total particulate calcite
           used = g_send_data(cobalt%id_calcos, cobalt%p_cadet_calc(:,:,1,tau) * cobalt%Rho_0, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          ! Includes only aragonite detritus, so concentration will be small relative to total particulate aragonite
           used = g_send_data(cobalt%id_aragos, cobalt%p_cadet_arag(:,:,1,tau) * cobalt%Rho_0, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_phydiatos, (cobalt%nlg_diatoms(:,:,1) + cobalt%nmd_diatoms(:,:,1)) * &
@@ -1165,6 +1169,8 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask(:,:,1),is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_sios,  cobalt%p_sio4(:,:,1,tau) * cobalt%Rho_0, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          ! Native units of f_chl are micrograms Chl kg-1 (i.e., ug Chl kg-1); CMIP requests kgChl m-3, so:
+          ! ug kg-1 * kg m-3 / 1.0e9 ug kg-1 = kg Chl m-3
           used = g_send_data(cobalt%id_chlos,  cobalt%f_chl(:,:,1) * cobalt%Rho_0 / 1.0e9, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_chldiatos,  (phyto(LARGE)%theta(:,:,1) * cobalt%nlg_diatoms(:,:,1) + &
@@ -1257,7 +1263,11 @@ module COBALT_send_diag
           !  model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
           !
-          ! 100m sinking flux (should derive 3D field and MOM6 interpolation?)
+          ! 100m sinking flux.  These are legacy diagnostics derived by finding the grid cell containing 100m and
+          ! assigning the sinking flux in this grid cell to 100m.  The bottom flux was also used in waters shallower
+          ! than 100m.  This approach was replaced in CMIP7 and beyond with a vertical interpolation of expc onto
+          ! 100m managed through the diagnostic table.  The old approach will be maintained for some time, but is
+          ! less accurate than the new approach and yields values that will not match those in the 3D expc.
           !
           used = g_send_data(cobalt%id_epc100, cobalt%fntot_100 * cobalt%c_2_n,  &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -1274,7 +1284,7 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_eparag100, cobalt%fcadet_arag_100,   &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           !
-          ! Vertical integrals (kg m-2)
+          ! Vertical integrals (convert from moles m-2 to kg m-2)
           !
           used = g_send_data(cobalt%id_intdic, cobalt%wc_vert_int_dic*12.0e-3,   &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -1356,7 +1366,7 @@ module COBALT_send_diag
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
             used = g_send_data(phyto(n)%id_jvirloss_sio2, phyto(n)%jvirloss_sio2, &
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
-            used = g_send_data(phyto(n)%id_jmortloss_sio2, phyto(n)%jmortloss_sio2, &
+            used = g_send_data(phyto(n)%id_jdissloss_si, phyto(n)%jdissloss_si, &
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
             used = g_send_data(phyto(n)%id_jhploss_sio2, phyto(n)%jhploss_sio2, &
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1445,6 +1455,8 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(bact(1)%id_temp_lim, bact(1)%temp_lim, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+	  used = g_send_data(bact(1)%id_no3lim, bact(1)%no3lim, &
+       	    model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
 
           !
           ! Send zooplankton ingestion, production and limitation diagnostic data
@@ -1659,8 +1671,6 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_ffe_sed, cobalt%ffe_sed, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_ffe_geotherm,  cobalt%ffe_geotherm, &
-            model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_ffe_iceberg,  cobalt%ffe_iceberg, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_fnso4red_sed,cobalt%fnso4red_sed, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
@@ -1925,6 +1935,8 @@ module COBALT_send_diag
           !
           used = g_send_data(cobalt%id_jalk, cobalt%jalk, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          used = g_send_data(cobalt%id_jalkh, cobalt%jalkh, &
+            model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jalk_plus_btm, cobalt%jalk_plus_btm, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jdiss_cadet_arag_plus_btm, cobalt%jdiss_cadet_arag_plus_btm, &
@@ -1933,17 +1945,29 @@ module COBALT_send_diag
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jdic, cobalt%jdic, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          used = g_send_data(cobalt%id_jdich, cobalt%jdich, &
+            model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jno3, cobalt%jno3, &
+            model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          used = g_send_data(cobalt%id_jno3h, cobalt%jno3h, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jpo4, cobalt%jpo4, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          used = g_send_data(cobalt%id_jpo4h, cobalt%jpo4h, &
+            model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jsio4, cobalt%jsio4, &
+            model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          used = g_send_data(cobalt%id_jsio4h, cobalt%jsio4h, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jdic_plus_btm, cobalt%jdic_plus_btm, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jnh4, cobalt%jnh4, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          used = g_send_data(cobalt%id_jnh4h, cobalt%jnh4h, &
+            model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jndet, cobalt%jndet, &
+            model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          used = g_send_data(cobalt%id_jndeth, cobalt%jndeth, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jndet_fast, cobalt%jndet_fast, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
@@ -1952,6 +1976,8 @@ module COBALT_send_diag
           used = g_send_data(cobalt%id_jo2_plus_btm, cobalt%jo2_plus_btm, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_jo2, cobalt%jo2, &
+            model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+          used = g_send_data(cobalt%id_jo2h, cobalt%jo2h, &
             model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
 
           !
@@ -2014,105 +2040,152 @@ module COBALT_send_diag
           !
           ! CMIP 100m biomass-weighted limitation terms
           ! (recommend using surface to avoid aliasing the limitation with information from below the nutricline)
-          ! (***needs to update these for 4P formulation***)
           !
-          used = g_send_data(cobalt%id_limndiat, phyto(LARGE)%nlim_bw_100, &
+          allocate( field_2d(isd:ied,jsd:jed) )
+          ! biomass-weighted diatom nitrogen limitation (contributions from medium and large)
+          field_2d(:,:) = &
+            ( phyto(MEDIUM)%nlim_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%nlim_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
+            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
+          used = g_send_data(cobalt%id_limndiat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           ! Not outputting/serving limndiaz because diazotrophs are not N limited
           ! used = g_send_data(cobalt%id_limndiaz, phyto(DIAZO)%nlim_bw_100, &
           !  model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_limnpico, phyto(SMALL)%nlim_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limnmisc, phyto(LARGE)%nlim_bw_100, &
+          ! biomass-weighted misc nitrogen limitation (contributions from medium and large)
+          field_2d(:,:) = &
+            ( phyto(MEDIUM)%nlim_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%nlim_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
+            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+              (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
+          used = g_send_data(cobalt%id_limnmisc, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limirrdiat, phyto(LARGE)%irrlim_bw_100, &
+
+          ! biomass-weighted diatom irradiance limitation (contributions from medium and large)
+          field_2d(:,:) = &
+            ( phyto(MEDIUM)%irrlim_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%irrlim_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
+            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
+          used = g_send_data(cobalt%id_limirrdiat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_limirrdiaz, phyto(DIAZO)%irrlim_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_limirrpico, phyto(SMALL)%irrlim_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limirrmisc, phyto(LARGE)%irrlim_bw_100, &
+          ! biomass-weighted misc irradiance limitation (contributions from medium and large)
+          field_2d(:,:) = &
+            ( phyto(MEDIUM)%irrlim_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%irrlim_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
+            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+              (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
+          used = g_send_data(cobalt%id_limirrmisc, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limfediat, phyto(LARGE)%def_fe_bw_100, &
+
+          ! biomass-weighted diatom iron limitation (contributions from medium and large)
+          field_2d(:,:) = &
+            ( phyto(MEDIUM)%def_fe_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%def_fe_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
+            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
+          used = g_send_data(cobalt%id_limfediat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_limfediaz, phyto(DIAZO)%def_fe_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_limfepico, phyto(SMALL)%def_fe_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limfemisc, phyto(LARGE)%def_fe_bw_100,  &
+          ! biomass-weighted misc iron limitation (contributions from medium and large)
+          field_2d(:,:) = &
+            ( phyto(MEDIUM)%def_fe_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%def_fe_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
+            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+              (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
+          used = g_send_data(cobalt%id_limfemisc, field_2d,  &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limpdiat, phyto(LARGE)%plim_bw_100, &
+
+          ! biomass-weighted diatom phosphorus limitation (contributions from medium and large)
+          field_2d(:,:) = &
+            ( phyto(MEDIUM)%plim_bw_100(:,:)*phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%plim_bw_100(:,:)*phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) ) / &
+            max(epsln, phyto(MEDIUM)%silim_bw_100(:,:)*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%silim_bw_100(:,:)*phyto(LARGE)%f_n_100(:,:) )
+          used = g_send_data(cobalt%id_limpdiat, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_limpdiaz, phyto(DIAZO)%plim_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_limppico, phyto(SMALL)%plim_bw_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_limpmisc, phyto(LARGE)%plim_bw_100, &
+          ! biomass-weighted misc phosphorus limitation (contributions from medium and large)
+          field_2d(:,:) = &
+            ( phyto(MEDIUM)%plim_bw_100(:,:)*(1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+              phyto(LARGE)%plim_bw_100(:,:)*(1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) ) / &
+            max(epsln, (1.0 - phyto(MEDIUM)%silim_bw_100(:,:))*phyto(MEDIUM)%f_n_100(:,:) + &
+              (1.0 - phyto(LARGE)%silim_bw_100(:,:))*phyto(LARGE)%f_n_100(:,:) )
+          used = g_send_data(cobalt%id_limpmisc, field_2d, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          deallocate(field_2d)
 
-          ! should this be 100m or full water column?
-          used = g_send_data(cobalt%id_intpp,  cobalt%jprod_allphytos_100 * cobalt%c_2_n, &
+          ! Switched to full water column to be consistent with latest CMIP diagnostics and ensure all NPP is captured
+          ! For primary production, included the standard CMIP breakdown by functional type (diatom, diazotroph,
+          ! picophyto and misc) and a breakdown strictly by size classes (pico, nano, micro) for FISH-MIP
+          ! Total = diat + diaz + pico + misc (standard CMIP)
+          ! Total = pico + nano + micro (by size class)
+          used = g_send_data(cobalt%id_intpp,  cobalt%wc_vert_int_npp * cobalt%c_2_n, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intppnitrate,  (phyto(DIAZO)%jprod_n_new_100 +  phyto(LARGE)%jprod_n_new_100 + &
-            phyto(MEDIUM)%jprod_n_new_100 + phyto(SMALL)%jprod_n_new_100) * cobalt%c_2_n, &
+          used = g_send_data(cobalt%id_intppnitrate, cobalt%wc_vert_int_juptake_no3 * cobalt%c_2_n, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intppdiat,  cobalt%jprod_diat_100 * cobalt%c_2_n,  &
+          used = g_send_data(cobalt%id_intppdiat,  cobalt%wc_vert_int_npp_diat * cobalt%c_2_n, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intppdiaz,  phyto(DIAZO)%jprod_n_100 * cobalt%c_2_n, &
+          used = g_send_data(cobalt%id_intppdiaz,  cobalt%wc_vert_int_npp_diaz * cobalt%c_2_n, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intpppico,  phyto(SMALL)%jprod_n_100 * cobalt%c_2_n, &
+          used = g_send_data(cobalt%id_intppmisc,  cobalt%wc_vert_int_npp_misc* cobalt%c_2_n, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intppmisc, (phyto(LARGE)%jprod_n_100 + phyto(MEDIUM)%jprod_n_100 - &
-            cobalt%jprod_diat_100) *cobalt%c_2_n, model_time, rmask = grid_tmask(:,:,1), &
+          used = g_send_data(cobalt%id_intpppico, cobalt%wc_vert_int_npp_pico * cobalt%c_2_n, &
+            model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          used = g_send_data(cobalt%id_intppnano, cobalt%wc_vert_int_npp_nano * cobalt%c_2_n, &
+            model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          used = g_send_data(cobalt%id_intppmicro, cobalt%wc_vert_int_npp_micro * cobalt%c_2_n, &
+            model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          used = g_send_data(cobalt%id_intpbn,  cobalt%wc_vert_int_juptake_nh4 + cobalt%wc_vert_int_juptake_no3 + &
+            cobalt%wc_vert_int_nfix, model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          used = g_send_data(cobalt%id_intpbp,  cobalt%wc_vert_int_juptake_po4, model_time, rmask = grid_tmask(:,:,1), &
             is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intpbn,  cobalt%jprod_allphytos_100, &
-            model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intpbp, (phyto(DIAZO)%juptake_po4_100 +  phyto(LARGE)%juptake_po4_100 +  &
-            phyto(MEDIUM)%juptake_po4_100 + phyto(SMALL)%juptake_po4_100), model_time, rmask = grid_tmask(:,:,1), &
+          used = g_send_data(cobalt%id_intpbfe, cobalt%wc_vert_int_juptake_fe, model_time, rmask = grid_tmask(:,:,1), &
             is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intpbfe,  (phyto(DIAZO)%juptake_fe_100 +  phyto(LARGE)%juptake_fe_100 +  &
-            phyto(MEDIUM)%juptake_fe_100 + phyto(SMALL)%juptake_fe_100), model_time, rmask = grid_tmask(:,:,1), &
+          used = g_send_data(cobalt%id_intpbsi, cobalt%wc_vert_int_juptake_si, model_time, rmask = grid_tmask(:,:,1), &
             is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intpbsi,  phyto(LARGE)%juptake_sio4_100, &
+          ! Note: COBALT only models the production of calcite detritus, so values will be smaller than estimates of total
+          ! calcite production by approximately a factor of 1 over the calcite-specific export ratio.
+          used = g_send_data(cobalt%id_intpcalcite,  cobalt%wc_vert_int_jprod_cadet_calc, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intpcalcite,  cobalt%jprod_cadet_calc_100, &
+          ! Note: COBALT only models the production of aragonite detritus, so values will be smaller than estimates of total
+          ! aragonite production by approximately a factor of 1 over the aragonite-specific export ratio.
+          used = g_send_data(cobalt%id_intparag,  cobalt%wc_vert_int_jprod_cadet_arag, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_intparag,  cobalt%jprod_cadet_arag_100, &
-            model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          ! CAS: Updated on 3/9/2021 to include sediment dissolution based on variable long name, also added
-          !      aragonite flux to the sediment (which is instantaneously redissolved)
+          ! tendency_of_ocean_mole_content_of_inorganic_carbon_due_to_runoff_and_sediment_dissolution
           used = g_send_data(cobalt%id_icfriver,  cobalt%runoff_flux_dic + cobalt%fcased_redis + &
-            cobalt%fcadet_arag_btm,model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          ! CAS: Updated on 3/9/2021 to exclude calcite dissolution but include the aragonite flux to
-          !      the bottom
-          used = g_send_data(cobalt%id_fric,  cobalt%fcadet_calc_btm + cobalt%fcadet_arag_btm,  &
+            cobalt%fcadet_arag_btm + (cobalt%fntot_btm - cobalt%fn_burial)*cobalt%c_2_n, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          ! CAS: variable includes release from sediment, but there is no organic carbon release from
-          !      sediment in COBALT
+          ! tendency_of_ocean_mole_content_of_organic_carbon_due_to_runoff_and_sediment_dissolution
           used = g_send_data(cobalt%id_ocfriver, cobalt%c_2_n* &
             (cobalt%runoff_flux_ldon+cobalt%runoff_flux_sldon+cobalt%runoff_flux_srdon), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          ! CAS: Updated on 3/9/2021 to reflect that the total loss of organic carbon at sediments is
-          !      equal to the total flux, not just the burial
-          used = g_send_data(cobalt%id_froc,cobalt%c_2_n*(cobalt%fndet_btm+cobalt%fndet_fast_btm), &
-            model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_intpn2,  cobalt%wc_vert_int_nfix,  &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          ! CAS: Updated on 3/9/2021 to include nh4 deposition and riverine fluxes of organic nitrogen
+          ! tendency_of_ocean_mole_content_of_elemental_nitrogen_due_to_deposition_and_fixation_and_runoff
+          ! also include sediment dissolution to be consistent with other terms
           used = g_send_data(cobalt%id_fsn,  cobalt%runoff_flux_no3 + cobalt%dry_no3 + cobalt%wet_no3 + &
             cobalt%dry_nh4 + cobalt%wet_nh4 + cobalt%runoff_flux_ldon + cobalt%runoff_flux_sldon + &
-            cobalt%runoff_flux_srdon + cobalt%wc_vert_int_nfix, model_time, rmask = grid_tmask(:,:,1), &
-            is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          ! JYL: Updated on 3/21/2021 to include anammox
-          used = g_send_data(cobalt%id_frn,  cobalt%fno3denit_sed + cobalt%wc_vert_int_jno3denit + &
-            cobalt%wc_vert_int_jnamx + cobalt%fn_burial, model_time, rmask = grid_tmask(:,:,1), &
-            is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          ! CAS: Updated on 3/9/2021 to include ffe_iceberg
-          used = g_send_data(cobalt%id_fsfe,  cobalt%runoff_flux_fed + cobalt%dry_fed + cobalt%wet_fed + &
-            cobalt%ffe_sed+cobalt%ffe_geotherm+cobalt%ffe_iceberg, model_time, rmask = grid_tmask(:,:,1), &
-            is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_frfe,  cobalt%ffedet_btm, &
+            cobalt%runoff_flux_srdon + cobalt%wc_vert_int_nfix + cobalt%fntot_btm - cobalt%fn_burial, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
+          ! Tendency_of_ocean_mole_content_of_iron_due_to_deposition_and_runoff_and_sediment_dissolution
+          ! included iceberg and geothermal sources to get the full budget
+          used = g_send_data(cobalt%id_fsfe,  cobalt%runoff_flux_fed + cobalt%dry_fed + cobalt%wet_fed + &
+            cobalt%ffe_sed+cobalt%ffe_geotherm+cobalt%wc_vert_int_jfe_iceberg, model_time, rmask = grid_tmask(:,:,1), &
+            is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
 ! 2016/08/15 - we will not be providing these fields
 ! CHECK: rate was computed offline for TOPAZ by saving a reference history file, dividing by secs_per_month and differencing monthly averages
@@ -2175,12 +2248,6 @@ module COBALT_send_diag
 !        model_time, rmask = grid_tmask(:,:,1),&
 !        is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
 
-!==============================================================================================================
-! JGJ 2016/08/08 CMIP6 OcnBgchem day: Marine Biogeochemical daily fields
-! chlos and phycos - in Omon and Oday
-!==============================================================================================================
-! 2016/08/15 JGJ: 100m integrals w/o CMOR conversion
-
           used = g_send_data(cobalt%id_jdic_100, cobalt%jdic_100, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_jdin_100, cobalt%jdin_100, &
@@ -2234,7 +2301,7 @@ module COBALT_send_diag
         used = g_send_data(cobalt%id_irr_sfc_dms,  cobalt%irr_sfc_dms,   &
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
-        
+
         used = g_send_data(cobalt%id_chl_dmsp,  cobalt%chl_dmsp,   &
         model_time, rmask = grid_tmask(:,:,1),&
         is_in=isc, js_in=jsc, ie_in=iec, je_in=jec)
