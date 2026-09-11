@@ -59,10 +59,6 @@ module COBALT_send_diag
       call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
            grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt)
 
-
-      call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
-           grid_tmask=grid_tmask,grid_mask_coast=mask_coast,grid_kmt=grid_kmt)
-
       ! Set default value
       is_post_vertdiff = .false.
 
@@ -126,10 +122,6 @@ module COBALT_send_diag
           ! To do: Move nh3 exchange calculations here as well?
           if (cobalt%recalculate_carbon) then
             k=1
-            do j = jsc, jec ; do i = isc, iec  !{
-              cobalt%htotallo(i,j) = cobalt%htotal_scale_lo * cobalt%f_htotal(i,j,k)
-              cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * cobalt%f_htotal(i,j,k)
-            enddo; enddo ; !} i, j
 
             ! Use pointers
             call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
@@ -151,11 +143,6 @@ module COBALT_send_diag
               omega_calc=cobalt%omega_calc(:,:,k))
 
             do k = 2, nk
-              do j = jsc, jec ; do i = isc, iec  !{
-                cobalt%htotallo(i,j) = cobalt%htotal_scale_lo * cobalt%f_htotal(i,j,k)
-                cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * cobalt%f_htotal(i,j,k)
-              enddo; enddo ; !} i, j
-
               call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
                 Temp(:,:,k), Salt(:,:,k), &
                 cobalt%p_dic(:,:,k,tau), &

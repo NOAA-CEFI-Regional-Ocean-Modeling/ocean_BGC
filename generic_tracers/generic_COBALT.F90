@@ -358,8 +358,6 @@ contains
     !User also adds the definition of each parameter in generic_COBALT_params type
     !==============================================================
 
-    integer :: stdoutunit
-
     !=============
     !Block Starts: g_tracer_add_param
     !=============
@@ -368,8 +366,6 @@ contains
     !All the g_tracer_add_param calls must happen between
     !g_tracer_start_param_list and g_tracer_end_param_list  calls.
     !This implementation enables runtime overwrite via COBALT_input or COBALT_override.
-
-    stdoutunit=stdout()
 
     call g_tracer_start_param_list(package_name)
     call get_param(param_file, "generic_COBALT", "init", cobalt%init, "init", default=.false.)
@@ -3042,9 +3038,6 @@ contains
   !   This is the subroutine to contain most of the biogeochemistry for calculating the
   !   interaction of tracers with each other and with outside forcings.
   !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call generic_COBALT_update_from_source(tracer_list,Temp,Salt,dzt,hblt_depth,&
-  !                                         ilb,jlb,tau,dt, grid_dat,sw_pen,opacity)
   !  </TEMPLATE>
   !  <IN NAME="tracer_list" TYPE="type(g_tracer_type), pointer">
   !   Pointer to the head of generic tracer list.
@@ -3084,7 +3077,7 @@ contains
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
   ! If you'd like to pass the thermodynamic variables for a mld calculation
   subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
-       ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff, &
+       ilb,jlb,tau,dt,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff, &
        geolat, photo_acc_dpth)
   !subroutine generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,hblt_depth,&
   !     ilb,jlb,tau,dt,grid_dat,model_time,nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff)
@@ -3095,9 +3088,7 @@ contains
     real, dimension(ilb:,jlb:),     intent(in) :: hblt_depth
     integer,                        intent(in) :: ilb,jlb,tau
     real,                           intent(in) :: dt
-    real, dimension(ilb:,jlb:),     intent(in) :: grid_dat
     type(time_type),                intent(in) :: model_time
-
     integer,                        intent(in) :: nbands
     real, dimension(:),             intent(in) :: max_wavelength_band
     real, dimension(:,ilb:,jlb:),   intent(in) :: sw_pen_band
@@ -3111,7 +3102,7 @@ contains
     real, dimension(ilb:,jlb:), optional, intent(in) :: photo_acc_dpth
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_update_from_source'
-    integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200, kmld_ref
+    integer :: isc,iec, jsc,jec,isd,ied,jsd,jed,nk,ntau, i, j, k , m, n, k_100, k_200
     real, dimension(:,:,:) ,pointer :: grid_tmask
     integer, dimension(:,:),pointer :: mask_coast,grid_kmt
     !
@@ -3130,7 +3121,7 @@ contains
     real :: tmp_irrad_aclm, tmp_zaclm
     real :: drho_dzt
     integer, dimension(:,:), Allocatable :: k_bot, kblt
-    real, dimension(:), Allocatable   :: tmp_irr_band
+    real, dimension(nbands) :: tmp_irr_band
     real, dimension(:,:), Allocatable :: rho_dzt_100,rho_dzt_200,rho_dzt_bot,sfc_irrad
     ! << local variables used for neritic CaCO3 burial
     integer :: k_150
@@ -3147,10 +3138,9 @@ contains
     real :: fpoc_btm, log10_fpoc_btm
     real :: fe_salt
     real :: sal,tt,tkb,ts,ts2,ts3,ts4,ts5
-    real :: rho_mld_ref,rho_k,dK,dKm1,afac,deltaRhoAtK,deltaRhoAtKm1,deltaRhoFlag
     real :: alpha_temp, alpha_step
     real :: P_C_max_temp, P_C_max_step, bresp_temp
-    real :: theta_temp, theta_step, irrlim_temp, P_C_m_aclm, P_C_m
+    real :: theta_temp, irrlim_temp, P_C_m_aclm, P_C_m
     real :: mu_temp, mu_opt
     integer :: yearday
     real :: rev_angle, dec_angle, temp_arg
@@ -3181,9 +3171,6 @@ contains
 
     real :: tr,ltr
     real :: imbal
-    integer :: stdoutunit, imbal_flag, outunit
-    type(g_tracer_type), pointer :: g_tracer,g_tracer_next
-    real :: KD_SMOOTH = 1.0E-05
 
     r_dt = 1.0 / dt
 
@@ -3226,12 +3213,6 @@ contains
     !---------------------------------------------------------------------
 
     k=1
-    do j = jsc, jec ; do i = isc, iec  !{
-       cobalt%htotallo(i,j) = cobalt%htotal_scale_lo * cobalt%f_htotal(i,j,k)
-       cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * cobalt%f_htotal(i,j,k)
-    enddo; enddo ; !} i, j
-
-
     call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
          Temp(:,:,k), Salt(:,:,k),                    &
          cobalt%f_dic(:,:,k),                          &
@@ -3251,11 +3232,6 @@ contains
          omega_calc=cobalt%omega_calc(:,:,k))
 
     do k = 2, nk
-       do j = jsc, jec ; do i = isc, iec  !{
-          cobalt%htotallo(i,j) = cobalt%htotal_scale_lo * cobalt%f_htotal(i,j,k)
-          cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * cobalt%f_htotal(i,j,k)
-       enddo; enddo ; !} i, j
-
        call FMS_co2calc(CO2_dope_vec,grid_tmask(:,:,k),&
             Temp(:,:,k), Salt(:,:,k),                    &
             cobalt%f_dic(:,:,k),                          &
@@ -3309,26 +3285,26 @@ contains
        call g_tracer_set_values(tracer_list,'nh4','csurf',cobalt%nh3_csurf    ,isd,jsd)
     end if
 
-      if (do_14c) then                                        !<<RADIOCARBON
+    if (do_14c) then                                        !<<RADIOCARBON
 
       ! Normally, the alpha would be multiplied by the atmospheric 14C/12C ratio. However,
       ! here that is set to 1, so that alpha_14C = alpha_12C. This needs to be changed!
 
-   call g_tracer_get_values(tracer_list,'di14c' ,'field', cobalt%f_di14c,isd,jsd,positive=.true.)
+      call g_tracer_get_values(tracer_list,'di14c' ,'field', cobalt%f_di14c,isd,jsd,positive=.true.)
 
-    ! This is not used until later, but get it now
-    call g_tracer_get_values(tracer_list,'do14c' ,'field', cobalt%f_do14c,isd,jsd,positive=.true.)
+      ! This is not used until later, but get it now
+      call g_tracer_get_values(tracer_list,'do14c' ,'field', cobalt%f_do14c,isd,jsd,positive=.true.)
 
-       do j = jsc, jec ; do i = isc, iec  !{
-       cobalt%c14o2_csurf(i,j) =  cobalt%co2_csurf(i,j) *                &
-         cobalt%f_di14c(i,j,1) / (cobalt%f_dic(i,j,1) + epsln)
-       cobalt%c14o2_alpha(i,j) =  cobalt%co2_alpha(i,j)
-       enddo; enddo ; !} i, j
+      do j = jsc, jec ; do i = isc, iec  !{
+        cobalt%c14o2_csurf(i,j) =  cobalt%co2_csurf(i,j) *                &
+        cobalt%f_di14c(i,j,1) / (cobalt%f_dic(i,j,1) + epsln)
+        cobalt%c14o2_alpha(i,j) =  cobalt%co2_alpha(i,j)
+      enddo; enddo ; !} i, j
 
-    call g_tracer_set_values(tracer_list,'di14c','alpha',cobalt%c14o2_alpha      ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'di14c','csurf',cobalt%c14o2_csurf      ,isd,jsd)
+      call g_tracer_set_values(tracer_list,'di14c','alpha',cobalt%c14o2_alpha      ,isd,jsd)
+      call g_tracer_set_values(tracer_list,'di14c','csurf',cobalt%c14o2_csurf      ,isd,jsd)
 
-      endif                                                   !RADIOCARBON>>
+    endif                                                   !RADIOCARBON>>
 
     !---------------------------------------------------------------------
     ! Get positive tracer concentrations
@@ -3358,7 +3334,7 @@ contains
     call g_tracer_get_values(tracer_list,'sldop'   ,'field',cobalt%f_sldop   ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'sidet'  ,'field',cobalt%f_sidet    ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'sio4'   ,'field',cobalt%f_sio4     ,isd,jsd,positive=.true.)
-!
+    !
     ! phytoplankton fields
     !
     call g_tracer_get_values(tracer_list,'fedi'   ,'field',phyto(DIAZ)%f_fe(:,:,:) ,isd,jsd,positive=.true.)
@@ -3579,7 +3555,7 @@ contains
     ! Forsythe et al.: https://www.sciencedirect.com/science/article/pii/030438009400034F
     ! Stock et al. (submitted) (link to be added as soon as available)
     !
-    allocate(tmp_irr_band(nbands))        ! irradiance in wavelength bands
+    !allocate(tmp_irr_band(nbands))        ! irradiance in wavelength bands
     allocate(sfc_irrad(isc:iec,jsc:jec))  ! surface photosythetically available irradiance
     allocate(kblt(isc:iec,jsc:jec))       ! tracks of max k index in mixed layer
     frac_sfc_irrad_aclm = 1.0/(2.71828**cobalt%ml_aclm_efold) ! controls acclimation in deep mixed layers
@@ -3706,7 +3682,7 @@ contains
        cobalt%irr_mix(i,j,1:kblt(i,j)) = tmp_irrad_ML / max(1.0e-6,tmp_hblt)
     enddo;  enddo !} i,j
 
-    deallocate(tmp_irr_band)
+    !deallocate(tmp_irr_band)
     deallocate(zmid_nk)
     !
     ! Calculate the final photoacclimation irradiance using the standard relaxation
@@ -3734,7 +3710,6 @@ contains
        cobalt%f_nh3(i,j,k) = cobalt%f_nh4(i,j,k)/(1.+10**(calc_pka_nh3(temp(i,j,k),salt(i,j,k))+log10(min(max(cobalt%f_htotal(i,j,1),1e-10),1e-5)))) * grid_tmask(i,j,k)
     enddo;  enddo ; enddo !} i,j,k
     end if
-
 
     !
     ! Calculate the phytoplankton growth rate calculation based on Geider et al. (1997).
@@ -6037,7 +6012,6 @@ contains
     ! and has understandable units. For example, typical plankton concentrations are ~0.1-1 mmoles N m-3
     ! day-1, so an imbalance of order 1 would be very large whereas 1e-9 is very small.
     ! A reccomended tolerance is between 1e-7 and 1e-9.
-    imbal_flag = 0;
     post_totn = 0;
     post_totc = 0;
     post_totp = 0;
@@ -7070,11 +7044,6 @@ contains
 
        call g_tracer_get_values(tracer_list,'htotal' ,'field', htotal_field,isd,jsd)
        call g_tracer_get_values(tracer_list,'co3_ion','field',co3_ion_field,isd,jsd)
-
-       do j = jsc, jec ; do i = isc, iec  !{
-          cobalt%htotallo(i,j) = cobalt%htotal_scale_lo * htotal_field(i,j,1)
-          cobalt%htotalhi(i,j) = cobalt%htotal_scale_hi * htotal_field(i,j,1)
-       enddo; enddo ; !} i, j
 
        if(.not. present(dzt)) then
           ! 2017/08/11 jgj is cobalt type defined/passed here ?
