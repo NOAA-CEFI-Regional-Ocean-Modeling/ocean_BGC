@@ -143,6 +143,15 @@ end subroutine read_mocsy_namelist
 !                    as "surface" only because every current caller in
 !                    this repo passes the top model layer's zt.
 !
+!                    JYL NOTE: zt is declared optional but is functionally REQUIRED;
+!                    there is a FATAL error that gets triggered if zt is not present.
+!                    It is left optional rather than changed to required because
+!                    htotal/htotallo/htotalhi are passed positionally by every existing
+!                    caller and relocating zt to be with the other required inputs
+!                    would require changes to every call site. This is not a change we
+!                    want to make at this time.
+!
+!
 !       htotallo   = lower limit of htotal range (not used since mocsy's
 !                    own pH solver doesn't need a bisection bracket;
 !                    retained only for interface compatibility)
