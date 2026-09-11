@@ -162,6 +162,8 @@ module generic_COBALT
 
   use FMS_co2calc_mod, only : FMS_co2calc, CO2_dope_vector
 
+  use ocean_atm_chemical_fluxes_utils, only :  get_nh3_ocean_atm_flux_property, calc_pka_nh3, schmidt_w_nh3, vb_nh3
+
   implicit none ; private
 
   public do_generic_COBALT
@@ -3179,7 +3181,6 @@ contains
     real, dimension(:,:),   Allocatable :: pka_nh3,phos_nh3_exchange
     real :: post_totn, post_totp, post_totsi, post_totfe, post_totc
 
-    real :: tr,ltr
     real :: imbal
     integer :: stdoutunit, imbal_flag, outunit
     type(g_tracer_type), pointer :: g_tracer,g_tracer_next
@@ -3282,27 +3283,18 @@ contains
 
     if (do_nh3_atm_ocean_exchange) then
        !to override pH used for ocean nh3 exchange
-       call data_override('OCN', 'phos_nh3_exchange', phos_nh3_exchange(isc:iec,jsc:jec), model_time,override=phos_nh3_override)
+       phos_nh3_exchange(isc:iec,jsc:jec) = -log10(min(max(1e-11,cobalt%f_htotal(isc:iec,jsc:jec,1)),1e-3))
+       call data_override('OCN', 'phos_nh3_exchange', phos_nh3_exchange(isc:iec,jsc:jec), model_time)
 
        do j = jsc, jec ; do i = isc, iec
-          pka_nh3(i,j)   = calc_pka_nh3(temp(i,j,1),salt(i,j,1))*grid_tmask(i,j,1)
-          tr             = 298.15/(temp(i,j,1)+273.15)-1.
-          ltr            = -tr+log(298.15/(temp(i,j,1)+273.15))
-          !f1p
-          !henry's constant is from Mark Jacobson's book "Fundamental of Atmospheric Modeling".
-          !I used this expression to be consistent with the cloud chemistry module
-          !the units are in mol/kg/atm. However it's probably in mol/kg(pure water)/atm
-          !the density of pure water is ~997 kg/m3 (25C). alpha will then be scaled by the density of seawater, which for some reason I don't quite understand is always set to 1035.
-          !to be consistent, I am scaling the Jacobson's number by 997/1035. This decreases the solubility of NH3 by less than 4%. For references, Sander's estimate is alpha(298.15)=0.59*101.63=59.96 mol/kg(pure water)/atm, about 4% greater than Jacobson's.
-          cobalt%nh3_alpha(i,j)   =  5.76e1*exp(13.79*tr-5.39*ltr)*997.
-          !apply salinity correction
-          cobalt%nh3_alpha(i,j)   =  cobalt%nh3_alpha(i,j)/saltout_correction(101325./(1.e-3*rdgas*wtmair*(temp(i,j,1)+273.15)*cobalt%nh3_alpha(i,j)),vb_nh3,salt(i,j,1))* 1./cobalt%Rho_0 !mol/kg/atm
-          if (phos_nh3_override) then
-             cobalt%nh3_csurf(i,j)   =  cobalt%f_nh4(i,j,1)/(1.+10**(pka_nh3(i,j)-max(min(phos_nh3_exchange(i,j),11.),3.))) !in mol/kg
-          else
-             cobalt%nh3_csurf(i,j)   =  cobalt%f_nh4(i,j,1)/(1.+10**(pka_nh3(i,j)+log10(min(max(cobalt%f_htotal(i,j,1),1e-11),1e-3)))) !in mol/kg
-          end if
-          cobalt%pnh3_csurf(i,j)  =  cobalt%nh3_csurf(i,j)/cobalt%nh3_alpha(i,j)*1.e6 !in uatm
+
+          call get_nh3_ocean_atm_flux_property(temp(i,j,1),salt(i,j,1),cobalt%f_nh4(i,j,1),  &
+                                     phos_nh3_exchange(i,j),                       &
+                                     cobalt%Rho_0,                                 &
+                                     cobalt%nh3_alpha(i,j), cobalt%nh3_csurf(i,j), &
+                                     pnh3_csurf = cobalt%pnh3_csurf(i,j),          &
+                                     pka_nh3 = pka_nh3(i,j))
+
        enddo; enddo ; !
 
        call g_tracer_set_values(tracer_list,'nh4','alpha',cobalt%nh3_alpha    ,isd,jsd)
@@ -3696,12 +3688,10 @@ contains
        ! light level over the photoacclimation layer: (tmp_irrad_aclm/tmp_zaclm)*24/daylength
        cobalt%irr_aclm_inst(i,j,1:kblt(i,j)) = tmp_irrad_aclm/max(1.0e-6,tmp_zaclm)*24.0/ &
                                                max(cobalt%daylength(i,j),cobalt%min_daylength)
-
        ! calculate the average limitation on light saturated photosynthesis in the mixed layer
        do n = 1,NUM_PHYTO
          phyto(n)%pcmlim_aclm_inst(i,j,1:kblt(i,j)) = phyto(n)%tmp_pcmlim_aclm_ML / max(1.0e-6,tmp_hblt)
        enddo
-
        ! Issue: what would it take to remove irr_mix?
        cobalt%irr_mix(i,j,1:kblt(i,j)) = tmp_irrad_ML / max(1.0e-6,tmp_hblt)
     enddo;  enddo !} i,j
@@ -7023,9 +7013,6 @@ contains
     real, dimension(:,:,:), ALLOCATABLE :: htotal_field,co3_ion_field
     real, dimension(:,:), ALLOCATABLE :: co2_alpha,co2_csurf,co2_sc_no,o2_alpha,o2_csurf,o2_sc_no,nh3_alpha,nh3_csurf,nh3_sc_no,phos_nh3_exchange
     real, dimension(:,:), ALLOCATABLE :: c14o2_alpha,c14o2_csurf
-    real :: pka_nh3,tr,ltr
-
-    logical :: phos_nh3_override
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_set_boundary_values'
 
@@ -7041,7 +7028,7 @@ contains
     allocate(co2_csurf(isd:ied, jsd:jed)); co2_csurf=0.0
     allocate(co2_sc_no(isd:ied, jsd:jed)); co2_sc_no=0.0
     allocate(nh3_alpha(isd:ied, jsd:jed)); nh3_alpha=0.0
-    allocate(nh3_csurf(isd:ied, jsd:jed)); nh3_csurf=0.0
+    allocate(nh3_csurf(isd:ied, jsd:jed)); nh3_csurf=0.0    
     allocate(nh3_sc_no(isd:ied, jsd:jed)); nh3_sc_no=0.0
     !for nh3 ph emission override
     allocate(phos_nh3_exchange(isd:ied, jsd:jed)); phos_nh3_exchange=0.0
@@ -7131,29 +7118,22 @@ contains
       endif
 
        if (do_nh3_atm_ocean_exchange) then
-          !          write(*,*) 'min htot ',minval(htotal_field(:,:,1))
 
-          call data_override('OCN', 'phos_nh3_exchange', phos_nh3_exchange(isc:iec,jsc:jec), model_time,override=phos_nh3_override)
+          phos_nh3_exchange(isc:iec,jsc:jec) = -log10(min(max(1e-11,htotal_field(isc:iec,jsc:jec,1)),1e-3))
+          call data_override('OCN', 'phos_nh3_exchange', phos_nh3_exchange(isc:iec,jsc:jec), model_time)
 
-          do j = jsc, jec ; do i = isc, iec  !{
-             !nh3
-             pka_nh3        = calc_pka_nh3(SST(i,j),SSS(i,j))
-             tr             = 298.15/(SST(i,j)+273.15)-1.
-             ltr            = -tr+log(298.15/(SST(i,j)+273.15))
-             !mol/kg/atm from Jacobson 2005 (fundamental of atmospheric modeling)
-             !997/1035 is to convert pure water to salt water
-             nh3_alpha(i,j) = 5.76e1*exp(13.79*tr-5.39*ltr)*997. !in mol/kg(water)/atm -> mol/m3/atm
-             nh3_alpha(i,j) = nh3_alpha(i,j)/saltout_correction(101325./(1e-3*rdgas*wtmair*(SST(i,j)+273.15)*nh3_alpha(i,j)),vb_nh3,SSS(i,j)) * 1./cobalt%Rho_0 !mol/kg/atm
-             if (phos_nh3_override) then
-                nh3_csurf(i,j) = nh4_field(i,j,1,tau)/(1.+10**(pka_nh3-(max(min(11.,phos_nh3_exchange(i,j)),3.))))
-             else
-                nh3_csurf(i,j) = nh4_field(i,j,1,tau)/(1.+10**(pka_nh3+log10(min(max(1e-11,htotal_field(i,j,1)),1e-3))))
-             end if
-             cobalt%pnh3_csurf(i,j)  =  cobalt%nh3_csurf(i,j)/nh3_alpha(i,j)*1.e6 !in uatm
-          enddo;enddo
+          do j = jsc, jec ; do i = isc, iec
 
-          call g_tracer_set_values(tracer_list,'nh4','alpha',nh3_alpha    ,isd,jsd)
-          call g_tracer_set_values(tracer_list,'nh4','csurf',nh3_csurf    ,isd,jsd)
+             call get_nh3_ocean_atm_flux_property(SST(i,j),SSS(i,j),                           &
+                                                  nh4_field(i,j,1,tau),                        &
+                                                  phos_nh3_exchange(i,j),                      &
+                                                  cobalt%Rho_0,                                &
+                                                  nh3_alpha(i,j), nh3_csurf(i,j))
+
+          enddo; enddo ; !
+
+          call g_tracer_set_values(tracer_list,'nh4','alpha',nh3_alpha,isd,jsd)
+          call g_tracer_set_values(tracer_list,'nh4','csurf',nh3_csurf,isd,jsd)
 
        end if
        !!nnz: If source is called uncomment the following
@@ -7165,7 +7145,6 @@ contains
 
     call g_tracer_get_values(tracer_list,'o2','alpha', o2_alpha ,isd,jsd)
     call g_tracer_get_values(tracer_list,'o2','csurf', o2_csurf ,isd,jsd)
-
 
     do j=jsc,jec ; do i=isc,iec
        !This calculation needs an input of SST and SSS
@@ -7290,8 +7269,9 @@ contains
 
        do j=jsc,jec ; do i=isc,iec
        !nh3
-       !f1p
-          nh3_sc_no(i,j) = schmidt_w(sst(i,j),sss(i,j),vb_nh3)*grid_tmask(i,j,1)
+          !f1p
+          !This calculation could be moved to get_nh3_ocean_atm_flux_property
+          nh3_sc_no(i,j) = schmidt_w_nh3(SST(i,j),SSS(i,j))*grid_tmask(i,j,1)
           nh3_csurf(i,j) = nh3_csurf(i,j)*cobalt%Rho_0
           nh3_alpha(i,j) = nh3_alpha(i,j)*cobalt%Rho_0
        end do;end do
@@ -8568,131 +8548,6 @@ contains
       deallocate(cobalt%chl_dmsp)
 
   end subroutine user_deallocate_arrays
-
-
-!f1p
- function calc_pka_nh3(tc,salt) result(pka)
-    !temperature, salinity
-    real, intent(in) :: tc,salt
-    real :: pka,tk
-!Bell 2007
-!    pka = 10.0423-0.0315536*tc+0.003071*salt
-
-!Clegg 1995
-    real, parameter :: a1=0.0500616
-    real, parameter :: a2=-9.412696
-    real, parameter :: a3=-2.029559e-7
-    real, parameter :: a4=-0.0142372
-    real, parameter :: a5=1.46041e-5
-    real, parameter :: a6=3.730005
-    real, parameter :: a7=7.14045e-5
-    real, parameter :: a8=-0.0229021
-    real, parameter :: a9=-5.521278e-7
-    real, parameter :: a10=1.95413e-4
-
-    tk=tc+273.15;
-    pka     = 9.244605-2729.33*(1/298.15-1./tk)  &
-            + (a1+a2/tk+a3*tk**2.)*salt**0.5       &
-            + (a4+a5*tk+a6/tk)*salt              &
-            + (a7+a8/tk)*salt**2.                 &
-            + (a9+a10/tk)*salt**3.;
-
-  end function calc_pka_nh3
-
-!salting out correction for solubility (Johnson 2010, Ocean Science)
-  function saltout_correction(kh,vb,salt) result(C)
-    real, intent(in) :: Kh,vb,salt
-    real*8 :: log_kh
-    real :: theta,C
-    log_kh = log(kh)
-    theta = (7.3353282561828962e-04 + (3.3961477466551352e-05*log_kh) + (-2.4088830102075734e-06*(log_kh)**2) + (1.5711393120941302e-07*(log_kh)**3))*log(vb)
-    C = 10**(theta*salt)
-  end function saltout_correction
-
-  !schmidt number in water
-  function schmidt_w(t,s,vb,rho) result(sc)
-    !schmidt number of the gas in the water
-    real, intent(in) :: t,s,vb
-    real, intent(in), optional :: rho
-    real             :: sc
-
-    sc=2.*v_sw(t,s,rho)/(d_hm(t,s,vb)+d_wc(t,s,vb))
-  end function schmidt_w
-
-  function v_sw(t,s,rho) result(v)
-    real, intent(in) :: t,s
-    real, intent(in), optional :: rho
-    real             :: n,p,v
-    n=n_sw(t,s)*1e-3
-    if (present(rho)) then
-       p=rho
-    else
-       p=p_sw(t,s)
-    end if
-    v = 1e4*n/p
-  end function  v_sw
-
-  function p_sw(t,s) result(p)
-    !density of sea water
-    !millero and poisson (1981)
-    real, intent(in) :: t,s
-    real             :: p, a, b, c
-    a = 0.824493-(4.0899e-3*t)+(7.6438e-5*(t**2))-(8.2467e-7*(t**3))+(5.3875e-9*(t**4))
-    b = -5.72466e-3+(1.0277e-4*t)-(1.6546e-6*(t**2))
-    c = 4.8314e-4
-    ! density of pure water
-    p = 999.842594+(6.793952e-2*t)-(9.09529e-3*(t**2))+(1.001685e-4*(t**3))-(1.120083e-6*(t**4))+(6.536332e-9*(t**5))
-    !salinity correction
-    p = (p+(a*s)+(b*(s**(1.5)))+(c*s))
-  end function p_sw
-
-  function d_wc(t,s,vb) result(d)
-    real, intent(in) :: t,s,vb
-    real             :: d
-    real, parameter  :: phi = 2.6
-    !wilkie and chang 1955
-    d = ((t+273.15)*7.4e-8*(phi*18.01)**0.5)/((n_sw(t,s))*(vb**0.6))
-  end function d_wc
-
-  function d_hm(t,s,vb) result(d)
-    real, intent(in) :: t,s,vb
-    real             :: d, epsilonstar
-    ! hayduk 1982
-    epsilonstar = (9.58/vb)-1.12
-    d=1.25e-8*(vb**(-0.19)-0.292)*((t+273.15)**(1.52))*((n_sw(t,s))**epsilonstar)
-  end function d_hm
-
-  function n_sw(t,s) result(n)
-    !dynamic viscosity
-    !laliberte 2007
-    real :: n
-    real, intent(in) :: t,s !temperature (c) and salinity
-    !salt in the order nacl,kcl,cacl2,mgcl2,mgso4
-    real, parameter :: mass_fraction(5) = (/ 0.798,0.022,0.033,0.047,0.1 /)
-    real, parameter :: v1(5) = (/ 16.22 , 6.4883, 32.028, 24.032, 72.269/)
-    real, parameter :: v2(5) = (/ 1.3229 , 1.3175, 0.78792, 2.2694, 2.2238/)
-    real, parameter :: v3(5) = (/ 1.4849 , -0.7785, -1.1495,  3.7108, 6.6037/)
-    real, parameter :: v4(5) = (/ 0.0074691 , 0.09272, 0.0026995,  0.021853, 0.0079004/)
-    real, parameter :: v5(5) = (/ 30.78 , -1.3, 780860., -1.1236, 3340.1/)
-    real, parameter :: v6(5) = (/ 2.0583 , 2.0811, 5.8442,0.14474, 6.1304/)
-
-    real :: n_0,ln_n_m,w_i_ln_n_i_tot,ni,w_i_tot,w_i
-    integer :: i
-    w_i_tot=0
-    w_i_ln_n_i_tot=0
-    do i=1,5
-       w_i = mass_fraction(i)*s/1000
-       w_i_tot = w_i+w_i_tot
-    enddo
-    do i=1,5
-       w_i = mass_fraction(i)*s/1000
-       ni = (exp(((v1(i)*w_i_tot**v2(i))+v3(i))/((v4(i)*t) + 1)))/((v5(i)*(w_i_tot**v6(i)))+1)
-       w_i_ln_n_i_tot = w_i_ln_n_i_tot + (w_i*log(ni))
-    enddo
-    n_0 = (t+246)/(137.37+(5.2842*t)+(0.05594*(t**2)))
-    ln_n_m = (1-w_i_tot)*log(n_0)+w_i_ln_n_i_tot
-    n = exp(ln_n_m)
-  end function n_sw
 
 
 
