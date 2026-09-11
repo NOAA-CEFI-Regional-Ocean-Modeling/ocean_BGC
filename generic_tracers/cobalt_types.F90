@@ -504,6 +504,8 @@ module cobalt_types
           kappa_sidet,      &
           irr_inhibit,      &
           k_n_inhib_di,     &
+          felim_photo_min,  &
+          felim_photo_pow,  &
           k_o2,             &
           k_o2_nit,         &
           kappa_eppley,     &
