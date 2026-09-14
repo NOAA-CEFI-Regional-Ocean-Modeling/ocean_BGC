@@ -1450,10 +1450,22 @@ contains
                    "innate availability of bacteria to higher predator feeding (0-1)", units="none", default=0.0)
     call get_param(param_file, "generic_COBALT", "hp_ipa_det", cobalt%hp_ipa_det, &
                    "innate availability of detritus to higher predator feeding (0-1)", units="none", default=0.0)
-    ! The material ingested by higher predators is partitioned between detritus and remineralization.
-    ! Remineralization = 1.0 - hp_phi_det
+    ! The material ingested by higher predators is partitioned between detritus, remineralization, and dissolved organic nitrogen
+    ! Remineralization = 1.0 - hp_phi_det - hp_phi_ldon - hp_phi_sldon - hp_phi_srdon
+    ! hp_phi_det + hp_phi_ldon + hp_phi_sldon + hp_phi_srdon must equal 0.35 to maintain the assimilation efficiency
+    ! The DON pathways were added to generalize the higher predator ingestion carbon partitioning for future experiments
+    ! and are set to zero by default to avoid changing answers
     call get_param(param_file, "generic_COBALT", "hp_phi_det", cobalt%hp_phi_det, &
                    "fraction of ingestion by higher predators to detritus", units="none", default=0.35)
+    call get_param(param_file, "generic_COBALT", "hp_phi_ldon", cobalt%hp_phi_ldon, &
+                  "fraction of N ingestion by higher predators to labile dissolved organic nitrogen", &
+                  units="none", default=0.0)
+    call get_param(param_file, "generic_COBALT", "hp_phi_sldon", cobalt%hp_phi_sldon, &
+                  "fraction of N ingestion by higher predators to semi-labile dissolved organic nitrogen", &
+                  units="none", default=0.0)
+    call get_param(param_file, "generic_COBALT", "hp_phi_srdon", cobalt%hp_phi_srdon, &
+                   "fraction of N ingestion by higher predators to semi-refractory dissolved organic nitrogen", &
+                  units="none", default=0.0)
 
     call get_param(param_file, "generic_COBALT", "frac_fastsinking", cobalt%frac_fastsinking, &
                    "Fraction of N and P detritus higher predators that is fast-sinking", units="none", default=1.0)
@@ -4659,6 +4671,15 @@ contains
           cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_n(i,j,k)
           cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
        endif
+       
+       ! A portion of egestion will be released into dissolved organic nitrogen and phosphorus pools
+       ! hp_phi_det + hp_phi_ldon + hp_phi_sldon + hp_phi_srdon = 0.35 (total egestion)
+       cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) + cobalt%hp_phi_ldon*cobalt%hp_jingest_n(i,j,k)
+       cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) + cobalt%hp_phi_sldon*cobalt%hp_jingest_n(i,j,k)
+       cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) + cobalt%hp_phi_srdon*cobalt%hp_jingest_n(i,j,k)
+       cobalt%jprod_ldop(i,j,k) = cobalt%jprod_ldop(i,j,k) + cobalt%hp_phi_ldon*cobalt%hp_jingest_p(i,j,k)
+       cobalt%jprod_sldop(i,j,k) = cobalt%jprod_sldop(i,j,k) + cobalt%hp_phi_sldon*cobalt%hp_jingest_p(i,j,k)
+       cobalt%jprod_srdop(i,j,k) = cobalt%jprod_srdop(i,j,k) + cobalt%hp_phi_srdon*cobalt%hp_jingest_p(i,j,k)
 
        ! Silica and iron detritus from HP does not sink quickly - just gets added to the bulk total
        cobalt%jprod_fedet(i,j,k) = cobalt%jprod_fedet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_fe(i,j,k)
@@ -4801,13 +4822,15 @@ contains
        cobalt%jprod_sio4(i,j,k) = cobalt%jprod_sio4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_sio2(i,j,k)
        ! If o2 is sufficient, respire what is not egested.  If not, everything is routed to detritus
        if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
-         cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)
-         cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_p(i,j,k)
-         cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)* &
-                                    cobalt%o2_2_nh4
+         cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) + &
+                                  (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*cobalt%hp_jingest_n(i,j,k)
+         cobalt%jprod_po4(i,j,k) = cobalt%jprod_po4(i,j,k) + &
+                                  (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*cobalt%hp_jingest_p(i,j,k)
+         cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) + &
+                                    (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*cobalt%hp_jingest_n(i,j,k)*cobalt%o2_2_nh4
        else
-         cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_n(i,j,k)
-         cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + (1.0-cobalt%hp_phi_det)*cobalt%hp_jingest_p(i,j,k)
+         cobalt%jprod_ndet(i,j,k) = cobalt%jprod_ndet(i,j,k) + (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*cobalt%hp_jingest_n(i,j,k)
+         cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*cobalt%hp_jingest_p(i,j,k)
        endif
 
     enddo; enddo ; enddo !} i,j,k
