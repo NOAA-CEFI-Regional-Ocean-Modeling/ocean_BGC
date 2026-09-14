@@ -3115,7 +3115,6 @@ contains
     real :: r_dt
     real :: feprime_temp
     real :: k_po4_adjust
-    real :: TK, PRESS, PKSPA, PKSPC
     real :: tmp_hblt, tmp_irrad, tmp_irrad_ML,tmp_opacity,tmp_mu_ML
     real :: frac_sfc_irrad_aclm, irrad_aclm_thresh
     real :: tmp_irrad_aclm, tmp_zaclm
@@ -3555,7 +3554,6 @@ contains
     ! Forsythe et al.: https://www.sciencedirect.com/science/article/pii/030438009400034F
     ! Stock et al. (submitted) (link to be added as soon as available)
     !
-    !allocate(tmp_irr_band(nbands))        ! irradiance in wavelength bands
     allocate(sfc_irrad(isc:iec,jsc:jec))  ! surface photosythetically available irradiance
     allocate(kblt(isc:iec,jsc:jec))       ! tracks of max k index in mixed layer
     frac_sfc_irrad_aclm = 1.0/(2.71828**cobalt%ml_aclm_efold) ! controls acclimation in deep mixed layers
@@ -3682,7 +3680,6 @@ contains
        cobalt%irr_mix(i,j,1:kblt(i,j)) = tmp_irrad_ML / max(1.0e-6,tmp_hblt)
     enddo;  enddo !} i,j
 
-    !deallocate(tmp_irr_band)
     deallocate(zmid_nk)
     !
     ! Calculate the final photoacclimation irradiance using the standard relaxation
