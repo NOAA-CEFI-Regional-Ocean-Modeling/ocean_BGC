@@ -1461,6 +1461,100 @@ contains
                    "basal respiration rate for medium migrating zooplankton", units="day-1", default=0.008,scale=I_sperd)
     call get_param(param_file, "generic_COBALT", "bresp_vmlgz", zoo(5)%bresp, &
                    "basal respiration rate for large migrating zooplankton", units="day-1", default=0.0032, scale=I_sperd)
+
+    !
+    ! Assimilation efficiency, gut and metabolite turnover, and active respiration.
+    !
+    call get_param(param_file, "generic_COBALT", "assim_eff_max_smz", zoo(1)%assim_eff_max, &
+                   "maximum assimilation efficiency for small zooplankton", units="none", default=0.7)
+    call get_param(param_file, "generic_COBALT", "assim_eff_max_mdz", zoo(2)%assim_eff_max, &
+                   "maximum assimilation efficiency for medium zooplankton", units="none", default=0.7)
+    call get_param(param_file, "generic_COBALT", "assim_eff_max_lgz", zoo(3)%assim_eff_max, &
+                   "maximum assimilation efficiency for large zooplankton", units="none", default=0.7)
+    call get_param(param_file, "generic_COBALT", "assim_eff_max_vmmdz", zoo(4)%assim_eff_max, &
+                   "maximum assimilation efficiency for medium migrating zooplankton", units="none", default=0.7)
+    call get_param(param_file, "generic_COBALT", "assim_eff_max_vmlgz", zoo(5)%assim_eff_max, &
+                   "maximum assimilation efficiency for large migrating zooplankton", units="none", default=0.7)
+    call get_param(param_file, "generic_COBALT", "assim_eff_min_smz", zoo(1)%assim_eff_min, &
+                   "minimum assimilation efficiency for small zooplankton", units="none", default=0.7)
+    call get_param(param_file, "generic_COBALT", "assim_eff_min_mdz", zoo(2)%assim_eff_min, &
+                   "minimum assimilation efficiency for medium zooplankton", units="none", default=0.7)
+    call get_param(param_file, "generic_COBALT", "assim_eff_min_lgz", zoo(3)%assim_eff_min, &
+                   "minimum assimilation efficiency for large zooplankton", units="none", default=0.7)
+    call get_param(param_file, "generic_COBALT", "assim_eff_min_vmmdz", zoo(4)%assim_eff_min, &
+                   "minimum assimilation efficiency for medium migrating zooplankton", units="none", default=0.7)
+    call get_param(param_file, "generic_COBALT", "assim_eff_min_vmlgz", zoo(5)%assim_eff_min, &
+                   "minimum assimilation efficiency for large migrating zooplankton", units="none", default=0.7)
+    call get_param(param_file, "generic_COBALT", "kae_smz", zoo(1)%kae, &
+                   "half-sat prey concentration for assimilation efficiency of small zooplankton", &
+                   units="mol N kg-1", default=1.0e+10)
+    call get_param(param_file, "generic_COBALT", "kae_mdz", zoo(2)%kae, &
+                   "half-sat prey concentration for assimilation efficiency of medium zooplankton", &
+                   units="mol N kg-1", default=1.0e+10)
+    call get_param(param_file, "generic_COBALT", "kae_lgz", zoo(3)%kae, &
+                   "half-sat prey concentration for assimilation efficiency of large zooplankton", &
+                   units="mol N kg-1", default=1.0e+10)
+    call get_param(param_file, "generic_COBALT", "kae_vmmdz", zoo(4)%kae, &
+                   "half-sat prey concentration for assimilation efficiency of medium migrating zooplankton", &
+                   units="mol N kg-1", default=1.0e+10)
+    call get_param(param_file, "generic_COBALT", "kae_vmlgz", zoo(5)%kae, &
+                   "half-sat prey concentration for assimilation efficiency of large migrating zooplankton", &
+                   units="mol N kg-1", default=1.0e+10)
+    call get_param(param_file, "generic_COBALT", "k_clear_gut_smz", zoo(1)%k_clear_gut, &
+                   "temperature-independent gut evacuation rate for small zooplankton", units="day-1", &
+                   default=8.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_clear_gut_mdz", zoo(2)%k_clear_gut, &
+                   "temperature-independent gut evacuation rate for medium zooplankton", units="day-1", &
+                   default=8.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_clear_gut_lgz", zoo(3)%k_clear_gut, &
+                   "temperature-independent gut evacuation rate for large zooplankton", units="day-1", &
+                   default=8.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_clear_gut_vmmdz", zoo(4)%k_clear_gut, &
+                   "temperature-independent gut evacuation rate for medium migrating zooplankton", units="day-1", &
+                   default=8.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_clear_gut_vmlgz", zoo(5)%k_clear_gut, &
+                   "temperature-independent gut evacuation rate for large migrating zooplankton", units="day-1", &
+                   default=8.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_temp_gut_smz", zoo(1)%k_temp_gut, &
+                   "temperature dependence of gut evacuation for small zooplankton", units="day-1 deg. C-1", &
+                   default=4.32, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_temp_gut_mdz", zoo(2)%k_temp_gut, &
+                   "temperature dependence of gut evacuation for medium zooplankton", units="day-1 deg. C-1", &
+                   default=4.32, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_temp_gut_lgz", zoo(3)%k_temp_gut, &
+                   "temperature dependence of gut evacuation for large zooplankton", units="day-1 deg. C-1", &
+                   default=4.32, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_temp_gut_vmmdz", zoo(4)%k_temp_gut, &
+                   "temperature dependence of gut evacuation for medium migrating zooplankton", units="day-1 deg. C-1", &
+                   default=4.32, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_temp_gut_vmlgz", zoo(5)%k_temp_gut, &
+                   "temperature dependence of gut evacuation for large migrating zooplankton", units="day-1 deg. C-1", &
+                   default=4.32, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_clear_met_smz", zoo(1)%k_clear_met, &
+                   "turnover rate of the metabolite pool for small zooplankton", units="day-1", &
+                   default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_clear_met_mdz", zoo(2)%k_clear_met, &
+                   "turnover rate of the metabolite pool for medium zooplankton", units="day-1", &
+                   default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_clear_met_lgz", zoo(3)%k_clear_met, &
+                   "turnover rate of the metabolite pool for large zooplankton", units="day-1", &
+                   default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_clear_met_vmmdz", zoo(4)%k_clear_met, &
+                   "turnover rate of the metabolite pool for medium migrating zooplankton", units="day-1", &
+                   default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "k_clear_met_vmlgz", zoo(5)%k_clear_met, &
+                   "turnover rate of the metabolite pool for large migrating zooplankton", units="day-1", &
+                   default=1.0, scale=I_sperd)
+    call get_param(param_file, "generic_COBALT", "phi_aresp_smz", zoo(1)%phi_aresp, &
+                   "fraction of ingestion by small zooplankton to active respiration", units="none", default=0.3)
+    call get_param(param_file, "generic_COBALT", "phi_aresp_mdz", zoo(2)%phi_aresp, &
+                   "fraction of ingestion by medium zooplankton to active respiration", units="none", default=0.3)
+    call get_param(param_file, "generic_COBALT", "phi_aresp_lgz", zoo(3)%phi_aresp, &
+                   "fraction of ingestion by large zooplankton to active respiration", units="none", default=0.3)
+    call get_param(param_file, "generic_COBALT", "phi_aresp_vmmdz", zoo(4)%phi_aresp, &
+                   "fraction of ingestion by medium migrating zooplankton to active respiration", units="none", default=0.3)
+    call get_param(param_file, "generic_COBALT", "phi_aresp_vmlgz", zoo(5)%phi_aresp, &
+                   "fraction of ingestion by large migrating zooplankton to active respiration", units="none", default=0.3)
     
     !
     ! By default, 30% of food ingested by zooplankton is egested as either particulate or dissolved organic material.
