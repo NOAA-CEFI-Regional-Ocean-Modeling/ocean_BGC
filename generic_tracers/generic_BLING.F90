@@ -2803,7 +2803,9 @@ write (stdlogunit, generic_bling_nml)
          bling%f_alk(:,:,k),                             &
          bling%htotal_satlo, bling%htotal_sathi,         &
                                 !InOut
-         bling%f_htotal_sat(:,:,k),                      & 
+         bling%f_htotal_sat(:,:,k),                      &
+                                !Optional In
+         zt=bling%zt(:,:,k),                             &
                                 !OUT
          co2star=bling%co2_sat_csurf(:,:),               &
          pCO2surf=bling%pco2_sat_csurf(:,:))
@@ -2822,7 +2824,9 @@ write (stdlogunit, generic_bling_nml)
             bling%f_alk(:,:,k),                          &
             bling%htotal_satlo, bling%htotal_sathi,&
                                 !InOut
-            bling%f_htotal_sat(:,:,k))
+            bling%f_htotal_sat(:,:,k),                   &
+                                !Optional In
+            zt=bling%zt(:,:,k))
     enddo
 
     call g_tracer_set_values(tracer_list,'htotal_sat','field',bling%f_htotal_sat  ,isd,jsd,ntau=1)

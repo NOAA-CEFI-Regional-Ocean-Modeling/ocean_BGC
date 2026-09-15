@@ -3,6 +3,7 @@
 !<----------------------------------------------------------------
 module cobalt_types
   use field_manager_mod, only: fm_string_len
+  use generic_bottom_layer_diags, only: generic_bld
   implicit none; private
 
   !
@@ -43,10 +44,32 @@ module cobalt_types
   integer, parameter, public :: NUM_ZOO = 5   !< total number of zooplankton groups
   integer, parameter, public :: NUM_BACT = 1  !< total number of bacteria groups
   integer, parameter, public :: NUM_PREY = 11  !< total numbers of prey groups
-  integer, parameter, public :: DIAZO      = 1 !< ID for diazotrophs
-  integer, parameter, public :: LARGE      = 2 !< ID for large phytoplankton
-  integer, parameter, public :: MEDIUM     = 3 !< ID for medium phytoplankton
-  integer, parameter, public :: SMALL      = 4 !< ID for small phytoplankton
+
+  ! phytoplankton IDs
+  integer, parameter, public :: DIAZ       = 1 !< ID for diazotrophs
+  integer, parameter, public :: LGP        = 2 !< ID for large phytoplankton
+  integer, parameter, public :: MDP        = 3 !< ID for medium phytoplankton
+  integer, parameter, public :: SMP        = 4 !< ID for small phytoplankton
+
+  ! zooplankton IDs
+  integer, parameter, public :: SMZ        = 1 !< ID for small zooplankton
+  integer, parameter, public :: MDZ        = 2 !< ID for medium zooplankton
+  integer, parameter, public :: LGZ        = 3 !< ID for large zooplankton
+  integer, parameter, public :: VMMDZ      = 4 !< ID for vertically migrating mesozooplankton
+  integer, parameter, public :: VMLGZ      = 5 !< ID for vertically migrating large zooplankton
+
+  ! prey array IDs
+  integer, parameter, public :: PR_DIAZ   = 1  !< prey array ID for diazotrophs
+  integer, parameter, public :: PR_LGP    = 2  !< prey array ID for large phytoplankton
+  integer, parameter, public :: PR_MDP    = 3  !< prey array ID for medium phytoplankton
+  integer, parameter, public :: PR_SMP    = 4  !< prey array ID for small phytoplankton
+  integer, parameter, public :: PR_BACT   = 5  !< prey array ID for bacteria
+  integer, parameter, public :: PR_SMZ    = 6  !< prey array ID for small zooplankton
+  integer, parameter, public :: PR_MDZ    = 7  !< prey array ID for medium zooplankton
+  integer, parameter, public :: PR_LGZ    = 8  !< prey array ID for large zooplankton
+  integer, parameter, public :: PR_VMMDZ  = 9  !< prey array ID for vertically migrating mesozooplankton
+  integer, parameter, public :: PR_VMLGZ  = 10 !< prey array ID for vertically migrating large zooplankton
+  integer, parameter, public :: PR_DET    = 11 !< prey array ID for detritus
 
   real, parameter, public :: sperd = 24.0 * 3600.0    !< number of seconds in a day (sec)
   real, parameter, public :: I_sperd = 1.0/sperd      !< inverse of number of seconds in a day (sec)
@@ -1106,6 +1129,9 @@ module cobalt_types
      character(len=fm_string_len)          :: file
      character(len=fm_string_len) :: ice_restart_file
      character(len=fm_string_len) :: ocean_restart_file,IC_file
+
+     ! Generic bottom layer diagnostics
+     type(generic_bld) :: bld
 
      integer               ::          &
           id_co3_sol_arag  = -1,       &
