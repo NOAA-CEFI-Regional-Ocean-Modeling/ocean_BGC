@@ -1726,28 +1726,28 @@ module COBALT_reg_diag
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
 
-    vardesc_temp = vardesc("jmetabo_nSmz","Production of nh4 by small zooplankton metabolism, layer integral",&
-                           'h','L','s','mol N m-2 s-1','f')
+    vardesc_temp = vardesc("jmetabo_nSmz","Production of nh4 by small zooplankton metabolism",&
+                           'h','L','s','mol N kg-1 s-1','f')
     zoo(1)%id_jmetabo_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jmetabo_nMdz","Production of nh4 by medium zooplankton metabolism, layer integral",&
-                           'h','L','s','mol N m-2 s-1','f')
+    vardesc_temp = vardesc("jmetabo_nMdz","Production of nh4 by medium zooplankton metabolism",&
+                           'h','L','s','mol N kg-1 s-1','f')
     zoo(2)%id_jmetabo_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
     
-    vardesc_temp = vardesc("jmetabo_nLgz","Production of nh4 by large zooplankton metabolism, layer integral",&
-                           'h','L','s','mol N m-2 s-1','f')
+    vardesc_temp = vardesc("jmetabo_nLgz","Production of nh4 by large zooplankton metabolism",&
+                           'h','L','s','mol N kg-1 s-1','f')
     zoo(3)%id_jmetabo_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jmetabo_nvmMdz","Production of nh4 by vertically migrating medium zooplankton metabolism, layer integral",&
-                           'h','L','s','mol N m-2 s-1','f')
+    vardesc_temp = vardesc("jmetabo_nvmMdz","Production of nh4 by vertically migrating medium zooplankton metabolism",&
+                           'h','L','s','mol N kg-1 s-1','f')
     zoo(4)%id_jmetabo_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 
-    vardesc_temp = vardesc("jmetabo_nvmLgz","Production of nh4 by vertically migrating large zooplankton metabolism, layer integral",&
-                           'h','L','s','mol N m-2 s-1','f')
+    vardesc_temp = vardesc("jmetabo_nvmLgz","Production of nh4 by vertically migrating large zooplankton metabolism",&
+                           'h','L','s','mol N kg-1 s-1','f')
     zoo(5)%id_jmetabo_n = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
 

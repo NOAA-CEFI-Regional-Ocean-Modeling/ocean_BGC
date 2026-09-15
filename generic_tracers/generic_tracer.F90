@@ -142,7 +142,13 @@ module generic_tracer
   logical :: generic_tracer_register_called = .false.
   logical :: force_update_fluxes = .false.
   character(len=10) :: as_param   = 'W14'     ! Use Wanninkhoff 2014 parameters for air-sea gas transfer by default
-  logical :: use_Press_et_al_tridiag_solver = .false.  ! Use the tridiagonal solver from Press et al. (Numerical Recipes) for vertical diffusion correction
+  ! Use the tridiagonal solver from Press et al. (Numerical Recipes) for vertical diffusion correction.
+  ! REQUIRED (.true.) for diel vertical migration, i.e. any tracer with a NEGATIVE vmove (upward
+  ! swimming): only the Press branch of g_tracer_vertdiff_G sign-splits the vertical motion, while the
+  ! default GOLD branch assumes sink >= 0 and does not conserve mass upward. Left .false. with DVM
+  ! active, generic_COBALT aborts almost at once on "biological source/sink imbalance ... Nitrogen".
+  ! Default stays .false. so non-DVM configurations keep their existing answers.
+  logical :: use_Press_et_al_tridiag_solver = .false.
      
   namelist /generic_tracer_nml/ do_generic_tracer, do_generic_abiotic, do_generic_age, do_generic_argon, do_generic_CFC, &
       do_generic_SF6, do_generic_BLING, do_generic_COBALT, &
