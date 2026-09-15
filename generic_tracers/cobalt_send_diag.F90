@@ -533,8 +533,8 @@ module COBALT_send_diag
             cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + cobalt%p_ldon(:,:,:,tau) + &
             cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_ndet_fast(:,:,:,tau) + &
             cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau) + &
-            cobalt%p_nvmmdz(i,j,k,tau) + cobalt%p_nvmmdz_gut(i,j,k,tau) + cobalt%p_nvmmdz_met(i,j,k,tau) + & 
-            cobalt%p_nvmlgz(i,j,k,tau) + cobalt%p_nvmlgz_gut(i,j,k,tau) + cobalt%p_nvmlgz_met(i,j,k,tau))) * rho_dzt(:,:,:)
+            cobalt%p_nvmmdz(:,:,:,tau) + cobalt%p_nvmmdz_gut(:,:,:,tau) + cobalt%p_nvmmdz_met(:,:,:,tau) + &
+            cobalt%p_nvmlgz(:,:,:,tau) + cobalt%p_nvmlgz_gut(:,:,:,tau) + cobalt%p_nvmlgz_met(:,:,:,tau))) * rho_dzt(:,:,:)
 
           ! dissolved organic component also includes an optional background doc (0 by default)
           cobalt%tot_layer_int_doc(:,:,:) = (cobalt%c_2_n * (cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) + &
@@ -543,8 +543,8 @@ module COBALT_send_diag
           cobalt%tot_layer_int_poc(:,:,:) = (cobalt%p_ndi(:,:,:,tau) + cobalt%p_nlg(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + &
             cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + cobalt%p_ndet_fast(:,:,:,tau) + &
             cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau) + &
-            cobalt%p_nvmmdz(i,j,k,tau) + cobalt%p_nvmmdz_gut(i,j,k,tau) + cobalt%p_nvmmdz_met(i,j,k,tau) + & 
-            cobalt%p_nvmlgz(i,j,k,tau) + cobalt%p_nvmlgz_gut(i,j,k,tau) + cobalt%p_nvmlgz_met(i,j,k,tau))*cobalt%c_2_n*rho_dzt(:,:,:)
+            cobalt%p_nvmmdz(:,:,:,tau) + cobalt%p_nvmmdz_gut(:,:,:,tau) + cobalt%p_nvmmdz_met(:,:,:,tau) + &
+            cobalt%p_nvmlgz(:,:,:,tau) + cobalt%p_nvmlgz_gut(:,:,:,tau) + cobalt%p_nvmlgz_met(:,:,:,tau))*cobalt%c_2_n*rho_dzt(:,:,:)
 
           cobalt%tot_layer_int_dic(:,:,:) = cobalt%p_dic(:,:,:,tau)*rho_dzt(:,:,:)
 
@@ -555,8 +555,8 @@ module COBALT_send_diag
             cobalt%p_nlg(:,:,:,tau) + cobalt%p_nmd(:,:,:,tau) + cobalt%p_nsm(:,:,:,tau) + cobalt%p_nbact(:,:,:,tau) + &
             cobalt%p_ldon(:,:,:,tau) + cobalt%p_sldon(:,:,:,tau) + cobalt%p_srdon(:,:,:,tau) + cobalt%p_ndet(:,:,:,tau) + &
             cobalt%p_ndet_fast(:,:,:,tau) + cobalt%p_nsmz(:,:,:,tau) + cobalt%p_nmdz(:,:,:,tau) + cobalt%p_nlgz(:,:,:,tau)+ &
-            cobalt%p_nvmmdz(i,j,k,tau) + cobalt%p_nvmmdz_gut(i,j,k,tau) + cobalt%p_nvmmdz_met(i,j,k,tau) + & 
-            cobalt%p_nvmlgz(i,j,k,tau) + cobalt%p_nvmlgz_gut(i,j,k,tau) + cobalt%p_nvmlgz_met(i,j,k,tau)) * rho_dzt(:,:,:)
+            cobalt%p_nvmmdz(:,:,:,tau) + cobalt%p_nvmmdz_gut(:,:,:,tau) + cobalt%p_nvmmdz_met(:,:,:,tau) + &
+            cobalt%p_nvmlgz(:,:,:,tau) + cobalt%p_nvmlgz_gut(:,:,:,tau) + cobalt%p_nvmlgz_met(:,:,:,tau)) * rho_dzt(:,:,:)
 
           cobalt%tot_layer_int_p(:,:,:) = (cobalt%p_po4(:,:,:,tau) + cobalt%p_pdi(:,:,:,tau) + cobalt%p_plg(:,:,:,tau) + &
             cobalt%p_pmd(:,:,:,tau) + cobalt%p_psm(:,:,:,tau) + cobalt%p_ldop(:,:,:,tau) + cobalt%p_sldop(:,:,:,tau) + &
