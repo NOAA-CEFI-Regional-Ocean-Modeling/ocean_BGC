@@ -3218,9 +3218,8 @@ contains
          cobalt%f_po4(:,:,k),                          &
          cobalt%f_sio4(:,:,k),                         &
          cobalt%f_alk(:,:,k),                          &
-         cobalt%htotallo, cobalt%htotalhi,&
                                 !InOut
-         cobalt%f_htotal(:,:,k),                       &
+         htotal=cobalt%f_htotal(:,:,k),                &
                                 !Optional In
          zt=cobalt%zt(:,:,k),                          &
                                 !OUT
@@ -3237,9 +3236,8 @@ contains
             cobalt%f_po4(:,:,k),                          &
             cobalt%f_sio4(:,:,k),                         &
             cobalt%f_alk(:,:,k),                          &
-            cobalt%htotallo, cobalt%htotalhi,&
                                 !InOut
-            cobalt%f_htotal(:,:,k),                       &
+            htotal=cobalt%f_htotal(:,:,k),                &
                                 !Optional In
             zt=cobalt%zt(:,:,k),                          &
                                 !OUT
@@ -7056,9 +7054,8 @@ contains
             po4_field(:,:,1,tau),                          &
             sio4_field(:,:,1,tau),                         &
             alk_field(:,:,1,tau),                          &
-            cobalt%htotallo, cobalt%htotalhi,              &
                                 !InOut
-            htotal_field(:,:,1),                           &
+            htotal=htotal_field(:,:,1),                    &
                                 !Optional In
             !! jgj 2017/08/11
             !!zt=cobalt%zt(:,:,1),                           &
@@ -7340,9 +7337,6 @@ contains
     CO2_dope_vec%jsc = jsc ; CO2_dope_vec%jec = jec
     CO2_dope_vec%isd = isd ; CO2_dope_vec%ied = ied
     CO2_dope_vec%jsd = jsd ; CO2_dope_vec%jed = jed
-
-    allocate(cobalt%htotallo(isd:ied,jsd:jed))
-    allocate(cobalt%htotalhi(isd:ied,jsd:jed))
 
     !
     ! allocate and initialize array elements of all phytoplankton groups
@@ -7952,7 +7946,6 @@ contains
     integer n
 
     call generic_bld_dealloc(cobalt%bld)
-    deallocate(cobalt%htotalhi,cobalt%htotallo)
 
     do n = 1, NUM_PHYTO
        deallocate(phyto(n)%P_C_max)

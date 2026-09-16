@@ -130,9 +130,8 @@ module COBALT_send_diag
               cobalt%p_po4(:,:,k,tau), &
               cobalt%p_sio4(:,:,k,tau), &
               cobalt%p_alk(:,:,k,tau), &
-              cobalt%htotallo, cobalt%htotalhi,&
                                 !InOut
-              cobalt%f_htotal(:,:,k), &
+              htotal=cobalt%f_htotal(:,:,k), &
                                 !Optional In
               zt=cobalt%zt(:,:,k), &
                                 !OUT
@@ -149,9 +148,8 @@ module COBALT_send_diag
                 cobalt%p_po4(:,:,k,tau), &
                 cobalt%p_sio4(:,:,k,tau), &
                 cobalt%p_alk(:,:,k,tau), &
-                cobalt%htotallo, cobalt%htotalhi,&
                                 !InOut
-                cobalt%f_htotal(:,:,k), &
+                htotal=cobalt%f_htotal(:,:,k), &
                                 !Optional In
                 zt=cobalt%zt(:,:,k), &
                                 !OUT

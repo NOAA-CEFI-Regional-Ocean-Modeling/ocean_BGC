@@ -861,7 +861,6 @@ module cobalt_types
           jprod_allphytos_200,&
           jprod_diat_100,&
           mld_aclm,&
-          htotallo, htotalhi,&
           hp_jingest_n_100,&
           hp_jremin_n_100,&
           hp_jprod_ndet_100,&
