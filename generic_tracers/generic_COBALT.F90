@@ -397,10 +397,6 @@ contains
     call get_param(param_file, "generic_COBALT", "IC_file"            , cobalt%IC_file            ,  &
             "IC_file"           , default="")
 
-    call get_param(param_file, "generic_COBALT", "htotal_scale_lo", cobalt%htotal_scale_lo, &
-                   "scaling factor for initializing carbon chemistry solver", units=" ", default=0.01)
-    call get_param(param_file, "generic_COBALT", "htotal_scale_hi", cobalt%htotal_scale_hi, &
-                   "scaling factor for initializing carbon chemistry solver", units=" ", default=100.0)
     ! Flag to recalculate the carbon system parameters after vertdiff to ensure consistency with prognostic tracers
     call get_param(param_file, "generic_COBALT", "recalculate_carbon", cobalt%recalculate_carbon, "recalculate_carbon", &
                    default=.true.)
