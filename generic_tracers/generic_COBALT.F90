@@ -3034,6 +3034,9 @@ contains
   !   This is the subroutine to contain most of the biogeochemistry for calculating the
   !   interaction of tracers with each other and with outside forcings.
   !  </DESCRIPTION>
+  !  <TEMPLATE>
+  !   call generic_COBALT_update_from_source(tracer_list,Temp,Salt,dzt,hblt_depth,&
+  !                                         ilb,jlb,tau,dt, grid_dat,sw_pen,opacity)
   !  </TEMPLATE>
   !  <IN NAME="tracer_list" TYPE="type(g_tracer_type), pointer">
   !   Pointer to the head of generic tracer list.
