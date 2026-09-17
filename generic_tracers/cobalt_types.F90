@@ -15,7 +15,6 @@ module cobalt_types
   public zooplankton
   public bacteria
   public generic_COBALT_type
-  public vardesc
 
   !The following variables for using this module
   ! are overwritten by generic_tracer_nml namelist
@@ -78,17 +77,6 @@ module cobalt_types
   real, parameter, public :: c2n = 106.0/16.0         !< convert nutrient ratios relative to carbon to ratios relative to nitrogen
   real, parameter, public :: micromolQ2Joule = 2.77e18/6.022e17 !< convert photosynthetically available radiation (micromole quanta
                                                       !! Joules
-
-  !> An auxiliary type for storing varible names
-  type vardesc
-     character(len=fm_string_len) :: name     !< The variable name in a NetCDF file.
-     character(len=fm_string_len) :: longname !< The long name of that variable.
-     character(len=1)  :: hor_grid !< The hor. grid:  u, v, h, q, or 1.
-     character(len=1)  :: z_grid   !< The vert. grid:  L, i, or 1.
-     character(len=1)  :: t_grid   !< The time description: s, a, m, or 1.
-     character(len=fm_string_len) :: units  !< The dimensions of the variable.
-     character(len=1)  :: mem_size !< The size in memory: d or f.
-  end type vardesc
 
   !> phytoplankton data type
   type phytoplankton
