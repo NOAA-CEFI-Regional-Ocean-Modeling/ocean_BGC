@@ -508,7 +508,7 @@ contains
 
     if (do_generic_COBALT) & 
           call generic_COBALT_update_from_source(tracer_list,Temp,Salt,rho_dzt,dzt,&
-            hblt_depth,ilb,jlb,tau,dtts,grid_dat,model_time,&
+            hblt_depth,ilb,jlb,tau,dtts,model_time,&
             nbands,max_wavelength_band,sw_pen_band,opacity_band,internal_heat,frunoff,&
             geolat,photo_acc_dpth)
 

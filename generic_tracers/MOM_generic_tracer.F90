@@ -77,8 +77,6 @@ type, public :: MOM_generic_tracer_CS ; private
   character(len = 200) :: IC_file !< The file in which the generic tracer initial values can
                                   !! be found, or an empty string for internal initialization.
   logical :: Z_IC_file !< If true, the generic_tracer IC_file is in Z-space.  The default is false.
-  real :: tracer_IC_val = 0.0    !< The initial value assigned to tracers, in
-                                 !! concentration units [conc]
   real :: tracer_land_val = -1.0 !< The values of tracers used where land is masked out, in
                                  !! concentration units [conc]
   logical :: tracers_may_reinit  !< If true, tracers may go through the

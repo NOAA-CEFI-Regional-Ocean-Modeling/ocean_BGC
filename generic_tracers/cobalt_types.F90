@@ -581,7 +581,7 @@ module cobalt_types
 
      real, dimension(3)                    :: total_atm_co2
 
-     real    :: htotal_scale_lo, htotal_scale_hi, htotal_in
+     real    :: htotal_in
      real    :: Rho_0, a_0, a_1, a_2, a_3, a_4, a_5, b_0, b_1, b_2, b_3, c_0
      real    :: a1_co2, a2_co2, a3_co2, a4_co2, a5_co2
      real    :: a1_o2, a2_o2, a3_o2, a4_o2, a5_o2
@@ -861,7 +861,6 @@ module cobalt_types
           jprod_allphytos_200,&
           jprod_diat_100,&
           mld_aclm,&
-          htotallo, htotalhi,&
           hp_jingest_n_100,&
           hp_jremin_n_100,&
           hp_jprod_ndet_100,&
