@@ -1,7 +1,5 @@
-!> The COBALT_send_diag module contains a subroutine
-!! to handle sending diagnostics.
-!<----------------------------------------------------------------
 module COBALT_reg_diag
+  !! The COBALT_send_diag module contains a subroutine to handle sending diagnostics.
 
   use cobalt_types
   use time_manager_mod,  only: time_type
@@ -13,10 +11,11 @@ module COBALT_reg_diag
 
   contains
 
-  !> subroutine that handles registration for diagnostic variables
   subroutine cobalt_reg_diagnostics(diag_list,axes,init_time,phyto,zoo,bact,cobalt)
-    !
+    !! Handles registration for diagnostic variables
+
     type(g_diag_type), pointer :: diag_list
+      !! Unused
     integer,                                   intent(in) :: axes(3)
     type(time_type),                           intent(in) :: init_time
     type(phytoplankton), dimension(NUM_PHYTO), intent(inout) :: phyto
@@ -3554,7 +3553,7 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_nitrate_in_sea_water", &
          cmor_long_name="Dissolved Nitrate Concentration")
 
-!! same name in model and CMOR, but different units - use for now
+! same name in model and CMOR, but different units - use for now
     vardesc_temp = vardesc("nh4_raw","Dissolved Ammonium Concentration",'h','L','s','mol m-3','f')
     cobalt%id_nh4_cmip = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -3562,7 +3561,7 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_ammonium_in_sea_water", &
          cmor_long_name="Dissolved Ammonium Concentration")
 
-!! same name in model and CMOR, but different units - use _cmip for now
+! same name in model and CMOR, but different units - use _cmip for now
     vardesc_temp = vardesc("po4_raw","Total Dissolved Inorganic Phosphorus Concentration",'h','L','s','mol m-3','f')
     cobalt%id_po4_cmip = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &
@@ -3584,7 +3583,7 @@ module COBALT_reg_diag
          cmor_standard_name="mole_concentration_of_dissolved_inorganic_silicon_in_sea_water", &
          cmor_long_name="Total Dissolved Inorganic Silicon Concentration")
 
-!! same name in model and CMOR, but different units - use _cmip for now
+! same name in model and CMOR, but different units - use _cmip for now
     vardesc_temp = vardesc("chl_raw","Mass Concentration of Total Phytoplankton expressed as Chlorophyll in Sea Water",'h','L','s','kg m-3','f')
     cobalt%id_chl_cmip = register_diag_field(package_name, vardesc_temp%name, axes(1:3), &
          init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1, &

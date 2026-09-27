@@ -1,21 +1,10 @@
-!----------------------------------------------------------------
-! <CONTACT EMAIL="Niki.Zadeh@noaa.gov"> Niki Zadeh
-! </CONTACT>
-!
-! <REVIEWER EMAIL="William.Cooke@noaa.gov"> William Cooke
-! </REVIEWER>
-!
-! <OVERVIEW>
-! g_tracer_utils module consists of core utility subroutines
-! to be used by all generic tracer modules.
-! These include the lowest level functions for adding,
-! allocating memory, and record keeping of individual
-! generic tracers irrespective of their physical/chemical nature.
-! </OVERVIEW>
-!----------------------------------------------------------------
-
-
 module g_tracer_utils
+  !! author: Niki Zadeh
+  !! g_tracer_utils module consists of core utility subroutines
+  !! to be used by all generic tracer modules.
+  !! These include the lowest level functions for adding,
+  !! allocating memory, and record keeping of individual
+  !! generic tracers irrespective of their physical/chemical nature.
 #include <fms_platform.h>
 
   use coupler_types_mod, only: coupler_2d_bc_type, ind_flux, ind_deltap, ind_kw
@@ -149,137 +138,145 @@ module g_tracer_utils
   ! </DESCRIPTION>
 
   type g_tracer_type
-     !A pointer to the next node in the list for the current "linked-list implementation".
+    ! Each generic tracer node is an instant of a FORTRAN type with the following member variables.
+    ! These member fields are supposed to uniquely define an individual tracer.
+    ! One such type shall be instantiated for EACH individual tracer.
+
      type(g_tracer_type), pointer :: next => NULL()
+    !! A pointer to the next node in the list for the current "linked-list implementation".
 
-     !A unique index (for the possible future "array implementation")
      integer :: index
+    !! A unique index (for the possible future "array implementation")
 
-     ! Tracer name, descriptive name, package that instantiates it
      character(len=fm_string_len) :: name, longname, alias, package_name
-
+    !! Tracer name, descriptive name, package that instantiates it
 
      character(len=fm_string_len) :: diag_name, standard_name, diag_field_units
      real :: diag_field_scaling_factor = 1.0
 
-     ! Tracer molecular wt
      real :: flux_gas_molwt
+    !! Tracer molecular wt
 
-     ! Tracer flux names recognized by component models (OCN, LND, ICE, ATM)
      character(len=fm_string_len) :: flux_gas_name, flux_gas_type, flux_runoff_name, flux_wetdep_name, flux_drydep_name,implementation
+    !! Tracer flux names recognized by component models (OCN, LND, ICE, ATM)
+
      real, _ALLOCATABLE, dimension(:) :: flux_param, flux_gas_param
 
-     ! IN and OUT (restart) files
      character(len=fm_string_len) :: ice_restart_file, ocean_restart_file
      character(len=fm_string_len) :: flux_gas_restart_file
-     ! Units of measurement for its field and its flux
+    !! IN and OUT (restart) files
+
      character(len=fm_string_len) :: units, flux_units
+    !! Units of measurement for its field and its flux
 
-     ! Tracer concentration field in space (and time)
-     ! MOM keeps the prognostic tracer fields at 3 time levels, hence 4D.
      real, pointer, dimension(:,:,:,:):: field  => NULL()
-     !The following pointer is intended to point to prognostic tracer field in MOM. Do not allocate!
-     real, pointer,      dimension(:,:,:,:):: field4d_ptr => NULL()
-     !The following pointer is intended to point to diagnostic tracer field in MOM. Do not allocate!
-     real, pointer,      dimension(:,:,:)  :: field3d_ptr => NULL()
-     ! Define a 3-d field pointer so as to retain the lower
-     ! and upper bounds for the 3-d version of g_tracer_get_pointer
-     ! for the field option
-     real, pointer,      dimension(:,:,:)  :: field_3d => NULL()
+    !! Tracer concentration field in space (and time)
+    !! MOM keeps the prognostic tracer fields at 3 time levels, hence 4D.
 
-     ! Surface flux, surface flux of gas, deltap and kw
-     real, _ALLOCATABLE, dimension(:,:)    :: stf    _NULL
-     real, _ALLOCATABLE, dimension(:,:)    :: stf_gas    _NULL
+     real, pointer,      dimension(:,:,:,:):: field4d_ptr => NULL()
+    !! Intended to point to prognostic tracer field in MOM. Do not allocate!
+
+     real, pointer,      dimension(:,:,:)  :: field3d_ptr => NULL()
+    !! Intended to point to diagnostic tracer field in MOM. Do not allocate!
+
+     real, pointer,      dimension(:,:,:)  :: field_3d => NULL()
+    !! Define a 3-d field pointer so as to retain the lower
+    !! and upper bounds for the 3-d version of g_tracer_get_pointer
+    !! for the field option
+
+     real, _ALLOCATABLE, dimension(:,:)    :: stf    _NULL !! Surface tracer flux
+     real, _ALLOCATABLE, dimension(:,:)    :: stf_gas    _NULL !! Surface flux of gas
      real, _ALLOCATABLE, dimension(:,:)    :: deltap    _NULL
      real, _ALLOCATABLE, dimension(:,:)    :: kw    _NULL
 
-     ! Bottom  flux
-     real, _ALLOCATABLE, dimension(:,:)    :: btf    _NULL
+     real, _ALLOCATABLE, dimension(:,:)    :: btf    _NULL !! Bottom tracer flux
+     real, _ALLOCATABLE, dimension(:,:)    :: btm_reservoir    _NULL !! Bottom reservoir flux
+     real, _ALLOCATABLE, dimension(:,:)    :: trunoff _NULL !! Tracer concentration in river runoff
 
-     ! Bottom  reservoir flux
-     real, _ALLOCATABLE, dimension(:,:)    :: btm_reservoir    _NULL
+     real, _ALLOCATABLE, dimension(:,:)    :: runoff_tracer_flux _NULL !! Runoff flux of tracer
 
-     ! Tracer concentration in river runoff
-     real, _ALLOCATABLE, dimension(:,:)    :: trunoff _NULL
+     real, _ALLOCATABLE, dimension(:,:)    :: wetdep _NULL !! Wet deposition flux of tracer
+     real, _ALLOCATABLE, dimension(:,:)    :: drydep _NULL !! Dry deposition flux of tracer
 
-     ! Runoff flux of tracer
-     real, _ALLOCATABLE, dimension(:,:)    :: runoff_tracer_flux _NULL
+     real, _ALLOCATABLE, dimension(:,:)    :: csurf  _NULL !! Tracer saturation
+     real, _ALLOCATABLE, dimension(:,:)    :: alpha  _NULL !! Tracer alpha
+     real, _ALLOCATABLE, dimension(:,:)    :: sc_no  _NULL !! Schmidt number
 
-     ! Wet deposition flux of tracer
-     real, _ALLOCATABLE, dimension(:,:)    :: wetdep _NULL
-
-     ! Dry deposition flux of tracer
-     real, _ALLOCATABLE, dimension(:,:)    :: drydep _NULL
-
-     ! Tracer saturation, alpha and schmidt number
-     real, _ALLOCATABLE, dimension(:,:)    :: csurf  _NULL
-
-     real, _ALLOCATABLE, dimension(:,:)    :: alpha  _NULL
-
-     real, _ALLOCATABLE, dimension(:,:)    :: sc_no  _NULL
-
-     ! An 3D field for vertical movement, esp. for zooplankton, ...
      real, _ALLOCATABLE, dimension(:,:,:)  :: vmove  _NULL
+    !! A 3D field for vertical movement, esp. for zooplankton,
 
-     ! An 3D field for random vertical movement, esp. for zooplankton, ...
      real, _ALLOCATABLE, dimension(:,:,:)  :: vdiff  _NULL
+    !! A 3D field for random vertical movement, esp. for zooplankton, ...
 
      ! The following arrays are for tracer budget diagnostics
      ! originally developed by Enhui Lao, Fan Yang, and Mathieu Poupon.
 
-     ! An 3D field for implicit vertical diffusion
      real, _ALLOCATABLE, dimension(:,:,:)  :: vdiffuse_impl  _NULL
+    !! A 3D field for implicit vertical diffusion
 
-     ! An 3D field for implicit vertical diffusion, concentration
      real, _ALLOCATABLE, dimension(:,:,:)  :: vdiffusec_impl  _NULL
+    !! A 3D field for implicit vertical diffusion, concentration
 
-     ! An 3D field for diagnosing forcing from the boundary
      real, _ALLOCATABLE, dimension(:,:,:)  :: boundary_forcing_tend  _NULL
+    !! A 3D field for diagnosing forcing from the boundary
 
-     ! An auxiliary 3D field for keeping model dependent change tendencies, ...
      real, pointer, dimension(:,:,:)  :: tendency  => NULL()
+    !! An auxiliary 3D field for keeping model dependent change tendencies, ...
 
-     ! IDs for using diag_manager tools
      integer :: diag_id_field=-1, diag_id_stf=-1, diag_id_stf_gas=-1, diag_id_deltap=-1, diag_id_kw=-1, diag_id_trunoff=-1
      integer :: diag_id_stf_gas_aux=-1
      integer :: diag_id_alpha=-1, diag_id_csurf=-1, diag_id_sc_no=-1, diag_id_aux=-1
      integer :: diag_id_btf=-1,diag_id_btm=-1, diag_id_vmove=-1, diag_id_vdiff=-1
      integer :: diag_id_vdiffuse_impl = -1
      integer :: diag_id_vdiffusec_impl = -1, diag_id_boundary_forcing_tend = -1
-     ! Tracer Initial concentration if constant everywhere
+    !! IDs for using diag_manager tools
+
      real    :: const_init_value = 0.0
      real    :: initial_value = 0.0
-     ! Tracer Sinking rate
-     real    :: sink_rate   = 0.0
+    !! Tracer Initial concentration if constant everywhere
+
+     real    :: sink_rate   = 0.0  !! Tracer Sinking rate
 
      ! Logical switches
-     logical :: prog        = .false. !Is this a prognostic (.true.) or diagnostic (.false.) tracer?
-     logical :: move_vertical = .false. ! Enable allocation of fields for active vertical movement
-     logical :: diff_vertical = .false. ! Enable allocation of fields for random active vertical movement
-     logical :: flux_gas    = .false. !Is there a gas flux to atmosphere?
-     logical :: flux_runoff = .false. !Is there a river flux?
-     logical :: flux_wetdep = .false. !Is there a wet deposition?
-     logical :: flux_drydep = .false. !Is there a dry deposition?
-     logical :: flux_bottom = .false. !Is there a flux through bottom?
-     logical :: has_btm_reservoir = .false. !Is there a flux bottom reservoir?
-     logical :: runoff_added_to_stf = .false. ! Has flux in from runoff been added to stf?
+     logical :: prog        = .false.
+    !! Is this a prognostic (.true.) or diagnostic (.false.) tracer?
+     logical :: move_vertical = .false.
+    !! Enable allocation of fields for active vertical movement
+     logical :: diff_vertical = .false.
+    !! Enable allocation of fields for random active vertical movement
+     logical :: flux_gas    = .false.
+    !! Is there a gas flux to atmosphere?
+     logical :: flux_runoff = .false.
+    !! Is there a river flux?
+     logical :: flux_wetdep = .false.
+    !! Is there a wet deposition?
+     logical :: flux_drydep = .false.
+    !! Is there a dry deposition?
+     logical :: flux_bottom = .false.
+    !! Is there a flux through bottom?
+     logical :: has_btm_reservoir = .false.
+    !! Is there a flux bottom reservoir?
+     logical :: runoff_added_to_stf = .false.
+    !! Has flux in from runoff been added to stf?
 
-     ! Flux identifiers to be set by aof_set_coupler_flux()
      integer :: flux_gas_ind    = -1
      integer :: flux_runoff_ind = -1
      integer :: flux_wetdep_ind = -1
      integer :: flux_drydep_ind = -1
+    !! Flux identifiers to be set by aof_set_coupler_flux()
+
 
      logical :: requires_restart = .true.
-     ! Tracer source: filename, type, var name, units, record, gridfile
      character(len=fm_string_len) :: src_file, src_var_name, src_var_unit, src_var_gridspec
+    !! Tracer source: filename, type, var name, units, record, gridfile
      character(len=fm_string_len) :: obc_src_file_name,obc_src_field_name
      real    :: obc_lfac_in = 1.
      real    :: obc_lfac_out= 1.
      logical :: obc_has = .true.
      integer :: src_var_record
      logical :: requires_src_info = .false.
-     real    :: src_var_unit_conversion = 1.0 !This factor depends on the tracer. Ask  Jasmin
+     real    :: src_var_unit_conversion = 1.0
+    !! This factor depends on the tracer. Ask  Jasmin
      real    :: src_var_valid_min = 0.0
      real    :: src_var_valid_max
 
@@ -287,13 +284,13 @@ module g_tracer_utils
 
 
   type g_diag_type
-     !A pointer to the next node in the list for the current "linked-list implementation".
      type(g_diag_type), pointer :: next => NULL()
+    !! A pointer to the next node in the list for the current "linked-list implementation".
 
      integer :: diag_id = -1
      character(len=fm_string_len) :: name, longname, package_name, units
-     !Diagnostic axes
      integer :: axes(3)
+    !! Diagnostic axes
      type(time_type) :: init_time
      real :: missing_value = -1.0e+10
      integer :: Z_diag = 0
@@ -307,45 +304,38 @@ module g_tracer_utils
   end type g_diag_ctrl
 #endif
 
-  ! <DESCRIPTION>
-  ! Public types:
-  !
-  ! The following type fields are common to ALL generic tracers and hence has to be instantiated only once:
-  ! </DESCRIPTION>
   type g_tracer_common
+  !! Common to ALL generic tracers and hence has to be instantiated only once.
+
      type(g_diag_ctrl) :: diag_CS
-     !Domain extents
      integer :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk
+    !! Domain extents
 
-     !Number of time levels
      integer :: ntau
+    !! Number of time levels
 
-     !Diagnostic axes
      integer :: axes(3)
+    !! Diagnostic axes
 
-     !Initial time used for diagnostics (all tracers are instantiated at the same time).
      type(time_type)        :: init_time
+    !! Initial time used for diagnostics (all tracers are instantiated at the same time).
 
-     !Grid mask
      real, _ALLOCATABLE, dimension(:,:,:) :: grid_tmask  _NULL !nnz: Make this a pointer, needs to be "target" in models
+    !! Grid mask
 
-     !Grid bottom index
      integer, _ALLOCATABLE, dimension(:,:):: grid_kmt    _NULL
+    !! Grid bottom index
 
-     !coast mask
      integer, _ALLOCATABLE, dimension(:,:):: grid_mask_coast    _NULL
+    !! coast mask
 
-     ! IN and OUT (restart) files
      character(len=fm_string_len) :: ice_restart_file, ocean_restart_file
+    !! IN and OUT (restart) files
   end type g_tracer_common
 
   !Keep the state of this common type for ALL tracers
   type(g_tracer_common), target, save :: g_tracer_com
 
-
-  ! <DESCRIPTION>
-  ! Public interfaces:
-  ! </DESCRIPTION>
   public :: g_tracer_type
   public :: g_tracer_find
   public :: g_tracer_add
@@ -384,47 +374,32 @@ module g_tracer_utils
   public :: g_tracer_get_obc_segment_props
   public :: fm_string_len
   public :: is_root_pe
-  ! <INTERFACE NAME="g_tracer_add_param">
-  !  <OVERVIEW>
-  !   Add a new parameter for the generic tracer package
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   This subroutine is used to add a new parameter by the calling tracer package.
-  !   It provides a mechanism for parameter overwrite through the field_table.
-  !For each tracer package there is a field called namelists and there
-  !the parameters can be modified from their value set by this method.
-  !E.g., we may have the following in the field_table
-  !
-  !   "namelists","ocean_mod","generic_topaz"
-  !   init = t
-  !    /
-  !This will overwrite the parameter topaz%init to be .true. at the run time
-  !even though generic_topaz package had in the code
-  !<TT>call g_tracer_add_param('init', topaz%init, .false. )</TT>
-  !
-  !   For the parameters overwrite mechanism to work all calls
-  !   for adding new parameters (refer to description for subroutine g_tracer_add_param)
-  !   should happen between a <TT>call g_tracer_start_param_list(package_name)</TT>
-  !   and a <TT>call g_tracer_end_param_list(package_name)</TT>
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_add_param(param_name, param_variable, param_value )
-  !  </TEMPLATE>
-  !  <IN NAME="param_name" TYPE="character(len=fm_string_len)">
-  !   Name of the  parameter (e.g., "init")
-  !  </IN>
-  !  <IN NAME="param_variable" TYPE="integer or logical or real">
-  !   Variable to contain the  parameter (e.g., "topaz%init")
-  !  </IN>
-  !  <IN NAME="param_value" TYPE="integer or logical or real">
-  !   Value of the  parameter (e.g., ".true.")
-  !  </IN>
-  ! </INTERFACE>
+
   interface g_tracer_add_param
-     module procedure g_tracer_add_param_real
-     module procedure g_tracer_add_param_logical
-     module procedure g_tracer_add_param_integer
-     module procedure g_tracer_add_param_string
+    !! Add a new parameter for the generic tracer package.
+    !!
+    !! This interface is used to add a new parameter by the calling tracer package.
+    !! It provides a mechanism for parameter overwrite through the field_table.
+    !! For each tracer package there is a field called namelists and there
+    !! the parameters can be modified from their value set by this method.
+    !! E.g., we may have the following in the field_table
+    !! ```
+    !! "namelists","ocean_mod","generic_topaz"
+    !! init = t
+    !! /
+    !! ```
+    !! This will overwrite the parameter topaz%init to be .true. at the run time
+    !! even though generic_topaz package had in the code
+    !! `call g_tracer_add_param('init', topaz%init, .false. )`
+    !!
+    !! For the parameters override mechanism to work, all calls
+    !! for adding new parameters
+    !! should happen between a `call g_tracer_start_param_list(package_name)`
+    !! and a `call g_tracer_end_param_list(package_name)`
+    module procedure g_tracer_add_param_real
+    module procedure g_tracer_add_param_logical
+    module procedure g_tracer_add_param_integer
+    module procedure g_tracer_add_param_string
   end interface
 
   interface g_tracer_set_pointer
@@ -439,83 +414,44 @@ module g_tracer_utils
      MODULE PROCEDURE g_send_data_3d
   END INTERFACE
 
-
-
-  ! <INTERFACE NAME="g_tracer_set_values">
-  !  <OVERVIEW>
-  !   Set the values of various (array) memebers of the tracer node g_tracer_type
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   This function is overloaded to set the values of the following member variables
-  !4D arrays:   'field'
-  !3D arrays:   'field' , 'tendency'
-  !2D arrays:   'alpha','csurf','sc_no','stf','stf_gas','deltap','kw','btf','btm_reservoir','trunoff','runoff_tracer_flux','drydep','wetdep'
-  !1D values:   'field','tendency','stf','stf_gas','deltap','kw','btf','btm_reservoir','trunoff','runoff_tracer_flux','drydep','wetdep','btm_reservoir','sink_rate'
-  !
-  !In case of 1D values all element arrays are set to the particular value.
-  !
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_set_values(tracer_list,tracer_name,field_name, array_in ,isd,jsd)
-  !  </TEMPLATE>
-  !  <IN NAME="tracer_list" TYPE="type(g_tracer_type),    pointer">
-  !   Pointer to the head of the generic tracer list.
-  !  </IN>
-  !  <IN NAME="tracer_name" TYPE="character(len=*)">
-  !   Name of the particular tracer.
-  !  </IN>
-  !  <IN NAME="field_name" TYPE="character(len=*)">
-  !   String associated with the member array, one of the following:
-  !   'field','tendency','stf','stf_gas','deltap','kw','btf','btm_reservoir','trunoff','runoff_tracer_flux','drydep','wetdep','btm_reservoir','sink_rate'
-  !   So the result of this call is tracer%field_name = array_in for the tracer called tracer_name
-  !  </IN>
-  !  <IN NAME="value" TYPE="real OR real(isd:,jsd:) OR real(isd:,jsd:,:) OR real(isd:,jsd:,:,:)">
-  !   Overloaded based on the dimension of argument array_in.
-  !  </IN>
-  !  <IN NAME="isd,jsd" TYPE="integer">
-  !   Lower bound of the domain for argument array_in
-  !  </IN>
-  ! </INTERFACE>
   interface g_tracer_set_values
+    !! Set the values of various (array) members of the tracer node g_tracer_type
+    !!
+    !! This subroutine is overloaded to set the values of the following member variables:
+    !! 4D arrays:   'field'
+    !! 3D arrays:   'vmove', 'vdiff', 'vdiffuse_impl', 'vdiffusec_impl', 'boundary_forcing_tend'
+    !! 2D arrays:   'alpha', 'csurf', 'sc_no', 'stf', 'stf_gas', 'deltap', 'kw', 'btf', 'btm_reservoir', 'trunoff', 'runoff_tracer_flux', 'drydep', 'wetdep'
+    !! 1D values:   'field', 'tendency', 'alpha', 'csurf', 'sc_no', 'stf', 'stf_gas', 'deltap', 'kw', 'btf', 'btm_reservoir', 'trunoff', 'runoff_tracer_flux', 'sink_rate'
+    !!
+    !! In case of 1D values all element arrays are set to the particular value.
+    !!
+    !! Usage:
+    !! `call g_tracer_set_values(tracer_list,tracer_name,field_name, array_in ,isd,jsd)`
      module procedure g_tracer_set_real
      module procedure g_tracer_set_2D
      module procedure g_tracer_set_3D
      module procedure g_tracer_set_4D
   end interface
 
-  ! <INTERFACE NAME="g_tracer_get_values">
-  !  <OVERVIEW>
-  !   Reverse of interface g_tracer_set_values for getting the tracer member arrays  in the argument value.
-  !  </OVERVIEW>
-  !  <TEMPLATE>
-  !   call g_tracer_get_values(tracer_list,tracer_name,field_name, array_out ,isd,jsd)
-  !  </TEMPLATE>
-  !  <DESCRIPTION>
-  !   This means "get the values of array  %field_name for tracer tracer_name and put them in argument array_out".
-  !  </DESCRIPTION>
-  ! </INTERFACE>
-  !
   interface g_tracer_get_values
-     module procedure g_tracer_get_4D_val
-     module procedure g_tracer_get_3D_val
-     module procedure g_tracer_get_2D_val
-     module procedure g_tracer_get_real
-     module procedure g_tracer_get_string
+    !! Reverse of interface [[g_tracer_set_values]] for getting the tracer member arrays  in the argument value.
+    !!
+    !! For example,
+    !! `call g_tracer_get_values(tracer_list,tracer_name,field_name, array_out ,isd,jsd)`
+    !! means "get the values of array  %field_name for tracer tracer_name and put them in argument array_out".
+    module procedure g_tracer_get_4D_val
+    module procedure g_tracer_get_3D_val
+    module procedure g_tracer_get_2D_val
+    module procedure g_tracer_get_real
+    module procedure g_tracer_get_string
   end interface
 
-  ! <INTERFACE NAME="g_tracer_get_pointer">
-  !  <OVERVIEW>
-  !   Return the pointer to the requested field of a particular tracer
-  !  </OVERVIEW>
-  !  <TEMPLATE>
-  !       call g_tracer_get_pointer(tracer_list,tracer_name,field_name, array_ptr)
-  !  </TEMPLATE>
-  !  <DESCRIPTION>
-  !   This means "get the pointer of array  %field_name for tracer tracer_name  in argument array_ptr".
-  !  </DESCRIPTION>
-  ! </INTERFACE>
-
   interface g_tracer_get_pointer
+    !! Return the pointer to the requested field of a particular tracer.
+    !!
+    !! For example,
+    !! `call g_tracer_get_pointer(tracer_list,tracer_name,field_name, array_ptr)`
+    !! means "get the pointer of array  %field_name for tracer tracer_name  in argument array_ptr".
      module procedure g_tracer_get_4D
      module procedure g_tracer_get_3D
      module procedure g_tracer_get_2D
@@ -523,26 +459,16 @@ module g_tracer_utils
 
 contains
 
-  ! <SUBROUTINE NAME="g_tracer_start_param_list">
-  !  <OVERVIEW>
-  !   Mark the start of adding new parameters for a package
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   For the parameters override mechanism to work all calls
-  !   for adding new parameters (refer to description for subroutine g_tracer_add_param)
-  !   should happen between a <TT>call g_tracer_start_param_list(package_name)</TT>
-  !   and a <TT>call g_tracer_end_param_list(package_name)</TT>
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_start_param_list(package_name)
-  !  </TEMPLATE>
-  !  <IN NAME="package_name" TYPE="character(len=fm_string_len)">
-  !   Name of the generic tracer package that is adding the parameters (e.g., "generic_cfc")
-  !  </IN>
-  ! </SUBROUTINE>
-
   subroutine g_tracer_start_param_list(package_name)
+    !! Mark the start of adding new parameters for a package
+    !! For the parameters override mechanism to work, all calls
+    !! for adding new parameters (refer to description for [[g_tracer_utils(module):g_tracer_add_param(interface)]])
+    !! should happen between a `call g_tracer_start_param_list(package_name)`
+    !! and a `call g_tracer_end_param_list(package_name)`
+
     character(len=fm_string_len), intent(in) :: package_name
+      !! Name of the package adding parameters.
+      !! For example, the COBALT model uses `generic_cobalt`.
     character(len=fm_string_len), parameter  :: sub_name = 'g_tracer_start_param_list'
     character(len=fm_string_len) :: list_path
     integer                      :: list_index
@@ -560,35 +486,30 @@ contains
 
   end subroutine g_tracer_start_param_list
 
-  ! <SUBROUTINE NAME="g_tracer_end_param_list">
-  !  <OVERVIEW>
-  !   Mark the start of adding new parameters for a package
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   For the parameters override mechanism to work all calls
-  !   for adding new parameters (refer to description for subroutine g_tracer_add_param)
-  !   should happen between a <TT>call g_tracer_start_param_list(package_name)</TT>
-  !   and a <TT>call g_tracer_end_param_list(package_name)</TT>
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_end_param_list(package_name)
-  !  </TEMPLATE>
-  !  <IN NAME="package_name" TYPE="character(len=fm_string_len)">
-  !   Name of the generic tracer package that is adding the parameters (e.g., "generic_cfc")
-  !  </IN>
-  ! </SUBROUTINE>
-
   subroutine g_tracer_end_param_list(package_name)
+    !! Finish adding new parameters for a package
+    !! For the parameters override mechanism to work, all calls
+    !! for adding new parameters (refer to description for [[g_tracer_add_param(interface)]])
+    !! should happen between a `call g_tracer_start_param_list(package_name)`
+    !! and a `call g_tracer_end_param_list(package_name)`
+
     character(len=fm_string_len) :: package_name
+      !! Name of the package adding parameters.
+      !! For example, the COBALT model uses `generic_cobalt`.
 
   end subroutine g_tracer_end_param_list
 
-  !Overload interface g_tracer_add_param for real parameter
   subroutine g_tracer_add_param_real(name, var, value, do_not_log)
+    !! Overload interface [[g_tracer_add_param(interface)]] for real parameter
+
     character(len=*), intent(in)  :: name
+      !! Parameter name to look up in field table
     real,             intent(in)  :: value
+      !! Default parameter value if not found in field table
     real,             intent(out) :: var
-    logical,          optional, intent(in)    :: do_not_log !< If present and true, no stdout for parameter
+      !! Parameter value returned to caller
+    logical,          optional, intent(in)    :: do_not_log
+      !! If present and true, no stdout for parameter
 
     real :: x
     integer :: stdoutunit
@@ -618,12 +539,17 @@ contains
 
   end subroutine g_tracer_add_param_real
 
-  !Overload interface g_tracer_add_param for logical parameter
   subroutine g_tracer_add_param_logical(name, var, value, do_not_log)
+    !! Overload interface [[g_tracer_add_param(interface)]] for logical parameter
+
     character(len=*), intent(in)  :: name
+      !! Parameter name to look up in field table
     logical,          intent(in)  :: value
+      !! Default parameter value if not found in field table
     logical,          intent(out) :: var
-    logical,          optional, intent(in)    :: do_not_log !< If present and true, no stdout for parameter
+      !! Parameter value returned to caller
+    logical,          optional, intent(in)    :: do_not_log
+      !! If present and true, no stdout for parameter
 
     logical :: x
     integer :: stdoutunit
@@ -658,12 +584,17 @@ contains
 
   end subroutine g_tracer_add_param_logical
 
-  !Overload interface g_tracer_add_param for integer parameter
   subroutine g_tracer_add_param_integer(name, var, value, do_not_log)
+    !! Overload interface [[g_tracer_add_param(interface)]] for integer parameter
+
     character(len=*), intent(in)  :: name
+      !! Parameter name to look up in field table
     integer,          intent(in)  :: value
+      !! Default parameter value if not found in field table
     integer,          intent(out) :: var
-    logical,          optional, intent(in)    :: do_not_log !< If present and true, no stdout for parameter
+      !! Parameter value returned to caller
+    logical,          optional, intent(in)    :: do_not_log
+      !! If present and true, no stdout for parameter
 
     real :: x
     integer :: stdoutunit
@@ -693,12 +624,16 @@ contains
 
   end subroutine g_tracer_add_param_integer
 
-  !Overload interface g_tracer_add_param for string parameter
   subroutine g_tracer_add_param_string(name, var, value, do_not_log)
+    !! Overload interface [[g_tracer_add_param(interface)]] for string parameter
     character(len=*), intent(in)  :: name
+    !! Parameter name to look up in field table
     character(len=*), intent(in)  :: value
+    !! Default parameter value if not found in field table
     character(len=*), intent(out) :: var
-    logical,          optional, intent(in)    :: do_not_log !< If present and true, no stdout for parameter
+    !! Parameter value returned to caller
+    logical,          optional, intent(in)    :: do_not_log
+    !! If present and true, no stdout for parameter
 
     character(len=fm_string_len) :: x
     integer :: stdoutunit
@@ -2145,16 +2080,24 @@ contains
 
   end subroutine g_tracer_get_string
 
-  !Overload interface g_tracer_set_values for 2D fields
-
   subroutine g_tracer_set_2D(g_tracer_list,name,member,array,isd,jsd,weight)
+    !! Overload interface [[g_tracer_set_values(interface)]] for 2D fields
+    type(g_tracer_type),      pointer    :: g_tracer_list
+      !! Pointer to the head of the generic tracer list.
     character(len=*),         intent(in) :: name
+      !! Name of the particular tracer.
     character(len=*),         intent(in) :: member
-    type(g_tracer_type),      pointer    :: g_tracer_list, g_tracer
+      !! String associated with the member array, one of the following:
+      !! 'alpha', 'csurf', 'sc_no', 'stf', 'stf_gas', 'deltap', 'kw', 'btf',
+      !! 'btm_reservoir', 'trunoff', 'runoff_tracer_flux', 'drydep', 'wetdep'.
+      !! So the result of this call is `tracer%name = array` for the tracer called `name`
     integer,                   intent(in) :: isd,jsd
+      !! Lower bound of the domain for argument `array`
     real, dimension(isd:,jsd:),intent(in) :: array
+      !! Set the tracer field to this array.
     real, optional            ,intent(in) :: weight
 
+    type(g_tracer_type),      pointer    :: g_tracer
     real :: w0,w1
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_set_2D'
 
@@ -2217,16 +2160,24 @@ contains
 
   end subroutine g_tracer_set_2D
 
-  !Overload interface g_tracer_set_values for 3D fields
-
   subroutine g_tracer_set_3D(g_tracer_list,name,member,array,isd,jsd,ntau)
+    !! Overload interface [[g_tracer_set_values(interface)]] for 3D fields
+    type(g_tracer_type),      pointer    :: g_tracer_list
+      !! Pointer to the head of the generic tracer list.
     character(len=*),         intent(in) :: name
+      !! Name of the particular tracer.
     character(len=*),         intent(in) :: member
-    type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
+      !! String associated with the member array, one of the following:
+      !! 'vmove', 'vdiff', 'vdiffuse_impl', 'vdiffusec_impl', 'boundary_forcing_tend'.
     integer,                  intent(in) :: isd,jsd
+      !! Lower bound of the domain for argument `array`
     integer, optional,        intent(in) :: ntau
+      !! Optional time index
     real, dimension(isd:,jsd:,:), intent(in)       :: array
+      !! Set the tracer field to this array.
+
     integer :: tau
+    type(g_tracer_type),      pointer    :: g_tracer
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_set_3D'
 
@@ -2270,15 +2221,21 @@ contains
 
   end subroutine g_tracer_set_3D
 
-  !Overload interface g_tracer_set_values for 4D fields
-
   subroutine g_tracer_set_4D(g_tracer_list,name,member,array,isd,jsd)
+    !! Overload interface [[g_tracer_set_values(interface)]] for 4D fields
+    type(g_tracer_type),      pointer    :: g_tracer_list
+      !! Pointer to the head of the generic tracer list.
     character(len=*),         intent(in) :: name
+      !! Name of the particular tracer.
     character(len=*),         intent(in) :: member
-    type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
+      !! String associated with the member array, one of the following:
+      !! 'field'.
     integer,                  intent(in) :: isd,jsd
+      !! Lower bound of the domain for argument `array`
     real, dimension(isd:,jsd:,:,:), intent(in)       :: array
+      !! Set the tracer field to this array.
 
+    type(g_tracer_type),      pointer    :: g_tracer
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_set_4D'
 
     if(.NOT. associated(g_tracer_list)) call mpp_error(FATAL, trim(sub_name)//&
@@ -2304,13 +2261,21 @@ contains
 
   end subroutine g_tracer_set_4D
 
-  !Overload interface g_tracer_set_values for 1D fields
-
   subroutine g_tracer_set_real(g_tracer_list,name,member,value)
+    !! Overload interface [[g_tracer_set_values(interface)]] for 1D fields
+    type(g_tracer_type),      pointer    :: g_tracer_list
+      !! Pointer to the head of the generic tracer list.
     character(len=*),         intent(in) :: name
+      !! Name of the particular tracer.
     character(len=*),         intent(in) :: member
-    type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
+      !! String associated with the member array, one of the following:
+      !! 'field', 'tendency', 'alpha', 'csurf', 'sc_no', 'stf', 'stf_gas', 'deltap',
+      !! 'kw', 'btf', 'btm_reservoir', 'trunoff', 'runoff_tracer_flux', 'sink_rate'.
+      !! So the result of this call is `tracer%name = value` for the tracer called `name`
     real,                     intent(in) :: value
+      !! Set the tracer field to this value.
+
+    type(g_tracer_type),      pointer    :: g_tracer
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_set_real'
 
@@ -3479,8 +3444,8 @@ contains
    !-----------------------------------------------------------------------
    !> @brief Solves a tridiagonal system of equations using the algorithm from Press et al.
    !>
-   !> @reference Numerical Recipes in Fortran77: The Art of Scientific Computing, 2nd Edition, 
-   !> by Press, Teukolsky, Vetterling, and Flannery, Cambridge University Press, 
+   !> @reference Numerical Recipes in Fortran77: The Art of Scientific Computing, 2nd Edition,
+   !> by Press, Teukolsky, Vetterling, and Flannery, Cambridge University Press,
    !> Section 2.4 Tridiagonal and Diagonal Systems of Equations.
    !>
    !> This subroutine solves a tridiagonal linear system of the form:
