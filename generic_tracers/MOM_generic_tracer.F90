@@ -390,15 +390,6 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
             !if (tr_ptr(i,j,k) > g_tracer%src_var_valid_max) tr_ptr(i,j,k) = g_tracer%src_var_valid_max
           endif
         enddo ; enddo ; enddo
-
-        !jgj: Reset CASED to 0 below K=1
-        if ( (trim(g_tracer_name) == 'cased') .or. (trim(g_tracer_name) == 'ca13csed') ) then
-          do k=2,nk ; do j=jsc,jec ; do i=isc,iec
-            if (tr_ptr(i,j,k) /= CS%tracer_land_val) then
-              tr_ptr(i,j,k) = 0.0
-            endif
-          enddo ; enddo ; enddo
-        endif
       elseif(.not. g_tracer%requires_restart) then
        !Do nothing for this tracer, it is initialized by the tracer package
         call MOM_error(NOTE,"initialize_MOM_generic_tracer: "//&
