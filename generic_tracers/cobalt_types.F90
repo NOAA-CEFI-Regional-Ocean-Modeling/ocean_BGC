@@ -814,29 +814,6 @@ module cobalt_types
           fptot_btm,&
           ffetot_btm,&
           fsitot_btm,&
-          f_cadet_arag_btf,&
-          f_cadet_calc_btf,&
-          f_fedet_btf, &
-          f_lithdet_btf, &
-          f_ndet_btf,&
-          f_ndet_fast_btf,&
-          f_pdet_btf,&
-          f_pdet_fast_btf,&
-          f_sidet_btf,&
-          f_nsm_btf,&
-          f_nmd_btf,&
-          f_nlg_btf,&
-          f_ndi_btf,&
-          f_simd_btf,&
-          f_silg_btf,&
-          f_fesm_btf,&
-          f_femd_btf,&
-          f_felg_btf,&
-          f_fedi_btf,&
-          f_psm_btf,&
-          f_pmd_btf,&
-          f_plg_btf,&
-          f_pdi_btf,&
           fcased_burial,&
           fcased_redis,&
           fcased_redis_surfresp,&
@@ -955,6 +932,33 @@ module cobalt_types
           wc_vert_int_jfe_iceberg,&
           wc_vert_int_jno3_iceberg,&
           wc_vert_int_jpo4_iceberg
+!==============================================================================================================
+
+     ! Bottom fluxes to the sediments. These are pointers so that they can be registered directly as restart fields.
+     real, dimension(:,:), pointer :: &
+          f_cadet_arag_btf,&
+          f_cadet_calc_btf,&
+          f_fedet_btf, &
+          f_lithdet_btf, &
+          f_ndet_btf,&
+          f_ndet_fast_btf,&
+          f_pdet_btf,&
+          f_pdet_fast_btf,&
+          f_sidet_btf,&
+          f_nsm_btf,&
+          f_nmd_btf,&
+          f_nlg_btf,&
+          f_ndi_btf,&
+          f_simd_btf,&
+          f_silg_btf,&
+          f_fesm_btf,&
+          f_femd_btf,&
+          f_felg_btf,&
+          f_fedi_btf,&
+          f_psm_btf,&
+          f_pmd_btf,&
+          f_plg_btf,&
+          f_pdi_btf
 !==============================================================================================================
 
      real, dimension(:,:,:,:), pointer :: &

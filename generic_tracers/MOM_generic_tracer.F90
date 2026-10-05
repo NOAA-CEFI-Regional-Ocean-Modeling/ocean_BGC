@@ -21,7 +21,8 @@ use generic_tracer, only: generic_tracer_init, generic_tracer_source, generic_tr
 use generic_tracer, only: generic_tracer_coupler_get, generic_tracer_coupler_set
 use generic_tracer, only: generic_tracer_end, generic_tracer_get_list, do_generic_tracer
 use generic_tracer, only: generic_tracer_update_from_bottom,generic_tracer_vertdiff_G
-use generic_tracer, only: generic_tracer_coupler_accumulate
+use generic_tracer, only: generic_tracer_coupler_accumulate, generic_tracer_restart_fields_2d
+use generic_restart_fields, only: g_restart_field_2d_type
 
 use g_tracer_utils,   only: g_tracer_get_name,g_tracer_set_values,g_tracer_set_common,g_tracer_get_common
 use g_tracer_utils,   only: g_tracer_get_next,g_tracer_type,g_tracer_is_prog,g_tracer_flux_init
@@ -37,6 +38,7 @@ use MOM_diag_mediator, only : diag_ctrl, get_diag_time_end
 use MOM_error_handler, only : MOM_error, FATAL, WARNING, NOTE
 use MOM_file_parser, only : get_param, log_param, log_version, param_file_type
 use MOM_forcing_type, only : forcing, optics_type
+use MOM_get_input, only : get_MOM_input, directories
 use MOM_grid, only : ocean_grid_type
 use MOM_hor_index, only : hor_index_type
 use MOM_interface_heights, only : thickness_to_dz
@@ -45,6 +47,7 @@ use MOM_open_boundary, only : ocean_OBC_type
 use MOM_open_boundary, only : register_obgc_segments, fill_obgc_segments
 use MOM_open_boundary, only : set_obgc_segments_props
 use MOM_restart, only : register_restart_field, query_initialized, set_initialized, MOM_restart_CS
+use MOM_restart, only : only_read_from_restarts
 use MOM_spatial_means, only : global_area_mean, global_mass_int_EFP, array_global_min_max
 use MOM_sponge, only : sponge_CS
 use MOM_time_manager, only : time_type, set_time
@@ -96,6 +99,8 @@ type, public :: MOM_generic_tracer_CS ; private
   type(ocean_OBC_type), pointer :: OBC => NULL() !<open boundary condition type
   !> Pointer to the first element of the linked list of generic tracers.
   type(g_tracer_type), pointer :: g_tracer_list => NULL()
+  !> 2D fields that the generic tracer packages keep outside of the tracer list, but save in restart files
+  type(g_restart_field_2d_type), dimension(:), allocatable :: restart_fields_2d
 
 end type MOM_generic_tracer_CS
 
@@ -123,7 +128,7 @@ function register_MOM_generic_tracer(HI, GV, param_file, CS, tr_Reg, restart_CS)
   character(len=200) :: inputdir ! The directory where NetCDF input files are.
   ! These can be overridden later in via the field manager?
 
-  integer :: ntau, axes(3)
+  integer :: ntau, axes(3), n
   type(g_tracer_type), pointer      :: g_tracer, g_tracer_next
   character(len=fm_string_len)      :: g_tracer_name, longname,units
   character(len=fm_string_len)      :: obc_src_file_name, obc_src_field_name
@@ -229,6 +234,16 @@ function register_MOM_generic_tracer(HI, GV, param_file, CS, tr_Reg, restart_CS)
     if (.NOT. associated(g_tracer_next)) exit
     g_tracer=>g_tracer_next
 
+  enddo
+
+  ! Register the 2D fields that are kept outside of the tracer list. These are not mandatory here because
+  ! they may instead be read from older 3D restart fields in initialize_MOM_generic_tracer, which also
+  ! checks that each of them was found.
+  call generic_tracer_restart_fields_2d(CS%restart_fields_2d)
+  do n=1,size(CS%restart_fields_2d)
+    call register_restart_field(CS%restart_fields_2d(n)%field, CS%restart_fields_2d(n)%name, .false., &
+                                restart_CS, longname=CS%restart_fields_2d(n)%longname, &
+                                units=CS%restart_fields_2d(n)%units)
   enddo
 
   register_MOM_generic_tracer = .true.
@@ -337,6 +352,8 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
        ": No tracer in the list.")
   !For each tracer name get its  fields
   g_tracer=>CS%g_tracer_list
+
+  if (restart) call read_legacy_restart_fields_2d(G, GV, CS)
 
   call thickness_to_dz(h, tv, dz, G, GV, US)
 
@@ -498,6 +515,53 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
 #endif
 
 end subroutine initialize_MOM_generic_tracer
+
+!> Fill any 2D restart fields that were not found in the restart files from the 3D fields that older
+!! versions saved instead, whose top level holds the same data. Without a legacy field, a missing
+!! 2D field is a fatal error unless TRACERS_MAY_REINIT is true, in which case it keeps its initial value.
+subroutine read_legacy_restart_fields_2d(G, GV, CS)
+  type(ocean_grid_type),       intent(in) :: G  !< The ocean's grid structure
+  type(verticalGrid_type),     intent(in) :: GV !< The ocean's vertical grid structure
+  type(MOM_generic_tracer_CS), pointer    :: CS !< Pointer to the control structure for this module.
+
+  ! Local variables
+  type(directories) :: dirs  ! The directories and file names used for restarts
+  real, dimension(SZI_(G),SZJ_(G),SZK_(GV)) :: legacy_field ! A legacy 3D restart field [various]
+  logical :: found           ! True if the legacy field was found in the restart files
+  logical :: have_dirs       ! True once dirs has been read
+  integer :: n
+
+  have_dirs = .false.
+  do n=1,size(CS%restart_fields_2d)
+    associate(rf => CS%restart_fields_2d(n))
+      if (query_initialized(rf%field, rf%name, CS%restart_CSp)) cycle
+
+      found = .false.
+      if (len_trim(rf%legacy_name) > 0) then
+        if (.not.have_dirs) then
+          ! Look for the restart files in the same place that restore_state does.
+          call get_MOM_input(dirs=dirs)
+          have_dirs = .true.
+        endif
+        legacy_field(:,:,:) = 0.0
+        call only_read_from_restarts(rf%legacy_name, legacy_field, G, CS%restart_CSp, &
+                                     filename=dirs%input_filename, directory=dirs%restart_input_dir, &
+                                     success=found)
+      endif
+
+      if (found) then
+        rf%field(:,:) = legacy_field(:,:,1)
+        call set_initialized(rf%field, rf%name, CS%restart_CSp)
+        call MOM_error(NOTE, "read_legacy_restart_fields_2d: Initialized "//trim(rf%name)// &
+                             " from the top level of the legacy restart field "//trim(rf%legacy_name))
+      elseif (.not.CS%tracers_may_reinit) then
+        call MOM_error(FATAL, "read_legacy_restart_fields_2d: Unable to find "//trim(rf%name)// &
+                              " or its legacy field "//trim(rf%legacy_name)//" in the restart files.")
+      endif
+    end associate
+  enddo
+
+end subroutine read_legacy_restart_fields_2d
 
 subroutine  g_tracer_initialize_sponges(G, GV, US, CS, param_file, Layer_CSp, ALE_CSp, Time)
   type(ocean_grid_type),   intent(in) :: G    !< The ocean's grid structure.
