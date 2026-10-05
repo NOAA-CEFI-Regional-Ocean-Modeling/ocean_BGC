@@ -14,8 +14,10 @@ Citations use pandoc syntax:
 
 import re
 import xml.etree.ElementTree as etree
+from html import escape
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from markdown import Markdown
 from markdown.inlinepatterns import InlineProcessor
@@ -71,9 +73,9 @@ class AuthorYearBibliography(Bibliography):
         html = super().formatReference(ref)
         doi = ref.fields.get('doi')
         if doi:
-            html = html.replace(
-                '</p>', f' <a href="https://doi.org/{doi}">doi:{doi}</a></p>'
-            )
+            # Old DOIs (SICI) contain "<" and ">", e.g. morel1994
+            link = f'<a href="https://doi.org/{quote(doi)}">doi:{escape(doi)}</a>'
+            html = html.replace('</p>', f' {link}</p>')
         return html
 
     def makeBibliography(self, root: etree.Element) -> etree.Element:
@@ -159,4 +161,9 @@ if __name__ == '__main__':
         html
     )
     assert '<td>Garcia and Gordon (1992)</td>' in html and 'Montégut' not in html, html
+    html = markdown.markdown('[@morel1994]', extensions=[makeExtension()])
+    assert (
+        '<a href="https://doi.org/10.1175/1520-0485%281994%29024%3C1652%3Ahrwtuo%3E2.0.co%3B2">'
+        'doi:10.1175/1520-0485(1994)024&lt;1652:hrwtuo&gt;2.0.co;2</a>'
+    ) in html, html
     print('ok')
