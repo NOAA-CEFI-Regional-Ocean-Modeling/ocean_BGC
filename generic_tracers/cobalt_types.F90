@@ -632,7 +632,6 @@ module cobalt_types
           f_htotal,&
           f_irr_aclm,&
           f_irr_aclm_z,&
-          f_irr_aclm_sfc, &
           f_cased,&
           jnbact,&
           jndi,&
@@ -934,8 +933,11 @@ module cobalt_types
           wc_vert_int_jpo4_iceberg
 !==============================================================================================================
 
-     ! Bottom fluxes to the sediments. These are pointers so that they can be registered directly as restart fields.
+     ! 2D fields that are saved in restart files. These are pointers so that they can be registered directly
+     ! as restart fields (see generic_COBALT_restart_fields_2d).
      real, dimension(:,:), pointer :: &
+          f_irr_aclm_sfc,&       ! Surface photoacclimation irradiance
+          ! Bottom fluxes to the sediments
           f_cadet_arag_btf,&
           f_cadet_calc_btf,&
           f_fedet_btf, &

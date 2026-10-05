@@ -2360,13 +2360,8 @@ contains
          prog       = .false.,       &
          init_value = 0.08           )
     !
-    !       CO3_ion (Carbonate ion)
-    !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'co3_ion',       &
-         longname   = 'Carbonate ion', &
-         units      = 'mol/kg',        &
-         prog       = .false.          )
+    !      The carbonate ion concentration (cobalt%f_co3_ion) is not a tracer, and is not saved in restart
+    !      files, because it is recalculated in update_from_source before it is used.
     !
     !      The bottom fluxes to the sediments (*_btf) are not tracers. They are kept in the 2D
     !      cobalt%f_*_btf arrays and saved as restart fields (see generic_COBALT_restart_fields_2d).
@@ -2387,12 +2382,7 @@ contains
          longname   = 'photoacclimation irradiance', &
          units      = 'Watts/m^2',         &
          prog       = .false.              )
-
-     call g_tracer_add(tracer_list,package_name,&
-         name       = 'irr_aclm_sfc',       &
-         longname   = 'Surface photoacclimation irradiance', &
-         units      = 'Watts/m^2',         &
-         prog       = .false.              )
+    !      The surface photoacclimation irradiance is a 2D restart field (see generic_COBALT_restart_fields_2d).
 
       call g_tracer_add(tracer_list,package_name,&
          name       = 'irr_aclm_z',       &
@@ -2906,7 +2896,6 @@ contains
     enddo
 
     call g_tracer_set_values(tracer_list,'htotal','field',cobalt%f_htotal  ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd)
     call g_tracer_set_values(tracer_list,'dic','alpha',cobalt%co2_alpha    ,isd,jsd)
     call g_tracer_set_values(tracer_list,'dic','csurf',cobalt%co2_csurf    ,isd,jsd)
 
@@ -3020,10 +3009,9 @@ contains
     ! diagnostic tracers that are passed between time steps (except chlorophyll)
     !
     call g_tracer_get_values(tracer_list,'cased'  ,'field',cobalt%f_cased    ,isd,jsd)
-    call g_tracer_get_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd,positive=.true.)
+    cobalt%f_co3_ion(:,:,:) = max(0.0, cobalt%f_co3_ion(:,:,:))
     call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
-    call g_tracer_get_values(tracer_list,'irr_aclm_sfc','field',cobalt%f_irr_aclm_sfc ,isd,jsd)
 
     ! zero out cumulative COBALT-wide production diagnostics
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec
@@ -3194,19 +3182,17 @@ contains
        temp_arg = max(min(temp_arg,1.0),-1.0)
        cobalt%daylength(i,j) = 24.0 - 24.0/3.14*acos(temp_arg)
 
-       !! The acclimation irradiance at the surface is calculated using this basic equation,
-       !! which relaxes the irradiance toward the current value with a an inverse time scale set by gamma:
-       !!```fortran
-       !! I_aclm(t+1) = I_aclm(t) + (I*(24/daylength)-I_aclm(t))*gamma*dt
-       !!```
-       !!
-       !! Multiplication by 24/daylength adjusts the irradiance averaged over 24 hours to
-       !! upward to approximate the irradiance during daylight hours. For photoacclimation
-       !! the default relaxation timescale is set to 1 day (`gamma` = 1/86400 sec), and
-       !! `dt` is the time step.
-       !!
-       cobalt%f_irr_aclm_sfc(i,j,1) = (cobalt%f_irr_aclm_sfc(i,j,1) + &
-         (sfc_irrad(i,j)*24.0/max(cobalt%daylength(i,j),cobalt%min_daylength)-cobalt%f_irr_aclm_sfc(i,j,1)) * &
+       ! Calculate the acclimation irradiance at the surface.  This basic equation relaxes
+       ! the irradiance toward the current value with a an inverse time scale set by gamma:
+       !
+       ! I_aclm(t+1) = I_aclm(t) + (I*(24/daylength)-I_aclm(t))*gamma*dt
+       !
+       ! multiplication by 24/daylength adjusts the irradiance averaged over 24 hours to
+       ! upward to approximate the irradiance during daylight hours. For photoacclimation
+       ! the default relaxation timescale is set to 1 day (gamma = 1/86400 sec), and
+       ! "dt" is the time step.
+       cobalt%f_irr_aclm_sfc(i,j) = (cobalt%f_irr_aclm_sfc(i,j) + &
+         (sfc_irrad(i,j)*24.0/max(cobalt%daylength(i,j),cobalt%min_daylength)-cobalt%f_irr_aclm_sfc(i,j)) * &
          min(1.0,cobalt%gamma_irr_aclm * dt)) * grid_tmask(i,j,1)
 
        !
@@ -3222,7 +3208,7 @@ contains
          phyto(n)%tmp_pcmlim_aclm_ML = 0.0
        enddo
        ! Define the irradiance threshold for a "deep" mixed layer for photoacclimation
-       irrad_aclm_thresh = frac_sfc_irrad_aclm*cobalt%f_irr_aclm_sfc(i,j,1)
+       irrad_aclm_thresh = frac_sfc_irrad_aclm*cobalt%f_irr_aclm_sfc(i,j)
        do k = 1, nk !{
           tmp_irrad = 0.0
           ! Sum up the irradiance in all bands at the k level
@@ -5614,10 +5600,8 @@ contains
     !
     call g_tracer_set_values(tracer_list,'cased',  'field',cobalt%f_cased    ,isd,jsd)
     call g_tracer_set_values(tracer_list,'chl',    'field',cobalt%f_chl      ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm' ,'field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm_z' ,'field',cobalt%f_irr_aclm_z ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'irr_aclm_sfc' ,'field',cobalt%f_irr_aclm_sfc ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_ndi' ,'field',phyto(DIAZ)%f_mu_mem ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LGP)%f_mu_mem ,isd,jsd)
     call g_tracer_set_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MDP)%f_mu_mem ,isd,jsd)
@@ -5774,7 +5758,7 @@ contains
           cobalt%dmspos(i,j)       = cobalt%dmspos(i,j)/1e6       * grid_tmask(i,j,1)     ! convert from nmol L to mol m-3
 
           ! ! Undo daylength adjustment to get 24h integrated irr
-          cobalt%irr_aclm_sfc_dayint(i,j) = cobalt%f_irr_aclm_sfc(i,j,1) * (max(cobalt%daylength(i,j),cobalt%min_daylength) / 24.0) * grid_tmask(i,j,1)
+          cobalt%irr_aclm_sfc_dayint(i,j) = cobalt%f_irr_aclm_sfc(i,j) * (max(cobalt%daylength(i,j),cobalt%min_daylength) / 24.0) * grid_tmask(i,j,1)
 
           ! ! Unit conversion: W m-2 to mol photons m-2 d-1
           cobalt%irr_sfc_dms(i,j) = cobalt%irr_aclm_sfc_dayint(i,j) * 4.6e-6 * 86400. * grid_tmask(i,j,1)
@@ -6583,7 +6567,7 @@ contains
     real    :: tt,tk,ts,ts2,ts3,ts4,ts5
     real, dimension(:,:,:)  ,pointer  :: grid_tmask
     real, dimension(:,:,:,:), pointer :: o2_field,dic_field,po4_field,sio4_field,alk_field,di14c_field,nh4_field
-    real, dimension(:,:,:), ALLOCATABLE :: htotal_field,co3_ion_field
+    real, dimension(:,:,:), ALLOCATABLE :: htotal_field
     real, dimension(:,:), ALLOCATABLE :: co2_alpha,co2_csurf,co2_sc_no,o2_alpha,o2_csurf,o2_sc_no,nh3_alpha,nh3_csurf,nh3_sc_no,phos_nh3_exchange
     real, dimension(:,:), ALLOCATABLE :: c14o2_alpha,c14o2_csurf
 
@@ -6610,8 +6594,8 @@ contains
     allocate(o2_alpha(isd:ied, jsd:jed)); o2_alpha=0.0
     allocate(o2_csurf(isd:ied, jsd:jed)); o2_csurf=0.0
     allocate(o2_sc_no(isd:ied, jsd:jed)); o2_sc_no=0.0
-    allocate(htotal_field(isd:ied,jsd:jed,nk),co3_ion_field(isd:ied,jsd:jed,nk))
-    htotal_field=0.0 ; co3_ion_field=0.0
+    allocate(htotal_field(isd:ied,jsd:jed,nk))
+    htotal_field=0.0
 
     !nnz: Since the generic_COBALT_update_from_source() subroutine is called by this time
     !     the following if block is not really necessary (since this calculation is already done in source).
@@ -6629,7 +6613,6 @@ contains
        call g_tracer_get_pointer(tracer_list,'nh4'   ,'field', nh4_field)
 
        call g_tracer_get_values(tracer_list,'htotal' ,'field', htotal_field,isd,jsd)
-       call g_tracer_get_values(tracer_list,'co3_ion','field',co3_ion_field,isd,jsd)
 
        if(.not. present(dzt)) then
           ! 2017/08/11 jgj is cobalt type defined/passed here ?
@@ -6654,13 +6637,11 @@ contains
                                 !OUT
             co2star=co2_csurf(:,:), alpha=co2_alpha(:,:),  &
             pCO2surf=cobalt%pco2_csurf(:,:), &
-            co3_ion=co3_ion_field(:,:,1), &
             omega_arag=cobalt%omega_arag(:,:,1), &
             omega_calc=cobalt%omega_calc(:,:,1))
 
        !Set fields !nnz: if These are pointers do I need to do this?
        call g_tracer_set_values(tracer_list,'htotal' ,'field',htotal_field ,isd,jsd)
-       call g_tracer_set_values(tracer_list,'co3_ion','field',co3_ion_field,isd,jsd)
 
        call g_tracer_set_values(tracer_list,'dic','alpha',co2_alpha    ,isd,jsd)
        call g_tracer_set_values(tracer_list,'dic','csurf',co2_csurf    ,isd,jsd)
@@ -6890,9 +6871,10 @@ contains
 
   !
   !   Add the 2D fields that COBALT keeps outside of the tracer list to a list of restart fields.
+  !   The surface photoacclimation irradiance is a running mean, so its previous value is needed.
   !   The bottom fluxes to the sediments (*_btf) need to be saved because the sediment calculations
   !   in update_from_source use the fluxes computed at the end of the previous step in update_from_bottom.
-  !   Older versions saved these as 3D diagnostic tracers named *_btf, which are given as legacy names.
+  !   Older versions saved these as 3D diagnostic tracers, whose names are given as legacy names.
   !   Their initial conditions are set in the field_table under these legacy names, as for those tracers.
   !
   subroutine generic_COBALT_restart_fields_2d(fields)
@@ -6902,6 +6884,8 @@ contains
 
     call g_tracer_start_param_list(package_name)
     call g_tracer_add_param('enforce_src_info', enforce_src_info, .true.)
+
+    call add_field(cobalt%f_irr_aclm_sfc, 'irr_aclm_sfc', 'Surface photoacclimation irradiance', 'Watts/m^2')
 
     call add_btf(cobalt%f_ndet_fast_btf, 'ndet_fast_btf', 'Fast sinking N flux to Sediments')
     call add_btf(cobalt%f_pdet_fast_btf, 'pdet_fast_btf', 'Fast sinking P flux to Sediments')
@@ -7168,7 +7152,7 @@ contains
     allocate(cobalt%f_htotal(isd:ied, jsd:jed, 1:nk))     ; cobalt%f_htotal=0.0
     allocate(cobalt%f_irr_aclm(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_irr_aclm=0.0
     allocate(cobalt%f_irr_aclm_z(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_irr_aclm_z=0.0
-    allocate(cobalt%f_irr_aclm_sfc(isd:ied, jsd:jed, 1:nk)) ; cobalt%f_irr_aclm_sfc=0.0
+    allocate(cobalt%f_irr_aclm_sfc(isd:ied, jsd:jed)) ; cobalt%f_irr_aclm_sfc=0.0
     allocate(cobalt%f_cased(isd:ied, jsd:jed, 1:nk))      ; cobalt%f_cased=0.0
     allocate(cobalt%f_cadet_arag_btf(isd:ied, jsd:jed)); cobalt%f_cadet_arag_btf=0.0
     allocate(cobalt%f_cadet_calc_btf(isd:ied, jsd:jed)); cobalt%f_cadet_calc_btf=0.0
