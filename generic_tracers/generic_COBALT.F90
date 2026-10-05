@@ -2343,13 +2343,8 @@ contains
     !Diagnostic Tracers
     !===========================================================
     !
-    !    Cased (CaCO3 in sediments)
+    !    Cased (CaCO3 in sediments) is a 2D restart field (see generic_COBALT_restart_fields_2d).
     !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'cased',          &
-         longname   = 'Sediment CaCO3', &
-         units      = 'mol m-3',       &
-         prog       = .false.           )
     !
     !       Chl (Chlorophyll)
     !
@@ -3008,7 +3003,6 @@ contains
     !
     ! diagnostic tracers that are passed between time steps (except chlorophyll)
     !
-    call g_tracer_get_values(tracer_list,'cased'  ,'field',cobalt%f_cased    ,isd,jsd)
     cobalt%f_co3_ion(:,:,:) = max(0.0, cobalt%f_co3_ion(:,:,:))
     call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
@@ -4933,26 +4927,26 @@ contains
           ! calculate the sediment redissolution rate (moles Ca m-2 sec-1). This calculation is subject to
           ! three limiters: a) a maximum of 1/2 of the total cased over one time step; b) a maximum of 0.01
           ! moles Ca per day; and c) a minimum of 0.0
-          cobalt%fcased_redis(i,j) = max(0.0, min(0.01/sperd, min(0.5*cobalt%f_cased(i,j,1)*r_dt,  &
-            cobalt%fcased_redis_surfresp(i,j)+cobalt%cased_redis_coef(i,j)*cobalt%cased_redis_delz(i,j)*cobalt%f_cased(i,j,1))) )
+          cobalt%fcased_redis(i,j) = max(0.0, min(0.01/sperd, min(0.5*cobalt%f_cased(i,j)*r_dt,  &
+            cobalt%fcased_redis_surfresp(i,j)+cobalt%cased_redis_coef(i,j)*cobalt%cased_redis_delz(i,j)*cobalt%f_cased(i,j))) )
 
           !
           ! Old expression
           !
-          !cobalt%fcased_redis(i,j) = max(0.0, min(0.01/sperd,min(0.5 * cobalt%f_cased(i,j,1) * r_dt, min(0.5 *       &
+          !cobalt%fcased_redis(i,j) = max(0.0, min(0.01/sperd,min(0.5 * cobalt%f_cased(i,j) * r_dt, min(0.5 *       &
           !   cobalt%f_cadet_calc_btf(i,j), 0.14307 * cobalt%f_ndet_btf(i,j) * cobalt%c_2_n) +        &
           !   0.03607 / spery * max(0.0, 1.0 - cobalt%omega_calc(i,j,k) +   &
           !   4.1228 * cobalt%f_ndet_btf(i,j) * cobalt%c_2_n * spery)**(2.7488) *                        &
           !   max(1.0, cobalt%f_lithdet_btf(i,j) * spery + cobalt%f_cadet_calc_btf(i,j) * 100.0 *  &
-          !   spery)**(-2.2185) * cobalt%f_cased(i,j,1))))*grid_tmask(i,j,k)
+          !   spery)**(-2.2185) * cobalt%f_cased(i,j))))*grid_tmask(i,j,k)
 
           if (cobalt%cased_steady) then
             cobalt%fcased_burial(i,j) = cobalt%f_cadet_calc_btf(i,j) - cobalt%fcased_redis(i,j)
-            cobalt%f_cased(i,j,1) = cobalt%fcased_burial(i,j)*cobalt%Co_cased/cobalt%f_cadet_calc_btf(i,j)
+            cobalt%f_cased(i,j) = cobalt%fcased_burial(i,j)*cobalt%Co_cased/cobalt%f_cadet_calc_btf(i,j)
           else
-            cobalt%fcased_burial(i,j) = max(0.0, cobalt%f_cadet_calc_btf(i,j) * cobalt%f_cased(i,j,1) / &
+            cobalt%fcased_burial(i,j) = max(0.0, cobalt%f_cadet_calc_btf(i,j) * cobalt%f_cased(i,j) / &
               cobalt%Co_cased)
-            cobalt%f_cased(i,j,1) = cobalt%f_cased(i,j,1) + (cobalt%f_cadet_calc_btf(i,j) -            &
+            cobalt%f_cased(i,j) = cobalt%f_cased(i,j) + (cobalt%f_cadet_calc_btf(i,j) -            &
               cobalt%fcased_redis(i,j) - cobalt%fcased_burial(i,j)) / cobalt%z_sed * dt *                &
               grid_tmask(i,j,k)
           endif
@@ -4981,10 +4975,6 @@ contains
 
        endif !}
     enddo; enddo  !} i, j
-
-    do k = 2, nk ; do j = jsc, jec ; do i = isc, iec   !{
-       cobalt%f_cased(i,j,k) = 0.0
-    enddo; enddo ; enddo  !} i,j,k
 
     call mpp_clock_end(id_clock_ballast_loops)
 
@@ -5598,7 +5588,6 @@ contains
     !
     !Set the diagnostics tracer fields.
     !
-    call g_tracer_set_values(tracer_list,'cased',  'field',cobalt%f_cased    ,isd,jsd)
     call g_tracer_set_values(tracer_list,'chl',    'field',cobalt%f_chl      ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm' ,'field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_set_values(tracer_list,'irr_aclm_z' ,'field',cobalt%f_irr_aclm_z ,isd,jsd)
@@ -6424,7 +6413,7 @@ contains
 
     do j = jsc, jec ; do i = isc, iec ; !{
       if (grid_kmt(i,j) .gt. 0) then !{
-         cobalt%cased_2d(i,j) = cobalt%f_cased(i,j,1)
+         cobalt%cased_2d(i,j) = cobalt%f_cased(i,j)
       endif
     enddo; enddo  !} i, j
 
@@ -6872,6 +6861,7 @@ contains
   !
   !   Add the 2D fields that COBALT keeps outside of the tracer list to a list of restart fields.
   !   The surface photoacclimation irradiance is a running mean, so its previous value is needed.
+  !   The sediment CaCO3 (cased) is a sediment state variable.
   !   The bottom fluxes to the sediments (*_btf) need to be saved because the sediment calculations
   !   in update_from_source use the fluxes computed at the end of the previous step in update_from_bottom.
   !   Older versions saved these as 3D diagnostic tracers, whose names are given as legacy names.
@@ -6886,6 +6876,7 @@ contains
     call g_tracer_add_param('enforce_src_info', enforce_src_info, .true.)
 
     call add_field(cobalt%f_irr_aclm_sfc, 'irr_aclm_sfc', 'Surface photoacclimation irradiance', 'Watts/m^2')
+    call add_field(cobalt%f_cased, 'cased', 'Sediment CaCO3', 'mol m-3')
 
     call add_btf(cobalt%f_ndet_fast_btf, 'ndet_fast_btf', 'Fast sinking N flux to Sediments')
     call add_btf(cobalt%f_pdet_fast_btf, 'pdet_fast_btf', 'Fast sinking P flux to Sediments')
@@ -7153,7 +7144,7 @@ contains
     allocate(cobalt%f_irr_aclm(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_irr_aclm=0.0
     allocate(cobalt%f_irr_aclm_z(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_irr_aclm_z=0.0
     allocate(cobalt%f_irr_aclm_sfc(isd:ied, jsd:jed)) ; cobalt%f_irr_aclm_sfc=0.0
-    allocate(cobalt%f_cased(isd:ied, jsd:jed, 1:nk))      ; cobalt%f_cased=0.0
+    allocate(cobalt%f_cased(isd:ied, jsd:jed))            ; cobalt%f_cased=0.0
     allocate(cobalt%f_cadet_arag_btf(isd:ied, jsd:jed)); cobalt%f_cadet_arag_btf=0.0
     allocate(cobalt%f_cadet_calc_btf(isd:ied, jsd:jed)); cobalt%f_cadet_calc_btf=0.0
     allocate(cobalt%f_fedet_btf(isd:ied, jsd:jed))  ; cobalt%f_fedet_btf=0.0
