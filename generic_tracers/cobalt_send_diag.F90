@@ -158,7 +158,6 @@ module COBALT_send_diag
                 omega_calc=cobalt%omega_calc(:,:,k))
             enddo
             call g_tracer_set_values(tracer_list,'htotal','field',cobalt%f_htotal,isd,jsd)
-            call g_tracer_set_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion,isd,jsd)
             call g_tracer_set_values(tracer_list,'dic','alpha',cobalt%co2_alpha,isd,jsd)
             call g_tracer_set_values(tracer_list,'dic','csurf',cobalt%co2_csurf,isd,jsd)
 
@@ -1702,7 +1701,7 @@ module COBALT_send_diag
           !
           used = g_send_data(cobalt%id_sfc_irr, cobalt%irr_inst(:,:,1), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_sfc_irr_aclm, cobalt%f_irr_aclm_sfc(:,:,1), &
+          used = g_send_data(cobalt%id_sfc_irr_aclm, cobalt%f_irr_aclm_sfc(:,:), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_mld_aclm, cobalt%mld_aclm, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
