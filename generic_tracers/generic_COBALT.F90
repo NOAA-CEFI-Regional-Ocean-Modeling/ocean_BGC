@@ -816,13 +816,13 @@ contains
     call get_param(param_file, "generic_COBALT", "c_2_n", cobalt%c_2_n, "carbon to nitrogen ratio of organic matter", &
                    units="mol C mol N-1", default= 106.0 / 16.0)
     !! P:N ratios are simulated using the emergent negative relationship between phytoplankton N:P and the ambient PO4
-    !! concentration identified by Galbraith and Martiny (2015).  The default maximum N:P ratio, which is reached in low
+    !! concentration identified by Galbraith and Martiny [-@galbraith2015].  The default maximum N:P ratio, which is reached in low
     !! P environments, is set to 31 (nearly twice the Redfield ratio).  Minimum N:P ratios were truncated to
-    !! characteristic values for each size class (Finkel et al., 2010).  This allows the phytoplankton to use up excess
+    !! characteristic values for each size class [@finkel2010].  This allows the phytoplankton to use up excess
     !! N when P is scarce (i.e., P frugality), but limits luxury uptake in PO4-rich regions and the low N:P ratios this
     !! would generate.  Uncertainty in N:P ratios in such high PO4 concentrations is large.  Most of the highest PO4
     !! concentrations in regional and global applications, furthermore, co-occur with even higher N concentrations.
-    !! River mouths, for example, are often high N:P.  Other observations (Sterner and Elser, 2003, Hall et al., 2005)
+    !! River mouths, for example, are often high N:P.  Other observations [@sterner2003; @hall2005]
     !! suggest that such conditions would prevent low N:P ratios and support the truncation of those values in the
     !! default settings.
     !!
@@ -831,11 +831,6 @@ contains
     !!
     !! Diazotrophs set to a constant default p2n value of 1:40
     !!
-    !! References:
-    !! Galbraith and Martiny, 2015 (https://www.pnas.org/doi/full/10.1073/pnas.1423917112)
-    !! Finkel et al., 2010 (https://academic.oup.com/plankt/article/32/1/119/1492394)
-    !! Sterner and Elser, 2003 (https://www.degruyter.com/document/doi/10.1515/9781400885695/html)
-    !! Hall et al., 2005 (https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/04-1045)
 
     call get_param(param_file, "generic_COBALT", "p_2_n_min_Di", phyto(DIAZ)%p_2_n_min, &
                    "minimum diazotroph P:N ratio", units="mol P mol N-1", default= 1.0/40.0)
@@ -2841,7 +2836,7 @@ contains
     ! Sinking phytoplankton: Iron
     !
     !! Iron flux to the sediment is removed, and flux from the sediment is
-    !! handled separately later using a relationship based on Dale et al., 2015.
+    !! handled separately later using a relationship based on Dale et al. [-@dale2015].
     !!
     call g_tracer_get_values(tracer_list,'fedi','btm_reservoir',phyto(DIAZ)%ffe_btm,isd,jsd)
     phyto(DIAZ)%ffe_btm = phyto(DIAZ)%ffe_btm/dt
@@ -3347,7 +3342,7 @@ contains
                                              phyto(n)%p_2_n_max)
        enddo  !} n
 
-       !! N limitation with NH4 inhibition after Frost and Franzen (1992)
+       !! N limitation with NH4 inhibition after Frost and Franzen [-@frost1992]
        !! (Note nitrate does not limit diazotroph growth but uptake limitation is used
        !! to determine nitrogen fixation versus facultative no3/nh4 uptake, see Sec. 1.3)
        !!
@@ -3397,11 +3392,10 @@ contains
 
     !!### 1.2: Light Limitation/Growth Calculations
     !! Calculate the mixed layer for phytoplankton photoacclimation
-    !! The default criteria is de Boyer Montegut et al. (2004), where the
+    !! The default criteria is de Boyer Montegut et al. [-@deboyermontegut2004], where the
     !! mixed layer is calculated relative to zmld_ref = 10m and is based on when
     !! a potential density difference of 0.03 kg m-3.  This definition
     !! captures mixing on time scale of 1 to a few days.
-    !! de Boyer-Montegut reference:  https://doi.org/10.1029/2004JC002378
     !!
     if (present(photo_acc_dpth)) then
       pha_all_same = all(photo_acc_dpth == photo_acc_dpth(isc,jsc))
@@ -3422,7 +3416,7 @@ contains
     !! receives visible and near-infrared inputs.  Near infrared is currently considered
     !! anything with wavelengths longer than ~710 nanometers.  Note that both shortwave and
     !! near infrared fall into the "shortwave" part of the radiation spectrum.  Following
-    !! Morel and Antoine (1994) and Sweeney et al. (2005), about 57% of the incoming irradiance
+    !! Morel and Antoine [-@morel1994] and Sweeney et al. [-@sweeney2005], about 57% of the incoming irradiance
     !! is assumed to lie within the visible range in the standard MOM6 radiation scheme
     !! with interactive chlorophyll.
     !!
@@ -3430,26 +3424,19 @@ contains
     !! active radiation (PAR).  This approach, however, included wavelengths shorter than
     !! the ~350-400 nanometer lower bound applied for PAR.  The "par_adj" parameter
     !! allows for a downward adjustment.  Its default value of 0.83 gives a PAR of 47%
-    !! of the total shortwave flux, consistent with Baker and Frouin (1987).
+    !! of the total shortwave flux, consistent with Baker and Frouin [-@baker1987].
     !!
     !! The instantaneous and acclimation irradiances are then calculated at all depths.  The
     !! former is eventually used to calculate instaneous phytoplankton growth, while the latter
     !! is used to calculate the chlorophyll to carbon ratio.  The acclimation irradiance
     !! is effectively an average of the instantaneous irradiance over daylight hours across
     !! an acclimation timescale (typically 24 hours).  The daylength for this calculation is
-    !! taken from CBM model described in Forsythe et al. (1995). The acclimation irradiance
+    !! taken from CBM model described in Forsythe et al. [-@forsythe1995]. The acclimation irradiance
     !! in the surface mixed layer is generally assumed to be the average in the mixed layer,
     !! except when the mixed layer extends beyond "ml_aclm_efold" e-folding scales for the
     !! irradiance.  In these deep mixed layer cases the average light down to "ml_aclm_efold"
     !! is used for the acclimation irradiance with the mixed layer.  Full details of these
-    !! calculations and their implications are presented and discussed in Stock et al. (submitted).
-    !!
-    !! References:
-    !! Morel and Antoine: https://doi.org/10.1175/1520-0485(1994)024<1652:HRWTUO>2.0.CO;2
-    !! Sweeney et al.: https://doi.org/10.1175/JPO2740.1
-    !! Baker and Frouin:  https://doi.org/10.4319/lo.1987.32.6.1370
-    !! Forsythe et al.: https://www.sciencedirect.com/science/article/pii/030438009400034F
-    !! Stock et al. (submitted) (link to be added as soon as available)
+    !! calculations and their implications are presented and discussed in Stock et al. [-@stock2025].
     !!
     allocate(sfc_irrad(isc:iec,jsc:jec))  ! surface photosythetically available irradiance
     allocate(kblt(isc:iec,jsc:jec))       ! tracks of max k index in mixed layer
@@ -3604,17 +3591,13 @@ contains
     end if
 
     !!
-    !! Calculate the phytoplankton growth rate calculation based on Geider et al. (1997).
-    !! This section also allows for low- and high-light adapted "ecotypes" (e.g., Moore
-    !! and Chisholm, 1999).  As described in Stock et al. (submitted), low-light adapted
+    !! Calculate the phytoplankton growth rate calculation based on Geider et al. [-@geider1997].
+    !! This section also allows for low- and high-light adapted "ecotypes" [e.g., @moore1999].
+    !! As described in Stock et al. [-@stock2025], low-light adapted
     !! ecotypes are characterized by a steep initial slope of the photosynthesis-irradiance
     !! curve (i.e., high values of Geider's "alpha") and a low maximum photosynthetic rate
     !! (low P_C_max, and high-light adapted cells have the opposite.  The best suited
     !! ecotype is the one that achieves maximal growth at the acclimation irradiance.
-    !!
-    !! references:
-    !! Moore and Chisholm: https://doi.org/10.4319/lo.1999.44.3.0628
-    !! Stock et al. (submitted) (link to be added as soon as available)
     !!
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        cobalt%f_chl(i,j,k) = 0.0
@@ -3849,8 +3832,7 @@ contains
     enddo; enddo; enddo  !} i,j,k
 
     !!  Calculate nitrification rates.  There are three possible schemes to use.  Schemes 2 and 3 are
-    !!  described in Paulot et al., 2020.  Ocean Ammonia Outgassing: Modulation by CO2 and Anthropogenic
-    !!  Nitrogen Deposition.  JAMES. https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2019MS002026
+    !!  described in Paulot et al. [-@paulot2020].
     !!  They rely on the calculated partitioning of reduced nitrogen species between ammonium (NH4) and
     !!  ammonia (NH3).  Scheme 1 is from COBALTv1.  Note that the acclimation irradiance, which reflects
     !!  the irradiance during daylight hours, has been used to impose nitrification photoinhibition.
@@ -3942,23 +3924,14 @@ contains
     !!### 3.1 Plankton foodweb dynamics: consumption by zooplankton and higher predators
     !!
     !! Zooplankton feeding is parameterized with observed allometric (i.e., size-dependent) feeding rates and predator-
-    !! prey linkages (i.e., Hansen, B.W. et al., 1994; Hansen, P.J., et al. 1997).  Feeding relationships are based on
+    !! prey linkages [@hansen1994; @hansen1997].  Feeding relationships are based on
     !! simple saturating (Holling Type 2) relationships when there is a single prey type.  A density dependent switching
-    !! response, however, is included when multiple prey types are present (Stock et al., 2008).  A small "refuge"
+    !! response, however, is included when multiple prey types are present [@stock2008].  A small "refuge"
     !! concentration has also been included as an extra safeguard against negative values and as a reflection of the
     !! paradigm that Baas Becking's hypothesis that "Everything is everywhere, but the environment selects".  Predation
     !! by higher predators (e.g., planktivorous fish) is modeled in a manner analogous to zooplankton, but assuming that
     !! the biomass of these unresolved predators scales in proportion to the available prey.
     !!
-    !! References:
-    !! Hansen, B.W., Bjornsen, P.K., Hansen, P.J., 1994. The size ratio between planktonic predators and their prey.
-    !!    Limnol. & Oceanogr. 39, 395–402. https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1994.39.2.0395
-    !! Hansen, P.J., Bjornsen, P.K., Hansen, B.W., 1997. Zooplankton grazing and growth: scaling within the
-    !!    2–2000-micron body size range. Limnol. & Oceanogr. 42, 687–704.
-    !!    https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1997.42.4.0687
-    !! Stock, C.A., Powell, T.M., and Levin, S.A., 2008. Bottom-up and top-down forcing in a simple size-structured
-    !!    plankton dynamics model.  Journal of Marine Systems. 74 (1-2), 134-152.
-    !!    https://doi.org/10.1016/j.jmarsys.2007.12.004
 
     call mpp_clock_begin(id_clock_zooplankton_calculations)
 
@@ -4341,23 +4314,16 @@ contains
        !! Since stress_fac multiplies the loss term, stress_fac=0 shuts the loss off when the cell is "happy", while
        !! stress_fac=1 allows the loss to achieve its full value when the cell is severely stressed.  This
        !! parameterization is consistent with observed sinking, aggregation, and stress-driven mortality responses
-       !! (e.g., Waite et al., 1992; Smayda et al., 1971).
+       !! [e.g., @waite1992; @smayda1971].
        !!
        !! Aggregation is modeled as a density-dependent (quadratic) loss that effects large cells most, does not
-       !! depend on temperature, and results in sinking detritus (e.g., Jackson et al., 1992).  Phytoplankton sinking as
+       !! depend on temperature, and results in sinking detritus [e.g., @jackson1990].  Phytoplankton sinking as
        !! non-aggregates is simulated directly using the "move_vertical" option in generic_tracers, with larger and more
        !! stressed cells sinking more quickly.  Phytoplankton mortality (cell death) is not used in the default settings
        !! but it is set as a linear loss rate that generates dissolved organic material.  Note that this differs from
        !! phytoplankton basal respiration, which is also linear but results in inorganic nutrients and carbon via
        !! respiration.
        !!
-       !! REFERENCES
-       !! Waite, A., Bienfeng, P.K., Harrison, P.J., 1992. Spring bloom sedimentation in a subarctic ecosystem.
-       !!    Marine Biology, 114 131-138.  https://doi.org/10.1007/BF00350862
-       !! Smayda, T.J., Normal and accelerated sinking of phytoplankton in the sea. Marine Geology, 11(2), 105-122.
-       !!    https://doi.org/10.1016/0025-3227(71)90070-3
-       !! Jackson, G.A., 1990. A model of the formation of marine algal flocs by physical coagulation processes.
-       !!    Deep Sea Res A, 37(8), 1197-1211. https://doi.org/10.1016/0198-0149(90)90038-W
 
        do n = 1,NUM_PHYTO !{
             ! calculate the stress factor
@@ -4386,12 +4352,9 @@ contains
        !!#### 3.2.2 Calculate phytoplankton and bacterial losses to viruses
        !!
        !! Viral losses are modeled as a density-dependent (quadratic) loss term that impacts bacteria and phytoplankton
-       !! regardless of their stress.  Viral losses are more effective loss mechanisms for small phytoplankton (Murray
-       !! and Jackson, 1992) and produce dissolved organic material.
+       !! regardless of their stress.  Viral losses are more effective loss mechanisms for small phytoplankton
+       !! [@murray1992] and produce dissolved organic material.
        !!
-       !! Reference: Murray and Jackson (1992). Viral dynamics: a model of the effects of size, shape motion and
-       !! abundance of single-celled planktonic organisms and other particles, Mar. Ecol. Prog. Ser., 89, 103-116.
-       !! http://www.jstor.org/stable/24831780.
 
        do n = 1,NUM_PHYTO !{
           phyto(n)%jvirloss_n(i,j,k) = bact(1)%temp_lim(i,j,k)*phyto(n)%vir*phyto(n)%f_n(i,j,k)**2.0
@@ -4406,12 +4369,9 @@ contains
        !!#### 3.2.3 Calculate losses to exudation
        !!
        !! Phytoplankton are assumed to lose a constant fraction of nitrogen they fix to dissolved organic nutrients
-       !! (phyto(n)%exu = 0.13 (Baines and Pace, 1991).  The model assumes losses of phosphate and iron occur in
+       !! (phyto(n)%exu = 0.13) [@baines1991].  The model assumes losses of phosphate and iron occur in
        !! proportion the the loss in N, but Si is assumed to be in the cell structure.
        !!
-       !! Reference: Baines, S.B., Pace, M.L., 1991.  The production of dissolved organic matter by phytoplankton and
-       !! its importance to bacteria: Patterns across marine and freshwater systems. Limnol. and Oceanogr., 36(6),
-       !! 1078-1090. https://doi.org/10.4319/lo.1991.36.6.1078
 
        n = DIAZ
        phyto(n)%jexuloss_n(i,j,k) = phyto(n)%exu*max(phyto(n)%juptake_no3(i,j,k)+ &
@@ -4585,20 +4545,13 @@ contains
        !!    metabolism.
        !!
        !! Zooplankton production is determined by multiplying the ingestion rate by the maximum growth efficiency
-       !! (i.e., gge_max) and then subtracting off the basal respiration rate.  By default, gge_max = 0.4 (Straile
-       !! et al., 1997, Hansen et al., 1997).  Thus, when ingestion >> basal respiration, gge -> 0.4, the fraction of
+       !! (i.e., gge_max) and then subtracting off the basal respiration rate.  By default, gge_max = 0.4
+       !! [@straile1997; @hansen1997].  Thus, when ingestion >> basal respiration, gge -> 0.4, the fraction of
        !! ingestion respired -> 0.7-0.4 = 0.3, and the fraction egested as either detritus or dissolved organic matter
        !! = 0.3.  When ingestion = basal respiration, gge -> 0, the fraction of ingestion respired -> 0.7 and the
        !! fraction egested remains 0.3.  When production is negative, respire all assimilated material and route negative
        !! production to detritus.  Nutrients are excreted in balance with respiration.
        !!
-       !! References:
-       !! Hansen, P.J., Bjornsen, P.K., Hansen, B.W., 1997. Zooplankton grazing and growth: scaling within the
-       !!   2–2000-micron body size range. Limnol. & Oceanogr. 42, 687–704.
-       !!   https://aslopubs.onlinelibrary.wiley.com/doi/10.4319/lo.1997.42.4.0687
-       !! Straile, D., 1997. Gross growth efficiencies of protozoan and metazoan zooplankton and their dependence on
-       !!   food concentration, predator-prey weight ratio, and taxonomic group. Limnol. and Oceanogr. 42, 1375-1385.
-       !!    https://doi.org/10.4319/lo.1997.42.6.137
 
        do m = 1,NUM_ZOO
           ! calculate the assimilation efficiency
@@ -4773,7 +4726,7 @@ contains
     !! Calcite and aragonite detritus are assumed to dissolve with at a rate proportional to subsaturation, with
     !! the maximum dissolution rates set gamma_cadet_arag and gamma_cadet_calc, respectively.  The dissolution of
     !! silica detritus is assumed to be temperature dependent.  Relevant references for all parameters can be found in
-    !! the COBALTv2 documentation paper: https://doi.org/10.1029/2019MS002043.
+    !! the COBALTv2 documentation paper [@stock2020].
     !!
     !! Note: Dissolution of aragonite and calcite detritus has been observed under supersaturating conditions. This
     !! process will be added in a future COBALT update.
@@ -4800,8 +4753,8 @@ contains
 
     !!### 4.4: Remineralization of nitrogen, phosphorous and iron detritus
     !!
-    !! Remineralization is handled following Laufkotter et al. (2017), which combines a "mineral protection/ballasting"
-    !! scheme (Armstrong et al., 2001; and Klaas and Archer 2002) with temperature and oxygen dependence calibrated to
+    !! Remineralization is handled following Laufkotter et al. [-@laufkotter2017], which combines a "mineral protection/ballasting"
+    !! scheme [@armstrong2001; @klaas2002] with temperature and oxygen dependence calibrated to
     !! a global database of sediment trap profiles.  As described in Laufkotter, remineralization under aerobic
     !! conditions was ramped up over a depth scale of 50m. This prevents excessive recycling in warm surface waters and
     !! is attributed to the colonization of the particles as they traverse the euphotic zone
@@ -4811,17 +4764,12 @@ contains
     !!
     !! max( 0.0,f_ndet - rpcaco3*(cadet_arag+cadet_calc) - rplith*lithdet - rpsio2*sidet)
     !!
-    !! Where rpcaco3, rplith and rpsio2 are protection factors associated with each mineral (Dunne et al., 2005).
+    !! Where rpcaco3, rplith and rpsio2 are protection factors associated with each mineral [@dunne2005].
     !!
     !! As was the case for free-living bacteria, the remineralization rate for sinking detritus under anaerobic
     !! conditions is scaled by o2_min/(k_o2+o2_min).  All anaerobic remineralization is assumed to occur via
     !! denitrification, so a scaling
     !!
-    !! References:
-    !! Laufkotter et al., 2017: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2017GB005643
-    !! Armstrong, 2002: https://doi.org/10.1016/S0967-0645(01)00101-1
-    !! Klaas and Archer, 2002: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2001GB001765
-    !! Dunne et al., 2005: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2004GB002390
 
     do k=1,nk ; do j=jsc,jec ; do i=isc,iec  !{
        cobalt%expkreminT(i,j,k) = exp(cobalt%kappa_remin * Temp(i,j,k))
@@ -4898,15 +4846,15 @@ contains
     !
     !!### 4.5: Iron scavenging onto detritus
     !!
-    !! COBALT uses a single ligand complexation model for iron scavenging onto detritus (e.g., Archer and Johnson, 2000).
+    !! COBALT uses a single ligand complexation model for iron scavenging onto detritus [e.g., @archer2000].
     !! The binding strength of the ligand, however, is modulated between weak high-light (kfe_eq_hl) and strong low-
     !! light limits (kfelig_ll) to mimic the weakening effect that oxygen free radicals have on iron binding in well-lit
-    !! waters (Fan, 2008).  The weakest binding is at light levels greater than io_fescav = 10 watts m-2.  Values decline
+    !! waters [@fan2008].  The weakest binding is at light levels greater than io_fescav = 10 watts m-2.  Values decline
     !! to the strongest low-light limit at 0.01 watts m-2.
     !!
     !! The ligand concentration includes a background concentration (felig_bkg) and an additional amount proportional
     !! to dissolved organic matter (felig_2_don).  When the free iron (feprime) exceeds solubility limits defined as
-    !! a function of temperature and salinity according to Liu and Millero (2002), scavenging is increased by the factor
+    !! a function of temperature and salinity according to Liu and Millero [-@liu2002], scavenging is increased by the factor
     !! fast_fescav_fac to mimic rapid precipitation. For coarse resolution global simulations, fast_fescav_fac was set
     !! set to 10.0.  This high value helped erode coastal iron signals that likely propagated too far into the open
     !! due to under-resolved shelves.  The current default is 2.0, which was able to better maintain iron limitation
@@ -4916,10 +4864,6 @@ contains
     !! the interaction between free iron and detritus (~beta_fescav*feprime*f_ndet).  The latter was used in COBALTv1,
     !! while the former was used in COBALTv2 and remains the default in COBALTv3.
     !!
-    !! References:
-    !! Archer and Johnson (2000): https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2004GB002390
-    !! Fan et al. (2008): https://www.sciencedirect.com/science/article/pii/S030442030800008X
-    !! Liu and Millero (2002): https://www.sciencedirect.com/science/article/pii/S030442030800008X
     !!
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        ! Calculate the equilibrium ligand binding strength and a function of light
@@ -4953,7 +4897,7 @@ contains
        cobalt%feprime(i,j,k) = (-feprime_temp + (feprime_temp * feprime_temp + 4.0 * cobalt%kfe_eq_lig(i,j,k) * &
             cobalt%f_fed(i,j,k))**(0.5)) / (2.0 * max(epsln,cobalt%kfe_eq_lig(i,j,k)))
 
-       !! Calculate the iron solubility following Liu and Millero (2002).  The quantity "fe_salt" is the ionic strength
+       !! Calculate the iron solubility following Liu and Millero [-@liu2002].  The quantity "fe_salt" is the ionic strength
        !! These values were derived for Fe(III) at a pH of 8 over a range of salinities and temperatures.
        fe_salt = 19.922*Salt(i,j,k)/(1000.0 - 1.005*Salt(i,j,k))
        cobalt%fe_sol(i,j,k) = 10**(-10.53 + 322.5/(Temp(i,j,k)+273.15) - 2.524*sqrt(fe_salt) + &
@@ -4977,7 +4921,7 @@ contains
     !!
     !! Nutrient inputs associated with icebergs/frozen runoff.  This is currently entered in the top grid cell.  The
     !! parameters "jfe_iceberg_ratio", "jno3_iceberg_ratio" and "jpo4_iceberg_ratio" are the ratios of nutrient input
-    !! per kg of runoff.  For iron, values can be set within the broad ranges discussed in Laufkotter et al. (2018).
+    !! per kg of runoff.  For iron, values can be set within the broad ranges discussed in Laufkotter et al. [-@laufkotter2018].
     !! While inputs are currently entered at the ocean surface, they have defined within a 3D array to allow
     !! eventual consideration of depth-dependent inputs.
     !! frunoff units are kg m-2 sec-1; jfe_iceberg_ratio = mol Fe kg-1 melt; rho_dzt = kg m-2
@@ -5023,13 +4967,11 @@ contains
           k = grid_kmt(i,j)
           if (cobalt%fntot_btm(i,j) .gt. 0.0) then !{
 
-             !! The Burial flux estimates are based on Dunne et al., 2007. A synthesis of global particle export from
-             !! the surface ocean and cycling through the ocean interior and on the seafloor.  Global Biogeochemical
-             !! Cycles. Vol. 21, GB4006, doi:10.1029/2006GB002907.  See Figure 2, eq. (3).  The default units of this
+             !! The Burial flux estimates are based on Dunne et al. [-@dunne2007].  See Figure 2, eq. (3).  The default units of this
              !! relationship are mmoles C m-2 day-1, and the local variable "fpoc_btm" is used to create a bottom flux
              !! in these units.
              !!
-             !! As described in Dunne et al., (2007) this relationship was generally developed for deeper ocean areas
+             !! As described in Dunne et al. [-@dunne2007] this relationship was generally developed for deeper ocean areas
              !! and its validity in shallow areas is unclear.  Past experiments suggest that it may overestimate burial
              !! in shallow areas, resulting in large nutrient losses that are inconsistent with observations.  The
              !! parameter "z_burial" thus provides a depth scale (an effective "half-saturation") for ramping up burial
@@ -5045,8 +4987,7 @@ contains
              cobalt%fn_burial(i,j) = cobalt%frac_burial(i,j)*cobalt%fntot_btm(i,j)
              cobalt%fp_burial(i,j) = cobalt%frac_burial(i,j)*cobalt%fptot_btm(i,j)
 
-             !! Denitrification follows Middelburg et al., 1996. Denitrification in marine sediments: a modeling study
-             !! Global Biogeochemical Cycles 10(4).  pp. 661-673.  https://doi.org/10.1029/96GB02562. COBALT uses the
+             !! Denitrification follows Middelburg et al. [-@middelburg1996]. COBALT uses the
              !! carbon flux-based relationship based on Middelburg's first extraction of his metamodel (the first
              !! equation in Section 3.4 of the paper).  This relationship requires a flux to the benthos in micromoles C
              !! cm-2 day-1.  This means that fpoc_btm defined for the burial calculation above must be multiplied by:
@@ -5131,7 +5072,7 @@ contains
           !!#### Iron flux from the sediment
           !!
           !!
-          !! Iron from sediment (Dale, 2015).  The maximum release from the sediment is set by ffe_sed_max.  The
+          !! Iron from sediment [@dale2015].  The maximum release from the sediment is set by ffe_sed_max.  The
           !! hyperbolic tangent requires the flux of carbon to the sediments (as mmoles m-2 day-1) in the numerator
           !! and the bottom water oxygen concentration (in microMolar units) in the denominator. Note that ffe_sed_max
           !! was converted to moles Fe m-2 sec-1 during parameter input, so ffe_sed is in moles Fe m-2 sec-1
@@ -5177,7 +5118,7 @@ contains
               cobalt%ffe_geotherm(i,j) = 0.0
           endif
 
-          !!#### Calcium carbonate flux and burial, based on Dunne et al., 2012
+          !!#### Calcium carbonate flux and burial, based on Dunne et al. [-@dunne2012]
           !!
           !! phi_surfresp_cased = 0.14307   ! const for enhanced diss., surf sed respiration (dimensionless)
           !! phi_deepresp_cased = 4.1228    ! const for enhanced diss., deep sed respiration (dimensionless)
@@ -5193,7 +5134,7 @@ contains
           !! no alkalinity changes/drifts associated with the long-term evolution of cased
           !!
           !! If cased_steady is false, calcite is partitioned between dissolution, burial and evolving
-          !! cased as described in Dunne et al. (2012).  The multi-century scale evolution of cased
+          !! cased as described in Dunne et al. [-@dunne2012].  The multi-century scale evolution of cased
           !! impacts alkalinity, but care must to ensure that cased starts in equilibrium with the
           !! mean ocean state to avoid unrealistic drifts.
           !!
@@ -6104,9 +6045,7 @@ contains
       endif !}
     enddo; enddo ; enddo  !} i,j,k
 
-    !! Calculate the oxygen saturation using the relationships of Garcia and Gordon, 1992. Oxygen solubility in
-    !! seawater: Better fitting equations.  Limnol. Oceanogr., 37(6), pp. 1307-1312.
-    !! https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.4319/lo.1992.37.6.1307
+    !! Calculate the oxygen saturation using the relationships of Garcia and Gordon [-@garcia1992].
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec
        sal = min(42.0,max(0.0,Salt(i,j,k)))
        tt = 298.15 - min(40.0,max(0.0,Temp(i,j,k)))
@@ -7003,8 +6942,7 @@ contains
 
        !---------------------------------------------------------------------
        !!  Compute the Schmidt number of CO2 in seawater using the
-       !!  formulation presented by Wanninkhof (1992, J. Geophys. Res., 97,
-       !!  7373-7382).
+       !!  formulation presented by Wanninkhof [-@wanninkhof1992].
        !!  2018/01/17 jgj  update Schmidt number for CO2 to use
        !!  Wanninkhof, Limnol. Oceanogr: Methods, 12, 2014, 351-362
        !---------------------------------------------------------------------
@@ -7031,7 +6969,7 @@ contains
        !!  pressure in mol/kg given the temperature (t, in deg C) and
        !!  the salinity (s, in permil)
        !!
-       !!  From Garcia and Gordon (1992), Limnology and Oceonography.
+       !!  From Garcia and Gordon [-@garcia1992].
        !!  The formula used is from page 1310, eq (8).
        !!
        !!@note
@@ -7064,8 +7002,7 @@ contains
             (cobalt%b_0 + cobalt%b_1*ts + cobalt%b_2*ts2 + cobalt%b_3*ts3 + cobalt%c_0*sal)*sal)
 
        !!  Compute the Schmidt number of O2 in seawater using the
-       !!  formulation proposed by Keeling et al. (1998, Global Biogeochem.
-       !!  Cycles, 12, 141-163).
+       !!  formulation proposed by Keeling et al. [-@keeling1998].
        !!  2018/01/17 jgj  update Schmidt number for O2 to use
        !!  Wanninkhof, Limnol. Oceanogr: Methods, 12, 2014, 351-362
        !!

@@ -2,4 +2,4 @@
 project = "generic_tracers"
 src_dir = "./generic_tracers"
 preprocess = false
-
+md_extensions = ["ford_bib"]
