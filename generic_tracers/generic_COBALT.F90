@@ -154,6 +154,7 @@ module generic_COBALT
   use generic_bottom_layer_diags, only: generic_bld_average, generic_bld_dealloc
 
   use cobalt_types
+  use generic_restart_fields, only : g_restart_field_2d_type, g_restart_field_2d_add
   use cobalt_send_diag, only : cobalt_send_diagnostics
   use cobalt_reg_diag, only : cobalt_reg_diagnostics
   use cobalt_param_doc, only : get_COBALT_param_file
@@ -175,6 +176,7 @@ module generic_COBALT
   public generic_COBALT_update_from_bottom
   public generic_COBALT_set_boundary_values
   public generic_COBALT_end
+  public generic_COBALT_restart_fields_2d
   public as_param_cobalt
 
   !The following variables for using this module
@@ -2398,189 +2400,8 @@ contains
          units      = 'mol/kg',        &
          prog       = .false.          )
     !
-    !      cadet_arag_btf (Aragonite flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name,  &
-         name       = 'cadet_arag_btf',          &
-         longname   = 'aragonite flux to Sediments', &
-         units      = 'mol m-2 s-1',             &
-         prog       = .false.                    )
-    !
-    !      cadet_calc_btf (Calcite flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name,  &
-         name       = 'cadet_calc_btf',          &
-         longname   = 'calcite flux to Sediments', &
-         units      = 'mol m-2 s-1',             &
-         prog       = .false.                    )
-    !
-    !      lithdet_btf (Lithogenic flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'lithdet_btf',            &
-         longname   = 'Lith flux to Sediments', &
-         units      = 'g m-2 s-1',              &
-         prog       = .false.                   )
-    !
-    !      ndet_btf (N flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'ndet_btf',            &
-         longname   = 'N flux to Sediments', &
-         units      = 'mol m-2 s-1',         &
-         prog       = .false.                )
-    !
-    !      pdet_btf (P flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'pdet_btf',            &
-         longname   = 'P flux to Sediments', &
-         units      = 'mol m-2 s-1',         &
-         prog       = .false.                )
-    !
-    !      sidet_btf (SiO2 flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'sidet_btf',              &
-         longname   = 'SiO2 flux to Sediments', &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !      fedet_btf (Fe flux to sediments)
-    !      (only used in "no mass change" check)
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'fedet_btf',              &
-         longname   = 'Fe flux to Sediments',   &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  ndet_fast_btf (Fast sinking N flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'ndet_fast_btf',            &
-         longname   = 'Fast sinking N flux to Sediments', &
-         units      = 'mol m-2 s-1',         &
-         prog       = .false.                )
-    !
-    !  pdet_fast_btf (Fast sinking P flux to sediments)
-    !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'pdet_fast_btf',            &
-         longname   = 'Fast sinking P flux to Sediments', &
-         units      = 'mol m-2 s-1',         &
-         prog       = .false.                )
-    !
-    !  add bottom flux for nsm_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'nsm_btf',                &
-         longname   = 'nsm flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for nmd_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'nmd_btf',                &
-         longname   = 'nmd flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for nlg_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'nlg_btf',                &
-         longname   = 'nlg flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for ndi_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'ndi_btf',                &
-         longname   = 'ndi flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-     !
-    !  add bottom flux for fesm_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'fesm_btf',                &
-         longname   = 'fesm flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for femd_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'femd_btf',                &
-         longname   = 'femd flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for felg_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'felg_btf',                &
-         longname   = 'felg flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for fedi_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'fedi_btf',                &
-         longname   = 'fedi flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for psm_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'psm_btf',                &
-         longname   = 'psm flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for pmd_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'pmd_btf',                &
-         longname   = 'pmd flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for plg_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'plg_btf',                &
-         longname   = 'plg flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for pdi_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'pdi_btf',                &
-         longname   = 'pdi flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for simd_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'simd_btf',                &
-         longname   = 'simd flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
-    !
-    !  add bottom flux for silg_btf
-    !
-    call g_tracer_add(tracer_list,package_name, &
-         name       = 'silg_btf',                &
-         longname   = 'silg flux to Sediments',  &
-         units      = 'mol m-2 s-1',            &
-         prog       = .false.                   )
+    !      The bottom fluxes to the sediments (*_btf) are not tracers. They are kept in the 2D
+    !      cobalt%f_*_btf arrays and saved as restart fields (see generic_COBALT_restart_fields_2d).
     !
     !       htotal (H+ ion concentration)
     !
@@ -2736,7 +2557,6 @@ contains
     integer :: i, j, k
     logical :: used
     real, dimension(:,:,:),pointer :: grid_tmask
-    real, dimension(:,:,:),pointer :: temp_field
     integer, dimension(:,:),pointer :: grid_kmt
 
     call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,grid_tmask=grid_tmask,&
@@ -2748,8 +2568,7 @@ contains
     !
     call g_tracer_get_values(tracer_list,'cadet_arag','btm_reservoir',cobalt%fcadet_arag_btm,isd,jsd)
     cobalt%fcadet_arag_btm = cobalt%fcadet_arag_btm/dt
-    call g_tracer_get_pointer(tracer_list,'cadet_arag_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fcadet_arag_btm(:,:)
+    cobalt%f_cadet_arag_btf(:,:) = cobalt%fcadet_arag_btm(:,:)
     call g_tracer_set_values(tracer_list,'cadet_arag','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_fcadet_arag_btm,cobalt%fcadet_arag_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2757,8 +2576,7 @@ contains
 
     call g_tracer_get_values(tracer_list,'cadet_calc','btm_reservoir',cobalt%fcadet_calc_btm,isd,jsd)
     cobalt%fcadet_calc_btm = cobalt%fcadet_calc_btm/dt
-    call g_tracer_get_pointer(tracer_list,'cadet_calc_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fcadet_calc_btm(:,:)
+    cobalt%f_cadet_calc_btf(:,:) = cobalt%fcadet_calc_btm(:,:)
     call g_tracer_set_values(tracer_list,'cadet_calc','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_fcadet_calc_btm, cobalt%fcadet_calc_btm, &
     model_time, rmask = grid_tmask(:,:,1), &
@@ -2769,8 +2587,7 @@ contains
     !
     call g_tracer_get_values(tracer_list,'fedet','btm_reservoir',cobalt%ffedet_btm,isd,jsd)
     cobalt%ffedet_btm = cobalt%ffedet_btm/dt
-    call g_tracer_get_pointer(tracer_list,'fedet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%ffedet_btm(:,:)
+    cobalt%f_fedet_btf(:,:) = cobalt%ffedet_btm(:,:)
     call g_tracer_set_values(tracer_list,'fedet','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_ffedet_btm, cobalt%ffedet_btm, &
     model_time, rmask = grid_tmask(:,:,1), &
@@ -2780,8 +2597,7 @@ contains
     !
     call g_tracer_get_values(tracer_list,'lithdet','btm_reservoir',cobalt%flithdet_btm,isd,jsd)
     cobalt%flithdet_btm = cobalt%flithdet_btm /dt
-    call g_tracer_get_pointer(tracer_list,'lithdet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%flithdet_btm(:,:)
+    cobalt%f_lithdet_btf(:,:) = cobalt%flithdet_btm(:,:)
     call g_tracer_set_values(tracer_list,'lithdet','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_flithdet_btm, cobalt%flithdet_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2792,46 +2608,41 @@ contains
     !
     call g_tracer_get_values(tracer_list,'ndet','btm_reservoir',cobalt%fndet_btm,isd,jsd)
     cobalt%fndet_btm = cobalt%fndet_btm/dt
-    call g_tracer_get_pointer(tracer_list,'ndet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fndet_btm(:,:)
+    cobalt%f_ndet_btf(:,:) = cobalt%fndet_btm(:,:)
     call g_tracer_set_values(tracer_list,'ndet','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_fndet_btm,cobalt%fndet_btm,          &
     model_time, rmask = grid_tmask(:,:,1),&
     is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
-	call g_tracer_get_values(tracer_list,'ndet_fast','btm_reservoir',cobalt%fndet_fast_btm,isd,jsd)
-	cobalt%fndet_fast_btm = cobalt%fndet_fast_btm/dt
-	call g_tracer_get_pointer(tracer_list,'ndet_fast_btf','field',temp_field)
-	temp_field(:,:,1) = cobalt%fndet_fast_btm(:,:)
-	call g_tracer_set_values(tracer_list,'ndet_fast','btm_reservoir',0.0)
-	if (cobalt%id_fndet_fast_btm .gt. 0)           &
-	used = g_send_data(cobalt%id_fndet_fast_btm,cobalt%fndet_fast_btm,          &
-	model_time, rmask = grid_tmask(:,:,1),&
-	is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+    call g_tracer_get_values(tracer_list,'ndet_fast','btm_reservoir',cobalt%fndet_fast_btm,isd,jsd)
+    cobalt%fndet_fast_btm = cobalt%fndet_fast_btm/dt
+    cobalt%f_ndet_fast_btf(:,:) = cobalt%fndet_fast_btm(:,:)
+    call g_tracer_set_values(tracer_list,'ndet_fast','btm_reservoir',0.0)
+    if (cobalt%id_fndet_fast_btm .gt. 0)           &
+    used = g_send_data(cobalt%id_fndet_fast_btm,cobalt%fndet_fast_btm,          &
+    model_time, rmask = grid_tmask(:,:,1),&
+    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
     call g_tracer_get_values(tracer_list,'pdet','btm_reservoir',cobalt%fpdet_btm,isd,jsd)
     cobalt%fpdet_btm = cobalt%fpdet_btm/dt
-    call g_tracer_get_pointer(tracer_list,'pdet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fpdet_btm(:,:)
+    cobalt%f_pdet_btf(:,:) = cobalt%fpdet_btm(:,:)
     call g_tracer_set_values(tracer_list,'pdet','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_fpdet_btm,cobalt%fpdet_btm,          &
     model_time, rmask = grid_tmask(:,:,1),&
     is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
-	call g_tracer_get_values(tracer_list,'pdet_fast','btm_reservoir',cobalt%fpdet_fast_btm,isd,jsd)
-	cobalt%fpdet_fast_btm = cobalt%fpdet_fast_btm/dt
-	call g_tracer_get_pointer(tracer_list,'pdet_fast_btf','field',temp_field)
-	temp_field(:,:,1) = cobalt%fpdet_fast_btm(:,:)
-	call g_tracer_set_values(tracer_list,'pdet_fast','btm_reservoir',0.0)
-	if (cobalt%id_fpdet_fast_btm .gt. 0)           &
-	used = g_send_data(cobalt%id_fpdet_fast_btm,cobalt%fpdet_fast_btm,          &
-	model_time, rmask = grid_tmask(:,:,1),&
-	is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+    call g_tracer_get_values(tracer_list,'pdet_fast','btm_reservoir',cobalt%fpdet_fast_btm,isd,jsd)
+    cobalt%fpdet_fast_btm = cobalt%fpdet_fast_btm/dt
+    cobalt%f_pdet_fast_btf(:,:) = cobalt%fpdet_fast_btm(:,:)
+    call g_tracer_set_values(tracer_list,'pdet_fast','btm_reservoir',0.0)
+    if (cobalt%id_fpdet_fast_btm .gt. 0)           &
+    used = g_send_data(cobalt%id_fpdet_fast_btm,cobalt%fpdet_fast_btm,          &
+    model_time, rmask = grid_tmask(:,:,1),&
+    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
     call g_tracer_get_values(tracer_list,'sidet','btm_reservoir',cobalt%fsidet_btm,isd,jsd)
     cobalt%fsidet_btm = cobalt%fsidet_btm/dt
-    call g_tracer_get_pointer(tracer_list,'sidet_btf','field',temp_field)
-    temp_field(:,:,1) = cobalt%fsidet_btm(:,:)
+    cobalt%f_sidet_btf(:,:) = cobalt%fsidet_btm(:,:)
     call g_tracer_set_values(tracer_list,'sidet','btm_reservoir',0.0)
     used = g_send_data(cobalt%id_fsidet_btm,    cobalt%fsidet_btm,          &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2842,8 +2653,7 @@ contains
     !
     call g_tracer_get_values(tracer_list,'ndi','btm_reservoir',phyto(DIAZ)%fn_btm,isd,jsd)
     phyto(DIAZ)%fn_btm = phyto(DIAZ)%fn_btm/dt
-    call g_tracer_get_pointer(tracer_list,'ndi_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(DIAZ)%fn_btm(:,:)
+    cobalt%f_ndi_btf(:,:) = phyto(DIAZ)%fn_btm(:,:)
     call g_tracer_set_values(tracer_list,'ndi','btm_reservoir',0.0)
     used = g_send_data(phyto(DIAZ)%id_fn_btm,phyto(DIAZ)%fn_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2851,8 +2661,7 @@ contains
 
     call g_tracer_get_values(tracer_list,'nlg','btm_reservoir',phyto(LGP)%fn_btm,isd,jsd)
     phyto(LGP)%fn_btm = phyto(LGP)%fn_btm/dt
-    call g_tracer_get_pointer(tracer_list,'nlg_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(LGP)%fn_btm(:,:)
+    cobalt%f_nlg_btf(:,:) = phyto(LGP)%fn_btm(:,:)
     call g_tracer_set_values(tracer_list,'nlg','btm_reservoir',0.0)
     used = g_send_data(phyto(LGP)%id_fn_btm,phyto(LGP)%fn_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2860,8 +2669,7 @@ contains
 
     call g_tracer_get_values(tracer_list,'nmd','btm_reservoir',phyto(MDP)%fn_btm,isd,jsd)
     phyto(MDP)%fn_btm = phyto(MDP)%fn_btm/dt
-    call g_tracer_get_pointer(tracer_list,'nmd_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(MDP)%fn_btm(:,:)
+    cobalt%f_nmd_btf(:,:) = phyto(MDP)%fn_btm(:,:)
     call g_tracer_set_values(tracer_list,'nmd','btm_reservoir',0.0)
     used = g_send_data(phyto(MDP)%id_fn_btm,phyto(MDP)%fn_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2869,8 +2677,7 @@ contains
 
     call g_tracer_get_values(tracer_list,'nsm','btm_reservoir',phyto(SMP)%fn_btm,isd,jsd)
     phyto(SMP)%fn_btm = phyto(SMP)%fn_btm/dt
-    call g_tracer_get_pointer(tracer_list,'nsm_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(SMP)%fn_btm(:,:)
+    cobalt%f_nsm_btf(:,:) = phyto(SMP)%fn_btm(:,:)
     call g_tracer_set_values(tracer_list,'nsm','btm_reservoir',0.0)
     used = g_send_data(phyto(SMP)%id_fn_btm,phyto(SMP)%fn_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2882,8 +2689,7 @@ contains
     !! handled separately later using a relationship based on Dale et al., 2015.
     call g_tracer_get_values(tracer_list,'fedi','btm_reservoir',phyto(DIAZ)%ffe_btm,isd,jsd)
     phyto(DIAZ)%ffe_btm = phyto(DIAZ)%ffe_btm/dt
-    call g_tracer_get_pointer(tracer_list,'fedi_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(DIAZ)%ffe_btm(:,:)
+    cobalt%f_fedi_btf(:,:) = phyto(DIAZ)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'fedi','btm_reservoir',0.0)
     used = g_send_data(phyto(DIAZ)%id_ffe_btm,phyto(DIAZ)%ffe_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2891,8 +2697,7 @@ contains
 
     call g_tracer_get_values(tracer_list,'felg','btm_reservoir',phyto(LGP)%ffe_btm,isd,jsd)
     phyto(LGP)%ffe_btm = phyto(LGP)%ffe_btm/dt
-    call g_tracer_get_pointer(tracer_list,'felg_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(LGP)%ffe_btm(:,:)
+    cobalt%f_felg_btf(:,:) = phyto(LGP)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'felg','btm_reservoir',0.0)
     used = g_send_data(phyto(LGP)%id_ffe_btm,phyto(LGP)%ffe_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2900,8 +2705,7 @@ contains
 
     call g_tracer_get_values(tracer_list,'femd','btm_reservoir',phyto(MDP)%ffe_btm,isd,jsd)
     phyto(MDP)%ffe_btm = phyto(MDP)%ffe_btm/dt
-    call g_tracer_get_pointer(tracer_list,'femd_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(MDP)%ffe_btm(:,:)
+    cobalt%f_femd_btf(:,:) = phyto(MDP)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'femd','btm_reservoir',0.0)
     used = g_send_data(phyto(MDP)%id_ffe_btm,phyto(MDP)%ffe_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2909,8 +2713,7 @@ contains
 
     call g_tracer_get_values(tracer_list,'fesm','btm_reservoir',phyto(SMP)%ffe_btm,isd,jsd)
     phyto(SMP)%ffe_btm = phyto(SMP)%ffe_btm/dt
-    call g_tracer_get_pointer(tracer_list,'fesm_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(SMP)%ffe_btm(:,:)
+    cobalt%f_fesm_btf(:,:) = phyto(SMP)%ffe_btm(:,:)
     call g_tracer_set_values(tracer_list,'fesm','btm_reservoir',0.0)
     used = g_send_data(phyto(SMP)%id_ffe_btm,phyto(SMP)%ffe_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2920,8 +2723,7 @@ contains
     !
     call g_tracer_get_values(tracer_list,'pdi','btm_reservoir',phyto(DIAZ)%fp_btm,isd,jsd)
     phyto(DIAZ)%fp_btm = phyto(DIAZ)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'pdi_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(DIAZ)%fp_btm(:,:)
+    cobalt%f_pdi_btf(:,:) = phyto(DIAZ)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'pdi','btm_reservoir',0.0)
     used = g_send_data(phyto(DIAZ)%id_fp_btm,phyto(DIAZ)%fp_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2929,8 +2731,7 @@ contains
 
     call g_tracer_get_values(tracer_list,'plg','btm_reservoir',phyto(LGP)%fp_btm,isd,jsd)
     phyto(LGP)%fp_btm = phyto(LGP)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'plg_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(LGP)%fp_btm(:,:)
+    cobalt%f_plg_btf(:,:) = phyto(LGP)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'plg','btm_reservoir',0.0)
     used = g_send_data(phyto(LGP)%id_fp_btm,phyto(LGP)%fp_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2938,8 +2739,7 @@ contains
 
     call g_tracer_get_values(tracer_list,'pmd','btm_reservoir',phyto(MDP)%fp_btm,isd,jsd)
     phyto(MDP)%fp_btm = phyto(MDP)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'pmd_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(MDP)%fp_btm(:,:)
+    cobalt%f_pmd_btf(:,:) = phyto(MDP)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'pmd','btm_reservoir',0.0)
     used = g_send_data(phyto(MDP)%id_fp_btm,phyto(MDP)%fp_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2947,8 +2747,7 @@ contains
 
     call g_tracer_get_values(tracer_list,'psm','btm_reservoir',phyto(SMP)%fp_btm,isd,jsd)
     phyto(SMP)%fp_btm = phyto(SMP)%fp_btm/dt
-    call g_tracer_get_pointer(tracer_list,'psm_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(SMP)%fp_btm(:,:)
+    cobalt%f_psm_btf(:,:) = phyto(SMP)%fp_btm(:,:)
     call g_tracer_set_values(tracer_list,'psm','btm_reservoir',0.0)
     used = g_send_data(phyto(SMP)%id_fp_btm,phyto(SMP)%fp_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2958,8 +2757,7 @@ contains
     !
     call g_tracer_get_values(tracer_list,'silg','btm_reservoir',phyto(LGP)%fsi_btm,isd,jsd)
     phyto(LGP)%fsi_btm = phyto(LGP)%fsi_btm/dt
-    call g_tracer_get_pointer(tracer_list,'silg_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(LGP)%fsi_btm(:,:)
+    cobalt%f_silg_btf(:,:) = phyto(LGP)%fsi_btm(:,:)
     call g_tracer_set_values(tracer_list,'silg','btm_reservoir',0.0)
     used = g_send_data(phyto(LGP)%id_fsi_btm,phyto(LGP)%fsi_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2967,34 +2765,13 @@ contains
 
     call g_tracer_get_values(tracer_list,'simd','btm_reservoir',phyto(MDP)%fsi_btm,isd,jsd)
     phyto(MDP)%fsi_btm = phyto(MDP)%fsi_btm/dt
-    call g_tracer_get_pointer(tracer_list,'simd_btf','field',temp_field)
-    temp_field(:,:,1) = phyto(MDP)%fsi_btm(:,:)
+    cobalt%f_simd_btf(:,:) = phyto(MDP)%fsi_btm(:,:)
     call g_tracer_set_values(tracer_list,'simd','btm_reservoir',0.0)
     used = g_send_data(phyto(MDP)%id_fsi_btm,phyto(MDP)%fsi_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
     is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
     ! Re-calculate aggregated flux diagnostics here
-    call get_btf_values(tracer_list,'ndet_btf',cobalt%f_ndet_btf)
-      call get_btf_values(tracer_list,'ndet_fast_btf',cobalt%f_ndet_fast_btf)
-    call get_btf_values(tracer_list,'pdet_btf',cobalt%f_pdet_btf)
-      call get_btf_values(tracer_list,'pdet_fast_btf',cobalt%f_pdet_fast_btf)
-    call get_btf_values(tracer_list,'sidet_btf',cobalt%f_sidet_btf)
-    call get_btf_values(tracer_list,'ndi_btf',cobalt%f_ndi_btf)
-    call get_btf_values(tracer_list,'nlg_btf',cobalt%f_nlg_btf)
-    call get_btf_values(tracer_list,'nmd_btf',cobalt%f_nmd_btf)
-      call get_btf_values(tracer_list,'nsm_btf',cobalt%f_nsm_btf)
-    call get_btf_values(tracer_list,'pdi_btf',cobalt%f_pdi_btf)
-    call get_btf_values(tracer_list,'plg_btf',cobalt%f_plg_btf)   
-    call get_btf_values(tracer_list,'pmd_btf',cobalt%f_pmd_btf)
-      call get_btf_values(tracer_list,'psm_btf',cobalt%f_psm_btf)
-    call get_btf_values(tracer_list,'silg_btf',cobalt%f_silg_btf)
-    call get_btf_values(tracer_list,'simd_btf',cobalt%f_simd_btf)
-    call get_btf_values(tracer_list,'fedet_btf',cobalt%f_fedet_btf)
-    call get_btf_values(tracer_list,'fedi_btf',cobalt%f_fedi_btf)
-    call get_btf_values(tracer_list,'felg_btf',cobalt%f_felg_btf)
-    call get_btf_values(tracer_list,'femd_btf',cobalt%f_femd_btf)
-      call get_btf_values(tracer_list,'fesm_btf',cobalt%f_fesm_btf)
 
     do j = jsc, jec; do i = isc, iec  !{
        if (grid_kmt(i,j) .gt. 0) then !{
@@ -3360,30 +3137,6 @@ contains
     !
     call g_tracer_get_values(tracer_list,'cased'  ,'field',cobalt%f_cased    ,isd,jsd)
     call g_tracer_get_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd,positive=.true.)
-    call get_btf_values(tracer_list,'cadet_arag_btf',cobalt%f_cadet_arag_btf)
-    call get_btf_values(tracer_list,'cadet_calc_btf',cobalt%f_cadet_calc_btf)
-    call get_btf_values(tracer_list,'lithdet_btf',cobalt%f_lithdet_btf)
-    call get_btf_values(tracer_list,'ndet_btf',cobalt%f_ndet_btf)
-      call get_btf_values(tracer_list,'ndet_fast_btf',cobalt%f_ndet_fast_btf)
-    call get_btf_values(tracer_list,'pdet_btf',cobalt%f_pdet_btf)
-      call get_btf_values(tracer_list,'pdet_fast_btf',cobalt%f_pdet_fast_btf)
-    call get_btf_values(tracer_list,'sidet_btf',cobalt%f_sidet_btf)
-    ! add phytoplankton because they now sink
-    call get_btf_values(tracer_list,'ndi_btf',cobalt%f_ndi_btf)
-    call get_btf_values(tracer_list,'nlg_btf',cobalt%f_nlg_btf)
-    call get_btf_values(tracer_list,'nmd_btf',cobalt%f_nmd_btf)
-      call get_btf_values(tracer_list,'nsm_btf',cobalt%f_nsm_btf)
-    call get_btf_values(tracer_list,'fedi_btf',cobalt%f_fedi_btf)
-    call get_btf_values(tracer_list,'felg_btf',cobalt%f_felg_btf)
-    call get_btf_values(tracer_list,'femd_btf',cobalt%f_femd_btf)
-      call get_btf_values(tracer_list,'fesm_btf',cobalt%f_fesm_btf)
-    call get_btf_values(tracer_list,'pdi_btf',cobalt%f_pdi_btf)
-    call get_btf_values(tracer_list,'plg_btf',cobalt%f_plg_btf)
-    call get_btf_values(tracer_list,'pmd_btf',cobalt%f_pmd_btf)
-      call get_btf_values(tracer_list,'psm_btf',cobalt%f_psm_btf)
-    call get_btf_values(tracer_list,'silg_btf',cobalt%f_silg_btf)
-    call get_btf_values(tracer_list,'simd_btf',cobalt%f_simd_btf)
-    call get_btf_values(tracer_list,'fedet_btf',cobalt%f_fedet_btf)
     call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_sfc','field',cobalt%f_irr_aclm_sfc ,isd,jsd)
@@ -7297,18 +7050,52 @@ contains
   end subroutine generic_COBALT_end
 
   !
-  !   This is an internal sub, not a public interface.
-  !   Copy a bottom flux tracer into its 2D cobalt array. The tracer field is 3D, but only k=1 is used.
+  !   Add the 2D fields that COBALT keeps outside of the tracer list to a list of restart fields.
+  !   The bottom fluxes to the sediments (*_btf) need to be saved because the sediment calculations
+  !   in update_from_source use the fluxes computed at the end of the previous step in update_from_bottom.
+  !   Older versions saved these as 3D diagnostic tracers named *_btf, which are given as legacy names.
   !
-  subroutine get_btf_values(tracer_list, name, array)
-    type(g_tracer_type), pointer :: tracer_list
-    character(len=*), intent(in) :: name
-    real, dimension(:,:), intent(out) :: array
-    real, dimension(:,:,:), pointer :: btf_field
+  subroutine generic_COBALT_restart_fields_2d(fields)
+    type(g_restart_field_2d_type), dimension(:), allocatable, intent(inout) :: fields
 
-    call g_tracer_get_pointer(tracer_list, name, 'field', btf_field)
-    array(:,:) = btf_field(:,:,1)
-  end subroutine get_btf_values
+    call add_btf(cobalt%f_ndet_fast_btf, 'ndet_fast_btf', 'Fast sinking N flux to Sediments')
+    call add_btf(cobalt%f_pdet_fast_btf, 'pdet_fast_btf', 'Fast sinking P flux to Sediments')
+    call add_btf(cobalt%f_cadet_arag_btf, 'cadet_arag_btf', 'aragonite flux to Sediments')
+    call add_btf(cobalt%f_cadet_calc_btf, 'cadet_calc_btf', 'calcite flux to Sediments')
+    call add_btf(cobalt%f_lithdet_btf, 'lithdet_btf', 'Lith flux to Sediments', units='g m-2 s-1')
+    call add_btf(cobalt%f_ndet_btf, 'ndet_btf', 'N flux to Sediments')
+    call add_btf(cobalt%f_pdet_btf, 'pdet_btf', 'P flux to Sediments')
+    call add_btf(cobalt%f_sidet_btf, 'sidet_btf', 'SiO2 flux to Sediments')
+    call add_btf(cobalt%f_fedet_btf, 'fedet_btf', 'Fe flux to Sediments')
+    call add_btf(cobalt%f_nsm_btf, 'nsm_btf', 'nsm flux to Sediments')
+    call add_btf(cobalt%f_fesm_btf, 'fesm_btf', 'fesm flux to Sediments')
+    call add_btf(cobalt%f_psm_btf, 'psm_btf', 'psm flux to Sediments')
+    call add_btf(cobalt%f_nmd_btf, 'nmd_btf', 'nmd flux to Sediments')
+    call add_btf(cobalt%f_nlg_btf, 'nlg_btf', 'nlg flux to Sediments')
+    call add_btf(cobalt%f_ndi_btf, 'ndi_btf', 'ndi flux to Sediments')
+    call add_btf(cobalt%f_femd_btf, 'femd_btf', 'femd flux to Sediments')
+    call add_btf(cobalt%f_felg_btf, 'felg_btf', 'felg flux to Sediments')
+    call add_btf(cobalt%f_fedi_btf, 'fedi_btf', 'fedi flux to Sediments')
+    call add_btf(cobalt%f_pmd_btf, 'pmd_btf', 'pmd flux to Sediments')
+    call add_btf(cobalt%f_plg_btf, 'plg_btf', 'plg flux to Sediments')
+    call add_btf(cobalt%f_pdi_btf, 'pdi_btf', 'pdi flux to Sediments')
+    call add_btf(cobalt%f_simd_btf, 'simd_btf', 'simd flux to Sediments')
+    call add_btf(cobalt%f_silg_btf, 'silg_btf', 'silg flux to Sediments')
+
+  contains
+
+    ! Add a bottom flux, named after the 3D tracer that older versions saved it as
+    subroutine add_btf(field, legacy_name, longname, units)
+      real, dimension(:,:), pointer          :: field
+      character(len=*),           intent(in) :: legacy_name, longname
+      character(len=*), optional, intent(in) :: units
+      character(len=32) :: btf_units
+
+      btf_units = 'mol m-2 s-1' ; if (present(units)) btf_units = units
+      call g_restart_field_2d_add(fields, field, trim(legacy_name)//'_2d', longname, btf_units, &
+                                  legacy_name=legacy_name)
+    end subroutine add_btf
+  end subroutine generic_COBALT_restart_fields_2d
 
   !
   !   This is an internal sub, not a public interface.

@@ -103,7 +103,9 @@ module generic_tracer
   use generic_COBALT,  only : generic_COBALT_init, generic_COBALT_update_from_source,generic_COBALT_register_diag
   use generic_COBALT,  only : generic_COBALT_update_from_bottom,generic_COBALT_update_from_coupler
   use generic_COBALT,  only : generic_COBALT_set_boundary_values, generic_COBALT_end, do_generic_COBALT
-  use generic_COBALT,  only : as_param_cobalt
+  use generic_COBALT,  only : as_param_cobalt, generic_COBALT_restart_fields_2d
+
+  use generic_restart_fields, only : g_restart_field_2d_type
 
 
   implicit none ; private
@@ -125,6 +127,7 @@ module generic_tracer
   public generic_tracer_vertdiff_G
   public generic_tracer_get_diag_list
   public generic_tracer_coupler_accumulate
+  public generic_tracer_restart_fields_2d
 
   !Linked Lists of all prog and diag tracers in this module
   !Ensure these pointers are "save"d between the calls
@@ -779,5 +782,16 @@ contains
     type(g_diag_type),    pointer    :: list
     list => diag_list
   end subroutine generic_tracer_get_diag_list
+
+  !> Get the list of 2D fields that the generic tracer packages keep outside of the tracer list,
+  !! but that must be saved in restart files. This must be called after generic_tracer_init,
+  !! once the packages have allocated their arrays.
+  subroutine generic_tracer_restart_fields_2d(fields)
+    type(g_restart_field_2d_type), dimension(:), allocatable, intent(out) :: fields !< The list of restart fields
+
+    allocate(fields(0))
+    if(do_generic_COBALT)  call generic_COBALT_restart_fields_2d(fields)
+
+  end subroutine generic_tracer_restart_fields_2d
 
 end module generic_tracer
