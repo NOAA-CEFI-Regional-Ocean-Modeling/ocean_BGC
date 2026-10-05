@@ -194,8 +194,8 @@ module generic_COBALT
 
   type(phytoplankton), dimension(NUM_PHYTO) :: phyto
   !! Array allocations and flux calculations assume that phyto(1) is the
-  !! only phytoplankton group cabable of nitrogen uptake by N2 fixation while phyto(2:NUM_PHYTO)
-  !! are only cabable of nitrgen uptake by NH4 and NO3 uptake
+  !! only phytoplankton group capable of nitrogen uptake by N2 fixation while phyto(2:NUM_PHYTO)
+  !! are only capable of nitrogen uptake by NH4 and NO3 uptake
 
   ! define three zooplankton types
   type(zooplankton), dimension(NUM_ZOO) :: zoo
@@ -276,6 +276,7 @@ contains
   subroutine generic_COBALT_init(tracer_list, force_update_fluxes)
    !! Initialize the generic COBALT module
    !! This subroutine:
+   !!
    !! - Adds all the COBALT Tracers to the list of generic tracers passed to it via utility subroutine g_tracer_add().
    !! - Adds all the parameters used by this module via utility subroutine [[g_tracer_add_param]].
    !! - Allocates all work arrays used in the module.
@@ -336,7 +337,7 @@ contains
     !! This is an internal sub, not a public interface.
     !! Add all the parameters to be used in this module.
 
-    type(param_file_type), intent(in)   :: param_file  !< structure indicating parameter file to parse
+    type(param_file_type), intent(in)   :: param_file  !! structure indicating parameter file to parse
 
     !Specify all parameters used in this modules.
     !===============================@===============================
@@ -1773,7 +1774,7 @@ contains
     type(g_tracer_type), pointer :: tracer_list
     character(len=fm_string_len), parameter :: sub_name = 'user_add_tracers'
     real :: as_coeff_cobalt
-    type(param_file_type) :: param_file  !< structure indicating parameter file to parse
+    type(param_file_type) :: param_file  !! structure indicating parameter file to parse
     !
     ! This include declares and sets the variable "version". (use of include statement copied from MOM6)
 # include "version_variable.h"
@@ -2320,7 +2321,7 @@ contains
          units      = 'mol/kg',   &
          prog       = .true.      )
 
-      if (do_14c) then                                        !<<RADIOCARBON
+      if (do_14c) then
       !       D14IC (Dissolved inorganic radiocarbon)
       !
       call g_tracer_add(tracer_list,package_name,       &
@@ -2346,7 +2347,7 @@ contains
          longname   = 'DO14C',                    &
          units      = 'mol/kg',                   &
          prog       = .true.)
-      endif                                                   !RADIOCARBON>>
+      endif
 
     !===========================================================
     !Diagnostic Tracers
@@ -3056,7 +3057,7 @@ contains
     integer :: yearday
     real :: rev_angle, dec_angle, temp_arg
 
-    !<for dms
+    ! for dms
     real :: log10chl,log10zeu,log10dmsp_mix,log10dmsp_strat, log10dmsp
     real :: log10dms_mix,log10dms_strat,log10dms
     real :: log10_zeu_over_mld
@@ -3182,7 +3183,7 @@ contains
        call g_tracer_set_values(tracer_list,'nh4','csurf',cobalt%nh3_csurf    ,isd,jsd)
     end if
 
-    if (do_14c) then                                        !<<RADIOCARBON
+    if (do_14c) then
 
       ! Normally, the alpha would be multiplied by the atmospheric 14C/12C ratio. However,
       ! here that is set to 1, so that alpha_14C = alpha_12C. This needs to be changed!
@@ -3201,7 +3202,7 @@ contains
       call g_tracer_set_values(tracer_list,'di14c','alpha',cobalt%c14o2_alpha      ,isd,jsd)
       call g_tracer_set_values(tracer_list,'di14c','csurf',cobalt%c14o2_csurf      ,isd,jsd)
 
-    endif                                                   !RADIOCARBON>>
+    endif
 
     !---------------------------------------------------------------------
     ! Get positive tracer concentrations
@@ -3392,10 +3393,10 @@ contains
 
     !!### 1.2: Light Limitation/Growth Calculations
     !! Calculate the mixed layer for phytoplankton photoacclimation
-    !! The default criteria is de Boyer Montegut et al. [-@deboyermontegut2004], where the
-    !! mixed layer is calculated relative to zmld_ref = 10m and is based on when
+    !! The default criterion is de Boyer Montegut et al. [-@deboyermontegut2004], where the
+    !! mixed layer is calculated relative to zmld_ref = 10m and is based on
     !! a potential density difference of 0.03 kg m-3.  This definition
-    !! captures mixing on time scale of 1 to a few days.
+    !! captures mixing on time scales of 1 to a few days.
     !!
     if (present(photo_acc_dpth)) then
       pha_all_same = all(photo_acc_dpth == photo_acc_dpth(isc,jsc))
@@ -3427,15 +3428,15 @@ contains
     !! of the total shortwave flux, consistent with Baker and Frouin [-@baker1987].
     !!
     !! The instantaneous and acclimation irradiances are then calculated at all depths.  The
-    !! former is eventually used to calculate instaneous phytoplankton growth, while the latter
+    !! former is eventually used to calculate instantaneous phytoplankton growth, while the latter
     !! is used to calculate the chlorophyll to carbon ratio.  The acclimation irradiance
     !! is effectively an average of the instantaneous irradiance over daylight hours across
     !! an acclimation timescale (typically 24 hours).  The daylength for this calculation is
-    !! taken from CBM model described in Forsythe et al. [-@forsythe1995]. The acclimation irradiance
+    !! taken from the CBM model described in Forsythe et al. [-@forsythe1995]. The acclimation irradiance
     !! in the surface mixed layer is generally assumed to be the average in the mixed layer,
     !! except when the mixed layer extends beyond "ml_aclm_efold" e-folding scales for the
     !! irradiance.  In these deep mixed layer cases the average light down to "ml_aclm_efold"
-    !! is used for the acclimation irradiance with the mixed layer.  Full details of these
+    !! is used for the acclimation irradiance within the mixed layer.  Full details of these
     !! calculations and their implications are presented and discussed in Stock et al. [-@stock2025].
     !!
     allocate(sfc_irrad(isc:iec,jsc:jec))  ! surface photosythetically available irradiance
@@ -3591,12 +3592,12 @@ contains
     end if
 
     !!
-    !! Calculate the phytoplankton growth rate calculation based on Geider et al. [-@geider1997].
+    !! Calculate the phytoplankton growth rate based on Geider et al. [-@geider1997].
     !! This section also allows for low- and high-light adapted "ecotypes" [e.g., @moore1999].
     !! As described in Stock et al. [-@stock2025], low-light adapted
     !! ecotypes are characterized by a steep initial slope of the photosynthesis-irradiance
     !! curve (i.e., high values of Geider's "alpha") and a low maximum photosynthetic rate
-    !! (low P_C_max, and high-light adapted cells have the opposite.  The best suited
+    !! (low P_C_max), and high-light adapted cells have the opposite.  The best suited
     !! ecotype is the one that achieves maximal growth at the acclimation irradiance.
     !!
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
@@ -3703,7 +3704,7 @@ contains
        !! If growth is negative, results in net respiration and production of nh4 if oxygen is above minimum threshold.
        !! jo2resp_wc is a cumulative variable that tracks the total oxygen consumption in the water column
        !! If oxygen is below that threshold, cell death results in labile dissolved organic production
-       !!!
+       !!
        if (cobalt%f_o2(i,j,k) .gt. cobalt%o2_min) then
          cobalt%jprod_nh4(i,j,k) = cobalt%jprod_nh4(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))
          cobalt%jo2resp_wc(i,j,k) = cobalt%jo2resp_wc(i,j,k) - min(0.0,phyto(n)%mu(i,j,k)*phyto(n)%f_n(i,j,k))*cobalt%o2_2_nh4
@@ -3805,7 +3806,7 @@ contains
     call mpp_clock_end(id_clock_phyto_growth)
 
 
-!!## 2: Free-living bacterial transformatioins and growth/uptake calculations
+!!## 2: Free-living bacterial transformations and growth/uptake calculations
 !!
     call mpp_clock_begin(id_clock_bacteria_growth)
 
@@ -3923,12 +3924,12 @@ contains
 !!
     !!### 3.1 Plankton foodweb dynamics: consumption by zooplankton and higher predators
     !!
-    !! Zooplankton feeding is parameterized with observed allometric (i.e., size-dependent) feeding rates and predator-
-    !! prey linkages [@hansen1994; @hansen1997].  Feeding relationships are based on
+    !! Zooplankton feeding is parameterized with observed allometric (i.e., size-dependent) feeding rates and predator-prey
+    !! linkages [@hansen1994; @hansen1997].  Feeding relationships are based on
     !! simple saturating (Holling Type 2) relationships when there is a single prey type.  A density dependent switching
     !! response, however, is included when multiple prey types are present [@stock2008].  A small "refuge"
-    !! concentration has also been included as an extra safeguard against negative values and as a reflection of the
-    !! paradigm that Baas Becking's hypothesis that "Everything is everywhere, but the environment selects".  Predation
+    !! concentration has also been included as an extra safeguard against negative values and as a reflection of
+    !! Baas Becking's hypothesis that "Everything is everywhere, but the environment selects".  Predation
     !! by higher predators (e.g., planktivorous fish) is modeled in a manner analogous to zooplankton, but assuming that
     !! the biomass of these unresolved predators scales in proportion to the available prey.
     !!
@@ -3946,8 +3947,8 @@ contains
     !! Note: The definition of predator-prey matrices is intended to allow for efficient experimentation with
     !! predator-prey interconnections.  Initial attempts to include a sweep over all elements of the predator-prey
     !! matrix, however, proved to be computationally costly.  Thus, while matrix structures are included, the
-    !! standard COBALTv3 interactions are hard-coded.  This makes the code faster, but adding new consumer-
-    !! resource linkages requires new code rather than just changing innate prey availability parameters.
+    !! standard COBALTv3 interactions are hard-coded.  This makes the code faster, but adding new consumer-resource
+    !! linkages requires new code rather than just changing innate prey availability parameters.
     !! A computationally efficient and flexible scheme will be pursued in future work.
     !!
     !! Note: The ipa_matrix must be ordered phytoplankton, bacteria, zooplankton, then detritus.  The order
@@ -4154,8 +4155,8 @@ contains
        zoo(m)%jingest_sio2(i,j,k) = ingest_matrix(m,PR_LGP)*prey_si2n_vec(PR_LGP) + &
                                     ingest_matrix(m,PR_MDP)*prey_si2n_vec(PR_MDP)
 
-       !! Large zooplankton consuming diazotrophs (PR_DIAZ), large phytoplankton (PR_LGP), medium pytoplankton (PR_MDP),
-       !! and medium zooplankton (PR_MDZ).  Switching occurs between herbibory and carnivory.
+       !! Large zooplankton consuming diazotrophs (PR_DIAZ), large phytoplankton (PR_LGP), medium phytoplankton (PR_MDP),
+       !! and medium zooplankton (PR_MDZ).  Switching occurs between herbivory and carnivory.
        !
        m = LGZ
        ! alternative prey items for the switching calculation (herbivory versus carnivory)
@@ -4316,7 +4317,7 @@ contains
        !! parameterization is consistent with observed sinking, aggregation, and stress-driven mortality responses
        !! [e.g., @waite1992; @smayda1971].
        !!
-       !! Aggregation is modeled as a density-dependent (quadratic) loss that effects large cells most, does not
+       !! Aggregation is modeled as a density-dependent (quadratic) loss that affects large cells most, does not
        !! depend on temperature, and results in sinking detritus [e.g., @jackson1990].  Phytoplankton sinking as
        !! non-aggregates is simulated directly using the "move_vertical" option in generic_tracers, with larger and more
        !! stressed cells sinking more quickly.  Phytoplankton mortality (cell death) is not used in the default settings
@@ -4370,7 +4371,7 @@ contains
        !!
        !! Phytoplankton are assumed to lose a constant fraction of nitrogen they fix to dissolved organic nutrients
        !! (phyto(n)%exu = 0.13) [@baines1991].  The model assumes losses of phosphate and iron occur in
-       !! proportion the the loss in N, but Si is assumed to be in the cell structure.
+       !! proportion to the loss in N, but Si is assumed to be in the cell structure.
        !!
 
        n = DIAZ
@@ -4387,7 +4388,7 @@ contains
     enddo; enddo; enddo  !} i,j,k
 
     !! Assume that individually sinking phytoplankton, which sink at slow rates relative to aggregates and fecal
-    !! pellets, collect in a nepholoid layer and are available for resuspension if they are exposed to mixing. This
+    !! pellets, collect in a nepheloid layer and are available for resuspension if they are exposed to mixing. This
     !! is accomplished by setting the vertical sinking rate in the bottom layer to 0, and is assumed to occur when
     !! the depth is less than twice the depth of active mixing.  Cells are otherwise assumed to sink into the
     !! benthos and be remineralized along with sinking detritus.
@@ -4418,8 +4419,8 @@ contains
 
     call mpp_clock_end(id_clock_other_losses)
 
-    !!### 3.3: Plankton foodweb dynamics: production of different ecosystem constituents resulting from ingestion and other
-    !!      loss processes. Products include detritus, dissolved organic matter, new zooplankton and inorganic nutrients
+    !!### 3.3: Plankton foodweb dynamics: production of different ecosystem constituents resulting from ingestion and other loss processes.
+    !!! Products include detritus, dissolved organic matter, new zooplankton and inorganic nutrients
     !!
 
     call mpp_clock_begin(id_clock_production_loop)
@@ -4536,7 +4537,7 @@ contains
 
        !!#### 3.3.2: Zooplankton production and excretion calculations
        !!
-       !! Zooplankton growth and respiration/excretion depends on two fundamental metabolic parameters:
+       !! Zooplankton growth and respiration/excretion depend on two fundamental metabolic parameters:
        !!
        !! 1. The assimilation efficiency is the fraction of ingested food that is assimilated for either anabolic
        !!    (i.e., growth) or catabolic (i.e., respiration) reactions.  It is equal to 1 - the egested fraction
@@ -4723,7 +4724,7 @@ contains
 
     !!### 4.3: Dissolution of aragonite, calcite and silica detritus
     !!
-    !! Calcite and aragonite detritus are assumed to dissolve with at a rate proportional to subsaturation, with
+    !! Calcite and aragonite detritus are assumed to dissolve at a rate proportional to subsaturation, with
     !! the maximum dissolution rates set gamma_cadet_arag and gamma_cadet_calc, respectively.  The dissolution of
     !! silica detritus is assumed to be temperature dependent.  Relevant references for all parameters can be found in
     !! the COBALTv2 documentation paper [@stock2020].
@@ -4751,13 +4752,13 @@ contains
           cobalt%f_silg(i,j,k)
     enddo; enddo ; enddo !} i,j,k
 
-    !!### 4.4: Remineralization of nitrogen, phosphorous and iron detritus
+    !!### 4.4: Remineralization of nitrogen, phosphorus and iron detritus
     !!
     !! Remineralization is handled following Laufkotter et al. [-@laufkotter2017], which combines a "mineral protection/ballasting"
     !! scheme [@armstrong2001; @klaas2002] with temperature and oxygen dependence calibrated to
     !! a global database of sediment trap profiles.  As described in Laufkotter, remineralization under aerobic
     !! conditions was ramped up over a depth scale of 50m. This prevents excessive recycling in warm surface waters and
-    !! is attributed to the colonization of the particles as they traverse the euphotic zone
+    !! is attributed to the colonization of the particles as they traverse the euphotic zone.
     !!
     !! In the mineral protection scheme, only the portion of organic material left unprotected by biogenic or lithogenic
     !! minerals is available to be remineralized.  The "unprotected" organic fraction is calculated as:
@@ -4847,8 +4848,8 @@ contains
     !!### 4.5: Iron scavenging onto detritus
     !!
     !! COBALT uses a single ligand complexation model for iron scavenging onto detritus [e.g., @archer2000].
-    !! The binding strength of the ligand, however, is modulated between weak high-light (kfe_eq_hl) and strong low-
-    !! light limits (kfelig_ll) to mimic the weakening effect that oxygen free radicals have on iron binding in well-lit
+    !! The binding strength of the ligand, however, is modulated between weak high-light (kfe_eq_hl) and strong low-light
+    !! limits (kfelig_ll) to mimic the weakening effect that oxygen free radicals have on iron binding in well-lit
     !! waters [@fan2008].  The weakest binding is at light levels greater than io_fescav = 10 watts m-2.  Values decline
     !! to the strongest low-light limit at 0.01 watts m-2.
     !!
@@ -4856,7 +4857,7 @@ contains
     !! to dissolved organic matter (felig_2_don).  When the free iron (feprime) exceeds solubility limits defined as
     !! a function of temperature and salinity according to Liu and Millero [-@liu2002], scavenging is increased by the factor
     !! fast_fescav_fac to mimic rapid precipitation. For coarse resolution global simulations, fast_fescav_fac was set
-    !! set to 10.0.  This high value helped erode coastal iron signals that likely propagated too far into the open
+    !! to 10.0.  This high value helped erode coastal iron signals that likely propagated into the open ocean
     !! due to under-resolved shelves.  The current default is 2.0, which was able to better maintain iron limitation
     !! patterns in higher-resolution simulations.
     !!
@@ -4883,7 +4884,7 @@ contains
        !! equilibrium ligand binding strength (kfe_eq_lig), the total iron [Fed] and the total ligand [Ltotal] are
        !! known.  If one i) uses eq. (2) to solve for [FeL] in terms of [Fed] and [Feprime]; ii) substitutes this
        !! relationship into eq. (3) to find an expression for [L] in terms of [Ltotal], [Fed] and [feprime]; iii)
-       !! substitutes both the expressions for [FeL] and [L] into eq. (1); then iv) group the terms, it will yield
+       !! substitutes both the expressions for [FeL] and [L] into eq. (1); and iv) groups the terms, it will yield
        !! a quadratic function for [feprime] that can be solved with the quadratic formula:
        !! (-b +- sqrt(b^2 - 4ac))/(2a) where:
        !!
@@ -4922,7 +4923,7 @@ contains
     !! Nutrient inputs associated with icebergs/frozen runoff.  This is currently entered in the top grid cell.  The
     !! parameters "jfe_iceberg_ratio", "jno3_iceberg_ratio" and "jpo4_iceberg_ratio" are the ratios of nutrient input
     !! per kg of runoff.  For iron, values can be set within the broad ranges discussed in Laufkotter et al. [-@laufkotter2018].
-    !! While inputs are currently entered at the ocean surface, they have defined within a 3D array to allow
+    !! While inputs are currently entered at the ocean surface, they have been defined within a 3D array to allow
     !! eventual consideration of depth-dependent inputs.
     !! frunoff units are kg m-2 sec-1; jfe_iceberg_ratio = mol Fe kg-1 melt; rho_dzt = kg m-2
     !!
@@ -4996,7 +4997,7 @@ contains
              !!
              !! to get the proper units.  The Middelburg relationship yields a rate at which arriving particulate organic
              !! carbon is denitrified in micromoles C cm-2 day-1.  This is converted to a rate at which arriving
-             !! particulate organic nitrogen denitrified in moles N m-2 sec-1 by dividing by:
+             !! particulate organic nitrogen is denitrified in moles N m-2 sec-1 by dividing by:
              !!
              !! c_2_n*sperd*1e6 micromoles/mole*1e-4 cm2/m2 = c_2_n*sperd*100
              !!
@@ -5006,8 +5007,8 @@ contains
              !! A number of limiters are applied to support global application.  First, the C flux used in the
              !! Middelburg relationship is capped at 43.0 micromoles C cm-2 day-1 to avoid anomalous extrapolation.
              !! Second, denitrification is slowed when bottom nitrate is low by a) scaling rates with a nitrate
-             !! half-saturation constant with (k_no3_denit), b) preventing the exhaustion of bottom nitrate over
-             !! single time step, and c) limiting the total amount of organic carbon denitrified to that arriving at
+             !! half-saturation constant (k_no3_denit), b) preventing the exhaustion of bottom nitrate over
+             !! a single time step, and c) limiting the total amount of organic carbon denitrified to that arriving at
              !! the sediment minus that which was buried. Finally, to prevent excessive denitrification in very shallow
              !! areas, a depth scale (z_denit) was included to ramp up rates to full Middelburg values only in deeper
              !! waters.
@@ -5050,6 +5051,7 @@ contains
              !! The maximum organic remin supported by local O2 is:
              !! btm_o2(moles O2 kg-1)*bottom_thickness(m)*density(kg m-3)* 1/dt(s-1)*molN/molO2 = moles N m-2 s-1
              !!@endnote
+             !!
              !! The thickness of the bottom boundary layer (cobalt%bottom_thickness) impacts this upper bound.
              !! Efforts are underway to implement a more dynamic bottom boundary layer scheme.
              !!
@@ -5069,7 +5071,7 @@ contains
              cobalt%fnoxic_sed(i,j) = 0.0
           endif !}
 
-          !!#### Iron flux from the sediment
+          !!### Iron flux from the sediment
           !!
           !!
           !! Iron from sediment [@dale2015].  The maximum release from the sediment is set by ffe_sed_max.  The
@@ -5080,7 +5082,7 @@ contains
           cobalt%ffe_sed(i,j) = cobalt%ffe_sed_max * tanh( (cobalt%fntot_btm(i,j)*cobalt%c_2_n*sperd*1.0e3)/ &
                                 max(cobalt%btm_o2(i,j)*1.0e6,epsln) )
 
-          !!#### Additional coastal iron (Optional, default fe_coast = 0)
+          !!### Additional coastal iron (Optional, default fe_coast = 0)
           !!
           !! Coarse resolution models and/or intermediate resolution models in areas with exceptionally steep bathymetry
           !! can under-represent coastal iron because they don't resolve shallow regions. An option to add iron through
@@ -5118,24 +5120,24 @@ contains
               cobalt%ffe_geotherm(i,j) = 0.0
           endif
 
-          !!#### Calcium carbonate flux and burial, based on Dunne et al. [-@dunne2012]
+          !!### Calcium carbonate flux and burial, based on Dunne et al. [-@dunne2012]
           !!
           !! phi_surfresp_cased = 0.14307   ! const for enhanced diss., surf sed respiration (dimensionless)
           !! phi_deepresp_cased = 4.1228    ! const for enhanced diss., deep sed respiration (dimensionless)
           !! alpha_cased = 2.7488 ! exponent controlling non-linearity of deep dissolution
           !! beta_cased = -2.2185 ! exponent controlling non-linearity of effective thickness
           !! gamma_cased = 0.03607/spery   ! dissolution rate constant
-          !! Co_cased = 8.1e3        ! moles CaCo3 m-3 for pure calcite sediment with porosity = 0.7
+          !! Co_cased = 8.1e3        ! moles CaCO3 m-3 for pure calcite sediment with porosity = 0.7
           !!
           !! if cased_steady is true, burial is calculated from Dunne's eq. (2) assuming dcased/dt = 0.
           !! This ensures that all the calcite bottom flux is partitioned between burial and redissolution.
-          !! The steady state cased value of cased is calculated to reflect the changing bottom conditions.
-          !! This influences the the partitioning of burial and redissolution over time, but there are
+          !! The steady-state value of cased is calculated to reflect the changing bottom conditions.
+          !! This influences the partitioning of burial and redissolution over time, but there are
           !! no alkalinity changes/drifts associated with the long-term evolution of cased
           !!
           !! If cased_steady is false, calcite is partitioned between dissolution, burial and evolving
           !! cased as described in Dunne et al. [-@dunne2012].  The multi-century scale evolution of cased
-          !! impacts alkalinity, but care must to ensure that cased starts in equilibrium with the
+          !! impacts alkalinity, but care must be taken to ensure that cased starts in equilibrium with the
           !! mean ocean state to avoid unrealistic drifts.
           !!
 
@@ -5731,7 +5733,7 @@ contains
     enddo; enddo ; enddo !} i,j,k
 !
 
-    if (do_14c) then                                        !<<RADIOCARBON
+    if (do_14c) then
 
          do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
 
@@ -5809,7 +5811,7 @@ contains
          (cobalt%jdi14c(i,j,k) - cobalt%j14c_decay_dic(i,j,k)) * dt          &
          * grid_tmask(i,j,k)
      enddo; enddo ; enddo !} i,j,k
-    endif                                                   !RADIOCARBON>>
+    endif
     !
     !-----------------------------------------------------------------------
     !     Lithogenic aluminosilicate particulates
@@ -5841,10 +5843,10 @@ contains
 
     !! Totals after source/sinks have been applied
     !! Imbalance in one timestep is converted from moles kg-1 to units of mmoles m-3 day-1 and compared
-    !! to a tolerance set in the input namelist. This means that imbalance is not sensetive to the timestep
+    !! to a tolerance set in the input namelist. This means that imbalance is not sensitive to the timestep
     !! and has understandable units. For example, typical plankton concentrations are ~0.1-1 mmoles N m-3
     !! day-1, so an imbalance of order 1 would be very large whereas 1e-9 is very small.
-    !! A reccomended tolerance is between 1e-7 and 1e-9.
+    !! A recommended tolerance is between 1e-7 and 1e-9.
     post_totn = 0;
     post_totc = 0;
     post_totp = 0;
@@ -6812,7 +6814,7 @@ contains
     allocate(co2_csurf(isd:ied, jsd:jed)); co2_csurf=0.0
     allocate(co2_sc_no(isd:ied, jsd:jed)); co2_sc_no=0.0
     allocate(nh3_alpha(isd:ied, jsd:jed)); nh3_alpha=0.0
-    allocate(nh3_csurf(isd:ied, jsd:jed)); nh3_csurf=0.0    
+    allocate(nh3_csurf(isd:ied, jsd:jed)); nh3_csurf=0.0
     allocate(nh3_sc_no(isd:ied, jsd:jed)); nh3_sc_no=0.0
     !for nh3 ph emission override
     allocate(phos_nh3_exchange(isd:ied, jsd:jed)); phos_nh3_exchange=0.0
@@ -6877,7 +6879,7 @@ contains
        call g_tracer_set_values(tracer_list,'dic','csurf',co2_csurf    ,isd,jsd)
 
 
-      if (do_14c) then                                        !<<RADIOCARBON
+      if (do_14c) then
 
         ! Normally, the alpha would be multiplied by the atmospheric 14C/12C ratio. However,
         ! here that is set to 1, so that alpha_14C = alpha_12C. This needs to be changed!
@@ -6932,7 +6934,7 @@ contains
        !Note: In the following calculations in order to get results for co2 and o2
        !      identical with cobalt code in MOM cobalt%Rho_0 must be replaced with rho(i,j,1,tau)
        !      This is achieved by uncommenting the following if desired.
-       !! cobalt%Rho_0 = rho(i,j,1,tau)
+       ! cobalt%Rho_0 = rho(i,j,1,tau)
        !      But since %Rho_0 plays the role of a unit conversion factor in this module
        !      it may be safer to keep it as a constant (1035.0) rather than the actual variable
        !      surface density rho(i,j,1,tau)
@@ -7057,7 +7059,7 @@ contains
 
     end if
 
-    if (do_14c) then                                      !<<RADIOCARBON
+    if (do_14c) then
 
        call g_tracer_get_values(tracer_list,'di14c','alpha', c14o2_alpha ,isd,jsd)
        call g_tracer_get_values(tracer_list,'di14c','csurf', c14o2_csurf ,isd,jsd)
@@ -7082,7 +7084,7 @@ contains
        call g_tracer_set_values(tracer_list,'di14c','csurf',c14o2_csurf,isd,jsd)
        call g_tracer_set_values(tracer_list,'di14c','sc_no',co2_sc_no,isd,jsd)
 
-    endif                                                  !RADIOCARBON>>
+    endif
 
     deallocate(co2_alpha,co2_csurf,&
          co2_sc_no,o2_alpha,          &
@@ -7656,7 +7658,7 @@ contains
    allocate(cobalt%zsatcalc(isd:ied, jsd:jed))             ; cobalt%zsatcalc=0.0
    allocate(cobalt%mask_zsatarag(isd:ied, jsd:jed))        ; cobalt%mask_zsatarag = .FALSE.
    allocate(cobalt%mask_zsatcalc(isd:ied, jsd:jed))        ; cobalt%mask_zsatcalc = .FALSE.
-   if (do_14c) then                                        !<<RADIOCARBON
+   if (do_14c) then
       allocate(cobalt%c14_2_n(isd:ied, jsd:jed, 1:nk));        cobalt%c14_2_n=0.0
       allocate(cobalt%f_di14c(isd:ied, jsd:jed, 1:nk));        cobalt%f_di14c=0.0
       allocate(cobalt%f_do14c(isd:ied, jsd:jed, 1:nk));        cobalt%f_do14c=0.0
@@ -7669,7 +7671,7 @@ contains
       allocate(cobalt%c14o2_csurf  (isd:ied, jsd:jed));        cobalt%c14o2_csurf=0.0
       allocate(cobalt%c14o2_alpha  (isd:ied, jsd:jed));        cobalt%c14o2_alpha=0.0
       allocate(cobalt%b_di14c      (isd:ied, jsd:jed));        cobalt%b_di14c=0.0
-   endif                                                   !RADIOCARBON>>
+   endif
       allocate(cobalt%runoff_flux_alk(isd:ied, jsd:jed));      cobalt%runoff_flux_alk=0.0
       allocate(cobalt%runoff_flux_dic(isd:ied, jsd:jed));      cobalt%runoff_flux_dic=0.0
       allocate(cobalt%runoff_flux_di14c(isd:ied, jsd:jed));    cobalt%runoff_flux_di14c=0.0
@@ -8245,7 +8247,7 @@ contains
     deallocate(bact(1)%juptake_ldon_100)
     deallocate(bact(1)%f_n_100)
 
-    if (do_14c) then                                        !<<RADIOCARBON
+    if (do_14c) then
       deallocate(cobalt%c14_2_n)
       deallocate(cobalt%f_di14c)
       deallocate(cobalt%f_do14c)
@@ -8258,7 +8260,7 @@ contains
       deallocate(cobalt%c14o2_alpha)
       deallocate(cobalt%c14o2_csurf)
       deallocate(cobalt%b_di14c )
-    endif                                                   !RADIOCARBON>>
+    endif
       deallocate(cobalt%runoff_flux_alk)
       deallocate(cobalt%runoff_flux_dic)
       deallocate(cobalt%runoff_flux_di14c)
