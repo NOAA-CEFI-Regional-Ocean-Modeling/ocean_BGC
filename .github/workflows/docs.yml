@@ -2,7 +2,9 @@ name: ford docs
 
 on:
   push:
-    branches: [ "dev/cefi" ]
+    branches: 
+      - dev/cefi
+      - 'docs/**'
 
 jobs:
   build_docs:
