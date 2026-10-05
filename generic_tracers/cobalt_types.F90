@@ -626,7 +626,6 @@ module cobalt_types
           f_htotal,&
           f_irr_aclm,&
           f_irr_aclm_z,&
-          f_cased,&
           jnbact,&
           jndi,&
           jnsm,&
@@ -931,6 +930,7 @@ module cobalt_types
      ! as restart fields (see generic_COBALT_restart_fields_2d).
      real, dimension(:,:), pointer :: &
           f_irr_aclm_sfc,&       ! Surface photoacclimation irradiance
+          f_cased,&              ! Sediment CaCO3
           ! Bottom fluxes to the sediments
           f_cadet_arag_btf,&
           f_cadet_calc_btf,&
