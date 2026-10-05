@@ -2975,37 +2975,37 @@ contains
     is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
     ! Re-calculate aggregated flux diagnostics here
-    call g_tracer_get_values(tracer_list,'ndet_btf','field',cobalt%f_ndet_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'ndet_fast_btf','field',cobalt%f_ndet_fast_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pdet_btf','field',cobalt%f_pdet_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pdet_fast_btf','field',cobalt%f_pdet_fast_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'sidet_btf','field',cobalt%f_sidet_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'ndi_btf','field',cobalt%f_ndi_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'nlg_btf','field',cobalt%f_nlg_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'nmd_btf','field',cobalt%f_nmd_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'nsm_btf','field',cobalt%f_nsm_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pdi_btf','field',cobalt%f_pdi_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'plg_btf','field',cobalt%f_plg_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pmd_btf','field',cobalt%f_pmd_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'psm_btf','field',cobalt%f_psm_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'silg_btf','field',cobalt%f_silg_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'simd_btf','field',cobalt%f_simd_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'fedet_btf','field',cobalt%f_fedet_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'fedi_btf','field',cobalt%f_fedi_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'felg_btf','field',cobalt%f_felg_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'femd_btf','field',cobalt%f_femd_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'fesm_btf','field',cobalt%f_fesm_btf,isd,jsd)
+    call get_btf_values(tracer_list,'ndet_btf',cobalt%f_ndet_btf)
+      call get_btf_values(tracer_list,'ndet_fast_btf',cobalt%f_ndet_fast_btf)
+    call get_btf_values(tracer_list,'pdet_btf',cobalt%f_pdet_btf)
+      call get_btf_values(tracer_list,'pdet_fast_btf',cobalt%f_pdet_fast_btf)
+    call get_btf_values(tracer_list,'sidet_btf',cobalt%f_sidet_btf)
+    call get_btf_values(tracer_list,'ndi_btf',cobalt%f_ndi_btf)
+    call get_btf_values(tracer_list,'nlg_btf',cobalt%f_nlg_btf)
+    call get_btf_values(tracer_list,'nmd_btf',cobalt%f_nmd_btf)
+      call get_btf_values(tracer_list,'nsm_btf',cobalt%f_nsm_btf)
+    call get_btf_values(tracer_list,'pdi_btf',cobalt%f_pdi_btf)
+    call get_btf_values(tracer_list,'plg_btf',cobalt%f_plg_btf)   
+    call get_btf_values(tracer_list,'pmd_btf',cobalt%f_pmd_btf)
+      call get_btf_values(tracer_list,'psm_btf',cobalt%f_psm_btf)
+    call get_btf_values(tracer_list,'silg_btf',cobalt%f_silg_btf)
+    call get_btf_values(tracer_list,'simd_btf',cobalt%f_simd_btf)
+    call get_btf_values(tracer_list,'fedet_btf',cobalt%f_fedet_btf)
+    call get_btf_values(tracer_list,'fedi_btf',cobalt%f_fedi_btf)
+    call get_btf_values(tracer_list,'felg_btf',cobalt%f_felg_btf)
+    call get_btf_values(tracer_list,'femd_btf',cobalt%f_femd_btf)
+      call get_btf_values(tracer_list,'fesm_btf',cobalt%f_fesm_btf)
 
     do j = jsc, jec; do i = isc, iec  !{
        if (grid_kmt(i,j) .gt. 0) then !{
-          cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j,1) + cobalt%f_ndet_fast_btf(i,j,1) + cobalt%f_ndi_btf(i,j,1) + &
-            cobalt%f_nsm_btf(i,j,1) + cobalt%f_nmd_btf(i,j,1) + cobalt%f_nlg_btf(i,j,1)
-          cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j,1) + cobalt%f_pdet_fast_btf(i,j,1) + cobalt%f_pdi_btf(i,j,1) + &
-            cobalt%f_psm_btf(i,j,1) + cobalt%f_pmd_btf(i,j,1) + cobalt%f_plg_btf(i,j,1)
-          cobalt%ffetot_btm(i,j) = cobalt%f_fedet_btf(i,j,1) + cobalt%f_fedi_btf(i,j,1) + &
-            cobalt%f_fesm_btf(i,j,1) + cobalt%f_femd_btf(i,j,1) + cobalt%f_felg_btf(i,j,1)
-          cobalt%fsitot_btm(i,j) = cobalt%f_sidet_btf(i,j,1) + cobalt%f_silg_btf(i,j,1) + &
-            cobalt%f_simd_btf(i,j,1)
+          cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j) + cobalt%f_ndet_fast_btf(i,j) + cobalt%f_ndi_btf(i,j) + &
+            cobalt%f_nsm_btf(i,j) + cobalt%f_nmd_btf(i,j) + cobalt%f_nlg_btf(i,j)
+          cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j) + cobalt%f_pdet_fast_btf(i,j) + cobalt%f_pdi_btf(i,j) + &
+            cobalt%f_psm_btf(i,j) + cobalt%f_pmd_btf(i,j) + cobalt%f_plg_btf(i,j)
+          cobalt%ffetot_btm(i,j) = cobalt%f_fedet_btf(i,j) + cobalt%f_fedi_btf(i,j) + &
+            cobalt%f_fesm_btf(i,j) + cobalt%f_femd_btf(i,j) + cobalt%f_felg_btf(i,j)
+          cobalt%fsitot_btm(i,j) = cobalt%f_sidet_btf(i,j) + cobalt%f_silg_btf(i,j) + &
+            cobalt%f_simd_btf(i,j)
        endif !}
     enddo; enddo  !} i, j
 
@@ -3360,30 +3360,30 @@ contains
     !
     call g_tracer_get_values(tracer_list,'cased'  ,'field',cobalt%f_cased    ,isd,jsd)
     call g_tracer_get_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion  ,isd,jsd,positive=.true.)
-    call g_tracer_get_values(tracer_list,'cadet_arag_btf','field',cobalt%f_cadet_arag_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'cadet_calc_btf','field',cobalt%f_cadet_calc_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'lithdet_btf','field',cobalt%f_lithdet_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'ndet_btf','field',cobalt%f_ndet_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'ndet_fast_btf','field',cobalt%f_ndet_fast_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pdet_btf','field',cobalt%f_pdet_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pdet_fast_btf','field',cobalt%f_pdet_fast_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'sidet_btf','field',cobalt%f_sidet_btf,isd,jsd)
+    call get_btf_values(tracer_list,'cadet_arag_btf',cobalt%f_cadet_arag_btf)
+    call get_btf_values(tracer_list,'cadet_calc_btf',cobalt%f_cadet_calc_btf)
+    call get_btf_values(tracer_list,'lithdet_btf',cobalt%f_lithdet_btf)
+    call get_btf_values(tracer_list,'ndet_btf',cobalt%f_ndet_btf)
+      call get_btf_values(tracer_list,'ndet_fast_btf',cobalt%f_ndet_fast_btf)
+    call get_btf_values(tracer_list,'pdet_btf',cobalt%f_pdet_btf)
+      call get_btf_values(tracer_list,'pdet_fast_btf',cobalt%f_pdet_fast_btf)
+    call get_btf_values(tracer_list,'sidet_btf',cobalt%f_sidet_btf)
     ! add phytoplankton because they now sink
-    call g_tracer_get_values(tracer_list,'ndi_btf','field',cobalt%f_ndi_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'nlg_btf','field',cobalt%f_nlg_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'nmd_btf','field',cobalt%f_nmd_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'nsm_btf','field',cobalt%f_nsm_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'fedi_btf','field',cobalt%f_fedi_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'felg_btf','field',cobalt%f_felg_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'femd_btf','field',cobalt%f_femd_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'fesm_btf','field',cobalt%f_fesm_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pdi_btf','field',cobalt%f_pdi_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'plg_btf','field',cobalt%f_plg_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pmd_btf','field',cobalt%f_pmd_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'psm_btf','field',cobalt%f_psm_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'silg_btf','field',cobalt%f_silg_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'simd_btf','field',cobalt%f_simd_btf,isd,jsd)
-    call g_tracer_get_values(tracer_list,'fedet_btf','field',cobalt%f_fedet_btf,isd,jsd)
+    call get_btf_values(tracer_list,'ndi_btf',cobalt%f_ndi_btf)
+    call get_btf_values(tracer_list,'nlg_btf',cobalt%f_nlg_btf)
+    call get_btf_values(tracer_list,'nmd_btf',cobalt%f_nmd_btf)
+      call get_btf_values(tracer_list,'nsm_btf',cobalt%f_nsm_btf)
+    call get_btf_values(tracer_list,'fedi_btf',cobalt%f_fedi_btf)
+    call get_btf_values(tracer_list,'felg_btf',cobalt%f_felg_btf)
+    call get_btf_values(tracer_list,'femd_btf',cobalt%f_femd_btf)
+      call get_btf_values(tracer_list,'fesm_btf',cobalt%f_fesm_btf)
+    call get_btf_values(tracer_list,'pdi_btf',cobalt%f_pdi_btf)
+    call get_btf_values(tracer_list,'plg_btf',cobalt%f_plg_btf)
+    call get_btf_values(tracer_list,'pmd_btf',cobalt%f_pmd_btf)
+      call get_btf_values(tracer_list,'psm_btf',cobalt%f_psm_btf)
+    call get_btf_values(tracer_list,'silg_btf',cobalt%f_silg_btf)
+    call get_btf_values(tracer_list,'simd_btf',cobalt%f_simd_btf)
+    call get_btf_values(tracer_list,'fedet_btf',cobalt%f_fedet_btf)
     call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
     call g_tracer_get_values(tracer_list,'irr_aclm_sfc','field',cobalt%f_irr_aclm_sfc ,isd,jsd)
@@ -5101,14 +5101,14 @@ contains
        if (grid_kmt(i,j) .gt. 0) then !{
 
           ! Add the phytoplankton fluxes to the detritus fluxes to get total flux to benthos
-          cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j,1) + cobalt%f_ndet_fast_btf(i,j,1) + cobalt%f_ndi_btf(i,j,1) + &
-            cobalt%f_nsm_btf(i,j,1) + cobalt%f_nmd_btf(i,j,1) + cobalt%f_nlg_btf(i,j,1)
-          cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j,1) + cobalt%f_pdet_fast_btf(i,j,1) + cobalt%f_pdi_btf(i,j,1) + &
-            cobalt%f_psm_btf(i,j,1) + cobalt%f_pmd_btf(i,j,1) + cobalt%f_plg_btf(i,j,1)
-          cobalt%ffetot_btm(i,j) = cobalt%f_fedet_btf(i,j,1) + cobalt%f_fedi_btf(i,j,1) + &
-            cobalt%f_fesm_btf(i,j,1) + cobalt%f_femd_btf(i,j,1) + cobalt%f_felg_btf(i,j,1)
-          cobalt%fsitot_btm(i,j) = cobalt%f_sidet_btf(i,j,1) + cobalt%f_silg_btf(i,j,1) + &
-            cobalt%f_simd_btf(i,j,1)
+          cobalt%fntot_btm(i,j) = cobalt%f_ndet_btf(i,j) + cobalt%f_ndet_fast_btf(i,j) + cobalt%f_ndi_btf(i,j) + &
+            cobalt%f_nsm_btf(i,j) + cobalt%f_nmd_btf(i,j) + cobalt%f_nlg_btf(i,j)
+          cobalt%fptot_btm(i,j) = cobalt%f_pdet_btf(i,j) + cobalt%f_pdet_fast_btf(i,j) + cobalt%f_pdi_btf(i,j) + &
+            cobalt%f_psm_btf(i,j) + cobalt%f_pmd_btf(i,j) + cobalt%f_plg_btf(i,j)
+          cobalt%ffetot_btm(i,j) = cobalt%f_fedet_btf(i,j) + cobalt%f_fedi_btf(i,j) + &
+            cobalt%f_fesm_btf(i,j) + cobalt%f_femd_btf(i,j) + cobalt%f_felg_btf(i,j)
+          cobalt%fsitot_btm(i,j) = cobalt%f_sidet_btf(i,j) + cobalt%f_silg_btf(i,j) + &
+            cobalt%f_simd_btf(i,j)
 
           ! calculate the saturation state with respect to calcite for subsequent calculations
           cobalt%btm_omega_calc(i,j)=cobalt%btm_co3_ion(i,j)/cobalt%btm_co3_sol_calc(i,j)
@@ -5290,7 +5290,7 @@ contains
 
           ! Enhanced dissolution by fast respiration near the sediment surface, proportional
           ! to organic flux, moles Ca m-2 s-1, limited to a max 1/2 the instantaneous calcite flux
-          cobalt%fcased_redis_surfresp(i,j)=min(0.5*cobalt%f_cadet_calc_btf(i,j,1), &
+          cobalt%fcased_redis_surfresp(i,j)=min(0.5*cobalt%f_cadet_calc_btf(i,j), &
             cobalt%phi_surfresp_cased*cobalt%fntot_btm(i,j)*cobalt%c_2_n)
 
           ! Ca-specific dissolution coeficient, depends on calcite saturation state and is enhanced by
@@ -5301,7 +5301,7 @@ contains
           ! Effective thickness term that enhances burial of calcite when total sediment accumulation is high
           ! dimensionless value between 0 and 1
           cobalt%cased_redis_delz(i,j) = max(1.0, &
-            cobalt%f_lithdet_btf(i,j,1)*spery+cobalt%f_cadet_calc_btf(i,j,1)*100.0*spery)**cobalt%beta_cased
+            cobalt%f_lithdet_btf(i,j)*spery+cobalt%f_cadet_calc_btf(i,j)*100.0*spery)**cobalt%beta_cased
 
           ! calculate the sediment redissolution rate (moles Ca m-2 sec-1). This calculation is subject to
           ! three limiters: a) a maximum of 1/2 of the total cased over one time step; b) a maximum of 0.01
@@ -5313,19 +5313,19 @@ contains
           ! Old expression
           !
           !cobalt%fcased_redis(i,j) = max(0.0, min(0.01/sperd,min(0.5 * cobalt%f_cased(i,j,1) * r_dt, min(0.5 *       &
-          !   cobalt%f_cadet_calc_btf(i,j,1), 0.14307 * cobalt%f_ndet_btf(i,j,1) * cobalt%c_2_n) +        &
+          !   cobalt%f_cadet_calc_btf(i,j), 0.14307 * cobalt%f_ndet_btf(i,j) * cobalt%c_2_n) +        &
           !   0.03607 / spery * max(0.0, 1.0 - cobalt%omega_calc(i,j,k) +   &
-          !   4.1228 * cobalt%f_ndet_btf(i,j,1) * cobalt%c_2_n * spery)**(2.7488) *                        &
-          !   max(1.0, cobalt%f_lithdet_btf(i,j,1) * spery + cobalt%f_cadet_calc_btf(i,j,1) * 100.0 *  &
+          !   4.1228 * cobalt%f_ndet_btf(i,j) * cobalt%c_2_n * spery)**(2.7488) *                        &
+          !   max(1.0, cobalt%f_lithdet_btf(i,j) * spery + cobalt%f_cadet_calc_btf(i,j) * 100.0 *  &
           !   spery)**(-2.2185) * cobalt%f_cased(i,j,1))))*grid_tmask(i,j,k)
 
           if (cobalt%cased_steady) then
-            cobalt%fcased_burial(i,j) = cobalt%f_cadet_calc_btf(i,j,1) - cobalt%fcased_redis(i,j)
-            cobalt%f_cased(i,j,1) = cobalt%fcased_burial(i,j)*cobalt%Co_cased/cobalt%f_cadet_calc_btf(i,j,1)
+            cobalt%fcased_burial(i,j) = cobalt%f_cadet_calc_btf(i,j) - cobalt%fcased_redis(i,j)
+            cobalt%f_cased(i,j,1) = cobalt%fcased_burial(i,j)*cobalt%Co_cased/cobalt%f_cadet_calc_btf(i,j)
           else
-            cobalt%fcased_burial(i,j) = max(0.0, cobalt%f_cadet_calc_btf(i,j,1) * cobalt%f_cased(i,j,1) / &
+            cobalt%fcased_burial(i,j) = max(0.0, cobalt%f_cadet_calc_btf(i,j) * cobalt%f_cased(i,j,1) / &
               cobalt%Co_cased)
-            cobalt%f_cased(i,j,1) = cobalt%f_cased(i,j,1) + (cobalt%f_cadet_calc_btf(i,j,1) -            &
+            cobalt%f_cased(i,j,1) = cobalt%f_cased(i,j,1) + (cobalt%f_cadet_calc_btf(i,j) -            &
               cobalt%fcased_redis(i,j) - cobalt%fcased_burial(i,j)) / cobalt%z_sed * dt *                &
               grid_tmask(i,j,k)
           endif
@@ -5334,7 +5334,7 @@ contains
           ! Bottom flux boundaries passed to the vertical mixing routine
           ! (negative values are fluxes into the ocean)
           !
-          cobalt%b_dic(i,j) =  - cobalt%fcased_redis(i,j) - cobalt%f_cadet_arag_btf(i,j,1) -       &
+          cobalt%b_dic(i,j) =  - cobalt%fcased_redis(i,j) - cobalt%f_cadet_arag_btf(i,j) -       &
              (cobalt%fntot_btm(i,j) - cobalt%fn_burial(i,j)) * cobalt%c_2_n
           cobalt%b_fed(i,j) = - cobalt%ffe_sed(i,j) - cobalt%ffe_geotherm(i,j)
           cobalt%b_nh4(i,j) = - cobalt%fntot_btm(i,j) + cobalt%fn_burial(i,j)
@@ -5342,11 +5342,11 @@ contains
           ! Include latent O2 demand and alkalinity effects of HS- (see stoichiometry)
           if (cobalt%do_fnso4red_sed) then
             cobalt%b_o2(i,j)  = cobalt%o2_2_nh4 * (cobalt%fnoxic_sed(i,j) + cobalt%fnso4red_sed(i,j))
-            cobalt%b_alk(i,j) = - 2.0*(cobalt%fcased_redis(i,j)+cobalt%f_cadet_arag_btf(i,j,1)) -    &
+            cobalt%b_alk(i,j) = - 2.0*(cobalt%fcased_redis(i,j)+cobalt%f_cadet_arag_btf(i,j)) -    &
               cobalt%fnoxic_sed(i,j) - cobalt%fno3denit_sed(i,j)*cobalt%alk_2_n_denit - cobalt%fnso4red_sed(i,j)
           else
             cobalt%b_o2(i,j)  = cobalt%o2_2_nh4 * cobalt%fnoxic_sed(i,j)
-            cobalt%b_alk(i,j) = - 2.0*(cobalt%fcased_redis(i,j)+cobalt%f_cadet_arag_btf(i,j,1)) -    &
+            cobalt%b_alk(i,j) = - 2.0*(cobalt%fcased_redis(i,j)+cobalt%f_cadet_arag_btf(i,j)) -    &
                cobalt%fnoxic_sed(i,j) - cobalt%fno3denit_sed(i,j)*cobalt%alk_2_n_denit
           endif
           cobalt%b_po4(i,j) = - cobalt%fptot_btm(i,j) + cobalt%fp_burial(i,j)
@@ -5930,7 +5930,7 @@ contains
       do j = jsc, jec ; do i = isc, iec  !{
          k = grid_kmt(i,j)
          if (k .gt. 0) then !{
-           cobalt%b_di14c(i,j) = - cobalt%fpo14c(i,j,k)- cobalt%fcased_redis(i,j) - cobalt%f_cadet_arag_btf(i,j,1)
+           cobalt%b_di14c(i,j) = - cobalt%fpo14c(i,j,k)- cobalt%fcased_redis(i,j) - cobalt%f_cadet_arag_btf(i,j)
          endif
       enddo; enddo  !} i, j
 
@@ -6441,7 +6441,7 @@ contains
           cobalt%jdiss_cadet_calc_plus_btm(i,j,k) = cobalt%jdiss_cadet_calc(i,j,k) +  &
             cobalt%fcased_redis(i,j) / rho_dzt_bot(i,j)
           cobalt%jdiss_cadet_arag_plus_btm(i,j,k)  = cobalt%jdiss_cadet_arag(i,j,k) +  &
-            cobalt%f_cadet_arag_btf(i,j,1) / rho_dzt_bot(i,j)
+            cobalt%f_cadet_arag_btf(i,j) / rho_dzt_bot(i,j)
           cobalt%jprod_nh4_plus_btm(i,j,k) = cobalt%jprod_nh4(i,j,k) - cobalt%b_nh4(i,j)/rho_dzt_bot(i,j)
           cobalt%jalk_plus_btm(i,j,k) = cobalt%jalk(i,j,k) - cobalt%b_alk(i,j)/rho_dzt_bot(i,j)
           cobalt%jo2_plus_btm(i,j,k) = cobalt%jo2(i,j,k) - cobalt%b_o2(i,j)/rho_dzt_bot(i,j)
@@ -7298,6 +7298,20 @@ contains
 
   !
   !   This is an internal sub, not a public interface.
+  !   Copy a bottom flux tracer into its 2D cobalt array. The tracer field is 3D, but only k=1 is used.
+  !
+  subroutine get_btf_values(tracer_list, name, array)
+    type(g_tracer_type), pointer :: tracer_list
+    character(len=*), intent(in) :: name
+    real, dimension(:,:), intent(out) :: array
+    real, dimension(:,:,:), pointer :: btf_field
+
+    call g_tracer_get_pointer(tracer_list, name, 'field', btf_field)
+    array(:,:) = btf_field(:,:,1)
+  end subroutine get_btf_values
+
+  !
+  !   This is an internal sub, not a public interface.
   !   Allocate all the work arrays to be used in this module.
   !
   subroutine user_allocate_arrays
@@ -7477,29 +7491,29 @@ contains
     allocate(cobalt%f_irr_aclm_z(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_irr_aclm_z=0.0
     allocate(cobalt%f_irr_aclm_sfc(isd:ied, jsd:jed, 1:nk)) ; cobalt%f_irr_aclm_sfc=0.0
     allocate(cobalt%f_cased(isd:ied, jsd:jed, 1:nk))      ; cobalt%f_cased=0.0
-    allocate(cobalt%f_cadet_arag_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_cadet_arag_btf=0.0
-    allocate(cobalt%f_cadet_calc_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_cadet_calc_btf=0.0
-    allocate(cobalt%f_fedet_btf(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_fedet_btf=0.0
-    allocate(cobalt%f_lithdet_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_lithdet_btf=0.0
-    allocate(cobalt%f_ndet_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_ndet_btf=0.0
-    allocate(cobalt%f_ndet_fast_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_ndet_fast_btf=0.0
-    allocate(cobalt%f_pdet_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_pdet_btf=0.0
-    allocate(cobalt%f_pdet_fast_btf(isd:ied, jsd:jed, 1:nk)); cobalt%f_pdet_fast_btf=0.0
-    allocate(cobalt%f_sidet_btf(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_sidet_btf=0.0
-    allocate(cobalt%f_ndi_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_ndi_btf=0.0
-    allocate(cobalt%f_nsm_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_nsm_btf=0.0
-    allocate(cobalt%f_nmd_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_nmd_btf=0.0
-    allocate(cobalt%f_nlg_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_nlg_btf=0.0
-    allocate(cobalt%f_pdi_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_pdi_btf=0.0
-    allocate(cobalt%f_psm_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_psm_btf=0.0
-    allocate(cobalt%f_pmd_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_pmd_btf=0.0
-    allocate(cobalt%f_plg_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_plg_btf=0.0
-    allocate(cobalt%f_fedi_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_fedi_btf=0.0
-    allocate(cobalt%f_fesm_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_fesm_btf=0.0
-    allocate(cobalt%f_femd_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_femd_btf=0.0
-    allocate(cobalt%f_felg_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_felg_btf=0.0
-    allocate(cobalt%f_simd_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_simd_btf=0.0
-    allocate(cobalt%f_silg_btf(isd:ied, jsd:jed, 1:nk))   ; cobalt%f_silg_btf=0.0
+    allocate(cobalt%f_cadet_arag_btf(isd:ied, jsd:jed)); cobalt%f_cadet_arag_btf=0.0
+    allocate(cobalt%f_cadet_calc_btf(isd:ied, jsd:jed)); cobalt%f_cadet_calc_btf=0.0
+    allocate(cobalt%f_fedet_btf(isd:ied, jsd:jed))  ; cobalt%f_fedet_btf=0.0
+    allocate(cobalt%f_lithdet_btf(isd:ied, jsd:jed)); cobalt%f_lithdet_btf=0.0
+    allocate(cobalt%f_ndet_btf(isd:ied, jsd:jed))   ; cobalt%f_ndet_btf=0.0
+    allocate(cobalt%f_ndet_fast_btf(isd:ied, jsd:jed)); cobalt%f_ndet_fast_btf=0.0
+    allocate(cobalt%f_pdet_btf(isd:ied, jsd:jed))   ; cobalt%f_pdet_btf=0.0
+    allocate(cobalt%f_pdet_fast_btf(isd:ied, jsd:jed)); cobalt%f_pdet_fast_btf=0.0
+    allocate(cobalt%f_sidet_btf(isd:ied, jsd:jed))  ; cobalt%f_sidet_btf=0.0
+    allocate(cobalt%f_ndi_btf(isd:ied, jsd:jed))   ; cobalt%f_ndi_btf=0.0
+    allocate(cobalt%f_nsm_btf(isd:ied, jsd:jed))   ; cobalt%f_nsm_btf=0.0
+    allocate(cobalt%f_nmd_btf(isd:ied, jsd:jed))   ; cobalt%f_nmd_btf=0.0
+    allocate(cobalt%f_nlg_btf(isd:ied, jsd:jed))   ; cobalt%f_nlg_btf=0.0
+    allocate(cobalt%f_pdi_btf(isd:ied, jsd:jed))   ; cobalt%f_pdi_btf=0.0
+    allocate(cobalt%f_psm_btf(isd:ied, jsd:jed))   ; cobalt%f_psm_btf=0.0
+    allocate(cobalt%f_pmd_btf(isd:ied, jsd:jed))   ; cobalt%f_pmd_btf=0.0
+    allocate(cobalt%f_plg_btf(isd:ied, jsd:jed))   ; cobalt%f_plg_btf=0.0
+    allocate(cobalt%f_fedi_btf(isd:ied, jsd:jed))   ; cobalt%f_fedi_btf=0.0
+    allocate(cobalt%f_fesm_btf(isd:ied, jsd:jed))   ; cobalt%f_fesm_btf=0.0
+    allocate(cobalt%f_femd_btf(isd:ied, jsd:jed))   ; cobalt%f_femd_btf=0.0
+    allocate(cobalt%f_felg_btf(isd:ied, jsd:jed))   ; cobalt%f_felg_btf=0.0
+    allocate(cobalt%f_simd_btf(isd:ied, jsd:jed))   ; cobalt%f_simd_btf=0.0
+    allocate(cobalt%f_silg_btf(isd:ied, jsd:jed))   ; cobalt%f_silg_btf=0.0
 
     allocate(cobalt%jnbact(isd:ied, jsd:jed, 1:nk))       ; cobalt%jnbact=0.0
     allocate(cobalt%jndi(isd:ied, jsd:jed, 1:nk))         ; cobalt%jndi=0.0
