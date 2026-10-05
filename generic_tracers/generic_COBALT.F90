@@ -3345,9 +3345,11 @@ contains
                                              phyto(n)%p_2_n_max)
        enddo  !} n
 
-       !! N limitation with NH4 inhibition after Frost and Franzen [-@frost1992]
-       !! (Note nitrate does not limit diazotroph growth but uptake limitation is used
-       !! to determine nitrogen fixation versus facultative no3/nh4 uptake, see Sec. 1.3)
+       !! N limitation with NH4 inhibition is calculated after Frost and Franzen [-@frost1992]
+       !!@note
+       !! Nitrate does not limit diazotroph growth but uptake limitation is used
+       !! to determine nitrogen fixation versus facultative no3/nh4 uptake. See Sec. 1.3.
+       !!@endnote
        !!
        do n= 1, NUM_PHYTO   !{
           if (scheme_no3_nh4_lim .eq. 1) then
@@ -3381,7 +3383,7 @@ contains
        enddo !} n
     enddo;  enddo ;  enddo !} i,j,k
     !
-    !! Calculate nutrient limitation based on the most limiting nutrient (`phyto(n)%liebig_lim`)
+    !! Nutrient limitation calculation is based on the most limiting nutrient (`phyto(n)%liebig_lim`)
     !!
     do k = 1, nk ; do j = jsc, jec ; do i = isc, iec   !{
        n=DIAZ
@@ -3394,8 +3396,8 @@ contains
     enddo;  enddo ;  enddo !} i,j,k
 
     !!### 1.2: Light Limitation/Growth Calculations
-    !! Calculate the mixed layer for phytoplankton photoacclimation
-    !! The default criterion is de Boyer Montegut et al. [-@deboyermontegut2004], where the
+    !! The default criterion for the mixed layer depth used for phytoplankton photoacclimation
+    !! is de Boyer Montegut et al. [-@deboyermontegut2004], where the
     !! mixed layer is calculated relative to `zmld_ref` = 10 m and is based on
     !! a potential density difference of 0.03 kg m-3.  This definition
     !! captures mixing on time scales of 1 to a few days.
@@ -3414,9 +3416,7 @@ contains
                               "which includes that calculation.")
     endif ! end if photo_acc_dpth was not present
 
-    !!
-    !! Calculate the underwater light field for the BGC calculations.  By default, COBALT
-    !! receives visible and near-infrared inputs.  Near infrared is currently considered
+    !! By default, COBALT receives visible and near-infrared inputs.  Near infrared is currently considered
     !! anything with wavelengths longer than ~710 nanometers.  Note that both shortwave and
     !! near infrared fall into the "shortwave" part of the radiation spectrum.  Following
     !! Morel and Antoine [-@morel1994] and Sweeney et al. [-@sweeney2005], about 57% of the incoming irradiance
@@ -3457,7 +3457,8 @@ contains
           endif !}
        enddo !}
 
-       ! calculate the day length (cobalt%daylength(i,j) based on the CBM daylength model
+       !! Day length (`cobalt%daylength(i,j)`) is based on the CBM daylength model.
+       !!
        ! rev_angle = revolution angle (eq. (1) of Forsythe et al.)
        ! dec_angle = sun's declination angle (eq. (2) of Forsythe et al.)
        ! daylength (in hours)
@@ -3470,15 +3471,17 @@ contains
        temp_arg = max(min(temp_arg,1.0),-1.0)
        cobalt%daylength(i,j) = 24.0 - 24.0/3.14*acos(temp_arg)
 
-       ! Calculate the acclimation irradiance at the surface.  This basic equation relaxes
-       ! the irradiance toward the current value with a an inverse time scale set by gamma:
-       !
-       ! I_aclm(t+1) = I_aclm(t) + (I*(24/daylength)-I_aclm(t))*gamma*dt
-       !
-       ! multiplication by 24/daylength adjusts the irradiance averaged over 24 hours to
-       ! upward to approximate the irradiance during daylight hours. For photoacclimation
-       ! the default relaxation timescale is set to 1 day (gamma = 1/86400 sec), and
-       ! "dt" is the time step.
+       !! The acclimation irradiance at the surface is calculated using this basic equation,
+       !! which relaxes the irradiance toward the current value with a an inverse time scale set by gamma:
+       !!```fortran
+       !! I_aclm(t+1) = I_aclm(t) + (I*(24/daylength)-I_aclm(t))*gamma*dt
+       !!```
+       !!
+       !! Multiplication by 24/daylength adjusts the irradiance averaged over 24 hours to
+       !! upward to approximate the irradiance during daylight hours. For photoacclimation
+       !! the default relaxation timescale is set to 1 day (`gamma` = 1/86400 sec), and
+       !! `dt` is the time step.
+       !!
        cobalt%f_irr_aclm_sfc(i,j,1) = (cobalt%f_irr_aclm_sfc(i,j,1) + &
          (sfc_irrad(i,j)*24.0/max(cobalt%daylength(i,j),cobalt%min_daylength)-cobalt%f_irr_aclm_sfc(i,j,1)) * &
          min(1.0,cobalt%gamma_irr_aclm * dt)) * grid_tmask(i,j,1)
