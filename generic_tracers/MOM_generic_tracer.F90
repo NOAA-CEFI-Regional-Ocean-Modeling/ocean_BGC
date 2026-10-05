@@ -353,9 +353,9 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
   !For each tracer name get its  fields
   g_tracer=>CS%g_tracer_list
 
-  if (restart) call read_legacy_restart_fields_2d(G, GV, CS)
-
   call thickness_to_dz(h, tv, dz, G, GV, US)
+
+  call initialize_restart_fields_2d(restart, h, dz, G, GV, US, param_file, CS)
 
   do
     if (INDEX(CS%IC_file, '_NULL_') /= 0) then
@@ -516,52 +516,106 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
 
 end subroutine initialize_MOM_generic_tracer
 
-!> Fill any 2D restart fields that were not found in the restart files from the 3D fields that older
-!! versions saved instead, whose top level holds the same data. Without a legacy field, a missing
-!! 2D field is a fatal error unless TRACERS_MAY_REINIT is true, in which case it keeps its initial value.
-subroutine read_legacy_restart_fields_2d(G, GV, CS)
-  type(ocean_grid_type),       intent(in) :: G  !< The ocean's grid structure
-  type(verticalGrid_type),     intent(in) :: GV !< The ocean's vertical grid structure
-  type(MOM_generic_tracer_CS), pointer    :: CS !< Pointer to the control structure for this module.
+!> Initialize the 2D restart fields that were not read from the restart files.
+!! On a restart, these are first read from the top level of the 3D fields that older versions saved
+!! instead. It is a fatal error if they are not found, unless TRACERS_MAY_REINIT is true.
+!! On a new run (or a reinitialization), they are initialized in the same way as the generic tracers,
+!! from their source files or else from GENERIC_TRACER_IC_FILE under their legacy names, keeping the
+!! top level.
+subroutine initialize_restart_fields_2d(restart, h, dz, G, GV, US, param_file, CS)
+  logical,                     intent(in)    :: restart    !< .true. if the fields have already been
+                                                           !! read from a restart file.
+  type(ocean_grid_type),       intent(inout) :: G          !< The ocean's grid structure
+  type(verticalGrid_type),     intent(in)    :: GV         !< The ocean's vertical grid structure
+  real, dimension(SZI_(G),SZJ_(G),SZK_(GV)), intent(in) :: h  !< Layer thicknesses [H ~> m or kg m-2]
+  real, dimension(SZI_(G),SZJ_(G),SZK_(GV)), intent(in) :: dz !< Layer vertical extent [Z ~> m]
+  type(unit_scale_type),       intent(in)    :: US         !< A dimensional unit scaling type
+  type(param_file_type),       intent(in)    :: param_file !< A structure to parse for run-time parameters
+  type(MOM_generic_tracer_CS), pointer       :: CS         !< Pointer to the control structure for this module.
 
   ! Local variables
   type(directories) :: dirs  ! The directories and file names used for restarts
-  real, dimension(SZI_(G),SZJ_(G),SZK_(GV)) :: legacy_field ! A legacy 3D restart field [various]
+  real, dimension(:,:,:), pointer :: field_3d ! A 3D version of a field [various]
   logical :: found           ! True if the legacy field was found in the restart files
   logical :: have_dirs       ! True once dirs has been read
-  integer :: n
+  character(len=64) :: ic_name ! The name of the field in GENERIC_TRACER_IC_FILE
+  integer :: i, j, k, n
 
+  if (size(CS%restart_fields_2d) == 0) return
+
+  allocate(field_3d(G%isd:G%ied, G%jsd:G%jed, GV%ke))
   have_dirs = .false.
   do n=1,size(CS%restart_fields_2d)
     associate(rf => CS%restart_fields_2d(n))
-      if (query_initialized(rf%field, rf%name, CS%restart_CSp)) cycle
+      if (restart) then
+        if (query_initialized(rf%field, rf%name, CS%restart_CSp)) cycle
 
-      found = .false.
-      if (len_trim(rf%legacy_name) > 0) then
-        if (.not.have_dirs) then
-          ! Look for the restart files in the same place that restore_state does.
-          call get_MOM_input(dirs=dirs)
-          have_dirs = .true.
+        found = .false.
+        if (len_trim(rf%legacy_name) > 0) then
+          if (.not.have_dirs) then
+            ! Look for the restart files in the same place that restore_state does.
+            call get_MOM_input(dirs=dirs)
+            have_dirs = .true.
+          endif
+          field_3d(:,:,:) = 0.0
+          call only_read_from_restarts(rf%legacy_name, field_3d, G, CS%restart_CSp, &
+                                       filename=dirs%input_filename, directory=dirs%restart_input_dir, &
+                                       success=found)
         endif
-        legacy_field(:,:,:) = 0.0
-        call only_read_from_restarts(rf%legacy_name, legacy_field, G, CS%restart_CSp, &
-                                     filename=dirs%input_filename, directory=dirs%restart_input_dir, &
-                                     success=found)
+
+        if (found) then
+          rf%field(:,:) = field_3d(:,:,1)
+          call set_initialized(rf%field, rf%name, CS%restart_CSp)
+          call MOM_error(NOTE, "initialize_restart_fields_2d: Initialized "//trim(rf%name)// &
+                               " from the top level of the legacy restart field "//trim(rf%legacy_name))
+          cycle
+        elseif (.not.CS%tracers_may_reinit) then
+          call MOM_error(FATAL, "initialize_restart_fields_2d: Unable to find "//trim(rf%name)// &
+                                " or its legacy field "//trim(rf%legacy_name)//" in the restart files.")
+        endif
       endif
 
-      if (found) then
-        rf%field(:,:) = legacy_field(:,:,1)
-        call set_initialized(rf%field, rf%name, CS%restart_CSp)
-        call MOM_error(NOTE, "read_legacy_restart_fields_2d: Initialized "//trim(rf%name)// &
-                             " from the top level of the legacy restart field "//trim(rf%legacy_name))
-      elseif (.not.CS%tracers_may_reinit) then
-        call MOM_error(FATAL, "read_legacy_restart_fields_2d: Unable to find "//trim(rf%name)// &
-                              " or its legacy field "//trim(rf%legacy_name)//" in the restart files.")
+      ! Initialize the field as the generic tracers are in initialize_MOM_generic_tracer.
+      if (INDEX(CS%IC_file, '_NULL_') /= 0) cycle
+      do k=1,GV%ke ; field_3d(:,:,k) = rf%field(:,:) ; enddo
+      if (trim(rf%src_file) /= 'NULL') then
+        call MOM_error(NOTE, "initialize_restart_fields_2d: initializing "//trim(rf%name)// &
+                             " using MOM_initialize_tracer_from_Z ")
+        call MOM_initialize_tracer_from_Z(dz, field_3d, G, GV, US, param_file, &
+                               src_file=rf%src_file, src_var_nam=rf%src_var_name, &
+                               src_var_unit_conversion=rf%src_var_unit_conversion, &
+                               src_var_record=rf%src_var_record, src_var_gridspec=rf%src_var_gridspec, &
+                               h_in_Z_units=.true.)
+        do j=G%jsc,G%jec ; do i=G%isc,G%iec
+          if (field_3d(i,j,1) /= CS%tracer_land_val) then
+            if (field_3d(i,j,1) < rf%src_var_valid_min) field_3d(i,j,1) = rf%src_var_valid_min
+          endif
+        enddo ; enddo
+      elseif (len_trim(CS%IC_file) > 0) then
+        ! Read the field from the IC file under the name of the 3D tracer that older versions used.
+        ic_name = rf%name ; if (len_trim(rf%legacy_name) > 0) ic_name = rf%legacy_name
+        if (.not.file_exists(CS%IC_file)) call MOM_error(FATAL, &
+                "initialize_restart_fields_2d: Unable to open "//CS%IC_file)
+        if (CS%Z_IC_file) then
+          if (.not.tracer_Z_init(field_3d, h, CS%IC_file, trim(ic_name), G, GV, US)) &
+            call MOM_error(FATAL, "initialize_restart_fields_2d: Unable to read "//trim(ic_name)// &
+                                  " from "//trim(CS%IC_file)//".")
+        else
+          call MOM_read_data(CS%IC_file, trim(ic_name), field_3d, G%Domain)
+        endif
+        call MOM_error(NOTE, "initialize_restart_fields_2d: initialized "//trim(rf%name)// &
+                             " from "//trim(ic_name)//" in Generic Tracer IC file "//trim(CS%IC_file))
+      else
+        call MOM_error(FATAL, "initialize_restart_fields_2d: check Generic Tracer IC filename "// &
+                              trim(CS%IC_file)//" for "//trim(rf%name))
       endif
+      rf%field(:,:) = field_3d(:,:,1)
+      call set_initialized(rf%field, rf%name, CS%restart_CSp)
     end associate
   enddo
+  deallocate(field_3d)
 
-end subroutine read_legacy_restart_fields_2d
+end subroutine initialize_restart_fields_2d
 
 subroutine  g_tracer_initialize_sponges(G, GV, US, CS, param_file, Layer_CSp, ALE_CSp, Time)
   type(ocean_grid_type),   intent(in) :: G    !< The ocean's grid structure.
