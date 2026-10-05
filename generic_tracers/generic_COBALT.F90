@@ -6893,9 +6893,15 @@ contains
   !   The bottom fluxes to the sediments (*_btf) need to be saved because the sediment calculations
   !   in update_from_source use the fluxes computed at the end of the previous step in update_from_bottom.
   !   Older versions saved these as 3D diagnostic tracers named *_btf, which are given as legacy names.
+  !   Their initial conditions are set in the field_table under these legacy names, as for those tracers.
   !
   subroutine generic_COBALT_restart_fields_2d(fields)
     type(g_restart_field_2d_type), dimension(:), allocatable, intent(inout) :: fields
+
+    logical :: enforce_src_info ! If true, the fields must have initial conditions set in the field_table
+
+    call g_tracer_start_param_list(package_name)
+    call g_tracer_add_param('enforce_src_info', enforce_src_info, .true.)
 
     call add_btf(cobalt%f_ndet_fast_btf, 'ndet_fast_btf', 'Fast sinking N flux to Sediments')
     call add_btf(cobalt%f_pdet_fast_btf, 'pdet_fast_btf', 'Fast sinking P flux to Sediments')
@@ -6921,9 +6927,11 @@ contains
     call add_btf(cobalt%f_simd_btf, 'simd_btf', 'simd flux to Sediments')
     call add_btf(cobalt%f_silg_btf, 'silg_btf', 'silg flux to Sediments')
 
+    call g_tracer_end_param_list(package_name)
+
   contains
 
-    ! Add a bottom flux, named after the 3D tracer that older versions saved it as
+    ! Add a bottom flux to sediments
     subroutine add_btf(field, legacy_name, longname, units)
       real, dimension(:,:), pointer          :: field
       character(len=*),           intent(in) :: legacy_name, longname
@@ -6931,9 +6939,52 @@ contains
       character(len=32) :: btf_units
 
       btf_units = 'mol m-2 s-1' ; if (present(units)) btf_units = units
-      call g_restart_field_2d_add(fields, field, trim(legacy_name)//'_2d', longname, btf_units, &
-                                  legacy_name=legacy_name)
+      call add_field(field, legacy_name, longname, btf_units)
     end subroutine add_btf
+
+    ! Add a field named after the 3D tracer that older versions saved it as, with the initial condition
+    ! that the field_table sets for that tracer. This follows g_tracer_add and g_tracer_init.
+    subroutine add_field(field, legacy_name, longname, units)
+      real, dimension(:,:), pointer :: field
+      character(len=*), intent(in)  :: legacy_name, longname, units
+      character(len=fm_string_len) :: src_file, src_var_name, src_var_unit, src_var_gridspec
+      integer :: src_var_record
+      real    :: src_var_unit_conversion, src_var_valid_min
+      logical :: requires_src_info
+
+      call g_tracer_add_param(trim(legacy_name)//"_requires_src_info", requires_src_info, enforce_src_info)
+      if (.not. requires_src_info) then
+        call g_restart_field_2d_add(fields, field, trim(legacy_name)//'_2d', longname, units, &
+                                    legacy_name=legacy_name)
+        return
+      endif
+
+      call g_tracer_add_param(trim(legacy_name)//"_src_file",         src_file,          'NULL')
+      call g_tracer_add_param(trim(legacy_name)//"_src_var_name",     src_var_name,      'NULL')
+      call g_tracer_add_param(trim(legacy_name)//"_src_var_unit",     src_var_unit,      'NULL')
+      call g_tracer_add_param(trim(legacy_name)//"_src_var_record",   src_var_record,    -1)
+      call g_tracer_add_param(trim(legacy_name)//"_src_var_gridspec", src_var_gridspec,  'NULL')
+      call g_tracer_add_param(trim(legacy_name)//"_valid_min",        src_var_valid_min, -99.0)
+
+      if (src_file == 'NULL') call mpp_error(FATAL, 'generic_COBALT_restart_fields_2d: '// &
+          trim(legacy_name)//' : src_file is not set in the field_table')
+      if (src_var_name == 'NULL') call mpp_error(FATAL, 'generic_COBALT_restart_fields_2d: '// &
+          trim(legacy_name)//' : src_var_name is not set in the field_table')
+      select case (trim(src_var_unit))
+        case ('none') ; src_var_unit_conversion = 1.0
+        case ('ppt')  ; src_var_unit_conversion = 1.0e-12
+        case ('NULL') ; call mpp_error(FATAL, 'generic_COBALT_restart_fields_2d: '// &
+                            trim(legacy_name)//' : src_var_unit is not set in the field_table')
+        case default  ; call mpp_error(FATAL, 'generic_COBALT_restart_fields_2d: '// &
+                            trim(legacy_name)//' : cannot determine src_var_unit_conversion')
+      end select
+
+      call g_restart_field_2d_add(fields, field, trim(legacy_name)//'_2d', longname, units, &
+                                  legacy_name=legacy_name, src_file=src_file, src_var_name=src_var_name, &
+                                  src_var_gridspec=src_var_gridspec, src_var_record=src_var_record, &
+                                  src_var_unit_conversion=src_var_unit_conversion, &
+                                  src_var_valid_min=src_var_valid_min)
+    end subroutine add_field
   end subroutine generic_COBALT_restart_fields_2d
 
   !
