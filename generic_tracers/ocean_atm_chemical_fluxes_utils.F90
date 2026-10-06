@@ -89,7 +89,7 @@ contains
   !salting out correction for solubility (Johnson 2010, Ocean Science)
   function saltout_correction(kh,vb,salt) result(C)
       real, intent(in) :: Kh,vb,salt
-      real*8 :: T,log_kh,theta2
+      real*8 :: log_kh
       real :: theta,C
       log_kh = log(kh)
       theta = (7.3353282561828962e-04 + (3.3961477466551352e-05*log_kh) + (-2.4088830102075734e-06*(log_kh)**2) + (1.5711393120941302e-07*(log_kh)**3))*log(vb)
