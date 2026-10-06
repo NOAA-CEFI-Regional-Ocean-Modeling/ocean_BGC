@@ -1535,11 +1535,11 @@ module COBALT_reg_diag
          missing_value = missing_value1)
 
     !
-    ! Some useful totals (change to moles kg-1 for MOM6?)
+    ! Some useful totals
     !
 
     cobalt%id_nphyto_tot = register_diag_field(package_name, "nphyto_tot", axes(1:3), &
-         init_time, "Total N: Di+Lg+Md+Sm", "mol m-2 s-1", missing_value = missing_value1)
+         init_time, "Total N: Di+Lg+Md+Sm", "mol kg-1", missing_value = missing_value1)
 
     cobalt%id_tot_layer_int_c = register_diag_field(package_name, "tot_layer_int_c", axes(1:3), &
          init_time, "Total Carbon (DIC+OC+IC) boxwise", "mol m-2", missing_value = missing_value1)
