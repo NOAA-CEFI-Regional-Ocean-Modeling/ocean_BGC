@@ -134,7 +134,7 @@ module generic_COBALT
   use mpp_mod,           only: input_nml_file, mpp_error, stdlog, NOTE, WARNING, FATAL, stdout, mpp_chksum
   use time_manager_mod,  only: time_type, day_of_year
   use fm_util_mod,       only: fm_util_start_namelist, fm_util_end_namelist
-  use constants_mod,     only: WTMCO2, WTMO2,WTMN,rdgas,wtmair
+  use constants_mod,     only: WTMCO2, WTMO2,WTMN
   use data_override_mod, only: data_override
   use fms_mod,           only: write_version_number, FATAL, WARNING, stdout, stdlog,mpp_pe,mpp_root_pe
   use fms_mod,           only: check_nml_error
@@ -3163,8 +3163,6 @@ contains
     real :: log10_zeu_over_mld
     !>
 
-
-    logical ::  phos_nh3_override
     logical ::  pha_all_same = .true.
 
     ! << local variables used for neritic CaCO3 burial
