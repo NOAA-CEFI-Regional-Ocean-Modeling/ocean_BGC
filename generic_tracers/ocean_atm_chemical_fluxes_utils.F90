@@ -23,7 +23,7 @@ contains
     real, intent(out), optional :: pdms_csurf
 
     dms_alpha = 0.537023e3*exp(3500.*(1./(tc+273.15)-1./298.15)) !M/atm
-    dms_alpha = dms_alpha/saltout_correction(101325./(1.e-3*rdgas*wtmair*tc*dms_alpha),vb_dms,salt)*1./rho_0 !mol/m3/atm
+    dms_alpha = dms_alpha/saltout_correction(101325./(1.e-3*rdgas*wtmair*(tc+273.15)*dms_alpha),vb_dms,salt)*1./rho_0 !mol/m3/atm
 !    dms_sco_no = schmidt_dms(sstc)
     dms_csurf  = f_dms     !if we ever want to modulate f_dms
     
