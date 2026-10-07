@@ -3914,8 +3914,8 @@ contains
   !!
   !! In MOM6 diag mode this calls MOM6's register_diag_field directly, so any MOM6 axes group
   !! may be used, and MOM6's default missing value is used for the output files.
-  !! In FMS diag mode only axesTL and axesT1 have axis handles; attempting to register fields
-  !! on other axes will result in an error.
+  !! In FMS diag mode the group must carry FMS axis handles. axesTL and axesT1 always do; axesTi
+  !! does only if the host passed axes_i to generic_tracer_init. Otherwise this is a fatal error.
   function g_register_diag_field_axes(module_name, field_name, axes, init_time, &
        long_name, units, missing_value, range, mask_variant, standard_name,      &
        verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
@@ -3963,7 +3963,7 @@ contains
 #else
     if(.not. allocated(axes%handles)) then
        call mpp_error(FATAL, trim(sub_name)//": no FMS axes are available for "//trim(field_name)//&
-            ", so it will not be registered.")
+            " (for interface fields, the host must pass axes_i to generic_tracer_init)")
     endif
     g_register_diag_field_axes = g_register_diag_field_handles(module_name, field_name, axes%handles, &
          init_time, long_name, units, missing_value, range, mask_variant, standard_name, &
