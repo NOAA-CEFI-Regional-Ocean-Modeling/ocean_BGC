@@ -368,6 +368,7 @@ module g_tracer_utils
   public :: g_tracer_get_common
   public :: g_tracer_set_common
   public :: g_tracer_set_csdiag
+  public :: g_tracer_unset_csdiag
   public :: g_tracer_get_diagCS
   public :: g_diag_ctrl
   public :: g_axes_grp
@@ -1689,6 +1690,16 @@ contains
     g_tracer_com%diag_CS => diag_CS
   end subroutine g_tracer_set_csdiag
 
+  !> Drop the reference to the diagnostic control structure. In FMS diag mode the structure
+  !! is owned by this module and is freed; with MOM6 diagnostics it belongs to the host and
+  !! is only disassociated.
+  subroutine g_tracer_unset_csdiag()
+#ifndef _USE_MOM6_DIAG
+    if (associated(g_tracer_com%diag_CS)) deallocate(g_tracer_com%diag_CS)
+#endif
+    nullify(g_tracer_com%diag_CS)
+  end subroutine g_tracer_unset_csdiag
+
   ! <SUBROUTINE NAME="g_tracer_set_common">
   !  <OVERVIEW>
   !   Set common values and arrays for ALL generic tracers to share
@@ -1818,6 +1829,8 @@ contains
   subroutine g_tracer_get_diagCS(diag_CS)
     type(g_diag_ctrl),        pointer :: diag_CS
 
+    if (.not. associated(g_tracer_com%diag_CS)) call mpp_error(FATAL, &
+         'g_tracer_get_diagCS: diag_CS has not been set; call g_tracer_set_csdiag first')
     diag_CS => g_tracer_com%diag_CS
   end subroutine g_tracer_get_diagCS
 
