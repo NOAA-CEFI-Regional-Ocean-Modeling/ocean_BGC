@@ -26,7 +26,7 @@ use generic_tracer, only: generic_tracer_coupler_accumulate
 use g_tracer_utils,   only: g_tracer_get_name,g_tracer_set_values,g_tracer_set_common,g_tracer_get_common
 use g_tracer_utils,   only: g_tracer_get_next,g_tracer_type,g_tracer_is_prog,g_tracer_flux_init
 use g_tracer_utils,   only: g_tracer_send_diag,g_tracer_get_values
-use g_tracer_utils,   only: g_tracer_get_pointer,g_tracer_get_alias,g_tracer_set_csdiag
+use g_tracer_utils,   only: g_tracer_get_pointer,g_tracer_get_alias,g_tracer_set_csdiag,g_tracer_unset_csdiag
 use g_tracer_utils,   only: g_tracer_get_obc_segment_props
 
 use MOM_ALE_sponge, only : set_up_ALE_sponge_field, ALE_sponge_CS
@@ -493,9 +493,6 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
   call g_tracer_set_csdiag(CS%diag)
 #endif
   call generic_tracer_register_diag()
-#ifdef _USE_MOM6_DIAG
-  call g_tracer_set_csdiag(CS%diag)
-#endif
 
 end subroutine initialize_MOM_generic_tracer
 
@@ -707,10 +704,6 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
   if (.NOT. associated(CS%g_tracer_list)) call MOM_error(FATAL,&
        trim(sub_name)//": No tracer in the list.")
 
-#ifdef _USE_MOM6_DIAG
-  call g_tracer_set_csdiag(CS%diag)
-#endif
-
   !
   !Extract the tracer surface fields from coupler and update tracer fields from sources
   !
@@ -869,9 +862,6 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
 
   !Output diagnostics via diag_manager for all generic tracers and their fluxes
   call g_tracer_send_diag(CS%g_tracer_list, get_diag_time_end(CS%diag), tau=1)
-#ifdef _USE_MOM6_DIAG
-  call g_tracer_set_csdiag(CS%diag)
-#endif
 
 end subroutine MOM_generic_tracer_column_physics
 
@@ -1145,6 +1135,7 @@ subroutine end_MOM_generic_tracer(CS)
   type(MOM_generic_tracer_CS), pointer :: CS   !< Pointer to the control structure for this module.
 
   call generic_tracer_end()
+  call g_tracer_unset_csdiag()
 
   if (associated(CS)) then
     deallocate(CS)
