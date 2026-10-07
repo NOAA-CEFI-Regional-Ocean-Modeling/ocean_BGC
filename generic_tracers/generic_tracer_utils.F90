@@ -1747,7 +1747,8 @@ contains
 #ifndef _USE_MOM6_DIAG
     !There is no host diag_ctrl in FMS diag mode, so build a stand-in that holds the FMS axis
     !handles. axesTi only gets handles if the host provides an interface axis.
-    !TODO: Consider checking the axis lengths with get_axis_length (nk for axes(3), nk+1 for axes_i).
+    !TODO: Consider checking the axis lengths with get_axis_length (nk for axes(3), nk+1 for axes_i)
+    ! to catch potential bugs in runs that don't call this subroutine from the g_tracer infrastructure
     if (.not. associated(g_tracer_com%diag_CS)) allocate(g_tracer_com%diag_CS)
     g_tracer_com%diag_CS%axesTL%handles = axes(1:3)
     g_tracer_com%diag_CS%axesT1%handles = axes(1:2)
