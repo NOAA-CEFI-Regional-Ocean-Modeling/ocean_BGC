@@ -2,7 +2,9 @@ name: ford docs
 
 on:
   push:
-    branches: [ "dev/cefi" ]
+    branches: 
+      - dev/cefi
+      - 'docs/**'
 
 jobs:
   build_docs:
@@ -15,11 +17,11 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4
       - name: Build docs
-        run: uvx ford ocean_bgc.md -o doc --no-search
+        run: uv run --locked --project docs/ford_bib_ext ford ocean_bgc.md -o docs/build --no-search
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./doc
+          path: ./docs/build
 
   deploy_docs:
     environment:
