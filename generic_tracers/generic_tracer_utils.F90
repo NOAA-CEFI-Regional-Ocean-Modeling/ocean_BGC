@@ -313,7 +313,8 @@ module g_tracer_utils
   ! The following type fields are common to ALL generic tracers and hence has to be instantiated only once:
   ! </DESCRIPTION>
   type g_tracer_common
-     type(g_diag_ctrl) :: diag_CS
+     !Pointer to the host model's diagnostic control structure
+     type(g_diag_ctrl), pointer :: diag_CS => NULL()
      !Domain extents
      integer :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk
 
@@ -1667,8 +1668,8 @@ contains
   end subroutine g_tracer_coupler_accumulate
 
   subroutine g_tracer_set_csdiag(diag_CS)
-    type(g_diag_ctrl),  target,intent(in) :: diag_CS
-    g_tracer_com%diag_CS = diag_CS
+    type(g_diag_ctrl), pointer, intent(in) :: diag_CS
+    g_tracer_com%diag_CS => diag_CS
   end subroutine g_tracer_set_csdiag
 
   ! <SUBROUTINE NAME="g_tracer_set_common">

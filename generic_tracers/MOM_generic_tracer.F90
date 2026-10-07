@@ -493,9 +493,6 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
   call g_tracer_set_csdiag(CS%diag)
 #endif
   call generic_tracer_register_diag()
-#ifdef _USE_MOM6_DIAG
-  call g_tracer_set_csdiag(CS%diag)
-#endif
 
 end subroutine initialize_MOM_generic_tracer
 
@@ -707,10 +704,6 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
   if (.NOT. associated(CS%g_tracer_list)) call MOM_error(FATAL,&
        trim(sub_name)//": No tracer in the list.")
 
-#ifdef _USE_MOM6_DIAG
-  call g_tracer_set_csdiag(CS%diag)
-#endif
-
   !
   !Extract the tracer surface fields from coupler and update tracer fields from sources
   !
@@ -869,9 +862,6 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
 
   !Output diagnostics via diag_manager for all generic tracers and their fluxes
   call g_tracer_send_diag(CS%g_tracer_list, get_diag_time_end(CS%diag), tau=1)
-#ifdef _USE_MOM6_DIAG
-  call g_tracer_set_csdiag(CS%diag)
-#endif
 
 end subroutine MOM_generic_tracer_column_physics
 
