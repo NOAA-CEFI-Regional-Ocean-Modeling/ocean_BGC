@@ -1709,18 +1709,22 @@ contains
   !   grid_mask array and initial time.
   !  </DESCRIPTION>
   !  <TEMPLATE>
-  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
+  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,axes_i)
   !  </TEMPLATE>
   !  <IN NAME="" TYPE="">
   !
   !  </IN>
   ! </SUBROUTINE>
 
-  subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
-    integer,                     intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes(3)
+  subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,axes_i)
+    integer,                     intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau
+    integer,                     intent(in) :: axes(3) !< FMS axis ids for (x, y, layer), with nk layers
     real, dimension(isd:,jsd:,:),intent(in) :: grid_tmask
     integer,dimension(isd:,jsd:),intent(in) :: grid_kmt
     type(time_type),             intent(in) :: init_time
+    integer,           optional, intent(in) :: axes_i  !< FMS axis id for the nk+1 interfaces. Only used in
+                                                       !! FMS diag mode; if absent, interface diagnostics
+                                                       !! are not registered.
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_set_common'
     integer :: i,j
@@ -1742,10 +1746,12 @@ contains
 
 #ifndef _USE_MOM6_DIAG
     !There is no host diag_ctrl in FMS diag mode, so build a stand-in that holds the FMS axis
-    !handles. The host provides no interface axis, so axesTi is left without handles.
+    !handles. axesTi only gets handles if the host provides an interface axis.
+    !TODO: Consider checking the axis lengths with get_axis_length (nk for axes(3), nk+1 for axes_i).
     if (.not. associated(g_tracer_com%diag_CS)) allocate(g_tracer_com%diag_CS)
     g_tracer_com%diag_CS%axesTL%handles = axes(1:3)
     g_tracer_com%diag_CS%axesT1%handles = axes(1:2)
+    if (present(axes_i)) g_tracer_com%diag_CS%axesTi%handles = (/ axes(1), axes(2), axes_i /)
 #endif
 
     if(.NOT. _ALLOCATED(g_tracer_com%grid_tmask)) allocate(g_tracer_com%grid_tmask(isd:ied,jsd:jed,nk))
