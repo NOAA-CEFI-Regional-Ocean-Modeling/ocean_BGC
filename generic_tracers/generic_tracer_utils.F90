@@ -1,10 +1,10 @@
 module g_tracer_utils
-  !! author: Niki Zadeh
-  !! g_tracer_utils module consists of core utility subroutines
-  !! to be used by all generic tracer modules.
-  !! These include the lowest level functions for adding,
-  !! allocating memory, and record keeping of individual
-  !! generic tracers irrespective of their physical/chemical nature.
+!! author: Niki Zadeh
+!! g_tracer_utils module consists of core utility subroutines
+!! to be used by all generic tracer modules.
+!! These include the lowest level functions for adding,
+!! allocating memory, and record keeping of individual
+!! generic tracers irrespective of their physical/chemical nature.
 #include <fms_platform.h>
 
   use coupler_types_mod, only: coupler_2d_bc_type, ind_flux, ind_deltap, ind_kw
@@ -37,110 +37,9 @@ module g_tracer_utils
 !-----------------------------------------------------------------------
 
   character(len=48), parameter :: mod_name = 'g_tracer_utils'
-  ! <DESCRIPTION>
-  ! Public types:
-  !
-  ! Each generic tracer node is an instant of a FORTRAN type with the following member variables.
-  ! These member fields are supposed to uniquely define an individual tracer.
-  ! One such type shall be instantiated for EACH individual tracer.
-  ! <PRE>
-  !type g_tracer_type
-  !   !A pointer to the next node in the list for the current "linked-list implementation".
-  !   type(g_tracer_type), pointer :: next => NULL()
-  !
-  !   !A unique index (for the possible future "array implementation")
-  !   integer :: index
-  !
-  !   ! Tracer name, descriptive name, package that instantiates it
-  !   character(len=64) :: name, longname, package_name
-  !
-  !   ! Units of measurement for its field and its flux
-  !   character(len=64) :: units, flux_units
-  !
-  !   ! Tracer concentration field in space (and time)
-  !   ! MOM keeps the field at 3 time levels, hence 4D.
-  !   real, _ALLOCATABLE, dimension(:,:,:,:):: field  _NULL
-  !
-  !   ! Surface flux, surface gas flux, deltap and kw
-  !   real, _ALLOCATABLE, dimension(:,:)    :: stf    _NULL
-  !
-  !   real, _ALLOCATABLE, dimension(:,:)    :: deltap    _NULL
-  !
-  !   real, _ALLOCATABLE, dimension(:,:)    :: kw    _NULL
-  !
-  !   ! Bottom  flux
-  !   real, _ALLOCATABLE, dimension(:,:)    :: btf    _NULL
-  !
-  !   ! Bottom  reservoir flux
-  !   real, _ALLOCATABLE, dimension(:,:)    :: btm_reservoir    _NULL
-  !
-  !   ! Tracer concentration in river runoff
-  !   real, _ALLOCATABLE, dimension(:,:)    :: trunoff _NULL
-  !
-  !   ! Runoff flux of tracer
-  !   real, _ALLOCATABLE, dimension(:,:)    :: runoff_tracer_flux _NULL
-  !
-  !   ! Wet deposition flux of tracer
-  !   real, _ALLOCATABLE, dimension(:,:)    :: wetdep _NULL
-  !
-  !   ! Dry deposition flux of tracer
-  !   real, _ALLOCATABLE, dimension(:,:)    :: drydep _NULL
-  !
-  !   ! Tracer saturation, alpha, and schmidt number
-  !   real, _ALLOCATABLE, dimension(:,:)    :: csurf  _NULL
-  !
-  !   real, _ALLOCATABLE, dimension(:,:)    :: alpha  _NULL
-  !
-  !   real, _ALLOCATABLE, dimension(:,:)    :: sc_no  _NULL
-  !
-  !   ! An 3D field for vertical movement, esp. for zooplankton, ...
-  !   real, _ALLOCATABLE, dimension(:,:,:)  :: vmove  _NULL
-  !   ! An 3D field for random vertical movement, esp. for zooplankton, ...
-  !   real, _ALLOCATABLE, dimension(:,:,:)  :: vdiff  _NULL
-
-  !   ! An 3D field for implicit vertical diffusion
-  !   real, _ALLOCATABLE, dimension(:,:,:)  :: vdiffuse_impl  _NULL
-
-  !   ! An auxiliary 3D field for keeping model dependent change tendencies, ...
-  !   real, _ALLOCATABLE, dimension(:,:,:)  :: tendency  _NULL
-  !
-  !   ! IDs for using diag_manager tools
-  !   integer :: diag_id_field=-1, diag_id_stf=-1, diag_id_stf_gas=-1, diag_id_deltap=-1, diag_id_kw=-1, diag_id_trunoff=-1
-  !   integer :: diag_id_alpha=-1, diag_id_csurf=-1, diag_id_sc_no=-1, diag_id_aux=-1
-  !
-  !  ! Tracer Initial concentration if constant everywhere
-  !   real    :: const_init_value = 0.0
-  !
-  !   ! Tracer Sinking rate
-  !   real    :: sink_rate   = 0.0
-  !
-  !   ! Logical switches
-  !   logical :: prog        = .false. !Is this a prognostic (.true.) or diagnostic (.false.) tracer?
-  !   logical :: move_vertical = .false. ! Enable allocation of fields for active vertical movement
-  !   logical :: diff_vertical = .false. ! Enable allocation of fields for random active vertical movement
-  !   logical :: flux_gas    = .false. !Is there a gas flux to atmosphere?
-  !   logical :: flux_runoff = .false. !Is there a river flux?
-  !   logical :: flux_wetdep = .false. !Is there a wet deposition?
-  !   logical :: flux_drydep = .false. !Is there a dry deposition?
-  !   logical :: flux_bottom = .false. !Is there a flux through bottom?
-  !
-  !   ! Flux identifiers to be set by aof_set_coupler_flux()
-  !   integer :: flux_gas_ind    = -1
-  !   integer :: flux_runoff_ind = -1
-  !   integer :: flux_wetdep_ind = -1
-  !   integer :: flux_drydep_ind = -1
-  !
-  !end type g_tracer_type
-  !
-  ! </PRE>
-  !
-  !
-  ! </DESCRIPTION>
 
   type g_tracer_type
-    ! Each generic tracer node is an instant of a FORTRAN type with the following member variables.
-    ! These member fields are supposed to uniquely define an individual tracer.
-    ! One such type shall be instantiated for EACH individual tracer.
+    !! Each generic tracer node is an instance of this FORTRAN type with the following member variables.
 
      type(g_tracer_type), pointer :: next => NULL()
     !! A pointer to the next node in the list for the current "linked-list implementation".
@@ -223,48 +122,36 @@ module g_tracer_utils
      real, pointer, dimension(:,:,:)  :: tendency  => NULL()
     !! An auxiliary 3D field for keeping model dependent change tendencies, ...
 
-     integer :: diag_id_field=-1, diag_id_stf=-1, diag_id_stf_gas=-1, diag_id_deltap=-1, diag_id_kw=-1, diag_id_trunoff=-1
-     integer :: diag_id_stf_gas_aux=-1
-     integer :: diag_id_alpha=-1, diag_id_csurf=-1, diag_id_sc_no=-1, diag_id_aux=-1
-     integer :: diag_id_btf=-1,diag_id_btm=-1, diag_id_vmove=-1, diag_id_vdiff=-1
-     integer :: diag_id_vdiffuse_impl = -1
-     integer :: diag_id_vdiffusec_impl = -1, diag_id_boundary_forcing_tend = -1
-    !! IDs for using diag_manager tools
+     integer :: diag_id_field=-1, diag_id_stf=-1, diag_id_stf_gas=-1 !! IDs for using diag_manager tools
+     integer :: diag_id_deltap=-1, diag_id_kw=-1, diag_id_trunoff=-1 !! IDs for using diag_manager tools
+     integer :: diag_id_stf_gas_aux=-1 !! IDs for using diag_manager tools
+     integer :: diag_id_alpha=-1, diag_id_csurf=-1, diag_id_sc_no=-1, diag_id_aux=-1 !! IDs for using diag_manager tools
+     integer :: diag_id_btf=-1,diag_id_btm=-1, diag_id_vmove=-1, diag_id_vdiff=-1 !! IDs for using diag_manager tools
+     integer :: diag_id_vdiffuse_impl = -1 !! IDs for using diag_manager tools
+     integer :: diag_id_vdiffusec_impl = -1, diag_id_boundary_forcing_tend = -1 !! IDs for using diag_manager tools
 
-     real    :: const_init_value = 0.0
+
+     real    :: const_init_value = 0.0 !! Tracer Initial concentration if constant everywhere
      real    :: initial_value = 0.0
-    !! Tracer Initial concentration if constant everywhere
 
      real    :: sink_rate   = 0.0  !! Tracer Sinking rate
 
      ! Logical switches
-     logical :: prog        = .false.
-    !! Is this a prognostic (.true.) or diagnostic (.false.) tracer?
-     logical :: move_vertical = .false.
-    !! Enable allocation of fields for active vertical movement
-     logical :: diff_vertical = .false.
-    !! Enable allocation of fields for random active vertical movement
-     logical :: flux_gas    = .false.
-    !! Is there a gas flux to atmosphere?
-     logical :: flux_runoff = .false.
-    !! Is there a river flux?
-     logical :: flux_wetdep = .false.
-    !! Is there a wet deposition?
-     logical :: flux_drydep = .false.
-    !! Is there a dry deposition?
-     logical :: flux_bottom = .false.
-    !! Is there a flux through bottom?
-     logical :: has_btm_reservoir = .false.
-    !! Is there a flux bottom reservoir?
-     logical :: runoff_added_to_stf = .false.
-    !! Has flux in from runoff been added to stf?
+     logical :: prog        = .false. !! Is this a prognostic (.true.) or diagnostic (.false.) tracer?
+     logical :: move_vertical = .false. !! Enable allocation of fields for active vertical movement
+     logical :: diff_vertical = .false. !! Enable allocation of fields for random active vertical movement
+     logical :: flux_gas    = .false. !! Is there a gas flux to atmosphere?
+     logical :: flux_runoff = .false. !! Is there a river flux?
+     logical :: flux_wetdep = .false. !! Is there a wet deposition?
+     logical :: flux_drydep = .false. !! Is there a dry deposition?
+     logical :: flux_bottom = .false. !! Is there a flux through bottom?
+     logical :: has_btm_reservoir = .false. !! Is there a flux bottom reservoir?
+     logical :: runoff_added_to_stf = .false. !! Has flux in from runoff been added to stf?
 
-     integer :: flux_gas_ind    = -1
-     integer :: flux_runoff_ind = -1
-     integer :: flux_wetdep_ind = -1
-     integer :: flux_drydep_ind = -1
-    !! Flux identifiers to be set by aof_set_coupler_flux()
-
+     integer :: flux_gas_ind    = -1 !! Flux identifier to be set by aof_set_coupler_flux()
+     integer :: flux_runoff_ind = -1 !! Flux identifier to be set by aof_set_coupler_flux()
+     integer :: flux_wetdep_ind = -1 !! Flux identifier to be set by aof_set_coupler_flux()
+     integer :: flux_drydep_ind = -1 !! Flux identifier to be set by aof_set_coupler_flux()
 
      logical :: requires_restart = .true.
      character(len=fm_string_len) :: src_file, src_var_name, src_var_unit, src_var_gridspec
@@ -276,7 +163,8 @@ module g_tracer_utils
      integer :: src_var_record
      logical :: requires_src_info = .false.
      real    :: src_var_unit_conversion = 1.0
-    !! This factor depends on the tracer. Ask  Jasmin
+    !! This factor depends on the tracer.
+     ! Ask  Jasmin
      real    :: src_var_valid_min = 0.0
      real    :: src_var_valid_max
 
@@ -662,128 +550,36 @@ contains
 
   end subroutine g_tracer_add_param_string
 
-
-  ! <SUBROUTINE NAME="g_tracer_add">
-  !  <OVERVIEW>
-  !   Add a new tracer (node) at the top of the list of generic tracers
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !    This subroutine call adds an individual new tracer to the growing list of generic tracers.
-  !    It then allocates all the necessary arrays for using this tracer in the Ocean model that requested it.
-  !    The information passed into this subroutine should be enough to fully describe the individual tracer
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !  call g_tracer_add(tracer_list,&
-  !       package    = 'generic_topaz',&
-  !       name       = 'g_dic',               &
-  !       longname   = 'g Dissolved Inorganic Carbon', &
-  !       units      = 'mol/kg',            &
-  !       prog       = .true.,              &
-  !       flux_gas       = .true.,                      &
-  !       flux_gas_name  = 'co2_flux',                  &
-  !       flux_gas_molwt = WTMCO2,                      &
-  !       flux_gas_param = (/ 9.36e-07, 9.7561e-06 /),  &
-  !       flux_runoff    = .true.,          &
-  !       flux_param     = (/12.011e-03  /),  &
-  !       flux_bottom    = .true.,          &
-  !       ice_restart_file = topaz%ice_restart_file)
-  !
-  !  </TEMPLATE>
-  !  <IN NAME="node_ptr" TYPE="type(g_tracer_type), pointer">
-  !   Pointer to the head node of the tracer list. This is also going to be the pointer to the node being added after the call.
-  !  </IN>
-  !  <IN NAME="package" TYPE="character(len=*)">
-  !   Name of tracer package adding this node.
-  !  </IN>
-  !  <IN NAME="name" TYPE="character(len=*)">
-  !   Name of this tracer.
-  !  </IN>
-  !  <IN NAME="longname" TYPE="character(len=*)">
-  !   Descriptive name of this tracer..
-  !  </IN>
-  !  <IN NAME="units" TYPE="character(len=*)">
-  !   Concentration units (units of array %field).
-  !  </IN>
-  !  <IN NAME="prog" TYPE="logical">
-  !   .true. for prognastic , .false. for diagnostic tracer.
-  !  </IN>
-  !
-  !  OPTIONAL arguments begin:
-  !
-  !  <IN NAME="const_init_value" TYPE="real">
-  !   Initial value of concenteration if constant.
-  !  </IN>
-  !  <IN NAME="flux_gas" TYPE="logical">
-  !   .true. if there is gas flux exchange with atmos.
-  !  </IN>
-  !  <IN NAME="flux_gas_name" TYPE="character(len=*)">
-  !   Name of the atmospheric tracer to exchange flux with (if flux_gas=.true.).
-  !  </IN>
-  !  <IN NAME="flux_runoff" TYPE="logical">
-  !   .true. if there is runoff flux.
-  !  </IN>
-  !  <IN NAME="flux_wetdep" TYPE="logical">
-  !   .true. if there is wetdep flux.
-  !  </IN>
-  !  <IN NAME="flux_drydep" TYPE="logical">
-  !   .true. if there is drydep flux.
-  !  </IN>
-  !  <IN NAME="flux_bottom" TYPE="logical">
-  !   .true. if there is bottom flux.
-  !  </IN>
-  !  <IN NAME="btm_reservoir" TYPE="logical">
-  !   .true. if there is bottom reservoir.
-  !  </IN>
-  !  <IN NAME="move_vertical" TYPE="logical">
-  !   .true. if there is active vertical movement
-  !  </IN>
-  !  <IN NAME="diff_vertical" TYPE="logical">
-  !   .true. if there is random active vertical movement
-  !  </IN>
-  !  <IN NAME="flux_gas_molwt" TYPE="real">
-  !   Molecular wt of gas defined in constants.F90 (g/mol)
-  !  </IN>
-  !  <IN NAME="flux_gas_param" TYPE="real, dimension(:)">
-  !   Aray of parameters for gas flux (refer to documentation for subroutine aof_set_coupler_flux() ).
-  !  </IN>
-  !  <IN NAME="flux_param" TYPE="real, dimension(:)">
-  !   Aray of parameters for non-gas flux (refer to documentation for subroutine aof_set_coupler_flux() ).
-  !  </IN>
-  !  <IN NAME="sink_rate" TYPE="real">
-  !   Sinking rate if non-zero.
-  !  </IN>
-  !  <IN NAME="ice_restart_file" TYPE="character(len=*)">
-  !   refer to documentation for subroutine aof_set_coupler_flux().
-  !  </IN>
-  !  <IN NAME="ocean_restart_file" TYPE="character(len=*)">
-  !   refer to documentation for subroutine aof_set_coupler_flux().
-  !  </IN>
-  !
-  ! </SUBROUTINE>
-
   subroutine g_tracer_add(node_ptr, package, name, longname, units,  prog, const_init_value,init_value,&
        flux_gas, flux_gas_name, flux_runoff, flux_wetdep, flux_drydep, flux_gas_molwt, flux_gas_param, &
        flux_param, flux_bottom, btm_reservoir, move_vertical, diff_vertical, sink_rate, flux_gas_restart_file, &
        flux_gas_type,requires_src_info,standard_name,diag_name,diag_field_units,diag_field_scaling_factor,implementation)
-
+    !! Add a new tracer (node) at the top of the list of generic tracers.
+    !! This subroutine call adds an individual new tracer to the growing list of generic tracers.
+    !! It then allocates all the necessary arrays for using this tracer in the Ocean model that requested it.
+    !! The information passed into this subroutine should be enough to fully describe the individual tracer.
     type(g_tracer_type), pointer :: node_ptr
-    character(len=*),   intent(in) :: package,name,longname,units
-    logical,            intent(in) :: prog
-    real,               intent(in), optional :: const_init_value
+    !!   Pointer to the head node of the tracer list. This is also going to be the pointer to the node being added after the call.
+    character(len=*),   intent(in) :: package !! Name of tracer package adding this node.
+    character(len=*),   intent(in) :: name !! Name of this tracer.
+    character(len=*),   intent(in) :: longname !! Descriptive name of this tracer.
+    character(len=*),   intent(in) :: units !! Concentration units (units of array `%field`).
+    logical,            intent(in) :: prog !! .true. for prognostic tracer , .false. for diagnostic tracer.
+    real,               intent(in), optional :: const_init_value !! Initial value of concenteration if constant.
     real,               intent(in), optional :: init_value
-    real,               intent(in), optional :: sink_rate
-    logical,            intent(in), optional :: flux_gas
-    logical,            intent(in), optional :: flux_runoff
-    logical,            intent(in), optional :: flux_wetdep
-    logical,            intent(in), optional :: flux_drydep
-    logical,            intent(in), optional :: flux_bottom
-    logical,            intent(in), optional :: btm_reservoir
-    logical,            intent(in), optional :: move_vertical
-    logical,            intent(in), optional :: diff_vertical
-    real,               intent(in), optional :: flux_gas_molwt
-    real, dimension(:), intent(in), optional :: flux_gas_param
-    real, dimension(:), intent(in), optional :: flux_param
-    character(len=*),   intent(in), optional :: flux_gas_name
+    real,               intent(in), optional :: sink_rate !! Sinking rate if non-zero.
+    logical,            intent(in), optional :: flux_gas !! .true. if there is gas flux exchange with atmos.
+    logical,            intent(in), optional :: flux_runoff !! .true. if there is runoff flux.
+    logical,            intent(in), optional :: flux_wetdep !! .true. if there is a wet deposition flux.
+    logical,            intent(in), optional :: flux_drydep !! .true. if there is a dry deposition flux.
+    logical,            intent(in), optional :: flux_bottom !! .true. if there is a bottom flux.
+    logical,            intent(in), optional :: btm_reservoir !! .true. if there is a bottom reservoir.
+    logical,            intent(in), optional :: move_vertical !! .true. if there is active vertical movement
+    logical,            intent(in), optional :: diff_vertical !! .true. if there is random active vertical movement.
+    real,               intent(in), optional :: flux_gas_molwt  !! Molecular weight of gas (g/mol).
+    real, dimension(:), intent(in), optional :: flux_gas_param !! Aray of parameters for gas flux (refer to documentation for subroutine `aof_set_coupler_flux()`).
+    real, dimension(:), intent(in), optional :: flux_param !! Aray of parameters for non-gas flux (refer to documentation for subroutine `aof_set_coupler_flux()`).
+    character(len=*),   intent(in), optional :: flux_gas_name !! Name of the atmospheric tracer to exchange flux with (if `flux_gas=.true.`).
     character(len=*),   intent(in), optional :: implementation
     character(len=*),   intent(in), optional :: flux_gas_type
     character(len=*),   intent(in), optional :: flux_gas_restart_file
@@ -865,8 +661,11 @@ contains
     !===================================================================
     !Allocate and initialize member field arrays
     !===================================================================
-    !Note that const_init_value unlike init_value has special meaning in MOM
-    ! and if present the field is not restarted from a file!!
+    !!@note
+    !! `const_init_value`, unlike `init_value`, has special meaning in MOM
+    !! and if present the field is not restarted from a file!
+    !!@endnote
+    !!
     if(present(const_init_value)) then
        g_tracer%const_init_value = const_init_value
        g_tracer%initial_value = const_init_value
@@ -974,12 +773,8 @@ contains
 
   end subroutine g_tracer_add
 
-  !
-  !     Local functiion to remap the bounds of an array
-  !     (Thanks to wikipedia for the suggestion)
-  !
-
   function remap_bounds(ilb, jlb, klb, array) result(ptr)
+    !! Local function to remap the bounds of an array.
 
   real, dimension(:,:,:),          pointer              :: ptr
 
@@ -1062,7 +857,7 @@ contains
 
   subroutine g_tracer_flux_init(g_tracer, verbosity)
     type(g_tracer_type), pointer :: g_tracer
-    integer, optional, intent(in) :: verbosity  !< A 0-9 integer indicating a level of verbosity.
+    integer, optional, intent(in) :: verbosity  !! A 0-9 integer indicating a level of verbosity.
 
 
     !===================================================================
@@ -1120,25 +915,11 @@ contains
 
   end subroutine g_tracer_flux_init
 
-
-  ! <SUBROUTINE NAME="g_tracer_register_diag">
-  !  <OVERVIEW>
-  !   Diag-register all the internal fields that were _ALLOCATED for a tracer.
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   Use diag_manager register_diag_field for each of the field arrays that were _ALLOCATED for a tracer node.
-  !   These include %field,  %tendency, %stf, %stf_gas, %deltap, %kw, %btf, %trunoff, %alpha, %csurf, %sc_no, %btm_reservoir.
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call  g_tracer_register_diag(g_tracer)
-  !  </TEMPLATE>
-  !  <IN NAME="g_tracer" TYPE="type(g_tracer_type), pointer">
-  !   Pointer to this tracer node.
-  !  </IN>
-  ! </SUBROUTINE>
-
   subroutine g_tracer_register_diag(g_tracer)
-    type(g_tracer_type), pointer :: g_tracer
+    !! Register diagnostics for all the internal fields that were allocated for a tracer.
+    !! Uses `register_diag_field` for each of the field arrays that were allocated.
+    ! These include %field,  %tendency, %stf, %stf_gas, %deltap, %kw, %btf, %trunoff, %alpha, %csurf, %sc_no, %btm_reservoir.
+    type(g_tracer_type), pointer :: g_tracer !! Pointer to this tracer node.
 
     character(len=fm_string_len) :: string
 
@@ -1316,36 +1097,13 @@ contains
 
   end subroutine g_tracer_register_diag
 
-  ! <SUBROUTINE NAME="g_tracer_coupler_set">
-  !  <OVERVIEW>
-  !   Set coupler values only for tracers that have _ALLOCATED %alpha, %csurf and %sc_no
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   Use coupler_util subroutine set_coupler_values() to set the coupler values
-  !   for fluxes to be exchanged with Ice for the requested fluxes.
-  !   NOTE:
-  !   This is a collective subroutine and will traverese the list of generic tracers and
-  !   set the coupler values for each tracer node accordingly.
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_coupler_set(g_tracer_list,IOB_struc,value)
-  !  </TEMPLATE>
-  !  <IN NAME="g_tracer_list" TYPE="type(g_tracer_type), pointer">
-  !   Pointer to the head of the generic tracer list.
-  !  </IN>
-  !  <IN NAME="IOB_struc" TYPE="type(coupler_2d_bc_type)">
-  !   The coupler flux IOB structure.
-  !  </IN>
-  !  OPTIONAL ARGS:
-  !  <IN NAME="value" TYPE="real">
-  !   Set the coupler values to a constant (particularly 0) is desired.
-  !  </IN>
-  ! </SUBROUTINE>
-
   subroutine g_tracer_coupler_set(g_tracer_list,IOB_struc,value)
-    type(g_tracer_type), pointer :: g_tracer_list,g_tracer
-    type(coupler_2d_bc_type), intent(inout) :: IOB_struc
-    real, optional :: value
+    !! Set coupler values only for tracers that have allocated `%alpha`, `%csurf`, and `%sc_no`.
+    !! Uses coupler_util subroutine `set_coupler_values()` to set the coupler values
+    !! for fluxes to be exchanged with Ice for the requested fluxes.
+    type(g_tracer_type), pointer :: g_tracer_list,g_tracer !! Pointer to the head of the generic tracer list.
+    type(coupler_2d_bc_type), intent(inout) :: IOB_struc !!  The coupler flux IOB structure.
+    real, optional :: value !! Set the coupler values to a constant (particularly 0) if desired.
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_coupler_set'
 
@@ -1408,33 +1166,14 @@ contains
 
   end subroutine g_tracer_coupler_set
 
-  ! <SUBROUTINE NAME="g_tracer_coupler_get">
-  !  <OVERVIEW>
-  !   Get coupler values only for tracers that have _ALLOCATED arrays for the fluxes
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   Use coupler_util subroutine extract_coupler_values() to get the coupler values
-  !   for fluxes to be exchanged with Ice for the requested fluxes only.
-  !   NOTE:
-  !   This is a collective subroutine and will traverese the list of generic tracers and
-  !   get the coupler values for each tracer node accordingly.
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_coupler_get(g_tracer_list,IOB_struc)
-  !  </TEMPLATE>
-  !  <IN NAME="g_tracer_list" TYPE="type(g_tracer_type), pointer">
-  !   Pointer to the head of the generic tracer list.
-  !  </IN>
-  !  <IN NAME="IOB_struc" TYPE="type(coupler_2d_bc_type)">
-  !   The coupler flux IOB structure.
-  !  </IN>
-  ! </SUBROUTINE>
-
   subroutine g_tracer_coupler_get(g_tracer_list,IOB_struc, weight, model_time)
-    type(g_tracer_type),          pointer :: g_tracer_list, g_tracer
-    type(coupler_2d_bc_type),    intent(in) :: IOB_struc
-    type(time_type),    optional,intent(in) :: model_time
+    !! Get coupler values only for tracers that have allocated arrays for the fluxes.
+    !! Uses coupler_util subroutine `extract_coupler_values()` to get the coupler values
+    !!  for fluxes to be exchanged with Ice for the requested fluxes only.
+    type(g_tracer_type),          pointer :: g_tracer_list, g_tracer !! Pointer to the head of the generic tracer list.
+    type(coupler_2d_bc_type),    intent(in) :: IOB_struc !! The coupler flux IOB structure.
     real,               optional,intent(in) :: weight
+    type(time_type),    optional,intent(in) :: model_time !! The model time (currently unused).
     logical :: used
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_coupler_get'
     real, dimension(:,:), allocatable :: temp_array,stf_array,stf_gas_array,deltap_array, kw_array
@@ -1606,23 +1345,10 @@ contains
     g_tracer_com%diag_CS = diag_CS
   end subroutine g_tracer_set_csdiag
 
-  ! <SUBROUTINE NAME="g_tracer_set_common">
-  !  <OVERVIEW>
-  !   Set common values and arrays for ALL generic tracers to share
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   ALL generic tracers share the same properties such as 2D Domain, # of depth levels, # of time steps retained
-  !   grid_mask array and initial time.
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
-  !  </TEMPLATE>
-  !  <IN NAME="" TYPE="">
-  !
-  !  </IN>
-  ! </SUBROUTINE>
-
   subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
+    !! Sets common values and arrays for **all** generic tracers to share.
+    !! All generic tracers share the same properties such as 2D Domain, # of depth levels, # of time steps retained,
+    !! grid_mask array, and initial time.
     integer,                     intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes(3)
     real, dimension(isd:,jsd:,:),intent(in) :: grid_tmask
     integer,dimension(isd:,jsd:),intent(in) :: grid_kmt
@@ -1672,25 +1398,9 @@ contains
 
   end subroutine g_tracer_set_common
 
-  ! <SUBROUTINE NAME="g_tracer_get_common">
-  !  <OVERVIEW>
-  !   Get common values and arrays for ALL generic tracers to share
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
-  !     axes,grid_tmask,grid_mask_coast,grid_kmt,init_time)
-  !  </TEMPLATE>
-  !  <IN NAME="" TYPE="">
-  !
-  !  </IN>
-  ! </SUBROUTINE>
-
   subroutine g_tracer_get_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,&
        axes,grid_tmask,grid_mask_coast,grid_kmt,init_time,diag_CS)
-
+    !! Get common values and arrays for **all** generic tracers to share.
     integer,               intent(out) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau
     integer,optional,      intent(out) :: axes(3)
     type(time_type), optional,      intent(out) :: init_time
@@ -1739,9 +1449,8 @@ contains
 
   end subroutine g_tracer_set_files
 
-  !Overload interface g_tracer_get_pointer for 4D fields
-
   subroutine g_tracer_get_4D(g_tracer_list,name,member,array_ptr)
+    !! !Overload interface [[g_tracer_get_pointer(interface)]] for 4D fields.
     character(len=*),         intent(in) :: name
     character(len=*),         intent(in) :: member
     type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
@@ -1771,9 +1480,8 @@ contains
 
   end subroutine g_tracer_get_4D
 
-  !Overload interface g_tracer_get_pointer for 3D fields
-
   subroutine g_tracer_get_3D(g_tracer_list,name,member,array_ptr)
+    !! Overload interface [[g_tracer_get_pointer(interface)]] for 3D fields.
     character(len=*),         intent(in) :: name
     character(len=*),         intent(in) :: member
     type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
@@ -1816,9 +1524,8 @@ contains
 
   end subroutine g_tracer_get_3D
 
-  !Overload interface g_tracer_get_pointer for 2D fields
-
   subroutine g_tracer_get_2D(g_tracer_list,name,member,array_ptr)
+    !! Overload interface [[g_tracer_get_pointer(interface)]] for 2D fields.
     character(len=*),         intent(in) :: name
     character(len=*),         intent(in) :: member
     type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
@@ -1868,9 +1575,8 @@ contains
 
   end subroutine g_tracer_get_2D
 
-  !Overload interface g_tracer_get_values for 4D fields
-
   subroutine g_tracer_get_4D_val(g_tracer_list,name,member,array,isd,jsd)
+    !! Overload interface [[g_tracer_get_values(interface)]] for 4D fields.
     character(len=*),         intent(in) :: name
     character(len=*),         intent(in) :: member
     type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
@@ -1901,9 +1607,8 @@ contains
 
   end subroutine g_tracer_get_4D_val
 
-  !Overload interface g_tracer_get_values for 3D fields
-
   subroutine g_tracer_get_3D_val(g_tracer_list,name,member,array,isd,jsd,ntau,positive)
+    !! Overload interface [[g_tracer_get_values(interface)]] for 3D fields.
     character(len=*),         intent(in) :: name
     character(len=*),         intent(in) :: member
     type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
@@ -1955,9 +1660,8 @@ contains
 
   end subroutine g_tracer_get_3D_val
 
-  !Overload interface g_tracer_get_values for 2D fields
-
   subroutine g_tracer_get_2D_val(g_tracer_list,name,member,array,isd,jsd)
+    !! Overload interface [[g_tracer_get_values(interface)]] for 2D fields.
     character(len=*),         intent(in) :: name
     character(len=*),         intent(in) :: member
     type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
@@ -2008,9 +1712,8 @@ contains
 
   end subroutine g_tracer_get_2D_val
 
-  !Overload interface g_tracer_get_values for 1D fields
-
   subroutine g_tracer_get_real(g_tracer_list,name,member,value)
+    !! Overload interface [[g_tracer_get_values(interface)]] for 1D fields.
     character(len=*),         intent(in) :: name
     character(len=*),         intent(in) :: member
     type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
@@ -2038,9 +1741,8 @@ contains
 
   end subroutine g_tracer_get_real
 
-  !Overload interface g_tracer_get_values for string members
-
   subroutine g_tracer_get_string(g_tracer_list,name,member,string)
+    ! Overload interface [[g_tracer_get_values(interface)]] for string members.
     character(len=*),         intent(in) :: name
     character(len=*),         intent(in) :: member
     type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
@@ -2460,64 +2162,22 @@ contains
     enddo
   end subroutine g_tracer_find
 
-
-!#######################################################################
-  ! <SUBROUTINE NAME="g_tracer_column_int">
-  !  <OVERVIEW>
-  !   Calculate the column interval for a given variable
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   Calculate the column interval for a given variable
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_column_int(depth, ilb, jlb, var, dzt, rho_dzt, rd, k_level, integral, caller)
-  !  </TEMPLATE>
-  !  <IN NAME="depth" TYPE="real">
-  !   Depth over which to integrate
-  !  </IN>
-  !  <IN NAME="ilb" TYPE="integer">
-  !   Lower bound of 1st dimension of arrays
-  !  </IN>
-  !  <IN NAME="jlb" TYPE="integer">
-  !   Lower bound of 2nd dimension of arrays
-  !  </IN>
-  !  <IN NAME="var" TYPE="real(:,:,:)">
-  !   Variable to integrate
-  !  </IN>
-  !  <IN NAME="dzt" TYPE="real(:,:,:)">
-  !   Layer thicknesses
-  !  </IN>
-  !  <IN NAME="rho_dzt" TYPE="real(:,:,:)">
-  !   Density times layer thicknesses
-  !  </IN>
-  !  <INOUT NAME="rd" TYPE="real(:,:,:)">
-  !   Work array: rho_dzt to be multiplied by var to do the integral (may be used in subsequent calls)
-  !  </INOUT>
-  !  <INOUT NAME="k_level" TYPE="integer">
-  !   K level for maximum depth to perform the integral, if 0 then calculate rd array (may be used in subsequent calls)
-  !   If set greater than 0, then the work array can be used in subsequent calls for the same depth to save some
-  !   computation. Care should be taken that if k_level is set > 0 that the same depth range is used.
-  !  </INOUT>
-  !  <OUT NAME="integral" TYPE="real(:,:,:)">
-  !   Integral of var over depth
-  !  </OUT>
-  !  <IN NAME="caller" TYPE="character(len=*), optional">
-  !   string indicating caller of this routine, for traceback
-  !  </IN>
-  ! </SUBROUTINE>
-
   subroutine g_tracer_column_int(depth, ilb, jlb, var, dzt, rho_dzt, rd, k_level, integral, caller)
-
-    real,                         intent(in)            :: depth
-    integer,                      intent(in)            :: ilb
-    integer,                      intent(in)            :: jlb
-    real, dimension(ilb:,jlb:,:), intent(in)            :: var
-    real, dimension(ilb:,jlb:,:), intent(in)            :: dzt
-    real, dimension(ilb:,jlb:,:), intent(in)            :: rho_dzt
+    !! Calculate the column integral for a given variable.
+    real,                         intent(in)            :: depth !! Depth over which to integrate.
+    integer,                      intent(in)            :: ilb !! Lower bound of 1st dimension of arrays.
+    integer,                      intent(in)            :: jlb !! Lower bound of 2nd dimension of arrays.
+    real, dimension(ilb:,jlb:,:), intent(in)            :: var !! Variable to integrate.
+    real, dimension(ilb:,jlb:,:), intent(in)            :: dzt !! Layer thickness (m).
+    real, dimension(ilb:,jlb:,:), intent(in)            :: rho_dzt !! Layer mass per unit area (kg m-2).
     real, dimension(ilb:,jlb:,:), intent(inout)         :: rd
+    !! Work array: `rho_dzt` to be multiplied by `var` to do the integral (may be used in subsequent calls).
     integer,                      intent(inout)         :: k_level
-    real, dimension(ilb:,jlb:),   intent(out)           :: integral
-    character(len=*),             intent(in), optional  :: caller
+    !! k level for maximum depth to perform the integral, if 0 then calculate `rd` array (may be used in subsequent calls).
+    !! If set greater than 0, then the work array can be used in subsequent calls for the same depth to save some
+    !! computation. Care should be taken that if `k_level` is set greater than 0 that the same depth range is used.
+    real, dimension(ilb:,jlb:),   intent(out)           :: integral !! Resulting integral of var over depth.
+    character(len=*),             intent(in), optional  :: caller !! String indicating caller of this routine, for traceback.
 
 !-----------------------------------------------------------------------
 !     local parameters
@@ -2669,17 +2329,22 @@ contains
   ! </SUBROUTINE>
 
   subroutine g_tracer_flux_at_depth(depth, ilb, jlb, var, dzt, k_level, frac, initialized, flux, caller)
-
-    real,                            intent(in)                 :: depth
-    integer,                         intent(in)                 :: ilb
-    integer,                         intent(in)                 :: jlb
-    real,    dimension(ilb:,jlb:,:), intent(in)                 :: var
-    real,    dimension(ilb:,jlb:,:), intent(in)                 :: dzt
+    !! Calculate the flux at a specified depth for a given variable.
+    real,                            intent(in)                 :: depth !! Depth to calculate at.
+    integer,                         intent(in)                 :: ilb !! Lower bound of 1st dimension of arrays.
+    integer,                         intent(in)                 :: jlb !! Lower bound of 2nd dimension of arrays.
+    real,    dimension(ilb:,jlb:,:), intent(in)                 :: var !! Variable to calculate for.
+    real,    dimension(ilb:,jlb:,:), intent(in)                 :: dzt !! Layer thickness (m).
     integer, dimension(ilb:,jlb:),   intent(inout)              :: k_level
+    !!  Work array: array of k level for each grid point at which depth occurs (may be used in future calls).
     real,    dimension(ilb:,jlb:),   intent(inout)              :: frac
+    !! Work array: fraction of level at which depth occurs (may be used in future calls).
     logical,                         intent(inout)              :: initialized
-    real,    dimension(ilb:,jlb:),   intent(out)                :: flux
-    character(len=*),                intent(in),    optional    :: caller
+    !! True if the arrays have been initialized from a previous call, set to true in subroutine.
+    !! If true, then the work arrays can be used in subsequent calls for the same depth to save some
+    !! computation. Care should be taken that if iniitialized is set to true that the same depth range is used.
+    real,    dimension(ilb:,jlb:),   intent(out)                :: flux !! Resulting flux at specified depth.
+    character(len=*),                intent(in),    optional    :: caller !! !! String indicating caller of this routine, for traceback.
 
 !-----------------------------------------------------------------------
 !     local parameters
@@ -2782,32 +2447,12 @@ contains
 
   end subroutine g_tracer_flux_at_depth
 
-
-  ! <SUBROUTINE NAME="g_tracer_send_diag">
-  !  <OVERVIEW>
-  !   Send diagnostics for all registered fields (if in diag_table)
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   Collectively sends out the diagnostics for all registered fields of all generic tracers
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_send_diag(g_tracer_list,model_time , tau)
-  !  </TEMPLATE>
-  !  <IN NAME="g_tracer_list" TYPE="type(g_tracer_type),    pointer">
-  !   pointer to the head of the generic tracer list
-  !  </IN>
-  !  <IN NAME="model_time" TYPE="type(time_type)">
-  !   Time that the diagnostics is sent
-  !  </IN>
-  !  <IN NAME="tau" TYPE="integer">
-  !   The time step for the %field 4D field to be reported
-  !  </IN>
-  ! </SUBROUTINE>
-
   subroutine g_tracer_send_diag(g_tracer_list,model_time,tau)
-    type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer
-    type(time_type),        intent(in) :: model_time
-    integer,                intent(in) :: tau
+    !! Send diagnostics for all registered fields (if in diag_table)
+    !! Collectively sends out the diagnostics for all registered fields of all generic tracers.
+    type(g_tracer_type),    pointer    :: g_tracer_list, g_tracer !! Pointer to the head of the generic tracer list.
+    type(time_type),        intent(in) :: model_time !! Time when the diagnostics are being sent.
+    integer,                intent(in) :: tau !! The time step for the 4D field to be reported
     integer :: tau_1
     logical :: used
 
@@ -2981,30 +2626,10 @@ contains
 
   end subroutine g_tracer_traverse
 
-  !
-  !The following subroutines work with individual tracer nodes
-  !
-  ! <SUBROUTINE NAME="g_tracer_get_name">
-  !  <OVERVIEW>
-  !   Get the name of a particular tracer Node
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_get_name(g_tracer,string)
-  !  </TEMPLATE>
-  !  <IN NAME="g_tracer" TYPE="type(g_tracer_type),    pointer">
-  !   Pointer to tracer node
-  !  </IN>
-  !  <IN NAME="string" TYPE="character(len=*)">
-  !   Name of the tracer upon return
-  !  </IN>
-  ! </SUBROUTINE>
-
   subroutine g_tracer_get_name(g_tracer,string)
-    type(g_tracer_type),    pointer    :: g_tracer
-    character(len=*),        intent(out) :: string
+    !! Get the name of a particular tracer Node
+    type(g_tracer_type),    pointer    :: g_tracer !! Pointer to tracer node.
+    character(len=*),        intent(out) :: string !! Name of the tracer upon return.
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_get_name'
 
     if(.NOT. associated(g_tracer)) call mpp_error(FATAL, trim(sub_name)//&
@@ -3024,24 +2649,10 @@ contains
     string=g_tracer%alias
   end subroutine g_tracer_get_alias
 
-  ! <SUBROUTINE NAME="g_tracer_is_prog">
-  !  <OVERVIEW>
-  !   Is the tracer prognostic?
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   flag = g_tracer_is_prog(g_tracer)
-  !  </TEMPLATE>
-  !  <IN NAME="g_tracer" TYPE="type(g_tracer_type),    pointer">
-  !   Pointer to tracer node
-  !  </IN>
-  !  RETURNS .true. for prognostic tracer, .false. for diagnostic
-  ! </SUBROUTINE>
   function g_tracer_is_prog(g_tracer)
-    logical :: g_tracer_is_prog
-    type(g_tracer_type),    pointer    :: g_tracer
+    !! Is the tracer prognostic?
+    logical :: g_tracer_is_prog !! True if the tracer is prognostic.
+    type(g_tracer_type),    pointer    :: g_tracer !! Pointer to tracer node.
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_is_prog'
 
     if(.NOT. associated(g_tracer)) call mpp_error(FATAL, trim(sub_name)//&
@@ -3050,25 +2661,10 @@ contains
     g_tracer_is_prog=g_tracer%prog
   end function g_tracer_is_prog
 
-  ! <SUBROUTINE NAME="g_tracer_get_next">
-  !  <OVERVIEW>
-  !   get the next tracer in the list
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call g_tracer_get_next(g_tracer,g_tracer_next)
-  !  </TEMPLATE>
-  !  <IN NAME="g_tracer" TYPE="type(g_tracer_type),    pointer">
-  !   Pointer to tracer node
-  !  </IN>
-  !  <IN NAME="g_tracer_next" TYPE="type(g_tracer_type),    pointer">
-  !   Pointer to the next tracer node in the list
-  !  </IN>
-  ! </SUBROUTINE>
   subroutine g_tracer_get_next(g_tracer,g_tracer_next)
-    type(g_tracer_type),    pointer    :: g_tracer,g_tracer_next
+    !! Gets the next tracer in the list.
+    type(g_tracer_type), pointer :: g_tracer !! Pointer to tracer node.
+    type(g_tracer_type), pointer :: g_tracer_next !!  Pointer to the next tracer node in the list.
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_get_next'
 
     if(.NOT. associated(g_tracer)) call mpp_error(FATAL, trim(sub_name)//&
@@ -3077,14 +2673,15 @@ contains
     g_tracer_next => g_tracer%next
   end subroutine g_tracer_get_next
 
-!> Returns tracer arrays (nominally T and S) with massless layers filled with
-  !! sensible values, by diffusing vertically with a small but constant diffusivity.
   subroutine g_tracer_vertfill(g_tracer, h, kappa_dt, tau, larger_h_denom)
+    !! Returns tracer arrays (nominally T and S) with massless layers filled with
+    !! sensible values, by diffusing vertically with a small but constant diffusivity.
     type(g_tracer_type),    pointer  :: g_tracer
     real, dimension(g_tracer_com%isd:,g_tracer_com%jsd:,:), intent(in) :: h
     real,                   intent(in) :: kappa_dt
     integer,                intent(in) :: tau
-    logical,      optional, intent(in) :: larger_h_denom !< Present and true, add a large
+    logical,      optional, intent(in) :: larger_h_denom
+    !! If present and true, add a large
     !! enough minimal thickness in the denominator of
     !! the flux calculations so that the fluxes are
     !! never so large as eliminate the transmission
@@ -3144,136 +2741,26 @@ contains
        enddo;enddo
     endif
   end subroutine g_tracer_vertfill
-  ! <SUBROUTINE NAME="g_tracer_vertdiff_G">
-  !  <OVERVIEW>
-  !   Vertical Diffusion of a tracer node
-  !  </OVERVIEW>
-  !  <DESCRIPTION>
-  !   This subroutine solves a tridiagonal equation to find and set values of vertically diffused field for a tracer node.
-  !   This is ported from GOLD (vertdiff) and simplified
-  !   Since the surface flux from the atmosphere (%stf) has the units of mol/m^2/sec the resulting tracer concentration
-  !   has units of mol/Kg
-  !  </DESCRIPTION>
-  !  <TEMPLATE>
-  !   call
-  !  </TEMPLATE>
-  !  <IN NAME="" TYPE="">
-  !
-  !  </IN>
-  ! </SUBROUTINE>
 
   subroutine g_tracer_vertdiff_G(g_tracer, h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau, use_PressAlgorithm, do_vertfill_post)
+    !! Vertical diffusion of a tracer.
+    !! This subroutine solves a tridiagonal equation to find and set values of
+    !! vertically diffused field for a tracer node.
+    !! This is ported from GOLD (vertdiff) and simplified.
+    !! Since the surface flux from the atmosphere (`%stf`) has the units of \(\mathrm{mol\ m^{-2}\ s^{-1}}\),
+    !! the resulting tracer concentration has units of \(\mathrm{mol\ kg^{-1}}\).
     type(g_tracer_type),    pointer  :: g_tracer
-    real, dimension(g_tracer_com%isd:,g_tracer_com%jsd:,:), intent(in) :: h_old, ea, eb
-    real,                   intent(in) :: dt, kg_m2_to_H, m_to_H
+    real, dimension(g_tracer_com%isd:,g_tracer_com%jsd:,:), intent(in) :: h_old !! Layer thickness before entrainment, in m or \(\mathrm{kg\ m^{-2}}\).
+    real, dimension(g_tracer_com%isd:,g_tracer_com%jsd:,:), intent(in) :: ea !! The amount of fluid entrained from the layer above, in the same units as `h_old`.
+    real, dimension(g_tracer_com%isd:,g_tracer_com%jsd:,:), intent(in) :: eb !! The amount of fluid entrained from the layer below, in the same units as `h_old`.
+    real,                   intent(in) :: dt !! The amount of time covered by this call (s).
+    real :: kg_m2_to_H !! A conversion factor that translates \(\mathrm{kg\ m^{-2}}\) into the units of `h_old`.
+    real ::  m_to_H !! A conversion factor that translates m into the units of `h_old`.
     integer,                intent(in) :: tau
     logical, optional ,     intent(in) :: use_PressAlgorithm
-    logical, optional,      intent(in) :: do_vertfill_post ! If true, use diffusion to reduce noise in vanished layers.
-
-    ! Arguments: h_old -  Layer thickness before entrainment, in m or kg m-2.
-    !                     In all the following comments the units of h_old are
-    !                     denoted as H.
-    !  (in)      ea - The amount of fluid entrained from the layer above, in H.
-    !  (in)      eb - The amount of fluid entrained from the layer below, in H.
-    !  (in)      dt - The amount of time covered by this call, in s.
-    !  (in)      kg_m2_to_H - A conversion factor that translates kg m-2 into
-    !                         the units of h_old (H).
-    !  (in)      m_to_H - A conversion factor that translates m into the units
-    !                     of h_old (H).
-    !  (in,opt)  use_PressAlgorithm - If true, then use the Press algorithm for solving the tridiagonal system,
-    !                                  if false or not present, then use the default algorithm.
-
-    !   This subroutine solves a tridiagonal equation for the final tracer
-    ! concentrations after the dual-entrainments, and possibly sinking or surface
-    ! and bottom sources, are applied.  The sinking is implemented with an
-    ! fully implicit upwind advection scheme.
-    !
-    ! This subroutine implements a modified version of the classic tridiag algorithm
-    ! from the Numerical Recipes book by Press et,al (provided below for comparison).
-    ! The original tridiag algorithm exactly solves the tridiagonal system of equations
-    ! below for vector u given the vector r and coefficients a_k,b_k,c_k of:
-    !
-    !        a_{k} u_{k-1} + b_k u_k + c_{k} u_{k+1} = r_k
-    !
-    ! In the present application
-    !    r_k is the old (before update) tracer concentration field at level k
-    !    u_k is the new (after  update) tracer concentration field at level k
-    !    a_k = -ea(k)/h_old(k)
-    !    c_k = -eb(k)/h_old(k)
-    !    b_k = (h_old(k)+ea(k)+eb(k))/h_old(k)
-    !
-    ! The modifications of the original algorithm is to allow for surface and bottom fluxes
-    ! as well as possible sinking or swimming of the tracers.
-    !
-    ! In MOM6 models, all tracers are advected (both horizontally and vertically) by MOM6
-    ! and also horizontally diffused by MOM6 if they are registered as MOM6 tracers
-    ! (which is the case for generic tracers).
-    ! So there remains a need to vertically diffuse tracers
-    ! (and, if necessary vertically advect tracers due to sinking or swimming) separately by tracer packages
-    ! (T&S vertdiff is again handled by MOM6).
-    !
-    ! So, why is the vertdiff needed at all?
-    !
-    ! The clue is in section A4 of Griffies et.al 2020:
-    ! https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019MS001954
-    !  "the continuity equation has no subgrid scale operator even after coarse graining;
-    ! that is, there is no diffusion of seawater mass, and hence, there are no mass
-    ! sources/sinks in the ocean interior. This property means that a diffusive flux of
-    ! salt crossing the boundary of a fluid element balances an oppositely directed
-    ! diffusive flux of freshwater, thus leaving the fluid element with a constant mass
-    ! but with a nonconstant salt  and freshwater content."
-    !
-    ! Hence, in a vertical grid box of thickness h, if an amount of seawater mass is
-    ! entered/diffused in, then the tracers must "diffuse" out of the box to keep the
-    ! total watermass in the box constant constant.
-    ! In other words we must satisfy the following two constraints after such diffusive
-    ! processes of water mass has occured (due to numerical diffusion of seawater mass?):
-    !
-    ! Final water  mass = Initial water  mass + water  mass entered
-    ! Final tracer mass = Initial tracer mass + tracer mass entered
-    !
-    ! hI = length equivalent of Initial water mass in layer k
-    ! hF = length equivalent of Final   water mass in layer k
-    ! ea = length equivalent of water mass entered from layer above
-    ! eb = length equivalent of water mass entered from layer below
-    ! tI_k = Intial tracer concentration in layer k
-    ! tF_k = Final  tracer concentration in layer k
-    !
-    ! The two equations above become:
-    ! hF      = hI      + ea          + eb            (1)
-    ! hF*tF_k = hI*tI_k + ea*tF_{k-1} + eb*tF_{k+1}   (2)
-    !
-    ! Or after replacing hF from (1) into (2) we get:
-    !
-    ! -ea*tF_{k-1} + (hI+ea+eb)*tF_k -eb*tF_{k+1} = hI*tI_k  (3)
-    !
-    ! This is a tridiagonal system for unknown vector tF:
-    !
-    !  a_k*tF_{k-1} + b_k*tF_k c_k*tF_{k+1} = tI_k    k=1,...,N
-    !    a_k = -ea(k)/h_old(k)
-    !    c_k = -eb(k)/h_old(k)
-    !    b_k = (h_old(k)+ea(k)+eb(k))/h_old(k)
-    !
-    ! This algorithm can be extended for the cases that the tracers have a surface or bottom
-    ! flux. In such cases the length-equivalent of tracer mass entered  to the top or bottom
-    ! layer can simply be added (with the sign of flux considered) to the right hand side
-    ! of equation (3) for k=1 and k=N equations (i.e., hI*tI_1 and hI*tI_N) .
-    !
-    !
-    ! So vertdiff is to fill the void of subgrid scale processes to correct for the
-    ! vertical advection and diffusion relative to the fluid flow.
-    ! We include the sinking (and swimming) of tracers (due to gravity or active processes)
-    ! in this "diffusive" correction.
-    ! Suppose a tracer sinks a distance s(k) (in the layer above layer k) in each timestep.
-    ! Then the tracer mass entered into layer k from the layer above, ea(k),
-    ! is enhanced by the tracer mass that has sinked into layer k from layer above in that
-    ! timestep, s(k). So the net effect is that ea(k) being replaced by ea(k)+s(k) in
-    ! tracer equation (2) for k=2,...,N. Similarly eb(k) should be replaced by eb(k)-s(k+1) :
-    !
-    ! -(ea+s)*tF_{k-1} + (hI+ea+eb)*tF_k -(eb-s(k+1))*tF_{k+1} = hI*tI_k
-    !
-    ! This translates into a(k) --> a(k)+s(k) and c(k) --> c(k)-s(k+1) in the Press et.al. algorithm
-    !
+    !! If true, then use the Press algorithm for solving the tridiagonal system.
+    !! If false or not present, then use the default algorithm.
+    logical, optional,      intent(in) :: do_vertfill_post !! If true, use diffusion to reduce noise in vanished layers.
 
     real :: sink_dist(1:g_tracer_com%nk+1)    ! The distance the tracer sinks in a time step, in H.
     real :: sfc_src      ! The time-integrated surface source of the tracer, in
@@ -3297,6 +2784,111 @@ contains
     real, parameter :: KD_SMOOTH = 1.0E-06 ! Diffusion coefficient for reducing noise in vanished layers.
 
     if(present(use_PressAlgorithm)) use_PressEtAl_in_vertdiff = use_PressAlgorithm
+
+    !! This subroutine solves a tridiagonal equation for the final tracer
+    !! concentrations after the dual-entrainments, and possibly sinking or surface
+    !! and bottom sources, are applied.  The sinking is implemented with an
+    !! fully implicit upwind advection scheme.
+    !!
+    !! This subroutine implements a modified version of the classic `tridag` algorithm
+    !! from Numerical Recipes [@press1992] (see `tridiag_solver_Press_et_al` for comparison).
+    !! The original algorithm exactly solves the tridiagonal system of equations
+    !! below for vector \(u\) given the vector \(r\) and coefficients \(a_k\), \(b_k\), \(c_k\):
+    !!
+    !! $$ a_k u_{k-1} + b_k u_k + c_k u_{k+1} = r_k $$
+    !!
+    !! In the present application, \(r_k\) is the old (before update) tracer concentration
+    !! at level \(k\), \(u_k\) is the new (after update) tracer concentration at level \(k\), and
+    !!
+    !! $$ a_k = -\frac{e_{a,k}}{h_k}, \qquad
+    !! b_k = \frac{h_k + e_{a,k} + e_{b,k}}{h_k}, \qquad
+    !! c_k = -\frac{e_{b,k}}{h_k} $$
+    !!
+    !! where \(h_k\) is `h_old(k)`, \(e_{a,k}\) is `ea(k)`, and \(e_{b,k}\) is `eb(k)`.
+    !!
+    !! The modifications of the original algorithm allow for surface and bottom fluxes
+    !! as well as possible sinking or swimming of the tracers.
+    !!
+    !! In MOM6 models, all tracers are advected (both horizontally and vertically) by MOM6
+    !! and also horizontally diffused by MOM6 if they are registered as MOM6 tracers
+    !! (which is the case for generic tracers).
+    !! So there remains a need to vertically diffuse tracers
+    !! (and, if necessary vertically advect tracers due to sinking or swimming) separately by tracer packages
+    !! (T&S vertdiff is again handled by MOM6).
+    !!
+    !! So, why is the vertdiff needed at all?
+    !!
+    !! The clue is in section A4 of Griffies et al. [-@griffies2020]:
+    !!
+    !! > "the continuity equation has no subgrid scale operator even after coarse graining;
+    !! > that is, there is no diffusion of seawater mass, and hence, there are no mass
+    !! > sources/sinks in the ocean interior. This property means that a diffusive flux of
+    !! > salt crossing the boundary of a fluid element balances an oppositely directed
+    !! > diffusive flux of freshwater, thus leaving the fluid element with a constant mass
+    !! > but with a nonconstant salt and freshwater content."
+    !!
+    !! Hence, in a vertical grid box of thickness \(h\), if an amount of seawater mass is
+    !! entered/diffused in, then the tracers must "diffuse" out of the box to keep the
+    !! total watermass in the box constant.
+    !! In other words we must satisfy the following two constraints after such diffusive
+    !! processes of water mass has occured (due to numerical diffusion of seawater mass?):
+    !!
+    !! $$ \begin{aligned}
+    !! \text{Final water mass} &= \text{Initial water mass} + \text{water mass entered}
+    !! \\ \text{Final tracer mass} &= \text{Initial tracer mass} + \text{tracer mass entered}
+    !! \end{aligned} $$
+    !!
+    !! where, for layer \(k\),
+    !!
+    !! - \(h^i\) is the length equivalent of the initial water mass
+    !! - \(h^f\) is the length equivalent of the final water mass
+    !! - \(e_a\) is the length equivalent of the water mass entered from the layer above
+    !! - \(e_b\) is the length equivalent of the water mass entered from the layer below
+    !! - \(t^i_k\) is the initial tracer concentration
+    !! - \(t^f_k\) is the final tracer concentration
+    !!
+    !! The two equations above become:
+    !!
+    !! $$ \begin{aligned}
+    !! h^f &= h^i + e_a + e_b \qquad (1)
+    !! \\ h^f t^f_k &= h^i t^i_k + e_a t^f_{k-1} + e_b t^f_{k+1} \qquad (2)
+    !! \end{aligned} $$
+    !!
+    !! Or after replacing \(h^f\) from (1) into (2) we get:
+    !!
+    !! $$ -e_a t^f_{k-1} + (h^i + e_a + e_b)\,t^f_k - e_b t^f_{k+1} = h^i t^i_k \qquad (3) $$
+    !!
+    !! Dividing by \(h^i\) gives a tridiagonal system for the unknown vector \(t^f\),
+    !! with \(a_k\), \(b_k\), and \(c_k\) as defined above:
+    !!
+    !! $$ a_k t^f_{k-1} + b_k t^f_k + c_k t^f_{k+1} = t^i_k, \qquad k = 1, \ldots, N $$
+    !!
+    !! This algorithm can be extended for the cases that the tracers have a surface or bottom
+    !! flux. In such cases the length-equivalent of tracer mass entered to the top or bottom
+    !! layer can simply be added (with the sign of flux considered) to the right hand side
+    !! of equation (3) for the \(k = 1\) and \(k = N\) equations (i.e., \(h^i t^i_1\) and \(h^i t^i_N\)).
+    !!
+    !! So vertdiff is to fill the void of subgrid scale processes to correct for the
+    !! vertical advection and diffusion relative to the fluid flow.
+    !! We include the sinking (and swimming) of tracers (due to gravity or active processes)
+    !! in this "diffusive" correction.
+    !! Suppose a tracer sinks a distance \(s_k\) (`sink(k)`) through the top interface of layer \(k\)
+    !! in each timestep. Then the tracer mass entered into layer \(k\) from the layer above
+    !! is enhanced by the tracer that has sunk into layer \(k\) in that timestep, so \(e_a\)
+    !! is replaced by \(e_a + s_k\) in the \(t^f_{k-1}\) term of tracer equation (2) for
+    !! \(k = 2, \ldots, N\). Similarly, the tracer that sinks out through the bottom interface
+    !! of layer \(k\) adds \(s_{k+1}\) to the \(t^f_k\) term:
+    !!
+    !! $$ -(e_a + s_k)\,t^f_{k-1} + (h^i + e_a + e_b + s_{k+1})\,t^f_k - e_b t^f_{k+1} = h^i t^i_k $$
+    !!
+    !! This translates into
+    !!
+    !! $$ a_k = -\frac{e_{a,k} + s_k}{h_k}, \qquad
+    !! b_k = \frac{h_k + e_{a,k} + e_{b,k} + s_{k+1}}{h_k} $$
+    !!
+    !! in the Press et al. algorithm.
+    !!
+
     !
     !   Save the current state for calculation of the implicit vertical diffusion term
     !
@@ -3442,33 +3034,26 @@ contains
   end subroutine g_tracer_vertdiff_G
 
    !-----------------------------------------------------------------------
-   !> @brief Solves a tridiagonal system of equations using the algorithm from Press et al.
-   !>
-   !> @reference Numerical Recipes in Fortran77: The Art of Scientific Computing, 2nd Edition,
-   !> by Press, Teukolsky, Vetterling, and Flannery, Cambridge University Press,
-   !> Section 2.4 Tridiagonal and Diagonal Systems of Equations.
-   !>
-   !> This subroutine solves a tridiagonal linear system of the form:
-   !>   a(i) * u(i-1) + b(i) * u(i) + c(i) * u(i+1) = r(i)
-   !> for i = 1, ..., n, where a, b, c are the sub-diagonal, diagonal, and super-diagonal elements,
-   !> r is the right-hand side, and u is the solution vector.
-   !>
-   !> @param[in]  a Sub-diagonal coefficients (a(1) unused)
-   !> @param[in]  b Diagonal coefficients
-   !> @param[in]  c Super-diagonal coefficients (c(n) unused)
-   !> @param[in]  r Right-hand side vector
-   !> @param[inout] u Solution vector (input ignored, output overwritten)
-   !> @param[in]  n Number of equations
-   !-----------------------------------------------------------------------
    subroutine tridiag_solver_Press_et_al(a,b,c,r,u,n)
-   integer, intent(in) :: n
-   real,    intent(in) :: a(n),b(n),c(n),r(n)
-   real,    intent(inout) :: u(n)
+    !! Solves a tridiagonal system of equations using the `tridag` algorithm from
+    !! Numerical Recipes [@press1992, section 2.4].
+
+   integer, intent(in) :: n !! Number of equations
+   real,    intent(in) :: a(n) !! Sub-diagonal coefficients (`a(1)` unused)
+   real,    intent(in) :: b(n) !! Diagonal coefficients
+   real,    intent(in) :: c(n) !! Super-diagonal coefficients (`c(n)` unused)
+   real,    intent(in) :: r(n) !! Right-hand side vector
+   real,    intent(inout) :: u(n) !! Solution vector (input ignored, output overwritten)
    real    :: bet,gam(n)
    integer :: k
-   ! Solves for a vector u(1:n) of length n the tridiagonal linear set of equations
-   !    a(k)*u(k-1) + b(k)*u(k) + c(k)*u(k+1) = r(k) for k=1,...,n
-   !    a,b,c are input vectors of length n and not modified.
+    !!
+    !! This subroutine solves a tridiagonal linear system of the form
+    !!
+    !! $$ a_i u_{i-1} + b_i u_i + c_i u_{i+1} = r_i, \qquad i = 1, \ldots, n $$
+    !!
+    !! where \(a\), \(b\), and \(c\) are the sub-diagonal, diagonal, and super-diagonal elements,
+    !! \(r\) is the right-hand side, and \(u\) is the solution vector.
+
    bet=b(1)
    u(1)=r(1)/bet
    do k=2,n    !Decomposition and forward substitution
