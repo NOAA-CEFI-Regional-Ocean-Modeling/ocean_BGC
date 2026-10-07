@@ -35,6 +35,7 @@ module g_tracer_utils
     use MOM_diag_mediator, only : register_diag_field_MOM=>register_diag_field
     use MOM_diag_mediator, only : post_data_MOM=>post_data
     use MOM_diag_mediator, only : g_diag_ctrl=>diag_ctrl
+    use MOM_diag_mediator, only : g_axes_grp=>axes_grp
 #else
     use diag_manager_mod, only : register_diag_field_FMS=>register_diag_field
     use diag_manager_mod, only : send_data_FMS=>send_data
@@ -301,9 +302,15 @@ module g_tracer_utils
   end type g_diag_type
 
 #ifndef _USE_MOM6_DIAG
-  !dummy type
+  !Stand-ins for MOM6's axes_grp and diag_ctrl in FMS diag mode. An axes group only
+  !carries the FMS axis handles; handles is left unallocated when no such axes exist.
+  type g_axes_grp
+     integer, allocatable :: handles(:)
+  end type g_axes_grp
+
   type g_diag_ctrl
      integer :: handle
+     type(g_axes_grp) :: axesTL, axesT1, axesTi
   end type g_diag_ctrl
 #endif
 
@@ -361,6 +368,9 @@ module g_tracer_utils
   public :: g_tracer_get_common
   public :: g_tracer_set_common
   public :: g_tracer_set_csdiag
+  public :: g_tracer_get_diagCS
+  public :: g_diag_ctrl
+  public :: g_axes_grp
   public :: g_tracer_set_files
   public :: g_tracer_coupler_set
   public :: g_tracer_coupler_get
@@ -521,6 +531,13 @@ module g_tracer_utils
      module procedure g_tracer_get_3D
      module procedure g_tracer_get_2D
   end interface
+
+  !> Register a diagnostic field, with its axes given either as an integer array of
+  !! axis handles or as an axes group from the diag control structure (e.g. diag_CS%axesTi).
+  interface g_register_diag_field
+     module procedure g_register_diag_field_handles
+     module procedure g_register_diag_field_axes
+  end interface g_register_diag_field
 
 contains
 
@@ -1711,6 +1728,14 @@ contains
     g_tracer_com%ntau=ntau
     g_tracer_com%axes=axes
     g_tracer_com%init_time=init_time
+
+#ifndef _USE_MOM6_DIAG
+    !There is no host diag_ctrl in FMS diag mode, so build a stand-in that holds the FMS axis
+    !handles. The host provides no interface axis, so axesTi is left without handles.
+    if (.not. associated(g_tracer_com%diag_CS)) allocate(g_tracer_com%diag_CS)
+    g_tracer_com%diag_CS%axesTL%handles = axes(1:3)
+    g_tracer_com%diag_CS%axesT1%handles = axes(1:2)
+#endif
 
     if(.NOT. _ALLOCATED(g_tracer_com%grid_tmask)) allocate(g_tracer_com%grid_tmask(isd:ied,jsd:jed,nk))
     g_tracer_com%grid_tmask=grid_tmask
@@ -3776,22 +3801,28 @@ contains
     if(present(lfac_out))     lfac_out = g_tracer%obc_lfac_out
   end subroutine g_tracer_get_obc_segment_props
 
-  function g_register_diag_field(module_name, field_name, axes, init_time,         &
+  !> Register a diagnostic field whose axes are given as an integer array( i.e., axis%handles )
+  !!
+  !! In FMS diag mode the handles are passed to the FMS diag_manager. In MOM6 diag mode only
+  !! the size of the array is used: 3, 2 and 1 select diag_CS%axesTL, %axesT1 and %axesTi.
+  !! New code should pass an axes group instead (see g_register_diag_field_axes).
+  function g_register_diag_field_handles(module_name, field_name, axes, init_time, &
        long_name, units, missing_value, range, mask_variant, standard_name,      &
        verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
        cmor_long_name, cmor_units, cmor_standard_name, cell_methods, &
        x_cell_method, y_cell_method, v_cell_method, diag_CS)
 
-    integer :: g_register_diag_field !< An integer handle for a diagnostic array.
+    integer :: g_register_diag_field_handles !< An integer handle for a diagnostic array.
     character(len=*), intent(in) :: module_name !< Name of this module, usually "ocean_model" or "ice_shelf_model"
     character(len=*), intent(in) :: field_name !< Name of the diagnostic field
-    type(time_type),intent(in)  :: init_time !< Time at which a field is first available?
-    type(g_diag_ctrl),optional, pointer :: diag_CS
-    integer,          optional, intent(in) :: axes(:)
+    integer,          intent(in) :: axes(:) !< Axis handles for this field
+    type(time_type),  intent(in) :: init_time !< Time at which a field is first available?
+    type(g_diag_ctrl),optional, pointer :: diag_CS !< Diag control structure; defaults to the one in g_tracer_com
     character(len=*), optional, intent(in) :: long_name !< Long name of a field.
     character(len=*), optional, intent(in) :: units !< Units of a field.
     character(len=*), optional, intent(in) :: standard_name !< Standardized name associated with a field
     real,             optional, intent(in) :: missing_value !< A value that indicates missing values.
+                                                            !! Only used in FMS diag mode.
     real,             optional, intent(in) :: range(2) !< Valid range of a variable (not used in MOM?)
     logical,          optional, intent(in) :: mask_variant !< If true a logical mask must be provided with post_data calls (not used in MOM?)
     logical,          optional, intent(in) :: verbose !< If true, FMS is verbose (not used in MOM?)
@@ -3810,54 +3841,114 @@ contains
     character(len=*), optional, intent(in) :: y_cell_method !< Specifies the cell method for the y-direction. Use '' have no method.
     character(len=*), optional, intent(in) :: v_cell_method !< Specifies the cell method for the vertical direction. Use '' have no method.
     ! Local variables
-    character(len=fm_string_len), parameter :: sub_name = 'g_register_diag_field'
+    character(len=fm_string_len), parameter :: sub_name = 'g_register_diag_field_handles'
 
 #ifdef _USE_MOM6_DIAG
     type(g_diag_ctrl), pointer :: diag_CS_ptr
-    real :: MOM_missing_value
 
     if(present(diag_CS)) then
        diag_CS_ptr => diag_CS
     else
-!       call mpp_error(NOTE, trim(sub_name)//&
-!            ": the diag_CD argument is not present and the model is compiled with _USE_MOM6_DIAG for "//trim(field_name))
-       !This is not thread-safe. It has to be fixed later.
        call g_tracer_get_diagCS(diag_CS_ptr)
     endif
-    MOM_missing_value = diag_CS_ptr%missing_value
     if(size(axes) .eq. 3) then
-       g_register_diag_field = register_diag_field_MOM(trim(module_name), field_name, diag_CS_ptr%axesTL, init_time,&
-            long_name, units, MOM_missing_value, range, mask_variant, standard_name,      &
+       g_register_diag_field_handles = g_register_diag_field_axes(module_name, field_name, diag_CS_ptr%axesTL, &
+            init_time, long_name, units, missing_value, range, mask_variant, standard_name, &
             verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
             cmor_long_name, cmor_units, cmor_standard_name, cell_methods, &
             x_cell_method, y_cell_method, v_cell_method)
     elseif(size(axes) .eq. 2) then
-       g_register_diag_field = register_diag_field_MOM(trim(module_name), field_name, diag_CS_ptr%axesT1, init_time,&
-            long_name, units, MOM_missing_value, range, mask_variant, standard_name,      &
+       g_register_diag_field_handles = g_register_diag_field_axes(module_name, field_name, diag_CS_ptr%axesT1, &
+            init_time, long_name, units, missing_value, range, mask_variant, standard_name, &
             verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
             cmor_long_name, cmor_units, cmor_standard_name, cell_methods, &
             x_cell_method, y_cell_method, v_cell_method)
     elseif(size(axes) .eq. 1) then
-       g_register_diag_field = register_diag_field_MOM(trim(module_name), field_name, diag_CS_ptr%axesTi, init_time,&
-            long_name, units, MOM_missing_value, range, mask_variant, standard_name,      &
+       g_register_diag_field_handles = g_register_diag_field_axes(module_name, field_name, diag_CS_ptr%axesTi, &
+            init_time, long_name, units, missing_value, range, mask_variant, standard_name, &
             verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
             cmor_long_name, cmor_units, cmor_standard_name, cell_methods, &
             x_cell_method, y_cell_method, v_cell_method)
+    else
+       call mpp_error(FATAL, trim(sub_name)//": unsupported number of axes for "//trim(field_name))
     endif
 #else
     if(present(cmor_field_name)) then
-       g_register_diag_field = register_diag_field_FMS(module_name, cmor_field_name, axes, init_time,         &
+       g_register_diag_field_handles = register_diag_field_FMS(module_name, cmor_field_name, axes, init_time, &
           long_name, cmor_units, missing_value, range, mask_variant, cmor_standard_name,      &
           verbose, do_not_log, err_msg, interp_method, tile_count)
     else
-    g_register_diag_field = register_diag_field_FMS(module_name, field_name, axes, init_time,         &
+    g_register_diag_field_handles = register_diag_field_FMS(module_name, field_name, axes, init_time, &
        long_name, units, missing_value, range, mask_variant, standard_name,      &
        verbose, do_not_log, err_msg, interp_method, tile_count)
     endif
-
 #endif
 
-  end function g_register_diag_field
+  end function g_register_diag_field_handles
+
+  !> Register a diagnostic field whose axes are given as an axes group, such as
+  !! diag_CS%axesTL (layers), diag_CS%axesTi (interfaces) or diag_CS%axesT1 (2-D).
+  !!
+  !! In MOM6 diag mode this calls MOM6's register_diag_field directly, so any MOM6 axes group
+  !! may be used, and MOM6's default missing value is used for the output files.
+  !! In FMS diag mode only axesTL and axesT1 have axis handles; attempting to register fields
+  !! on other axes will result in an error.
+  function g_register_diag_field_axes(module_name, field_name, axes, init_time, &
+       long_name, units, missing_value, range, mask_variant, standard_name,      &
+       verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
+       cmor_long_name, cmor_units, cmor_standard_name, cell_methods, &
+       x_cell_method, y_cell_method, v_cell_method)
+
+    integer :: g_register_diag_field_axes !< An integer handle for a diagnostic array.
+    character(len=*), intent(in) :: module_name !< Name of this module, usually "ocean_model" or "ice_shelf_model"
+    character(len=*), intent(in) :: field_name !< Name of the diagnostic field
+    type(g_axes_grp), target, intent(in) :: axes !< The axes group for this field
+    type(time_type),  intent(in) :: init_time !< Time at which a field is first available?
+    character(len=*), optional, intent(in) :: long_name !< Long name of a field.
+    character(len=*), optional, intent(in) :: units !< Units of a field.
+    character(len=*), optional, intent(in) :: standard_name !< Standardized name associated with a field
+    real,             optional, intent(in) :: missing_value !< A value that indicates missing values.
+                                                            !! Only used in FMS diag mode.
+    real,             optional, intent(in) :: range(2) !< Valid range of a variable (not used in MOM?)
+    logical,          optional, intent(in) :: mask_variant !< If true a logical mask must be provided with post_data calls (not used in MOM?)
+    logical,          optional, intent(in) :: verbose !< If true, FMS is verbose (not used in MOM?)
+    logical,          optional, intent(in) :: do_not_log !< If true, do not log something (not used in MOM?)
+    character(len=*), optional, intent(out):: err_msg !< String into which an error message might be placed (not used in MOM?)
+    character(len=*), optional, intent(in) :: interp_method !< no clue (not used in MOM?)
+    integer,          optional, intent(in) :: tile_count !< no clue (not used in MOM?)
+    character(len=*), optional, intent(in) :: cmor_field_name !< CMOR name of a field
+    character(len=*), optional, intent(in) :: cmor_long_name !< CMOR long name of a field
+    character(len=*), optional, intent(in) :: cmor_units !< CMOR units of a field
+    character(len=*), optional, intent(in) :: cmor_standard_name !< CMOR standardized name associated with a field
+    character(len=*), optional, intent(in) :: cell_methods !< String to append as cell_methods attribute. Use '' to have no attribute.
+    !! If present, this overrides the default constructed from the default for
+    !! each individual axis direction.
+    character(len=*), optional, intent(in) :: x_cell_method !< Specifies the cell method for the x-direction. Use '' have no method.
+    character(len=*), optional, intent(in) :: y_cell_method !< Specifies the cell method for the y-direction. Use '' have no method.
+    character(len=*), optional, intent(in) :: v_cell_method !< Specifies the cell method for the vertical direction. Use '' have no method.
+    ! Local variables
+    character(len=fm_string_len), parameter :: sub_name = 'g_register_diag_field_axes'
+
+#ifdef _USE_MOM6_DIAG
+    g_register_diag_field_axes = register_diag_field_MOM(trim(module_name), field_name, axes, init_time, &
+         long_name=long_name, units=units, range=range, mask_variant=mask_variant, &
+         standard_name=standard_name, verbose=verbose, do_not_log=do_not_log, err_msg=err_msg, &
+         interp_method=interp_method, tile_count=tile_count, cmor_field_name=cmor_field_name, &
+         cmor_long_name=cmor_long_name, cmor_units=cmor_units, cmor_standard_name=cmor_standard_name, &
+         cell_methods=cell_methods, x_cell_method=x_cell_method, y_cell_method=y_cell_method, &
+         v_cell_method=v_cell_method)
+#else
+    if(.not. allocated(axes%handles)) then
+       call mpp_error(FATAL, trim(sub_name)//": no FMS axes are available for "//trim(field_name)//&
+            ", so it will not be registered.")
+    endif
+    g_register_diag_field_axes = g_register_diag_field_handles(module_name, field_name, axes%handles, &
+         init_time, long_name, units, missing_value, range, mask_variant, standard_name, &
+         verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
+         cmor_long_name, cmor_units, cmor_standard_name)
+#endif
+
+  end function g_register_diag_field_axes
 
   LOGICAL FUNCTION g_send_data_0d(diag_field_id, field, time, err_msg, diag_CS)
     INTEGER, INTENT(in) :: diag_field_id
