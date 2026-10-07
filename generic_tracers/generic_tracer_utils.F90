@@ -3816,9 +3816,9 @@ contains
 
   !> Register a diagnostic field whose axes are given as an integer array( i.e., axis%handles )
   !!
-  !! In FMS diag mode the handles are passed to the FMS diag_manager. In MOM6 diag mode only
-  !! the size of the array is used: 3, 2 and 1 select diag_CS%axesTL, %axesT1 and %axesTi.
-  !! New code should pass an axes group instead (see g_register_diag_field_axes).
+  !! Legacy path for non-COBALT generic tracer packages. In FMS diag mode the handles are passed
+  !! to the FMS diag_manager. In MOM6 diag mode only the size of the array is used: 3, 2 and 1
+  !! select diag_CS%axesTL, %axesT1 and %axesTi. New development goes in g_register_diag_field_axes.
   function g_register_diag_field_handles(module_name, field_name, axes, init_time, &
        long_name, units, missing_value, range, mask_variant, standard_name,      &
        verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
@@ -3858,27 +3858,30 @@ contains
 
 #ifdef _USE_MOM6_DIAG
     type(g_diag_ctrl), pointer :: diag_CS_ptr
+    real :: MOM_missing_value
 
     if(present(diag_CS)) then
        diag_CS_ptr => diag_CS
     else
+       !This is not thread-safe. It has to be fixed later.
        call g_tracer_get_diagCS(diag_CS_ptr)
     endif
+    MOM_missing_value = diag_CS_ptr%missing_value
     if(size(axes) .eq. 3) then
-       g_register_diag_field_handles = g_register_diag_field_axes(module_name, field_name, diag_CS_ptr%axesTL, &
-            init_time, long_name, units, missing_value, range, mask_variant, standard_name, &
+       g_register_diag_field_handles = register_diag_field_MOM(trim(module_name), field_name, diag_CS_ptr%axesTL, init_time,&
+            long_name, units, MOM_missing_value, range, mask_variant, standard_name,      &
             verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
             cmor_long_name, cmor_units, cmor_standard_name, cell_methods, &
             x_cell_method, y_cell_method, v_cell_method)
     elseif(size(axes) .eq. 2) then
-       g_register_diag_field_handles = g_register_diag_field_axes(module_name, field_name, diag_CS_ptr%axesT1, &
-            init_time, long_name, units, missing_value, range, mask_variant, standard_name, &
+       g_register_diag_field_handles = register_diag_field_MOM(trim(module_name), field_name, diag_CS_ptr%axesT1, init_time,&
+            long_name, units, MOM_missing_value, range, mask_variant, standard_name,      &
             verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
             cmor_long_name, cmor_units, cmor_standard_name, cell_methods, &
             x_cell_method, y_cell_method, v_cell_method)
     elseif(size(axes) .eq. 1) then
-       g_register_diag_field_handles = g_register_diag_field_axes(module_name, field_name, diag_CS_ptr%axesTi, &
-            init_time, long_name, units, missing_value, range, mask_variant, standard_name, &
+       g_register_diag_field_handles = register_diag_field_MOM(trim(module_name), field_name, diag_CS_ptr%axesTi, init_time,&
+            long_name, units, MOM_missing_value, range, mask_variant, standard_name,      &
             verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
             cmor_long_name, cmor_units, cmor_standard_name, cell_methods, &
             x_cell_method, y_cell_method, v_cell_method)
