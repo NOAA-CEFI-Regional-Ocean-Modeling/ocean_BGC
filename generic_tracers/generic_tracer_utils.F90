@@ -1709,18 +1709,22 @@ contains
   !   grid_mask array and initial time.
   !  </DESCRIPTION>
   !  <TEMPLATE>
-  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
+  !   call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,axes_i)
   !  </TEMPLATE>
   !  <IN NAME="" TYPE="">
   !
   !  </IN>
   ! </SUBROUTINE>
 
-  subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time)
-    integer,                     intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes(3)
+  subroutine g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,axes_i)
+    integer,                     intent(in) :: isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau
+    integer,                     intent(in) :: axes(3) !< FMS axis ids for (x, y, layer), with nk layers
     real, dimension(isd:,jsd:,:),intent(in) :: grid_tmask
     integer,dimension(isd:,jsd:),intent(in) :: grid_kmt
     type(time_type),             intent(in) :: init_time
+    integer,           optional, intent(in) :: axes_i  !< FMS axis id for the nk+1 interfaces. Only used in
+                                                       !! FMS diag mode; if absent, interface diagnostics
+                                                       !! are not registered.
 
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_set_common'
     integer :: i,j
@@ -1742,10 +1746,13 @@ contains
 
 #ifndef _USE_MOM6_DIAG
     !There is no host diag_ctrl in FMS diag mode, so build a stand-in that holds the FMS axis
-    !handles. The host provides no interface axis, so axesTi is left without handles.
+    !handles. axesTi only gets handles if the host provides an interface axis.
+    !TODO: Consider checking the axis lengths with get_axis_length (nk for axes(3), nk+1 for axes_i)
+    ! to catch potential bugs in runs that don't call this subroutine from the g_tracer infrastructure
     if (.not. associated(g_tracer_com%diag_CS)) allocate(g_tracer_com%diag_CS)
     g_tracer_com%diag_CS%axesTL%handles = axes(1:3)
     g_tracer_com%diag_CS%axesT1%handles = axes(1:2)
+    if (present(axes_i)) g_tracer_com%diag_CS%axesTi%handles = (/ axes(1), axes(2), axes_i /)
 #endif
 
     if(.NOT. _ALLOCATED(g_tracer_com%grid_tmask)) allocate(g_tracer_com%grid_tmask(isd:ied,jsd:jed,nk))
@@ -3907,8 +3914,8 @@ contains
   !!
   !! In MOM6 diag mode this calls MOM6's register_diag_field directly, so any MOM6 axes group
   !! may be used, and MOM6's default missing value is used for the output files.
-  !! In FMS diag mode only axesTL and axesT1 have axis handles; attempting to register fields
-  !! on other axes will result in an error.
+  !! In FMS diag mode the group must carry FMS axis handles. axesTL and axesT1 always do; axesTi
+  !! does only if the host passed axes_i to generic_tracer_init. Otherwise this is a fatal error.
   function g_register_diag_field_axes(module_name, field_name, axes, init_time, &
        long_name, units, missing_value, range, mask_variant, standard_name,      &
        verbose, do_not_log, err_msg, interp_method, tile_count, cmor_field_name, &
@@ -3956,7 +3963,7 @@ contains
 #else
     if(.not. allocated(axes%handles)) then
        call mpp_error(FATAL, trim(sub_name)//": no FMS axes are available for "//trim(field_name)//&
-            ", so it will not be registered.")
+            " (for interface fields, the host must pass axes_i to generic_tracer_init)")
     endif
     g_register_diag_field_axes = g_register_diag_field_handles(module_name, field_name, axes%handles, &
          init_time, long_name, units, missing_value, range, mask_variant, standard_name, &

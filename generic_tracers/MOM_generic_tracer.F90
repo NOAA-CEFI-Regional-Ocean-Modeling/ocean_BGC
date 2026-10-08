@@ -481,7 +481,8 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
     endif
   enddo ; enddo
   call g_tracer_set_common(G%isc,G%iec,G%jsc,G%jec,G%isd,G%ied,G%jsd,G%jed,&
-                           GV%ke,1,CS%diag%axesTL%handles,grid_tmask,grid_kmt,day)
+                           GV%ke,1,CS%diag%axesTL%handles,grid_tmask,grid_kmt,day, &
+                           axes_i=CS%diag%axesTi%handles(3))
 
   call get_param(param_file, "initialize_sponges_file", "DO_SPONGE_GENERIC_TRACER", do_use_gt_sponge, &
                  "If true, then some generic tracers may be nudged.", default=.false.)
