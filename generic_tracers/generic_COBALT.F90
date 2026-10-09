@@ -2529,7 +2529,9 @@ contains
 
     call g_tracer_get_values(tracer_list,'nsm','btm_reservoir',phyto(SMP)%fn_btm,isd,jsd)
     phyto(SMP)%fn_btm = phyto(SMP)%fn_btm/dt
-    cobalt%f_nsm_btf(:,:) = phyto(SMP)%fn_btm(:,:)
+    if (phyto(SMP)%sink_max > 0.0) then
+      cobalt%f_nsm_btf(:,:) = phyto(SMP)%fn_btm(:,:)
+    endif
     call g_tracer_set_values(tracer_list,'nsm','btm_reservoir',0.0)
     used = g_send_data(phyto(SMP)%id_fn_btm,phyto(SMP)%fn_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2566,7 +2568,9 @@ contains
 
     call g_tracer_get_values(tracer_list,'fesm','btm_reservoir',phyto(SMP)%ffe_btm,isd,jsd)
     phyto(SMP)%ffe_btm = phyto(SMP)%ffe_btm/dt
-    cobalt%f_fesm_btf(:,:) = phyto(SMP)%ffe_btm(:,:)
+    if (phyto(SMP)%sink_max > 0.0) then
+      cobalt%f_fesm_btf(:,:) = phyto(SMP)%ffe_btm(:,:)
+    endif
     call g_tracer_set_values(tracer_list,'fesm','btm_reservoir',0.0)
     used = g_send_data(phyto(SMP)%id_ffe_btm,phyto(SMP)%ffe_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -2600,7 +2604,9 @@ contains
 
     call g_tracer_get_values(tracer_list,'psm','btm_reservoir',phyto(SMP)%fp_btm,isd,jsd)
     phyto(SMP)%fp_btm = phyto(SMP)%fp_btm/dt
-    cobalt%f_psm_btf(:,:) = phyto(SMP)%fp_btm(:,:)
+    if (phyto(SMP)%sink_max > 0.0) then
+      cobalt%f_psm_btf(:,:) = phyto(SMP)%fp_btm(:,:)
+    endif
     call g_tracer_set_values(tracer_list,'psm','btm_reservoir',0.0)
     used = g_send_data(phyto(SMP)%id_fp_btm,phyto(SMP)%fp_btm, &
     model_time, rmask = grid_tmask(:,:,1),&
@@ -6817,12 +6823,14 @@ contains
                              'SiO2 flux to Sediments', 'mol m-2 s-1')
     call g_restart_field_add(fields, cobalt%f_fedet_btf, 'fedet_btf', &
                              'Fe flux to Sediments', 'mol m-2 s-1')
-    call g_restart_field_add(fields, cobalt%f_nsm_btf, 'nsm_btf', &
-                             'nsm flux to Sediments', 'mol m-2 s-1')
-    call g_restart_field_add(fields, cobalt%f_fesm_btf, 'fesm_btf', &
-                             'fesm flux to Sediments', 'mol m-2 s-1')
-    call g_restart_field_add(fields, cobalt%f_psm_btf, 'psm_btf', &
-                             'psm flux to Sediments', 'mol m-2 s-1')
+    if (phyto(SMP)%sink_max > 0.0) then
+      call g_restart_field_add(fields, cobalt%f_nsm_btf, 'nsm_btf', &
+                               'nsm flux to Sediments', 'mol m-2 s-1')
+      call g_restart_field_add(fields, cobalt%f_fesm_btf, 'fesm_btf', &
+                               'fesm flux to Sediments', 'mol m-2 s-1')
+      call g_restart_field_add(fields, cobalt%f_psm_btf, 'psm_btf', &
+                               'psm flux to Sediments', 'mol m-2 s-1')
+    endif
     call g_restart_field_add(fields, cobalt%f_nmd_btf, 'nmd_btf', &
                              'nmd flux to Sediments', 'mol m-2 s-1')
     call g_restart_field_add(fields, cobalt%f_nlg_btf, 'nlg_btf', &
