@@ -2067,19 +2067,31 @@ contains
          btm_reservoir = .true.,   &
          flux_param = (/ 1.0e-3 /) )
     !
-    !    Ndet_fast (Fast sinking detrital/particulate nitrogen)
-    !      ndet_fast, pdet_fast, and associated btf tracers carried by
-    !      the model even if fast-sinking detritus is turned off (e.g., if "do_fastsinking = .false.")
+    !    Fast sinking detritus: ndet_fast, pdet_fast (fast sinking detrital N and P)
+    !      These are only registered if do_fastsinking = .true.
+    !      Otherwise p_ndet_fast and p_pdet_fast point to zero-filled arrays (see user_allocate_arrays).
+    !      Their bottom fluxes are restart fields (see generic_COBALT_restart_fields).
     !
-    call g_tracer_add(tracer_list,package_name,         &
-         name       = 'ndet_fast',                      &
-         longname   = 'Fast sinking Detrital Nitrogen', &
-         flux_runoff= .false.,                          &
-         units      = 'mol/kg',                         &
-         prog       = .true.,                           &
-         sink_rate  = cobalt%wsink_fast,                &
-         btm_reservoir = .true.,                        &
-         flux_param = (/ 1.0e-3 /) )
+    if (cobalt%do_fastsinking) then
+      call g_tracer_add(tracer_list,package_name,         &
+           name       = 'ndet_fast',                      &
+           longname   = 'Fast sinking Detrital Nitrogen', &
+           flux_runoff= .false.,                          &
+           units      = 'mol/kg',                         &
+           prog       = .true.,                           &
+           sink_rate  = cobalt%wsink_fast,                &
+           btm_reservoir = .true.,                        &
+           flux_param = (/ 1.0e-3 /) )
+      call g_tracer_add(tracer_list,package_name,         &
+           name       = 'pdet_fast',                      &
+           longname   = 'Fast sinking Detrital Phosphorus', &
+           flux_runoff= .false.,                          &
+           units      = 'mol/kg',                         &
+           prog       = .true.,                           &
+           sink_rate  = cobalt%wsink_fast,                &
+           btm_reservoir = .true.,                        &
+           flux_param = (/ 1.0e-3 /) )
+    endif
     !
     !    NDi (assumed to be facultative N2-fixers, with a variable N:P ratio
     !
@@ -2207,18 +2219,6 @@ contains
          units      = 'mol/kg',                         &
          prog       = .true.,                           &
          sink_rate  = cobalt%wsink,                     &
-         btm_reservoir = .true.,                        &
-         flux_param = (/ 1.0e-3 /) )
-    !
-    !    Pdet_fast (Fast sinking detrital/particulate Phosphorus)
-    !
-    call g_tracer_add(tracer_list,package_name,         &
-         name       = 'pdet_fast',                      &
-         longname   = 'Fast sinking Detrital Phosphorus', &
-         flux_runoff= .false.,                          &
-         units      = 'mol/kg',                         &
-         prog       = .true.,                           &
-         sink_rate  = cobalt%wsink_fast,                &
          btm_reservoir = .true.,                        &
          flux_param = (/ 1.0e-3 /) )
     !
@@ -2532,14 +2532,16 @@ contains
     model_time, rmask = grid_tmask(:,:,1),&
     is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
-    call g_tracer_get_values(tracer_list,'ndet_fast','btm_reservoir',cobalt%fndet_fast_btm,isd,jsd)
-    cobalt%fndet_fast_btm = cobalt%fndet_fast_btm/dt
-    cobalt%f_ndet_fast_btf(:,:) = cobalt%fndet_fast_btm(:,:)
-    call g_tracer_set_values(tracer_list,'ndet_fast','btm_reservoir',0.0)
-    if (cobalt%id_fndet_fast_btm .gt. 0)           &
-    used = g_send_data(cobalt%id_fndet_fast_btm,cobalt%fndet_fast_btm,          &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+    if (cobalt%do_fastsinking) then
+      call g_tracer_get_values(tracer_list,'ndet_fast','btm_reservoir',cobalt%fndet_fast_btm,isd,jsd)
+      cobalt%fndet_fast_btm = cobalt%fndet_fast_btm/dt
+      cobalt%f_ndet_fast_btf(:,:) = cobalt%fndet_fast_btm(:,:)
+      call g_tracer_set_values(tracer_list,'ndet_fast','btm_reservoir',0.0)
+      if (cobalt%id_fndet_fast_btm .gt. 0)           &
+      used = g_send_data(cobalt%id_fndet_fast_btm,cobalt%fndet_fast_btm,          &
+      model_time, rmask = grid_tmask(:,:,1),&
+      is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+    endif
 
     call g_tracer_get_values(tracer_list,'pdet','btm_reservoir',cobalt%fpdet_btm,isd,jsd)
     cobalt%fpdet_btm = cobalt%fpdet_btm/dt
@@ -2549,14 +2551,16 @@ contains
     model_time, rmask = grid_tmask(:,:,1),&
     is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
 
-    call g_tracer_get_values(tracer_list,'pdet_fast','btm_reservoir',cobalt%fpdet_fast_btm,isd,jsd)
-    cobalt%fpdet_fast_btm = cobalt%fpdet_fast_btm/dt
-    cobalt%f_pdet_fast_btf(:,:) = cobalt%fpdet_fast_btm(:,:)
-    call g_tracer_set_values(tracer_list,'pdet_fast','btm_reservoir',0.0)
-    if (cobalt%id_fpdet_fast_btm .gt. 0)           &
-    used = g_send_data(cobalt%id_fpdet_fast_btm,cobalt%fpdet_fast_btm,          &
-    model_time, rmask = grid_tmask(:,:,1),&
-    is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+    if (cobalt%do_fastsinking) then
+      call g_tracer_get_values(tracer_list,'pdet_fast','btm_reservoir',cobalt%fpdet_fast_btm,isd,jsd)
+      cobalt%fpdet_fast_btm = cobalt%fpdet_fast_btm/dt
+      cobalt%f_pdet_fast_btf(:,:) = cobalt%fpdet_fast_btm(:,:)
+      call g_tracer_set_values(tracer_list,'pdet_fast','btm_reservoir',0.0)
+      if (cobalt%id_fpdet_fast_btm .gt. 0)           &
+      used = g_send_data(cobalt%id_fpdet_fast_btm,cobalt%fpdet_fast_btm,          &
+      model_time, rmask = grid_tmask(:,:,1),&
+      is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
+    endif
 
     call g_tracer_get_values(tracer_list,'sidet','btm_reservoir',cobalt%fsidet_btm,isd,jsd)
     cobalt%fsidet_btm = cobalt%fsidet_btm/dt
@@ -2999,12 +3003,14 @@ contains
     call g_tracer_get_values(tracer_list,'lith'   ,'field',cobalt%f_lith     ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'lithdet','field',cobalt%f_lithdet  ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'ndet'   ,'field',cobalt%f_ndet     ,isd,jsd,positive=.true.)
-    call g_tracer_get_values(tracer_list,'ndet_fast','field',cobalt%f_ndet_fast ,isd,jsd,positive=.true.)
+    if (cobalt%do_fastsinking) &
+      call g_tracer_get_values(tracer_list,'ndet_fast','field',cobalt%f_ndet_fast ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'nh4'    ,'field',cobalt%f_nh4      ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'no3'    ,'field',cobalt%f_no3      ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'o2'     ,'field',cobalt%f_o2       ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'pdet'   ,'field',cobalt%f_pdet     ,isd,jsd,positive=.true.)
-    call g_tracer_get_values(tracer_list,'pdet_fast','field',cobalt%f_pdet_fast ,isd,jsd,positive=.true.)
+    if (cobalt%do_fastsinking) &
+      call g_tracer_get_values(tracer_list,'pdet_fast','field',cobalt%f_pdet_fast ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'po4'    ,'field',cobalt%f_po4      ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'srdon'   ,'field',cobalt%f_srdon   ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'srdop'   ,'field',cobalt%f_srdop   ,isd,jsd,positive=.true.)
@@ -5049,7 +5055,8 @@ contains
     call g_tracer_get_pointer(tracer_list,'lithdet','field',cobalt%p_lithdet)
     call g_tracer_get_pointer(tracer_list,'nbact'  ,'field',cobalt%p_nbact  )
     call g_tracer_get_pointer(tracer_list,'ndet'   ,'field',cobalt%p_ndet   )
-    call g_tracer_get_pointer(tracer_list,'ndet_fast','field',cobalt%p_ndet_fast)
+    if (cobalt%do_fastsinking) &
+      call g_tracer_get_pointer(tracer_list,'ndet_fast','field',cobalt%p_ndet_fast)
     call g_tracer_get_pointer(tracer_list,'ndi'    ,'field',cobalt%p_ndi    )
     call g_tracer_get_pointer(tracer_list,'nlg'    ,'field',cobalt%p_nlg    )
     call g_tracer_get_pointer(tracer_list,'nmd'    ,'field',cobalt%p_nmd    )
@@ -5062,7 +5069,8 @@ contains
     call g_tracer_get_pointer(tracer_list,'pmd'    ,'field',cobalt%p_pmd    )
     call g_tracer_get_pointer(tracer_list,'psm'    ,'field',cobalt%p_psm    )
     call g_tracer_get_pointer(tracer_list,'pdet'   ,'field',cobalt%p_pdet   )
-    call g_tracer_get_pointer(tracer_list,'pdet_fast','field',cobalt%p_pdet_fast)
+    if (cobalt%do_fastsinking) &
+      call g_tracer_get_pointer(tracer_list,'pdet_fast','field',cobalt%p_pdet_fast)
     call g_tracer_get_pointer(tracer_list,'po4'    ,'field',cobalt%p_po4    )
     call g_tracer_get_pointer(tracer_list,'srdon'   ,'field',cobalt%p_srdon   )
     call g_tracer_get_pointer(tracer_list,'srdop'   ,'field',cobalt%p_srdop   )
@@ -6950,10 +6958,12 @@ contains
     call g_restart_field_add(fields, cobalt%f_cased, 'cased_2d', &
                              'Sediment CaCO3', 'mol m-3', legacy_name='cased')
 
-    call g_restart_field_add(fields, cobalt%f_ndet_fast_btf, 'ndet_fast_btf_2d', &
-                             'Fast sinking N flux to Sediments', 'mol m-2 s-1', legacy_name='ndet_fast_btf')
-    call g_restart_field_add(fields, cobalt%f_pdet_fast_btf, 'pdet_fast_btf_2d', &
-                             'Fast sinking P flux to Sediments', 'mol m-2 s-1', legacy_name='pdet_fast_btf')
+    if (cobalt%do_fastsinking) then
+      call g_restart_field_add(fields, cobalt%f_ndet_fast_btf, 'ndet_fast_btf_2d', &
+                               'Fast sinking N flux to Sediments', 'mol m-2 s-1', legacy_name='ndet_fast_btf')
+      call g_restart_field_add(fields, cobalt%f_pdet_fast_btf, 'pdet_fast_btf_2d', &
+                               'Fast sinking P flux to Sediments', 'mol m-2 s-1', legacy_name='pdet_fast_btf')
+    endif
     call g_restart_field_add(fields, cobalt%f_cadet_arag_btf, 'cadet_arag_btf_2d', &
                              'aragonite flux to Sediments', 'mol m-2 s-1', legacy_name='cadet_arag_btf')
     call g_restart_field_add(fields, cobalt%f_cadet_calc_btf, 'cadet_calc_btf_2d', &
@@ -7180,6 +7190,12 @@ contains
     allocate(cobalt%f_o2(isd:ied, jsd:jed, 1:nk))         ; cobalt%f_o2=0.0
     allocate(cobalt%f_pdet(isd:ied, jsd:jed, 1:nk))       ; cobalt%f_pdet=0.0
     allocate(cobalt%f_pdet_fast(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_pdet_fast=0.0
+    ! Without fast-sinking detritus the ndet_fast and pdet_fast tracers are not registered, so point
+    ! p_ndet_fast and p_pdet_fast at zero-filled arrays so that expressions using them are unchanged.
+    if (.not. cobalt%do_fastsinking) then
+      allocate(cobalt%p_ndet_fast(isd:ied, jsd:jed, 1:nk, 1:ntau)) ; cobalt%p_ndet_fast=0.0
+      allocate(cobalt%p_pdet_fast(isd:ied, jsd:jed, 1:nk, 1:ntau)) ; cobalt%p_pdet_fast=0.0
+    endif
     allocate(cobalt%f_po4(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_po4=0.0
     allocate(cobalt%f_srdon(isd:ied, jsd:jed, 1:nk))      ; cobalt%f_srdon=0.0
     allocate(cobalt%f_srdop(isd:ied, jsd:jed, 1:nk))      ; cobalt%f_srdop=0.0
@@ -7782,6 +7798,10 @@ contains
     deallocate(cobalt%f_o2)
     deallocate(cobalt%f_pdet)
     deallocate(cobalt%f_pdet_fast)
+    if (.not. cobalt%do_fastsinking) then
+      deallocate(cobalt%p_ndet_fast)
+      deallocate(cobalt%p_pdet_fast)
+    endif
     deallocate(cobalt%f_po4)
     deallocate(cobalt%f_srdon)
     deallocate(cobalt%f_srdop)
