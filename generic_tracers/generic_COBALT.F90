@@ -2393,77 +2393,10 @@ contains
     !      The bottom fluxes to the sediments (*_btf) are not tracers. They are kept in the 2D
     !      cobalt%f_*_btf arrays and saved as restart fields (see generic_COBALT_restart_fields).
     !
-    !       htotal (H+ ion concentration)
-    !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'htotal',               &
-         longname   = 'H+ ion concentration', &
-         units      = 'mol/kg',               &
-         prog       = .false.,                &
-         init_value = cobalt%htotal_in         )
-    !
-    !       Irr_aclm (photoacclimation irradiance)
-    !
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'irr_aclm',           &
-         longname   = 'photoacclimation irradiance', &
-         units      = 'Watts/m^2',         &
-         prog       = .false.              )
-    !      The surface photoacclimation irradiance is a 2D restart field (see generic_COBALT_restart_fields).
-
-      call g_tracer_add(tracer_list,package_name,&
-         name       = 'irr_aclm_z',       &
-         longname   = 'depth-resolved photoacclim irrad', &
-         units      = 'Watts/m^2',         &
-         prog       = .false.              )
-
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'mu_mem_ndi',           &
-         longname   = 'Growth memory', &
-         units      = 'sec-1',         &
-         prog       = .false.              )
-
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'mu_mem_nlg',           &
-         longname   = 'Growth memory', &
-         units      = 'sec-1',         &
-         prog       = .false.              )
-
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'mu_mem_nmd',           &
-         longname   = 'Growth memory', &
-         units      = 'sec-1',         &
-         prog       = .false.              )
-
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'mu_mem_nsm',           &
-         longname   = 'Growth memory', &
-         units      = 'sec-1',         &
-         prog       = .false.              )
-
-    call g_tracer_add(tracer_list,package_name,&
-         name       = 'pcmlim_aclm_nsm',    &
-         longname   = 'Nut*Temp Lim memory, small phytoplankton', &
-         units      = 'dimensionless',         &
-         prog       = .false.              )
-
-     call g_tracer_add(tracer_list,package_name,&
-         name       = 'pcmlim_aclm_nmd',    &
-         longname   = 'Nut*Temp Lim memory, medium phytoplankton', &
-         units      = 'dimensionless',         &
-         prog       = .false.              )
-
-     call g_tracer_add(tracer_list,package_name,&
-         name       = 'pcmlim_aclm_nlg',    &
-         longname   = 'Nut*Temp Lim memory, large phytoplankton', &
-         units      = 'dimensionless',         &
-         prog       = .false.              )
-
-     call g_tracer_add(tracer_list,package_name,&
-         name       = 'pcmlim_aclm_ndi',    &
-         longname   = 'Nut*Temp Lim memory, diazotroph', &
-         units      = 'dimensionless',         &
-         prog       = .false.              )
+    !      The H+ ion concentration (htotal), the photoacclimation irradiances (irr_aclm, irr_aclm_z, irr_aclm_sfc)
+    !      and the phytoplankton growth and nutrient limitation memories (mu_mem_*, pcmlim_aclm_*) are not
+    !      tracers. They are kept in the cobalt%f_* and phyto(:)%f_* arrays and saved as restart fields
+    !      (see generic_COBALT_restart_fields).
 
   end subroutine user_add_tracers
 
@@ -2940,7 +2873,6 @@ contains
 
     call mpp_clock_begin(id_clock_carbon_calculations)
     !Get necessary fields
-    call g_tracer_get_values(tracer_list,'htotal','field', cobalt%f_htotal,isd,jsd)
     call g_tracer_get_values(tracer_list,'po4'   ,'field', cobalt%f_po4,isd,jsd)
     call g_tracer_get_values(tracer_list,'sio4'  ,'field', cobalt%f_sio4,isd,jsd)
     call g_tracer_get_values(tracer_list,'alk'   ,'field', cobalt%f_alk,isd,jsd)
@@ -3006,7 +2938,6 @@ contains
             omega_calc=cobalt%omega_calc(:,:,k))
     enddo
 
-    call g_tracer_set_values(tracer_list,'htotal','field',cobalt%f_htotal  ,isd,jsd)
     call g_tracer_set_values(tracer_list,'dic','alpha',cobalt%co2_alpha    ,isd,jsd)
     call g_tracer_set_values(tracer_list,'dic','csurf',cobalt%co2_csurf    ,isd,jsd)
 
@@ -3098,14 +3029,6 @@ contains
     call g_tracer_get_values(tracer_list,'nsm'    ,'field',phyto(SMP)%f_n(:,:,:),isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'silg'   ,'field',cobalt%f_silg     ,isd,jsd,positive=.true.)
     call g_tracer_get_values(tracer_list,'simd'   ,'field',cobalt%f_simd     ,isd,jsd,positive=.true.)
-    call g_tracer_get_values(tracer_list,'mu_mem_ndi' ,'field',phyto(DIAZ)%f_mu_mem,isd,jsd)
-    call g_tracer_get_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LGP)%f_mu_mem,isd,jsd)
-    call g_tracer_get_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MDP)%f_mu_mem,isd,jsd)
-    call g_tracer_get_values(tracer_list,'mu_mem_nsm' ,'field',phyto(SMP)%f_mu_mem,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pcmlim_aclm_ndi' ,'field',phyto(DIAZ)%f_pcmlim_aclm,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pcmlim_aclm_nlg' ,'field',phyto(LGP)%f_pcmlim_aclm,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pcmlim_aclm_nmd' ,'field',phyto(MDP)%f_pcmlim_aclm,isd,jsd)
-    call g_tracer_get_values(tracer_list,'pcmlim_aclm_nsm' ,'field',phyto(SMP)%f_pcmlim_aclm,isd,jsd)
     !
     ! zooplankton fields
     !
@@ -3117,11 +3040,9 @@ contains
     !
     call g_tracer_get_values(tracer_list,'nbact'   ,'field',bact(1)%f_n(:,:,:) ,isd,jsd,positive=.true.)
     !
-    ! diagnostic tracers that are passed between time steps (except chlorophyll)
+    ! The carbonate ion concentration is not negative (as when it was read as a tracer with positive=.true.)
     !
     cobalt%f_co3_ion(:,:,:) = max(0.0, cobalt%f_co3_ion(:,:,:))
-    call g_tracer_get_values(tracer_list,'irr_aclm','field',cobalt%f_irr_aclm ,isd,jsd)
-    call g_tracer_get_values(tracer_list,'irr_aclm_z','field',cobalt%f_irr_aclm_z ,isd,jsd)
 
     ! zero out cumulative COBALT-wide production diagnostics
     do k = 1, nk  ; do j = jsc, jec ; do i = isc, iec
@@ -5705,16 +5626,6 @@ contains
     !Set the diagnostics tracer fields.
     !
     call g_tracer_set_values(tracer_list,'chl',    'field',cobalt%f_chl      ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'irr_aclm' ,'field',cobalt%f_irr_aclm ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'irr_aclm_z' ,'field',cobalt%f_irr_aclm_z ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'mu_mem_ndi' ,'field',phyto(DIAZ)%f_mu_mem ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'mu_mem_nlg' ,'field',phyto(LGP)%f_mu_mem ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'mu_mem_nmd' ,'field',phyto(MDP)%f_mu_mem ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'mu_mem_nsm' ,'field',phyto(SMP)%f_mu_mem ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'pcmlim_aclm_ndi' ,'field',phyto(DIAZ)%f_pcmlim_aclm ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'pcmlim_aclm_nlg' ,'field',phyto(LGP)%f_pcmlim_aclm ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'pcmlim_aclm_nmd' ,'field',phyto(MDP)%f_pcmlim_aclm ,isd,jsd)
-    call g_tracer_set_values(tracer_list,'pcmlim_aclm_nsm' ,'field',phyto(SMP)%f_pcmlim_aclm ,isd,jsd)
 
     ! CAS calculate totals after source/sinks have been applied
     ! Imbalance in one timestep is converted from moles kg-1 to units of mmoles m-3 day-1 and compared
@@ -6704,7 +6615,6 @@ contains
     real    :: tt,tk,ts,ts2,ts3,ts4,ts5
     real, dimension(:,:,:)  ,pointer  :: grid_tmask
     real, dimension(:,:,:,:), pointer :: o2_field,dic_field,po4_field,sio4_field,alk_field,di14c_field,nh4_field
-    real, dimension(:,:,:), ALLOCATABLE :: htotal_field
     real, dimension(:,:), ALLOCATABLE :: co2_alpha,co2_csurf,co2_sc_no,o2_alpha,o2_csurf,o2_sc_no,nh3_alpha,nh3_csurf,nh3_sc_no,phos_nh3_exchange
     real, dimension(:,:), ALLOCATABLE :: c14o2_alpha,c14o2_csurf
 
@@ -6731,8 +6641,6 @@ contains
     allocate(o2_alpha(isd:ied, jsd:jed)); o2_alpha=0.0
     allocate(o2_csurf(isd:ied, jsd:jed)); o2_csurf=0.0
     allocate(o2_sc_no(isd:ied, jsd:jed)); o2_sc_no=0.0
-    allocate(htotal_field(isd:ied,jsd:jed,nk))
-    htotal_field=0.0
 
     !nnz: Since the generic_COBALT_update_from_source() subroutine is called by this time
     !     the following if block is not really necessary (since this calculation is already done in source).
@@ -6749,8 +6657,6 @@ contains
        call g_tracer_get_pointer(tracer_list,'alk'   ,'field', alk_field)
        call g_tracer_get_pointer(tracer_list,'nh4'   ,'field', nh4_field)
 
-       call g_tracer_get_values(tracer_list,'htotal' ,'field', htotal_field,isd,jsd)
-
        if(.not. present(dzt)) then
           ! 2017/08/11 jgj is cobalt type defined/passed here ?
           !        do j = jsc, jec ; do i = isc, iec  !{
@@ -6766,7 +6672,7 @@ contains
             sio4_field(:,:,1,tau),                         &
             alk_field(:,:,1,tau),                          &
                                 !InOut
-            htotal=htotal_field(:,:,1),                    &
+            htotal=cobalt%f_htotal(:,:,1),                 &
                                 !Optional In
             !! jgj 2017/08/11
             !!zt=cobalt%zt(:,:,1),                           &
@@ -6778,8 +6684,6 @@ contains
             omega_calc=cobalt%omega_calc(:,:,1))
 
        !Set fields !nnz: if These are pointers do I need to do this?
-       call g_tracer_set_values(tracer_list,'htotal' ,'field',htotal_field ,isd,jsd)
-
        call g_tracer_set_values(tracer_list,'dic','alpha',co2_alpha    ,isd,jsd)
        call g_tracer_set_values(tracer_list,'dic','csurf',co2_csurf    ,isd,jsd)
 
@@ -6804,7 +6708,7 @@ contains
 
        if (do_nh3_atm_ocean_exchange) then
 
-          phos_nh3_exchange(isc:iec,jsc:jec) = -log10(min(max(1e-11,htotal_field(isc:iec,jsc:jec,1)),1e-3))
+          phos_nh3_exchange(isc:iec,jsc:jec) = -log10(min(max(1e-11,cobalt%f_htotal(isc:iec,jsc:jec,1)),1e-3))
           call data_override('OCN', 'phos_nh3_exchange', phos_nh3_exchange(isc:iec,jsc:jec), model_time)
 
           do j = jsc, jec ; do i = isc, iec
@@ -7022,13 +6926,16 @@ contains
   end subroutine generic_COBALT_end
 
   !
-  !   Add the 2D fields that COBALT keeps outside of the tracer list to a list of restart fields.
+  !   Add the fields that COBALT keeps outside of the tracer list to a list of restart fields.
   !   The surface photoacclimation irradiance is a running mean, so its previous value is needed.
   !   The sediment CaCO3 (cased) is a sediment state variable.
   !   The bottom fluxes to the sediments (*_btf) need to be saved because the sediment calculations
   !   in update_from_source use the fluxes computed at the end of the previous step in update_from_bottom.
-  !   Older versions saved these as 3D diagnostic tracers, whose names are given as legacy names.
-  !   Their initial conditions are set in the field_table under these legacy names, as for those tracers.
+  !   Older versions saved these 2D fields as 3D diagnostic tracers, whose names are given as legacy names.
+  !   The 3D fields are the initial guess for the carbonate solver (htotal), the photoacclimation
+  !   irradiances (irr_aclm, irr_aclm_z) and the phytoplankton growth and nutrient limitation memories
+  !   (mu_mem_*, pcmlim_aclm_*). They keep the names of the 3D diagnostic tracers that older versions saved.
+  !   The initial conditions of all of these are set in the field_table under the old tracer names.
   !
   subroutine generic_COBALT_restart_fields(fields)
     type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields
@@ -7065,6 +6972,22 @@ contains
     call add_btf(cobalt%f_simd_btf, 'simd_btf', 'simd flux to Sediments')
     call add_btf(cobalt%f_silg_btf, 'silg_btf', 'silg flux to Sediments')
 
+    call add_field_3d(cobalt%f_htotal, 'htotal', 'H+ ion concentration', 'mol/kg')
+    call add_field_3d(cobalt%f_irr_aclm, 'irr_aclm', 'photoacclimation irradiance', 'Watts/m^2')
+    call add_field_3d(cobalt%f_irr_aclm_z, 'irr_aclm_z', 'depth-resolved photoacclim irrad', 'Watts/m^2')
+    call add_field_3d(phyto(DIAZ)%f_mu_mem, 'mu_mem_ndi', 'Growth memory', 'sec-1')
+    call add_field_3d(phyto(LGP)%f_mu_mem, 'mu_mem_nlg', 'Growth memory', 'sec-1')
+    call add_field_3d(phyto(MDP)%f_mu_mem, 'mu_mem_nmd', 'Growth memory', 'sec-1')
+    call add_field_3d(phyto(SMP)%f_mu_mem, 'mu_mem_nsm', 'Growth memory', 'sec-1')
+    call add_field_3d(phyto(SMP)%f_pcmlim_aclm, 'pcmlim_aclm_nsm', &
+                      'Nut*Temp Lim memory, small phytoplankton', 'dimensionless')
+    call add_field_3d(phyto(MDP)%f_pcmlim_aclm, 'pcmlim_aclm_nmd', &
+                      'Nut*Temp Lim memory, medium phytoplankton', 'dimensionless')
+    call add_field_3d(phyto(LGP)%f_pcmlim_aclm, 'pcmlim_aclm_nlg', &
+                      'Nut*Temp Lim memory, large phytoplankton', 'dimensionless')
+    call add_field_3d(phyto(DIAZ)%f_pcmlim_aclm, 'pcmlim_aclm_ndi', &
+                      'Nut*Temp Lim memory, diazotroph', 'dimensionless')
+
     call g_tracer_end_param_list(package_name)
 
   contains
@@ -7089,6 +7012,16 @@ contains
       call g_restart_field_add(fields, field, trim(legacy_name)//'_2d', longname, units, legacy_name=legacy_name)
       call read_ic_params(fields(size(fields)), legacy_name)
     end subroutine add_field
+
+    ! Add a 3D field named after the 3D tracer that older versions saved, with the initial condition
+    ! that the field_table sets for that tracer.
+    subroutine add_field_3d(field, name, longname, units)
+      real, dimension(:,:,:), pointer :: field
+      character(len=*), intent(in)    :: name, longname, units
+
+      call g_restart_field_add(fields, field, name, longname, units)
+      call read_ic_params(fields(size(fields)), name)
+    end subroutine add_field_3d
 
     ! Read the initial condition parameters that the field_table sets for a tracer called name into
     ! the restart field rf. This follows g_tracer_add and g_tracer_init.
@@ -7300,7 +7233,7 @@ contains
     allocate(cobalt%f_chl(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_chl=0.0
     allocate(cobalt%f_nh3(isd:ied, jsd:jed, 1:nk))        ; cobalt%f_nh3=0.0
     allocate(cobalt%f_co3_ion(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_co3_ion=0.0
-    allocate(cobalt%f_htotal(isd:ied, jsd:jed, 1:nk))     ; cobalt%f_htotal=0.0
+    allocate(cobalt%f_htotal(isd:ied, jsd:jed, 1:nk))     ; cobalt%f_htotal=cobalt%htotal_in
     allocate(cobalt%f_irr_aclm(isd:ied, jsd:jed, 1:nk))    ; cobalt%f_irr_aclm=0.0
     allocate(cobalt%f_irr_aclm_z(isd:ied, jsd:jed, 1:nk))  ; cobalt%f_irr_aclm_z=0.0
     allocate(cobalt%f_irr_aclm_sfc(isd:ied, jsd:jed)) ; cobalt%f_irr_aclm_sfc=0.0
