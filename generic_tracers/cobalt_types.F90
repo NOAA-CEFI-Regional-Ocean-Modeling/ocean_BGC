@@ -927,7 +927,7 @@ module cobalt_types
 !==============================================================================================================
 
      ! 2D fields that are saved in restart files. These are pointers so that they can be registered directly
-     ! as restart fields (see generic_COBALT_restart_fields_2d).
+     ! as restart fields (see generic_COBALT_restart_fields).
      real, dimension(:,:), pointer :: &
           f_irr_aclm_sfc,&       ! Surface photoacclimation irradiance
           f_cased,&              ! Sediment CaCO3
