@@ -115,7 +115,7 @@ module generic_COBALT
   use generic_bottom_layer_diags, only: generic_bld_average, generic_bld_dealloc
 
   use cobalt_types
-  use generic_restart_fields, only : g_restart_field_2d_type, g_restart_field_2d_add
+  use generic_restart_fields, only : g_restart_field_type, g_restart_field_add
   use cobalt_send_diag, only : cobalt_send_diagnostics
   use cobalt_reg_diag, only : cobalt_reg_diagnostics
   use cobalt_param_doc, only : get_COBALT_param_file
@@ -137,7 +137,7 @@ module generic_COBALT
   public generic_COBALT_update_from_bottom
   public generic_COBALT_set_boundary_values
   public generic_COBALT_end
-  public generic_COBALT_restart_fields_2d
+  public generic_COBALT_restart_fields
   public as_param_cobalt
 
   !The following variables for using this module
@@ -2343,7 +2343,7 @@ contains
     !Diagnostic Tracers
     !===========================================================
     !
-    !    Cased (CaCO3 in sediments) is a 2D restart field (see generic_COBALT_restart_fields_2d).
+    !    Cased (CaCO3 in sediments) is a 2D restart field (see generic_COBALT_restart_fields).
     !
     !
     !       Chl (Chlorophyll)
@@ -2359,7 +2359,7 @@ contains
     !      files, because it is recalculated in update_from_source before it is used.
     !
     !      The bottom fluxes to the sediments (*_btf) are not tracers. They are kept in the 2D
-    !      cobalt%f_*_btf arrays and saved as restart fields (see generic_COBALT_restart_fields_2d).
+    !      cobalt%f_*_btf arrays and saved as restart fields (see generic_COBALT_restart_fields).
     !
     !       htotal (H+ ion concentration)
     !
@@ -2377,7 +2377,7 @@ contains
          longname   = 'photoacclimation irradiance', &
          units      = 'Watts/m^2',         &
          prog       = .false.              )
-    !      The surface photoacclimation irradiance is a 2D restart field (see generic_COBALT_restart_fields_2d).
+    !      The surface photoacclimation irradiance is a 2D restart field (see generic_COBALT_restart_fields).
 
       call g_tracer_add(tracer_list,package_name,&
          name       = 'irr_aclm_z',       &
@@ -6867,8 +6867,8 @@ contains
   !   Older versions saved these as 3D diagnostic tracers, whose names are given as legacy names.
   !   Their initial conditions are set in the field_table under these legacy names, as for those tracers.
   !
-  subroutine generic_COBALT_restart_fields_2d(fields)
-    type(g_restart_field_2d_type), dimension(:), allocatable, intent(inout) :: fields
+  subroutine generic_COBALT_restart_fields(fields)
+    type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields
 
     logical :: enforce_src_info ! If true, the fields must have initial conditions set in the field_table
 
@@ -6918,49 +6918,48 @@ contains
     end subroutine add_btf
 
     ! Add a field named after the 3D tracer that older versions saved it as, with the initial condition
-    ! that the field_table sets for that tracer. This follows g_tracer_add and g_tracer_init.
+    ! that the field_table sets for that tracer.
     subroutine add_field(field, legacy_name, longname, units)
       real, dimension(:,:), pointer :: field
       character(len=*), intent(in)  :: legacy_name, longname, units
-      character(len=fm_string_len) :: src_file, src_var_name, src_var_unit, src_var_gridspec
-      integer :: src_var_record
-      real    :: src_var_unit_conversion, src_var_valid_min
+
+      call g_restart_field_add(fields, field, trim(legacy_name)//'_2d', longname, units, legacy_name=legacy_name)
+      call read_ic_params(fields(size(fields)), legacy_name)
+    end subroutine add_field
+
+    ! Read the initial condition parameters that the field_table sets for a tracer called name into
+    ! the restart field rf. This follows g_tracer_add and g_tracer_init.
+    subroutine read_ic_params(rf, name)
+      type(g_restart_field_type), intent(inout) :: rf
+      character(len=*),           intent(in)    :: name
+      character(len=fm_string_len) :: src_var_unit
       logical :: requires_src_info
 
-      call g_tracer_add_param(trim(legacy_name)//"_requires_src_info", requires_src_info, enforce_src_info)
-      if (.not. requires_src_info) then
-        call g_restart_field_2d_add(fields, field, trim(legacy_name)//'_2d', longname, units, &
-                                    legacy_name=legacy_name)
-        return
-      endif
+      call g_tracer_add_param(trim(name)//"_requires_src_info", requires_src_info, enforce_src_info)
+      call g_tracer_add_param(trim(name)//"_requires_restart", rf%init_from_ic, .true.)
+      if (.not. requires_src_info) return
 
-      call g_tracer_add_param(trim(legacy_name)//"_src_file",         src_file,          'NULL')
-      call g_tracer_add_param(trim(legacy_name)//"_src_var_name",     src_var_name,      'NULL')
-      call g_tracer_add_param(trim(legacy_name)//"_src_var_unit",     src_var_unit,      'NULL')
-      call g_tracer_add_param(trim(legacy_name)//"_src_var_record",   src_var_record,    -1)
-      call g_tracer_add_param(trim(legacy_name)//"_src_var_gridspec", src_var_gridspec,  'NULL')
-      call g_tracer_add_param(trim(legacy_name)//"_valid_min",        src_var_valid_min, -99.0)
+      call g_tracer_add_param(trim(name)//"_src_file",         rf%src_file,          'NULL')
+      call g_tracer_add_param(trim(name)//"_src_var_name",     rf%src_var_name,      'NULL')
+      call g_tracer_add_param(trim(name)//"_src_var_unit",     src_var_unit,         'NULL')
+      call g_tracer_add_param(trim(name)//"_src_var_record",   rf%src_var_record,    -1)
+      call g_tracer_add_param(trim(name)//"_src_var_gridspec", rf%src_var_gridspec,  'NULL')
+      call g_tracer_add_param(trim(name)//"_valid_min",        rf%src_var_valid_min, -99.0)
 
-      if (src_file == 'NULL') call mpp_error(FATAL, 'generic_COBALT_restart_fields_2d: '// &
-          trim(legacy_name)//' : src_file is not set in the field_table')
-      if (src_var_name == 'NULL') call mpp_error(FATAL, 'generic_COBALT_restart_fields_2d: '// &
-          trim(legacy_name)//' : src_var_name is not set in the field_table')
+      if (rf%src_file == 'NULL') call mpp_error(FATAL, 'generic_COBALT_restart_fields: '// &
+          trim(name)//' : src_file is not set in the field_table')
+      if (rf%src_var_name == 'NULL') call mpp_error(FATAL, 'generic_COBALT_restart_fields: '// &
+          trim(name)//' : src_var_name is not set in the field_table')
       select case (trim(src_var_unit))
-        case ('none') ; src_var_unit_conversion = 1.0
-        case ('ppt')  ; src_var_unit_conversion = 1.0e-12
-        case ('NULL') ; call mpp_error(FATAL, 'generic_COBALT_restart_fields_2d: '// &
-                            trim(legacy_name)//' : src_var_unit is not set in the field_table')
-        case default  ; call mpp_error(FATAL, 'generic_COBALT_restart_fields_2d: '// &
-                            trim(legacy_name)//' : cannot determine src_var_unit_conversion')
+        case ('none') ; rf%src_var_unit_conversion = 1.0
+        case ('ppt')  ; rf%src_var_unit_conversion = 1.0e-12
+        case ('NULL') ; call mpp_error(FATAL, 'generic_COBALT_restart_fields: '// &
+                            trim(name)//' : src_var_unit is not set in the field_table')
+        case default  ; call mpp_error(FATAL, 'generic_COBALT_restart_fields: '// &
+                            trim(name)//' : cannot determine src_var_unit_conversion')
       end select
-
-      call g_restart_field_2d_add(fields, field, trim(legacy_name)//'_2d', longname, units, &
-                                  legacy_name=legacy_name, src_file=src_file, src_var_name=src_var_name, &
-                                  src_var_gridspec=src_var_gridspec, src_var_record=src_var_record, &
-                                  src_var_unit_conversion=src_var_unit_conversion, &
-                                  src_var_valid_min=src_var_valid_min)
-    end subroutine add_field
-  end subroutine generic_COBALT_restart_fields_2d
+    end subroutine read_ic_params
+  end subroutine generic_COBALT_restart_fields
 
   !
   !   This is an internal sub, not a public interface.
