@@ -169,9 +169,9 @@ module cobalt_types
      real, ALLOCATABLE, dimension(:,:,:)  ::  jprod_n        !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  liebig_lim     !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  mu             !<
-     real, ALLOCATABLE, dimension(:,:,:)  ::  f_mu_mem       !<
+     real, pointer,     dimension(:,:,:)  ::  f_mu_mem       !< Growth memory, saved in restart files
      real, ALLOCATABLE, dimension(:,:,:)  ::  mu_mix         !<
-     real, ALLOCATABLE, dimension(:,:,:)  ::  f_pcmlim_aclm  !<
+     real, pointer,     dimension(:,:,:)  ::  f_pcmlim_aclm  !< Nut*Temp Lim memory, saved in restart files
      real, ALLOCATABLE, dimension(:,:,:)  ::  pcmlim_aclm_inst !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  nh4lim         !<
      real, ALLOCATABLE, dimension(:,:,:)  ::  no3lim         !<
@@ -225,6 +225,8 @@ module cobalt_types
      integer ::  id_mu           = -1
      integer ::  id_f_mu_mem     = -1
      integer ::  id_f_pcmlim_aclm = -1
+     integer ::  id_f_mu_mem_n   = -1  !< f_mu_mem under the name of its former tracer (mu_mem_n*)
+     integer ::  id_f_pcmlim_aclm_n = -1 !< f_pcmlim_aclm under the name of its former tracer (pcmlim_aclm_n*)
      integer ::  id_pcmlim_aclm_inst = -1
      integer ::  id_mu_mix       = -1
      integer ::  id_nh4lim       = -1
@@ -629,9 +631,6 @@ module cobalt_types
           f_chl,&
           f_nh3,&
           f_co3_ion,&
-          f_htotal,&
-          f_irr_aclm,&
-          f_irr_aclm_z,&
           jnbact,&
           jndi,&
           jnsm,&
@@ -961,6 +960,12 @@ module cobalt_types
           f_pmd_btf,&
           f_plg_btf,&
           f_pdi_btf
+
+     ! 3D fields that are saved in restart files. These are pointers for the same reason.
+     real, dimension(:,:,:), pointer :: &
+          f_htotal,&             ! H+ ion concentration
+          f_irr_aclm,&           ! Photoacclimation irradiance
+          f_irr_aclm_z           ! Depth-resolved photoacclimation irradiance
 !==============================================================================================================
 
      real, dimension(:,:,:,:), pointer :: &
@@ -1209,6 +1214,7 @@ module cobalt_types
           id_sfc_po4       = -1,       &
           id_sfc_sio4      = -1,       &
           id_sfc_htotal    = -1,       &
+          id_htotal        = -1,       &
           id_sfc_o2        = -1,       &
           id_sfc_chl       = -1,       &
           id_sfc_irr       = -1,       &
