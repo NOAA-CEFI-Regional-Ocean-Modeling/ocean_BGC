@@ -6777,121 +6777,82 @@ contains
   subroutine generic_COBALT_restart_fields(fields)
     type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields
 
-    logical :: enforce_src_info ! If true, the fields must have initial conditions set in the field_table
-
+    ! g_restart_field_add reads the initial conditions from the field_table entries of the current
+    ! field_manager list. Other packages may have changed that list since COBALT's tracers were added,
+    ! so it is set back to COBALT's list here.
     call g_tracer_start_param_list(package_name)
-    call g_tracer_add_param('enforce_src_info', enforce_src_info, .true.)
 
-    call add_field(cobalt%f_irr_aclm_sfc, 'irr_aclm_sfc', 'Surface photoacclimation irradiance', 'Watts/m^2')
-    call add_field(cobalt%f_cased, 'cased', 'Sediment CaCO3', 'mol m-3')
+    call g_restart_field_add(fields, cobalt%f_irr_aclm_sfc, 'irr_aclm_sfc_2d', &
+                             'Surface photoacclimation irradiance', 'Watts/m^2', legacy_name='irr_aclm_sfc')
+    call g_restart_field_add(fields, cobalt%f_cased, 'cased_2d', &
+                             'Sediment CaCO3', 'mol m-3', legacy_name='cased')
 
-    call add_btf(cobalt%f_ndet_fast_btf, 'ndet_fast_btf', 'Fast sinking N flux to Sediments')
-    call add_btf(cobalt%f_pdet_fast_btf, 'pdet_fast_btf', 'Fast sinking P flux to Sediments')
-    call add_btf(cobalt%f_cadet_arag_btf, 'cadet_arag_btf', 'aragonite flux to Sediments')
-    call add_btf(cobalt%f_cadet_calc_btf, 'cadet_calc_btf', 'calcite flux to Sediments')
-    call add_btf(cobalt%f_lithdet_btf, 'lithdet_btf', 'Lith flux to Sediments', units='g m-2 s-1')
-    call add_btf(cobalt%f_ndet_btf, 'ndet_btf', 'N flux to Sediments')
-    call add_btf(cobalt%f_pdet_btf, 'pdet_btf', 'P flux to Sediments')
-    call add_btf(cobalt%f_sidet_btf, 'sidet_btf', 'SiO2 flux to Sediments')
-    call add_btf(cobalt%f_fedet_btf, 'fedet_btf', 'Fe flux to Sediments')
-    call add_btf(cobalt%f_nsm_btf, 'nsm_btf', 'nsm flux to Sediments')
-    call add_btf(cobalt%f_fesm_btf, 'fesm_btf', 'fesm flux to Sediments')
-    call add_btf(cobalt%f_psm_btf, 'psm_btf', 'psm flux to Sediments')
-    call add_btf(cobalt%f_nmd_btf, 'nmd_btf', 'nmd flux to Sediments')
-    call add_btf(cobalt%f_nlg_btf, 'nlg_btf', 'nlg flux to Sediments')
-    call add_btf(cobalt%f_ndi_btf, 'ndi_btf', 'ndi flux to Sediments')
-    call add_btf(cobalt%f_femd_btf, 'femd_btf', 'femd flux to Sediments')
-    call add_btf(cobalt%f_felg_btf, 'felg_btf', 'felg flux to Sediments')
-    call add_btf(cobalt%f_fedi_btf, 'fedi_btf', 'fedi flux to Sediments')
-    call add_btf(cobalt%f_pmd_btf, 'pmd_btf', 'pmd flux to Sediments')
-    call add_btf(cobalt%f_plg_btf, 'plg_btf', 'plg flux to Sediments')
-    call add_btf(cobalt%f_pdi_btf, 'pdi_btf', 'pdi flux to Sediments')
-    call add_btf(cobalt%f_simd_btf, 'simd_btf', 'simd flux to Sediments')
-    call add_btf(cobalt%f_silg_btf, 'silg_btf', 'silg flux to Sediments')
+    call g_restart_field_add(fields, cobalt%f_ndet_fast_btf, 'ndet_fast_btf_2d', &
+                             'Fast sinking N flux to Sediments', 'mol m-2 s-1', legacy_name='ndet_fast_btf')
+    call g_restart_field_add(fields, cobalt%f_pdet_fast_btf, 'pdet_fast_btf_2d', &
+                             'Fast sinking P flux to Sediments', 'mol m-2 s-1', legacy_name='pdet_fast_btf')
+    call g_restart_field_add(fields, cobalt%f_cadet_arag_btf, 'cadet_arag_btf_2d', &
+                             'aragonite flux to Sediments', 'mol m-2 s-1', legacy_name='cadet_arag_btf')
+    call g_restart_field_add(fields, cobalt%f_cadet_calc_btf, 'cadet_calc_btf_2d', &
+                             'calcite flux to Sediments', 'mol m-2 s-1', legacy_name='cadet_calc_btf')
+    call g_restart_field_add(fields, cobalt%f_lithdet_btf, 'lithdet_btf_2d', &
+                             'Lith flux to Sediments', 'g m-2 s-1', legacy_name='lithdet_btf')
+    call g_restart_field_add(fields, cobalt%f_ndet_btf, 'ndet_btf_2d', &
+                             'N flux to Sediments', 'mol m-2 s-1', legacy_name='ndet_btf')
+    call g_restart_field_add(fields, cobalt%f_pdet_btf, 'pdet_btf_2d', &
+                             'P flux to Sediments', 'mol m-2 s-1', legacy_name='pdet_btf')
+    call g_restart_field_add(fields, cobalt%f_sidet_btf, 'sidet_btf_2d', &
+                             'SiO2 flux to Sediments', 'mol m-2 s-1', legacy_name='sidet_btf')
+    call g_restart_field_add(fields, cobalt%f_fedet_btf, 'fedet_btf_2d', &
+                             'Fe flux to Sediments', 'mol m-2 s-1', legacy_name='fedet_btf')
+    call g_restart_field_add(fields, cobalt%f_nsm_btf, 'nsm_btf_2d', &
+                             'nsm flux to Sediments', 'mol m-2 s-1', legacy_name='nsm_btf')
+    call g_restart_field_add(fields, cobalt%f_fesm_btf, 'fesm_btf_2d', &
+                             'fesm flux to Sediments', 'mol m-2 s-1', legacy_name='fesm_btf')
+    call g_restart_field_add(fields, cobalt%f_psm_btf, 'psm_btf_2d', &
+                             'psm flux to Sediments', 'mol m-2 s-1', legacy_name='psm_btf')
+    call g_restart_field_add(fields, cobalt%f_nmd_btf, 'nmd_btf_2d', &
+                             'nmd flux to Sediments', 'mol m-2 s-1', legacy_name='nmd_btf')
+    call g_restart_field_add(fields, cobalt%f_nlg_btf, 'nlg_btf_2d', &
+                             'nlg flux to Sediments', 'mol m-2 s-1', legacy_name='nlg_btf')
+    call g_restart_field_add(fields, cobalt%f_ndi_btf, 'ndi_btf_2d', &
+                             'ndi flux to Sediments', 'mol m-2 s-1', legacy_name='ndi_btf')
+    call g_restart_field_add(fields, cobalt%f_femd_btf, 'femd_btf_2d', &
+                             'femd flux to Sediments', 'mol m-2 s-1', legacy_name='femd_btf')
+    call g_restart_field_add(fields, cobalt%f_felg_btf, 'felg_btf_2d', &
+                             'felg flux to Sediments', 'mol m-2 s-1', legacy_name='felg_btf')
+    call g_restart_field_add(fields, cobalt%f_fedi_btf, 'fedi_btf_2d', &
+                             'fedi flux to Sediments', 'mol m-2 s-1', legacy_name='fedi_btf')
+    call g_restart_field_add(fields, cobalt%f_pmd_btf, 'pmd_btf_2d', &
+                             'pmd flux to Sediments', 'mol m-2 s-1', legacy_name='pmd_btf')
+    call g_restart_field_add(fields, cobalt%f_plg_btf, 'plg_btf_2d', &
+                             'plg flux to Sediments', 'mol m-2 s-1', legacy_name='plg_btf')
+    call g_restart_field_add(fields, cobalt%f_pdi_btf, 'pdi_btf_2d', &
+                             'pdi flux to Sediments', 'mol m-2 s-1', legacy_name='pdi_btf')
+    call g_restart_field_add(fields, cobalt%f_simd_btf, 'simd_btf_2d', &
+                             'simd flux to Sediments', 'mol m-2 s-1', legacy_name='simd_btf')
+    call g_restart_field_add(fields, cobalt%f_silg_btf, 'silg_btf_2d', &
+                             'silg flux to Sediments', 'mol m-2 s-1', legacy_name='silg_btf')
 
-    call add_field_3d(cobalt%f_htotal, 'htotal', 'H+ ion concentration', 'mol/kg')
-    call add_field_3d(cobalt%f_irr_aclm, 'irr_aclm', 'photoacclimation irradiance', 'Watts/m^2')
-    call add_field_3d(cobalt%f_irr_aclm_z, 'irr_aclm_z', 'depth-resolved photoacclim irrad', 'Watts/m^2')
-    call add_field_3d(phyto(DIAZ)%f_mu_mem, 'mu_mem_ndi', 'Growth memory', 'sec-1')
-    call add_field_3d(phyto(LGP)%f_mu_mem, 'mu_mem_nlg', 'Growth memory', 'sec-1')
-    call add_field_3d(phyto(MDP)%f_mu_mem, 'mu_mem_nmd', 'Growth memory', 'sec-1')
-    call add_field_3d(phyto(SMP)%f_mu_mem, 'mu_mem_nsm', 'Growth memory', 'sec-1')
-    call add_field_3d(phyto(SMP)%f_pcmlim_aclm, 'pcmlim_aclm_nsm', &
-                      'Nut*Temp Lim memory, small phytoplankton', 'dimensionless')
-    call add_field_3d(phyto(MDP)%f_pcmlim_aclm, 'pcmlim_aclm_nmd', &
-                      'Nut*Temp Lim memory, medium phytoplankton', 'dimensionless')
-    call add_field_3d(phyto(LGP)%f_pcmlim_aclm, 'pcmlim_aclm_nlg', &
-                      'Nut*Temp Lim memory, large phytoplankton', 'dimensionless')
-    call add_field_3d(phyto(DIAZ)%f_pcmlim_aclm, 'pcmlim_aclm_ndi', &
-                      'Nut*Temp Lim memory, diazotroph', 'dimensionless')
+    call g_restart_field_add(fields, cobalt%f_htotal, 'htotal', 'H+ ion concentration', 'mol/kg')
+    call g_restart_field_add(fields, cobalt%f_irr_aclm, 'irr_aclm', &
+                             'photoacclimation irradiance', 'Watts/m^2')
+    call g_restart_field_add(fields, cobalt%f_irr_aclm_z, 'irr_aclm_z', &
+                             'depth-resolved photoacclim irrad', 'Watts/m^2')
+    call g_restart_field_add(fields, phyto(DIAZ)%f_mu_mem, 'mu_mem_ndi', 'Growth memory', 'sec-1')
+    call g_restart_field_add(fields, phyto(LGP)%f_mu_mem, 'mu_mem_nlg', 'Growth memory', 'sec-1')
+    call g_restart_field_add(fields, phyto(MDP)%f_mu_mem, 'mu_mem_nmd', 'Growth memory', 'sec-1')
+    call g_restart_field_add(fields, phyto(SMP)%f_mu_mem, 'mu_mem_nsm', 'Growth memory', 'sec-1')
+    call g_restart_field_add(fields, phyto(SMP)%f_pcmlim_aclm, 'pcmlim_aclm_nsm', &
+                             'Nut*Temp Lim memory, small phytoplankton', 'dimensionless')
+    call g_restart_field_add(fields, phyto(MDP)%f_pcmlim_aclm, 'pcmlim_aclm_nmd', &
+                             'Nut*Temp Lim memory, medium phytoplankton', 'dimensionless')
+    call g_restart_field_add(fields, phyto(LGP)%f_pcmlim_aclm, 'pcmlim_aclm_nlg', &
+                             'Nut*Temp Lim memory, large phytoplankton', 'dimensionless')
+    call g_restart_field_add(fields, phyto(DIAZ)%f_pcmlim_aclm, 'pcmlim_aclm_ndi', &
+                             'Nut*Temp Lim memory, diazotroph', 'dimensionless')
 
     call g_tracer_end_param_list(package_name)
-
-  contains
-
-    ! Add a bottom flux to sediments
-    subroutine add_btf(field, legacy_name, longname, units)
-      real, dimension(:,:), pointer          :: field
-      character(len=*),           intent(in) :: legacy_name, longname
-      character(len=*), optional, intent(in) :: units
-      character(len=32) :: btf_units
-
-      btf_units = 'mol m-2 s-1' ; if (present(units)) btf_units = units
-      call add_field(field, legacy_name, longname, btf_units)
-    end subroutine add_btf
-
-    ! Add a field named after the 3D tracer that older versions saved it as, with the initial condition
-    ! that the field_table sets for that tracer.
-    subroutine add_field(field, legacy_name, longname, units)
-      real, dimension(:,:), pointer :: field
-      character(len=*), intent(in)  :: legacy_name, longname, units
-
-      call g_restart_field_add(fields, field, trim(legacy_name)//'_2d', longname, units, legacy_name=legacy_name)
-      call read_ic_params(fields(size(fields)), legacy_name)
-    end subroutine add_field
-
-    ! Add a 3D field named after the 3D tracer that older versions saved, with the initial condition
-    ! that the field_table sets for that tracer.
-    subroutine add_field_3d(field, name, longname, units)
-      real, dimension(:,:,:), pointer :: field
-      character(len=*), intent(in)    :: name, longname, units
-
-      call g_restart_field_add(fields, field, name, longname, units)
-      call read_ic_params(fields(size(fields)), name)
-    end subroutine add_field_3d
-
-    ! Read the initial condition parameters that the field_table sets for a tracer called name into
-    ! the restart field rf. This follows g_tracer_add and g_tracer_init.
-    subroutine read_ic_params(rf, name)
-      type(g_restart_field_type), intent(inout) :: rf
-      character(len=*),           intent(in)    :: name
-      character(len=fm_string_len) :: src_var_unit
-      logical :: requires_src_info
-
-      call g_tracer_add_param(trim(name)//"_requires_src_info", requires_src_info, enforce_src_info)
-      call g_tracer_add_param(trim(name)//"_requires_restart", rf%init_from_ic, .true.)
-      if (.not. requires_src_info) return
-
-      call g_tracer_add_param(trim(name)//"_src_file",         rf%src_file,          'NULL')
-      call g_tracer_add_param(trim(name)//"_src_var_name",     rf%src_var_name,      'NULL')
-      call g_tracer_add_param(trim(name)//"_src_var_unit",     src_var_unit,         'NULL')
-      call g_tracer_add_param(trim(name)//"_src_var_record",   rf%src_var_record,    -1)
-      call g_tracer_add_param(trim(name)//"_src_var_gridspec", rf%src_var_gridspec,  'NULL')
-      call g_tracer_add_param(trim(name)//"_valid_min",        rf%src_var_valid_min, -99.0)
-
-      if (rf%src_file == 'NULL') call mpp_error(FATAL, 'generic_COBALT_restart_fields: '// &
-          trim(name)//' : src_file is not set in the field_table')
-      if (rf%src_var_name == 'NULL') call mpp_error(FATAL, 'generic_COBALT_restart_fields: '// &
-          trim(name)//' : src_var_name is not set in the field_table')
-      select case (trim(src_var_unit))
-        case ('none') ; rf%src_var_unit_conversion = 1.0
-        case ('ppt')  ; rf%src_var_unit_conversion = 1.0e-12
-        case ('NULL') ; call mpp_error(FATAL, 'generic_COBALT_restart_fields: '// &
-                            trim(name)//' : src_var_unit is not set in the field_table')
-        case default  ; call mpp_error(FATAL, 'generic_COBALT_restart_fields: '// &
-                            trim(name)//' : cannot determine src_var_unit_conversion')
-      end select
-    end subroutine read_ic_params
   end subroutine generic_COBALT_restart_fields
 
   !
