@@ -1507,6 +1507,9 @@ module COBALT_reg_diag
     cobalt%id_htotal = register_diag_field(package_name, "htotal", axes(1:3), &
          init_time, "H+ ion concentration", "mol/kg", missing_value = -1.0e+20)
 
+    ! The mu_mem_n* and pcmlim_aclm_n* diagnostics duplicate mu_mem_* and pcmlim_aclm_* (id_f_mu_mem
+    ! and id_f_pcmlim_aclm above), which output the same arrays. They are kept so that existing
+    ! diag_tables still find them.
     phyto(DIAZ)%id_f_mu_mem_n = register_diag_field(package_name, "mu_mem_ndi", axes(1:3), &
          init_time, "Growth memory", "sec-1", missing_value = -1.0e+20)
 
