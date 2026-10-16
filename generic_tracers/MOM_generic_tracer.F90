@@ -542,6 +542,9 @@ subroutine initialize_restart_fields(restart, h, dz, G, GV, US, param_file, CS)
 
   if (size(CS%restart_fields) == 0) return
 
+  ! The 2D fields are read through this 3D buffer, because their legacy restart fields and initial
+  ! conditions are stored as 3D variables, and MOM_initialize_tracer_from_Z and tracer_Z_init only
+  ! fill 3D arrays. This should be revisited when the initialization of these fields is refactored.
   allocate(scratch(G%isd:G%ied, G%jsd:G%jed, GV%ke))
   have_dirs = .false.
   do n=1,size(CS%restart_fields)
