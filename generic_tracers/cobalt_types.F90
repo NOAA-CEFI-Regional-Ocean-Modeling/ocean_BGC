@@ -3,6 +3,7 @@
 !<----------------------------------------------------------------
 module cobalt_types
   use field_manager_mod, only: fm_string_len
+  use generic_bottom_layer_diags, only: generic_bld
   implicit none; private
 
   !
@@ -14,7 +15,6 @@ module cobalt_types
   public zooplankton
   public bacteria
   public generic_COBALT_type
-  public vardesc
 
   !The following variables for using this module
   ! are overwritten by generic_tracer_nml namelist
@@ -43,10 +43,28 @@ module cobalt_types
   integer, parameter, public :: NUM_ZOO = 3   !< total number of zooplankton groups
   integer, parameter, public :: NUM_BACT = 1  !< total number of bacteria groups
   integer, parameter, public :: NUM_PREY = 9  !< total numbers of prey groups
-  integer, parameter, public :: DIAZO      = 1 !< ID for diazotrophs
-  integer, parameter, public :: LARGE      = 2 !< ID for large phytoplankton
-  integer, parameter, public :: MEDIUM     = 3 !< ID for medium phytoplankton
-  integer, parameter, public :: SMALL      = 4 !< ID for small phytoplankton
+
+  ! phytoplankton IDs
+  integer, parameter, public :: DIAZ       = 1 !< ID for diazotrophs
+  integer, parameter, public :: LGP        = 2 !< ID for large phytoplankton
+  integer, parameter, public :: MDP        = 3 !< ID for medium phytoplankton
+  integer, parameter, public :: SMP        = 4 !< ID for small phytoplankton
+
+  ! zooplankton IDs
+  integer, parameter, public :: SMZ        = 1 !< ID for small zooplankton
+  integer, parameter, public :: MDZ        = 2 !< ID for medium zooplankton
+  integer, parameter, public :: LGZ        = 3 !< ID for large zooplankton
+
+  ! prey array IDs
+  integer, parameter, public :: PR_DIAZ   = 1 !< prey array ID for diazotrophs
+  integer, parameter, public :: PR_LGP    = 2 !< prey array ID for large phytoplankton
+  integer, parameter, public :: PR_MDP    = 3 !< prey array ID for medium phytoplankton
+  integer, parameter, public :: PR_SMP    = 4 !< prey array ID for small phytoplankton
+  integer, parameter, public :: PR_BACT   = 5 !< prey array ID for bacteria
+  integer, parameter, public :: PR_SMZ    = 6 !< prey array ID for small zooplankton
+  integer, parameter, public :: PR_MDZ    = 7 !< prey array ID for medium zooplankton
+  integer, parameter, public :: PR_LGZ    = 8 !< prey array ID for large zooplankton
+  integer, parameter, public :: PR_DET    = 9 !< prey array ID for detritus
 
   real, parameter, public :: sperd = 24.0 * 3600.0    !< number of seconds in a day (sec)
   real, parameter, public :: I_sperd = 1.0/sperd      !< inverse of number of seconds in a day (sec)
@@ -54,22 +72,10 @@ module cobalt_types
   real, parameter, public :: I_spery = 1.0/spery      !< inverse of number of seconds in a year (sec)
   real, parameter, public :: epsln=1.0e-30            !< small, but non-zero value for numerical stability
   real, parameter, public :: missing_value1=-1.0e+10  !< large negative value to represent missing value in diags
-  real, parameter, public :: vb_nh3 = 25.             !< Liquid molar volume at boiling point for NH3 (cm3 mol−1)
   real, parameter, public :: micromol2mol = 1.0e6     !< convert micromoles to moles (used in concentration parameters)
   real, parameter, public :: c2n = 106.0/16.0         !< convert nutrient ratios relative to carbon to ratios relative to nitrogen
   real, parameter, public :: micromolQ2Joule = 2.77e18/6.022e17 !< convert photosynthetically available radiation (micromole quanta
                                                       !! Joules
-
-  !> An auxiliary type for storing varible names
-  type vardesc
-     character(len=fm_string_len) :: name     !< The variable name in a NetCDF file.
-     character(len=fm_string_len) :: longname !< The long name of that variable.
-     character(len=1)  :: hor_grid !< The hor. grid:  u, v, h, q, or 1.
-     character(len=1)  :: z_grid   !< The vert. grid:  L, i, or 1.
-     character(len=1)  :: t_grid   !< The time description: s, a, m, or 1.
-     character(len=fm_string_len) :: units  !< The dimensions of the variable.
-     character(len=1)  :: mem_size !< The size in memory: d or f.
-  end type vardesc
 
   !> phytoplankton data type
   type phytoplankton
@@ -568,7 +574,7 @@ module cobalt_types
 
      real, dimension(3)                    :: total_atm_co2
 
-     real    :: htotal_scale_lo, htotal_scale_hi, htotal_in
+     real    :: htotal_in
      real    :: Rho_0, a_0, a_1, a_2, a_3, a_4, a_5, b_0, b_1, b_2, b_3, c_0
      real    :: a1_co2, a2_co2, a3_co2, a4_co2, a5_co2
      real    :: a1_o2, a2_o2, a3_o2, a4_o2, a5_o2
@@ -848,7 +854,6 @@ module cobalt_types
           jprod_allphytos_200,&
           jprod_diat_100,&
           mld_aclm,&
-          htotallo, htotalhi,&
           hp_jingest_n_100,&
           hp_jremin_n_100,&
           hp_jprod_ndet_100,&
@@ -1029,6 +1034,9 @@ module cobalt_types
      character(len=fm_string_len)          :: file
      character(len=fm_string_len) :: ice_restart_file
      character(len=fm_string_len) :: ocean_restart_file,IC_file
+
+     ! Generic bottom layer diagnostics
+     type(generic_bld) :: bld
 
      integer               ::          &
           id_co3_sol_arag  = -1,       &

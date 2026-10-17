@@ -3140,10 +3140,10 @@ contains
     integer :: i, j, k, is, ie, js, je, nz
 
     h_neglect = 1.0e-20 !GV%H_subroundoff
-    kap_dt_x2 = (2.0*kappa_dt) !*GV%Z_to_H**2
+    kap_dt_x2 = (2.0*kappa_dt) ! *GV%Z_to_H**2
     h0 = h_neglect
     if (present(larger_h_denom)) then
-       if (larger_h_denom) h0 = 1.0e-16*sqrt(kappa_dt) !*GV%Z_to_H
+       if (larger_h_denom) h0 = 1.0e-16*sqrt(kappa_dt) ! *GV%Z_to_H
     endif
 
     if (kap_dt_x2 > 0.0) then

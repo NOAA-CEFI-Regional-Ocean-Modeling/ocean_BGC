@@ -1,0 +1,5 @@
+[extra.ford]
+project = "generic_tracers"
+src_dir = "./generic_tracers"
+preprocess = false
+
