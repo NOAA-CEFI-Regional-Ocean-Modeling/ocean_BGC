@@ -2754,8 +2754,8 @@ contains
     real, dimension(g_tracer_com%isd:,g_tracer_com%jsd:,:), intent(in) :: ea !! The amount of fluid entrained from the layer above, in the same units as `h_old`.
     real, dimension(g_tracer_com%isd:,g_tracer_com%jsd:,:), intent(in) :: eb !! The amount of fluid entrained from the layer below, in the same units as `h_old`.
     real,                   intent(in) :: dt !! The amount of time covered by this call (s).
-    real :: kg_m2_to_H !! A conversion factor that translates \(\mathrm{kg\ m^{-2}}\) into the units of `h_old`.
-    real ::  m_to_H !! A conversion factor that translates m into the units of `h_old`.
+    real, intent(in) :: kg_m2_to_H !! A conversion factor that translates \(\mathrm{kg\ m^{-2}}\) into the units of `h_old`.
+    real, intent(in) :: m_to_H !! A conversion factor that translates m into the units of `h_old`.
     integer,                intent(in) :: tau
     logical, optional ,     intent(in) :: use_PressAlgorithm
     !! If true, then use the Press algorithm for solving the tridiagonal system.
