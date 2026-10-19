@@ -1,10 +1,14 @@
 name: ford docs
 
 on:
+  workflow_dispatch:
   push:
-    branches: 
+    branches:
       - dev/cefi
       - 'docs/**'
+  pull_request:
+    branches:
+      - dev/cefi
 
 jobs:
   build_docs:
@@ -24,6 +28,7 @@ jobs:
           path: ./docs/build
 
   deploy_docs:
+    if: github.ref == 'refs/heads/dev/cefi'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
