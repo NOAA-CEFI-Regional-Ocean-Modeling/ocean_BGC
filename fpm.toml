@@ -2,5 +2,5 @@
 project = "generic_tracers"
 src_dir = "./generic_tracers"
 preprocess = true
-macro = ["_ALLOCATABLE=allocatable", "_NULL="]
+macro = ["_ALLOCATABLE=allocatable", "_NULL=", "_USE_MOM6_DIAG"]
 md_extensions = ["ford_bib"]
