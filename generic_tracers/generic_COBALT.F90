@@ -1,130 +1,92 @@
-! <CONTACT EMAIL="Charles.Stock@noaa.gov"> Charles Stock
-! </CONTACT>
-!
-! <OVERVIEW>
-! This module contains the generic version of the version 3 of the Carbon Ocean
-! Biogeochemistry and Lower Trophics model (COBALTv3.0)
-! </OVERVIEW>
-!<DESCRIPTION>
-!  COBALT simulates plankton food webs and the cycling of carbon, nitrogen,
-!  phosphorus, iron, silica, calcium carbonate, and lithogenic material in ocean
-!  and coastal environments.  COBALT's construction attempts to balance the need
-!  for sufficient complexity to resolve prominent global and regional patterns
-!  in these processes, while being mindful of computational efficiency and
-!  the desire to rely on dynamics which are well supported by empirical studies.
-!  In some cases, this means forgoing less understood interactions of uncertain
-!  quantitative importance to establish a robustly supported baseline simulation
-!  until constraints improve.  The COBALT code releases reflect this approach:
-!
-!  COBALTv1 (Stock et al., 2014) augmented the plankton foodweb dynamics of
-!  GFDL's prior biogeochemical model (TOPAZ, Dunne et al., 2013) by adding 3
-!  zooplankton groups, free living bacteria, and expanding the resolution of
-!  dissolved organic material to include labile, semi-labile and semi-refractory
-!  forms.  This produced quantitatively credible estimates of energy flows through
-!  plankton foodwebs.
-!
-!  COBALTv2 served as the ocean biogeochemical component of GFDL's CMIP6 earth
-!  system model (Stock et al., 2020).  The structure of COBALTv2 was largely
-!  analogous to COBALTv1, but notable adjustments included: 1) the addition of
-!  temperature and O2-dependent particle remineralization following Laufkotter
-!  et al. (2017); 2) retuning of ammonia dynamics and the addition air-sea ammonia
-!  exchanges (Paulot et al., 2020); 3) adjustments to iron sources and
-!  scavenging; and 4) movement of the default carbon chemistry to MOCSY.
-!
-!  COBALTv3 (Stock et al., submitted) was developed to enhance the robustness of COBALT
-!  across open ocean and coastal regions.  It now divides the phytoplankton community
-!  into 3 rather than 2 size classes to better resolve phytoplankton communities from
-!  oligotrophic gyres to highly productive coastal regions (Van Oostende et al., 2018).
-!  Thus, COBALTv3 includes small, medium, and large phytoplankton, and a large diazotroph.
-!  The flexibility of plankton foodweb links has been increased and relevant parameters
-!  recalibrated to better reflect observed constraints.  Dynamic P:N stoichiometry has
-!  been added using a truncated variant of the Galbraith and Martiny (2015) scheme
-!  to allow COBALT to better integrate riverine inputs with highly perturbed stoichiometry
-!  (Ross et al., 2023).  Photoacclimation and photoadaptation dynamics have been enhanced
-!  to better represent observed chlorophyll patterns (Stock et al., submitted).
-!  Direct phytoplankton sinking has been added and phytoplankton loss terms generalized.
-!  Temperature dependence has been added to the decay of dissolved organic material to
-!  improve seasonal dynamics.
-!
-!  COBALTv3 now includes 42 prognostic state variables:
-!
-!       alk: alkalinity
-!       cadet_arag: calcium carbonate detritus (aragonite)
-!       cadet_calc: calcium carbonate detritus (calcite)
-!       dic: dissolved inorganic carbon
-!       fed: dissolved iron
-!       fedi: diazotroph iron
-!       felg: large phytoplankton iron
-!       femd: medium phytoplankton iron
-!       fesm: small phytoplankton iron
-!       fedet: iron detritus
-!       ldon: labile dissolved organic nitrogen
-!       ldop: labile dissolved organic phosphorous
-!       lith: lithogenic aluminosilicate particles
-!       lithdet: lithogenic detritus
-!       nbact: bacteria
-!       ndet: nitrogen detritus
-!       ndet_fast: fast-sinking nitrogen detritus
-!       ndi: diazotroph nitrogen
-!       nlg: large, coastal or chain-forming, phytoplankton nitrogen
-!       nmd: medium phytoplankton nitrogen
-!       nsm: high-light adapted small phytoplankton nitrogen
-!       nh4: ammonia
-!       no3: nitrate
-!       o2: oxygen
-!       pdet: phosphorous detritus
-!       pdet_fast: fast-sinking phosphorous detritus
-!       pdi: diazotroph phosphorus
-!       plg: large phytoplankton phosphorus
-!       pmd: medium phytoplankton phosphorus
-!       psm: small phytoplankton phosphorus
-!       po4: phosphate
-!       srdon: semi-refractory dissolved organic nitrogen
-!       srdop: semi-refractory dissolved organic phosphorous
-!       sldon: semi-labile dissolved organic nitrogen
-!       sldop: semi-labile dissolved organic phosphorous
-!       sidet: silica detritus
-!       silg: large phytoplankton silica
-!       simd: medium phytoplankton silica
-!       sio4: silicate
-!       nsmz: small zooplankton nitrogen
-!       nmdz: medium zooplankton nitrogen
-!       nlgz: large zooplankton nitrogen
-!
-!<NAMELIST NAME="generic_COBALT_nml">
-!
-!  <DATA NAME="do_14c" TYPE="logical">
-!  If true, then simulate radiocarbon. Includes 2 prognostic tracers, DI14C
-! and DO14C. Requires that do_carbon = .true. Note that 14C is not taken up
-! by CaCO3 at the current time, but cycles only through the soft tissue.
-! This is a mistake that will be fixed later.
-!  </DATA>
-!
-!</NAMELIST>
-!
-!</DESCRIPTION>
-!
-! <INFO>
-! <REFERENCE>
-!
-! Stock et al. (2025). https://doi.org/10.1029/2024MS004701
-!
-! Stock et al. (2020). https://doi.org/10.1029/2019MS002043
-! Stock, Dunne and John (2014). https://doi.org/10.1016/j.pocean.2013.07.001
-! Dunne et al. (2013). https://doi.org/10.1175/JCLI-D-12-00150.1
-! Ross et al. (2023) https://doi.org/10.5194/gmd-16-6943-2023
-! Van Oostende et al. (2018) https://doi.org/10.1016/j.pocean.2018.10.009
-! Laufkotter et al. (2017)  https://doi.org/10.1002/2017GB005643
-! Paulot et al. (2020)  https://doi.org/10.1029/2019MS002026
-! Galbraith and Martiny (2015) https://doi.org/10.1073/pnas.1423917112
-!
-! </REFERENCE>
-! <DEVELOPER_NOTES>
-! </DEVELOPER_NOTES>
-! </INFO>
-!----------------------------------------------------------------
-
 module generic_COBALT
+   !! author: Charles Stock
+   !! This module contains the generic version of the version 3 of the Carbon Ocean
+   !! Biogeochemistry and Lower Trophics model (COBALTv3.0)
+   !!  COBALT simulates plankton food webs and the cycling of carbon, nitrogen,
+   !! phosphorus, iron, silica, calcium carbonate, and lithogenic material in ocean
+   !! and coastal environments.  COBALT's construction attempts to balance the need
+   !! for sufficient complexity to resolve prominent global and regional patterns
+   !! in these processes, while being mindful of computational efficiency and
+   !! the desire to rely on dynamics which are well supported by empirical studies.
+   !! In some cases, this means forgoing less understood interactions of uncertain
+   !! quantitative importance to establish a robustly supported baseline simulation
+   !! until constraints improve.  The COBALT code releases reflect this approach:
+   !!
+   !! COBALTv1 [@stock2014] augmented the plankton foodweb dynamics of
+   !! GFDL's prior biogeochemical model (TOPAZ) [@dunne2013] by adding 3
+   !! zooplankton groups, free living bacteria, and expanding the resolution of
+   !! dissolved organic material to include labile, semi-labile and semi-refractory
+   !! forms.  This produced quantitatively credible estimates of energy flows through
+   !! plankton foodwebs.
+   !!
+   !! COBALTv2 served as the ocean biogeochemical component of GFDL's CMIP6 earth
+   !! system model [@stock2020].  The structure of COBALTv2 was largely
+   !! analogous to COBALTv1, but notable adjustments included: 1) the addition of
+   !! temperature and O2-dependent particle remineralization following Laufkötter
+   !! et al. [-@laufkotter2017]; 2) retuning of ammonia dynamics and the addition air-sea ammonia
+   !! exchanges [@paulot2020]; 3) adjustments to iron sources and
+   !! scavenging; and 4) movement of the default carbon chemistry to MOCSY.
+   !!
+   !! COBALTv3 [@stock2025] was developed to enhance the robustness of COBALT
+   !! across open ocean and coastal regions.  It now divides the phytoplankton community
+   !! into 3 rather than 2 size classes to better resolve phytoplankton communities from
+   !! oligotrophic gyres to highly productive coastal regions [@vanoostende2018].
+   !! Thus, COBALTv3 includes small, medium, and large phytoplankton, and a large diazotroph.
+   !! The flexibility of plankton foodweb links has been increased and relevant parameters
+   !! recalibrated to better reflect observed constraints.  Dynamic P:N stoichiometry has
+   !! been added using a truncated variant of the Galbraith and Martiny [-@galbraith2015] scheme
+   !! to allow COBALT to better integrate riverine inputs with highly perturbed stoichiometry
+   !! [@ross2023].  Photoacclimation and photoadaptation dynamics have been enhanced
+   !! to better represent observed chlorophyll patterns [@stock2025].
+   !! Direct phytoplankton sinking has been added and phytoplankton loss terms generalized.
+   !! Temperature dependence has been added to the decay of dissolved organic material to
+   !! improve seasonal dynamics.
+   !!
+   !! COBALTv3 now includes 42 prognostic state variables:
+   !!
+   !! - alk: alkalinity
+   !! - cadet_arag: calcium carbonate detritus (aragonite)
+   !! - cadet_calc: calcium carbonate detritus (calcite)
+   !! - dic: dissolved inorganic carbon
+   !! - fed: dissolved iron
+   !! - fedi: diazotroph iron
+   !! - felg: large phytoplankton iron
+   !! - femd: medium phytoplankton iron
+   !! - fesm: small phytoplankton iron
+   !! - fedet: iron detritus
+   !! - ldon: labile dissolved organic nitrogen
+   !! - ldop: labile dissolved organic phosphorous
+   !! - lith: lithogenic aluminosilicate particles
+   !! - lithdet: lithogenic detritus
+   !! - nbact: bacteria
+   !! - ndet: nitrogen detritus
+   !! - ndet_fast: fast-sinking nitrogen detritus
+   !! - ndi: diazotroph nitrogen
+   !! - nlg: large, coastal or chain-forming, phytoplankton nitrogen
+   !! - nmd: medium phytoplankton nitrogen
+   !! - nsm: high-light adapted small phytoplankton nitrogen
+   !! - nh4: ammonia
+   !! - no3: nitrate
+   !! - o2: oxygen
+   !! - pdet: phosphorous detritus
+   !! - pdet_fast: fast-sinking phosphorous detritus
+   !! - pdi: diazotroph phosphorus
+   !! - plg: large phytoplankton phosphorus
+   !! - pmd: medium phytoplankton phosphorus
+   !! - psm: small phytoplankton phosphorus
+   !! - po4: phosphate
+   !! - srdon: semi-refractory dissolved organic nitrogen
+   !! - srdop: semi-refractory dissolved organic phosphorous
+   !! - sldon: semi-labile dissolved organic nitrogen
+   !! - sldop: semi-labile dissolved organic phosphorous
+   !! - sidet: silica detritus
+   !! - silg: large phytoplankton silica
+   !! - simd: medium phytoplankton silica
+   !! - sio4: silicate
+   !! - nsmz: small zooplankton nitrogen
+   !! - nmdz: medium zooplankton nitrogen
+   !! - nlgz: large zooplankton nitrogen
+   !!
 
   use coupler_types_mod, only: coupler_2d_bc_type
   use field_manager_mod, only: fm_string_len
