@@ -4104,7 +4104,7 @@ contains
        zoo(m)%jingest_sio2(i,j,k) = ingest_matrix(m,PR_MDP)*prey_si2n_vec(PR_MDP)
 
        !! Medium zooplankton consume diazotrophs (`PR_DIAZ`), large phytoplankton (`PR_LGP`), medium phytoplankton (`PR_MDP`),
-       !! small phytoplankton (`PR_SMP)`, and small zooplankton (`PR_SMZ`).  Switching occurs between herbivory and carnivory.
+       !! small phytoplankton (`PR_SMP`), and small zooplankton (`PR_SMZ`).  Switching occurs between herbivory and carnivory.
        !!
        !!@note
        !! The default availability of large phytoplankton to medium zooplankton is 0.  The optimal setting for
