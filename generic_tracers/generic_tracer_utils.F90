@@ -2344,7 +2344,7 @@ contains
     !! If true, then the work arrays can be used in subsequent calls for the same depth to save some
     !! computation. Care should be taken that if iniitialized is set to true that the same depth range is used.
     real,    dimension(ilb:,jlb:),   intent(out)                :: flux !! Resulting flux at specified depth.
-    character(len=*),                intent(in),    optional    :: caller !! !! String indicating caller of this routine, for traceback.
+    character(len=*),                intent(in),    optional    :: caller !! String indicating caller of this routine, for traceback.
 
 !-----------------------------------------------------------------------
 !     local parameters
