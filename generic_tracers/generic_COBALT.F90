@@ -785,7 +785,7 @@ contains
     !! N when P is scarce (i.e., P frugality), but limits luxury uptake in PO4-rich regions and the low N:P ratios this
     !! would generate.  Uncertainty in N:P ratios in such high PO4 concentrations is large.  Most of the highest PO4
     !! concentrations in regional and global applications, furthermore, co-occur with even higher N concentrations.
-    !! River mouths, for example, are often high N:P.  Other observations [@sterner2003; @hall2005]
+    !! River mouths, for example, are often high N:P.  Other observations [@sterner2002; @hall2005]
     !! suggest that such conditions would prevent low N:P ratios and support the truncation of those values in the
     !! default settings.
     !!
@@ -4736,7 +4736,7 @@ contains
     !!### 4.4: Remineralization of nitrogen, phosphorus and iron detritus
     !!
     !! Remineralization is handled following Laufkotter et al. [-@laufkotter2017], which combines a "mineral protection/ballasting"
-    !! scheme [@armstrong2001; @klaas2002] with temperature and oxygen dependence calibrated to
+    !! scheme [@armstrong2002; @klaas2002] with temperature and oxygen dependence calibrated to
     !! a global database of sediment trap profiles.  As described in Laufkotter, remineralization under aerobic
     !! conditions was ramped up over a depth scale of 50m. This prevents excessive recycling in warm surface waters and
     !! is attributed to the colonization of the particles as they traverse the euphotic zone.
