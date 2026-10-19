@@ -1,5 +1,5 @@
 module COBALT_reg_diag
-  !! The COBALT_send_diag module contains a subroutine to handle sending diagnostics.
+  !! The COBALT_reg_diag module contains a subroutine to handle registering diagnostics.
 
   use cobalt_types
   use time_manager_mod,  only: time_type
