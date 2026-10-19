@@ -3304,9 +3304,9 @@ contains
   subroutine g_tracer_get_obc_segment_props(g_tracer_list, name, obc_has, src_file, src_var_name,lfac_in,lfac_out)
     type(g_tracer_type),      pointer    :: g_tracer_list,g_tracer
     character(len=*),         intent(in) :: name
-    logical,                  intent(out):: obc_has                !<.true. if This tracer has OBC
-    character(len=*),optional,intent(out):: src_file, src_var_name !<OBC source file and variable in file
-    real,            optional,intent(out):: lfac_in,lfac_out       !<OBC reservoir inverse lengthscale factor
+    logical,                  intent(out):: obc_has                !! .true. if this tracer has OBC
+    character(len=*),optional,intent(out):: src_file, src_var_name !! OBC source file and variable in file
+    real,            optional,intent(out):: lfac_in,lfac_out       !! OBC reservoir inverse lengthscale factor
     character(len=fm_string_len), parameter :: sub_name = 'g_tracer_get_obc_segment_props'
 
     if(.NOT. associated(g_tracer_list)) call mpp_error(FATAL, trim(sub_name)//&
@@ -3331,33 +3331,33 @@ contains
        cmor_long_name, cmor_units, cmor_standard_name, cell_methods, &
        x_cell_method, y_cell_method, v_cell_method, diag_CS)
 
-    integer :: g_register_diag_field !< An integer handle for a diagnostic array.
-    character(len=*), intent(in) :: module_name !< Name of this module, usually "ocean_model" or "ice_shelf_model"
-    character(len=*), intent(in) :: field_name !< Name of the diagnostic field
-    type(time_type),intent(in)  :: init_time !< Time at which a field is first available?
+    integer :: g_register_diag_field !! An integer handle for a diagnostic array.
+    character(len=*), intent(in) :: module_name !! Name of this module, usually "ocean_model" or "ice_shelf_model"
+    character(len=*), intent(in) :: field_name !! Name of the diagnostic field.
+    type(time_type),intent(in)  :: init_time !! Time at which a field is first available?
     type(g_diag_ctrl),optional, pointer :: diag_CS
     integer,          optional, intent(in) :: axes(:)
-    character(len=*), optional, intent(in) :: long_name !< Long name of a field.
-    character(len=*), optional, intent(in) :: units !< Units of a field.
-    character(len=*), optional, intent(in) :: standard_name !< Standardized name associated with a field
-    real,             optional, intent(in) :: missing_value !< A value that indicates missing values.
-    real,             optional, intent(in) :: range(2) !< Valid range of a variable (not used in MOM?)
-    logical,          optional, intent(in) :: mask_variant !< If true a logical mask must be provided with post_data calls (not used in MOM?)
-    logical,          optional, intent(in) :: verbose !< If true, FMS is verbose (not used in MOM?)
-    logical,          optional, intent(in) :: do_not_log !< If true, do not log something (not used in MOM?)
-    character(len=*), optional, intent(out):: err_msg !< String into which an error message might be placed (not used in MOM?)
-    character(len=*), optional, intent(in) :: interp_method !< no clue (not used in MOM?)
-    integer,          optional, intent(in) :: tile_count !< no clue (not used in MOM?)
-    character(len=*), optional, intent(in) :: cmor_field_name !< CMOR name of a field
-    character(len=*), optional, intent(in) :: cmor_long_name !< CMOR long name of a field
-    character(len=*), optional, intent(in) :: cmor_units !< CMOR units of a field
-    character(len=*), optional, intent(in) :: cmor_standard_name !< CMOR standardized name associated with a field
-    character(len=*), optional, intent(in) :: cell_methods !< String to append as cell_methods attribute. Use '' to have no attribute.
+    character(len=*), optional, intent(in) :: long_name !! Long name of a field.
+    character(len=*), optional, intent(in) :: units !! Units of a field.
+    character(len=*), optional, intent(in) :: standard_name !! Standardized name associated with a field.
+    real,             optional, intent(in) :: missing_value !! A value that indicates missing values.
+    real,             optional, intent(in) :: range(2) !! Valid range of a variable (not used in MOM?)
+    logical,          optional, intent(in) :: mask_variant !! If true a logical mask must be provided with post_data calls (not used in MOM?)
+    logical,          optional, intent(in) :: verbose !! If true, FMS is verbose (not used in MOM?)
+    logical,          optional, intent(in) :: do_not_log ! If true, do not log something (not used in MOM?)
+    character(len=*), optional, intent(out):: err_msg !! String into which an error message might be placed (not used in MOM?)
+    character(len=*), optional, intent(in) :: interp_method ! no clue (not used in MOM?)
+    integer,          optional, intent(in) :: tile_count ! no clue (not used in MOM?)
+    character(len=*), optional, intent(in) :: cmor_field_name !! CMOR name of a field
+    character(len=*), optional, intent(in) :: cmor_long_name !! CMOR long name of a field
+    character(len=*), optional, intent(in) :: cmor_units !! CMOR units of a field
+    character(len=*), optional, intent(in) :: cmor_standard_name !! CMOR standardized name associated with a field
+    character(len=*), optional, intent(in) :: cell_methods !! String to append as cell_methods attribute. Use '' to have no attribute.
     !! If present, this overrides the default constructed from the default for
     !! each individual axis direction.
-    character(len=*), optional, intent(in) :: x_cell_method !< Specifies the cell method for the x-direction. Use '' have no method.
-    character(len=*), optional, intent(in) :: y_cell_method !< Specifies the cell method for the y-direction. Use '' have no method.
-    character(len=*), optional, intent(in) :: v_cell_method !< Specifies the cell method for the vertical direction. Use '' have no method.
+    character(len=*), optional, intent(in) :: x_cell_method !! Specifies the cell method for the x-direction. Use '' have no method.
+    character(len=*), optional, intent(in) :: y_cell_method !! Specifies the cell method for the y-direction. Use '' have no method.
+    character(len=*), optional, intent(in) :: v_cell_method !! Specifies the cell method for the vertical direction. Use '' have no method.
     ! Local variables
     character(len=fm_string_len), parameter :: sub_name = 'g_register_diag_field'
 
