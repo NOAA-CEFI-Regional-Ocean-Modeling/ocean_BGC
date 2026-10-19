@@ -283,7 +283,8 @@ contains
     type(g_tracer_type), pointer :: tracer_list !! Pointer to the head of generic tracer list.
     logical          ,intent(in) :: force_update_fluxes !! Force fluxes to be updated every time step.
     !! There are situations where the column_physics (update_from_source) is not called every timestep
-    !! such as when MOM6 THERMO_SPANS_COUPLING=True, yet we want the fluxes to be updated every timestep
+    !! such as when MOM6 THERMO_SPANS_COUPLING=True, yet we want the fluxes to be updated every timestep.
+    !! In that case we can force an update by setting the namelist `generic_tracer_nml:force_update_fluxes=.true.`
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_COBALT_init'
 
