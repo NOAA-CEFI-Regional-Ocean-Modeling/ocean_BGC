@@ -556,6 +556,8 @@ subroutine initialize_restart_fields(restart, h, dz, G, GV, US, param_file, CS)
       endif
 
       if (restart) then
+        ! 3d fields without a legacy name should already have been initialized in MOM, so
+        ! they will likely cycle here
         if (associated(rf%field_3d)) then
           initialized = query_initialized(rf%field_3d, rf%name, CS%restart_CSp)
         else
@@ -563,6 +565,8 @@ subroutine initialize_restart_fields(restart, h, dz, G, GV, US, param_file, CS)
         endif
         if (initialized) cycle
 
+        ! This block exists to support fields whose names may have changed
+        ! ( i.e 2d fields that were once 3d )
         found = .false.
         if (len_trim(rf%legacy_name) > 0) then
           if (.not.have_dirs) then
