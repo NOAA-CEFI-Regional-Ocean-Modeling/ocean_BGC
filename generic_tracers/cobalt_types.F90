@@ -564,6 +564,12 @@ module cobalt_types
           hp_ipa_lgz,       & ! "  "  "  "  "  "  "  "  "   large zooplankton to hp
           hp_ipa_det,       & ! "  "  "  "  "  "  "  "  "   detritus to hp
           hp_phi_det,       & ! fraction of ingested N to detritus
+          hp_phi_ldon,      & ! fraction of ingested N to labile dissolved organic nitrogen
+          hp_phi_sldon,     & ! fraction of ingested N to semi-labile dissolved organic nitrogen
+          hp_phi_srdon,     & ! fraction of ingested N to semi-refractory dissolved organic nitrogen
+          hp_phi_ldop,      & ! fraction of ingested P to labile dissolved organic phosphorus
+          hp_phi_sldop,     & ! fraction of ingested P to semi-labile dissolved organic phosphorus
+          hp_phi_srdop,     & ! fraction of ingested P to semi-refractory dissolved organic phosphorus
           frac_fastsinking    ! fraction of higher predator detritus that is fast-sinking
 
      real, dimension(3)                    :: total_atm_co2
