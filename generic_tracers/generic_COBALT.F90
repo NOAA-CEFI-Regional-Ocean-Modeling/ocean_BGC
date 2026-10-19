@@ -1444,11 +1444,13 @@ contains
                    "innate availability of bacteria to higher predator feeding (0-1)", units="none", default=0.0)
     call get_param(param_file, "generic_COBALT", "hp_ipa_det", cobalt%hp_ipa_det, &
                    "innate availability of detritus to higher predator feeding (0-1)", units="none", default=0.0)
-    ! The material ingested by higher predators is partitioned between detritus, remineralization, and dissolved organic nitrogen
+    ! Material ingested by higher predators is partitioned between detritus, remineralization, and dissolved organic
+    ! nitrogen and phosphorus (DON, DOP):
     ! Remineralization = 1.0 - hp_phi_det - hp_phi_ldon - hp_phi_sldon - hp_phi_srdon
     ! hp_phi_det + hp_phi_ldon + hp_phi_sldon + hp_phi_srdon must equal 0.35 to maintain the assimilation efficiency
-    ! The DON pathways were added to generalize the higher predator ingestion carbon partitioning for future experiments
-    ! and are set to zero by default to avoid changing answers
+    ! The same relationships apply to P, using hp_phi_ldop, hp_phi_sldop, and hp_phi_srdop.
+    ! The DON/DOP pathways generalize higher predator egestion for future experiments and default to zero to avoid
+    ! changing answers. When used, set both DON and DOP fractions; they need not be equal.
     call get_param(param_file, "generic_COBALT", "hp_phi_det", cobalt%hp_phi_det, &
                    "fraction of ingestion by higher predators to detritus", units="none", default=0.35)
     call get_param(param_file, "generic_COBALT", "hp_phi_ldon", cobalt%hp_phi_ldon, &
@@ -4638,8 +4640,9 @@ contains
           cobalt%jprod_pdet(i,j,k) = cobalt%jprod_pdet(i,j,k) + cobalt%hp_phi_det*cobalt%hp_jingest_p(i,j,k)
        endif
        
-       ! A portion of egestion will be released into dissolved organic nitrogen and phosphorus pools
-       ! hp_phi_det + hp_phi_ldon + hp_phi_sldon + hp_phi_srdon = 0.35 (total egestion)
+       ! A portion of egestion is released into dissolved organic nitrogen and phosphorus pools. Total egestion:
+       ! N: hp_phi_det + hp_phi_ldon + hp_phi_sldon + hp_phi_srdon = 0.35
+       ! P: hp_phi_det + hp_phi_ldop + hp_phi_sldop + hp_phi_srdop = 0.35
        cobalt%jprod_ldon(i,j,k) = cobalt%jprod_ldon(i,j,k) + cobalt%hp_phi_ldon*cobalt%hp_jingest_n(i,j,k)
        cobalt%jprod_sldon(i,j,k) = cobalt%jprod_sldon(i,j,k) + cobalt%hp_phi_sldon*cobalt%hp_jingest_n(i,j,k)
        cobalt%jprod_srdon(i,j,k) = cobalt%jprod_srdon(i,j,k) + cobalt%hp_phi_srdon*cobalt%hp_jingest_n(i,j,k)
@@ -6549,7 +6552,7 @@ contains
        enddo   !} n
 
        cobalt%hp_jingest_n_100(i,j) = cobalt%hp_jingest_n(i,j,1)*rho_dzt(i,j,1)
-       cobalt%hp_jremin_n_100(i,j) =  cobalt%hp_jingest_n(i,j,1)*rho_dzt(i,j,1)*(1.0-cobalt%hp_phi_det)
+       cobalt%hp_jremin_n_100(i,j) =  cobalt%hp_jingest_n(i,j,1)*rho_dzt(i,j,1)*(1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)
        cobalt%hp_jprod_ndet_100(i,j) =  cobalt%hp_jingest_n(i,j,1)*rho_dzt(i,j,1)*cobalt%hp_phi_det
 
        bact(1)%jprod_n_100(i,j) = bact(1)%jprod_n(i,j,1) * rho_dzt(i,j,1)
@@ -6641,7 +6644,7 @@ contains
              cobalt%hp_jingest_n_100(i,j) = cobalt%hp_jingest_n_100(i,j) + cobalt%hp_jingest_n(i,j,k)* &
                  rho_dzt(i,j,k)
              cobalt%hp_jremin_n_100(i,j) = cobalt%hp_jremin_n_100(i,j) + cobalt%hp_jingest_n(i,j,k)* &
-                 (1.0-cobalt%hp_phi_det)*rho_dzt(i,j,k)
+                 (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*rho_dzt(i,j,k)
              cobalt%hp_jprod_ndet_100(i,j) = cobalt%hp_jprod_ndet_100(i,j) + cobalt%hp_jingest_n(i,j,k)* &
                  cobalt%hp_phi_det*rho_dzt(i,j,k)
 
@@ -6730,7 +6733,7 @@ contains
            cobalt%hp_jingest_n_100(i,j) = cobalt%hp_jingest_n_100(i,j) + cobalt%hp_jingest_n(i,j,k_100)* &
                drho_dzt
            cobalt%hp_jremin_n_100(i,j) = cobalt%hp_jremin_n_100(i,j) + cobalt%hp_jingest_n(i,j,k_100)* &
-               (1.0-cobalt%hp_phi_det)*drho_dzt
+               (1.0-cobalt%hp_phi_det-cobalt%hp_phi_ldon-cobalt%hp_phi_sldon-cobalt%hp_phi_srdon)*drho_dzt
            cobalt%hp_jprod_ndet_100(i,j) = cobalt%hp_jprod_ndet_100(i,j) + cobalt%hp_jingest_n(i,j,k_100)* &
                cobalt%hp_phi_det*drho_dzt
 
