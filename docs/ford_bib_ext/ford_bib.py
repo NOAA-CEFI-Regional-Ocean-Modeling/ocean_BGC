@@ -57,6 +57,7 @@ class AuthorYearBibliography(Bibliography):
     def label(self, citekey: str, suppress_author: bool = False) -> str:
         found = self.names_and_year(citekey)
         if found is None:
+            print(f'::warning::Did not find a citation for {citekey}')
             return citekey
         names, year = found
         return year if suppress_author else f'{names}, {year}'
