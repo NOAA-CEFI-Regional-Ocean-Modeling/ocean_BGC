@@ -27,7 +27,7 @@ Use `scale=` for unit conversion. Provide `default=` when sensible; use `fail_if
 ## Git
 
 - Work on a fork
-- Branch from the fork's default branch (e.g., `dev/gfdl`, `dev/cefi`) for all new work
+- Branch from the fork's default branch (e.g., `dev/cefi`) for all new work
 - Never rebase a shared branch
 
 ## Style
