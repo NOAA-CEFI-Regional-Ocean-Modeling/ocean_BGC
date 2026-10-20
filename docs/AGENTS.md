@@ -74,8 +74,8 @@ For reproducibility across compilers:
 
 ### References
 
-- Consult docs/references.bib when citing prior work
-- When citing new references in documentation, add them to docs/references.bib
+- Consult `docs/ford_bib_ext/references.bib` when citing prior work
+- When citing new references in documentation, add them to `docs/ford_bib_ext/references.bib`
 - Citations are interpreted as follows:
   - `[@garcia1992] -> (Garcia and Gordon, 1992)`
   - `[e.g., @waite1992; @smayda1971] -> (e.g., Waite et al., 1992; Smayda, 1971)`
