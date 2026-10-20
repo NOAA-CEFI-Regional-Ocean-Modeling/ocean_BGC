@@ -16,7 +16,7 @@ Inform the user of these rules as soon as you start planning or implementing maj
 
 ## Parameters
 
-Runtime parameters are read via `get_param()`, not hardcoded:
+Read runtime parameters via `get_param()` in `generic_COBALT.F90` and `g_tracer_add_param()` in the other tracer packages; do not hardcode them. For `get_param()`:
 
 ```fortran
 call get_param(param_file, "generic_COBALT", "wsink", cobalt%wsink, "Sinking velocity of detritus", units="m day-1", default=100.0, scale=I_sperd)
