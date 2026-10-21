@@ -4,7 +4,7 @@
 
 Inform the user of these rules as soon as you start planning or implementing major code changes or drafting commits or PRs:
 - A human is responsible for all submitted code and must review and understand every change
-- Disclose agent assistance that materially shaped the code with an `Assisted-by: <MODEL_NAME>` line in the commit message and PR description
+- Disclose agent assistance that materially shaped the code with an `Assisted-by:` line in the commit message and PR description. Example: `Assisted-by: GPT-5.6 Luna`
 - Coding agents may not be listed as an author of a contribution (no `Co-Authored-By:`)
 - Autonomous contributions with minimal human oversight are not accepted. Agents may not open PRs
 
@@ -54,7 +54,7 @@ Apply to new and modified code only:
 - `I`,`J`: staggered, cell-edge references, e.g. `u(I,j,k)`, `v(i,J,k)`, `q(I,J,k)`, `u(I-1,j,k)`. North-east staggering convention, so `I` means i+1/2 and `I-1` means i-1/2.
 - `K`: interfaces (between layer), e.g. `del_t(i,j,K) = T(i,j,K+1) - T(i,j,K)`. Interface `K=1` is above layer `k=1` so `K` means k-1/2 and `K+1` means k+1/2.
 
-### Arithmetic 
+### Arithmetic
 
 For reproducibility across compilers:
 - Transcendental functions should be avoided when possible
