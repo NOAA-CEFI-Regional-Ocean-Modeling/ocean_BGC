@@ -10,7 +10,7 @@ Inform the user of these rules as soon as you start planning or implementing maj
 
 ## Repository
 
-- Some files, including `generic_COBALT.F90`, `cobalt_reg_diag.F90`, and `cobalt_send_diag.F90`, are large and should be searched instead of read in full
+- Some files, including those for COBALT, BLING, and generic_tracer_utils.F90, are large and should be searched instead of read in full
 - Do not edit the `mocsy` submodule
 - Ignore `.archive` files
 
