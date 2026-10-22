@@ -1,3 +1,8 @@
+# Documentation build files
+docs/build/
+.venv/
+*.pyc
+
 # Assorted coding agents
 .claude/
 .codex/
