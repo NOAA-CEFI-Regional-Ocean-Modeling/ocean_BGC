@@ -1,0 +1,6 @@
+# Assorted coding agents
+.claude/
+.codex/
+.gemini/
+.github/copilot-instructions.md
+.github/instructions/
