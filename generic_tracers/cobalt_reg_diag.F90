@@ -1496,13 +1496,43 @@ module COBALT_reg_diag
          init_time, "Instantaneous light, avg over photoadapt layer", "W m-2", &
          missing_value = missing_value1)
 
-    !vardesc_temp = vardesc("irr_aclm_z","Acclimation irradiance with vertical structure preserved in mixed layer",'h','L','s','W m-2','f')
-    !cobalt%id_irr_aclm_z = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-    !     init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
-    !
-    !vardesc_temp = vardesc("irr_aclm","Acclimation irradiance",'h','L','s','W m-2','f')
-    !cobalt%id_irr_aclm = register_diag_field(package_name, vardesc_temp%name, axes(1:3),&
-    !     init_time, vardesc_temp%longname,vardesc_temp%units, missing_value = missing_value1)
+    ! These fields were saved as diagnostic tracers by older versions, which output them with the same
+    ! names, long names, units and missing value as below.
+    cobalt%id_irr_aclm = register_diag_field(package_name, "irr_aclm", axes(1:3), &
+         init_time, "photoacclimation irradiance", "Watts/m^2", missing_value = -1.0e+20)
+
+    cobalt%id_irr_aclm_z = register_diag_field(package_name, "irr_aclm_z", axes(1:3), &
+         init_time, "depth-resolved photoacclim irrad", "Watts/m^2", missing_value = -1.0e+20)
+
+    cobalt%id_htotal = register_diag_field(package_name, "htotal", axes(1:3), &
+         init_time, "H+ ion concentration", "mol/kg", missing_value = -1.0e+20)
+
+    ! The mu_mem_n* and pcmlim_aclm_n* diagnostics duplicate mu_mem_* and pcmlim_aclm_* (id_f_mu_mem
+    ! and id_f_pcmlim_aclm above), which output the same arrays. They are kept so that existing
+    ! diag_tables still find them.
+    phyto(DIAZ)%id_f_mu_mem_n = register_diag_field(package_name, "mu_mem_ndi", axes(1:3), &
+         init_time, "Growth memory", "sec-1", missing_value = -1.0e+20)
+
+    phyto(LGP)%id_f_mu_mem_n = register_diag_field(package_name, "mu_mem_nlg", axes(1:3), &
+         init_time, "Growth memory", "sec-1", missing_value = -1.0e+20)
+
+    phyto(MDP)%id_f_mu_mem_n = register_diag_field(package_name, "mu_mem_nmd", axes(1:3), &
+         init_time, "Growth memory", "sec-1", missing_value = -1.0e+20)
+
+    phyto(SMP)%id_f_mu_mem_n = register_diag_field(package_name, "mu_mem_nsm", axes(1:3), &
+         init_time, "Growth memory", "sec-1", missing_value = -1.0e+20)
+
+    phyto(SMP)%id_f_pcmlim_aclm_n = register_diag_field(package_name, "pcmlim_aclm_nsm", axes(1:3), &
+         init_time, "Nut*Temp Lim memory, small phytoplankton", "dimensionless", missing_value = -1.0e+20)
+
+    phyto(MDP)%id_f_pcmlim_aclm_n = register_diag_field(package_name, "pcmlim_aclm_nmd", axes(1:3), &
+         init_time, "Nut*Temp Lim memory, medium phytoplankton", "dimensionless", missing_value = -1.0e+20)
+
+    phyto(LGP)%id_f_pcmlim_aclm_n = register_diag_field(package_name, "pcmlim_aclm_nlg", axes(1:3), &
+         init_time, "Nut*Temp Lim memory, large phytoplankton", "dimensionless", missing_value = -1.0e+20)
+
+    phyto(DIAZ)%id_f_pcmlim_aclm_n = register_diag_field(package_name, "pcmlim_aclm_ndi", axes(1:3), &
+         init_time, "Nut*Temp Lim memory, diazotroph", "dimensionless", missing_value = -1.0e+20)
 
     !
     ! Nitrification/Denitrification/Anammox diagnostics
