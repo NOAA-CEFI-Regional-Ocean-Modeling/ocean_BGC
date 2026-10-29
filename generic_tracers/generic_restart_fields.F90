@@ -119,6 +119,8 @@ contains
     logical :: enforce_src_info  ! The package default for whether initial conditions must be set
     logical :: requires_src_info ! If true, this field must have its initial condition set
 
+    ! g_tracer_add only uses this default for the COBALT, abiotic and BLING packages, and otherwise
+    ! sets requires_src_info to false. This should be revisited if another package uses this module.
     call g_tracer_add_param('enforce_src_info', enforce_src_info, .true., do_not_log=.true.)
     call g_tracer_add_param(trim(name)//"_requires_src_info", requires_src_info, enforce_src_info)
     call g_tracer_add_param(trim(name)//"_requires_restart", rf%init_from_ic, .true.)
