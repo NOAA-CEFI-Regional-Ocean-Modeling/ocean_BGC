@@ -6768,7 +6768,9 @@ contains
   !   The sediment CaCO3 (cased) is a sediment state variable.
   !   The bottom fluxes to the sediments (*_btf) need to be saved because the sediment calculations
   !   in update_from_source use the fluxes computed at the end of the previous step in update_from_bottom.
-  !   Older versions saved these 2D fields as 3D diagnostic tracers, whose names are given as legacy names.
+  !   Older versions saved these 2D fields as 3D diagnostic tracers. They are still saved as 3D variables
+  !   with the same names, so that restart files can be used by both older and newer versions
+  !   (see generic_restart_fields).
   !   The 3D fields are the initial guess for the carbonate solver (htotal), the photoacclimation
   !   irradiances (irr_aclm, irr_aclm_z) and the phytoplankton growth and nutrient limitation memories
   !   (mu_mem_*, pcmlim_aclm_*). They keep the names of the 3D diagnostic tracers that older versions saved.
@@ -6782,57 +6784,57 @@ contains
     ! so it is set back to COBALT's list here.
     call g_tracer_start_param_list(package_name)
 
-    call g_restart_field_add(fields, cobalt%f_irr_aclm_sfc, 'irr_aclm_sfc_2d', &
-                             'Surface photoacclimation irradiance', 'Watts/m^2', legacy_name='irr_aclm_sfc')
-    call g_restart_field_add(fields, cobalt%f_cased, 'cased_2d', &
-                             'Sediment CaCO3', 'mol m-3', legacy_name='cased')
+    call g_restart_field_add(fields, cobalt%f_irr_aclm_sfc, 'irr_aclm_sfc', &
+                             'Surface photoacclimation irradiance', 'Watts/m^2')
+    call g_restart_field_add(fields, cobalt%f_cased, 'cased', &
+                             'Sediment CaCO3', 'mol m-3')
 
-    call g_restart_field_add(fields, cobalt%f_ndet_fast_btf, 'ndet_fast_btf_2d', &
-                             'Fast sinking N flux to Sediments', 'mol m-2 s-1', legacy_name='ndet_fast_btf')
-    call g_restart_field_add(fields, cobalt%f_pdet_fast_btf, 'pdet_fast_btf_2d', &
-                             'Fast sinking P flux to Sediments', 'mol m-2 s-1', legacy_name='pdet_fast_btf')
-    call g_restart_field_add(fields, cobalt%f_cadet_arag_btf, 'cadet_arag_btf_2d', &
-                             'aragonite flux to Sediments', 'mol m-2 s-1', legacy_name='cadet_arag_btf')
-    call g_restart_field_add(fields, cobalt%f_cadet_calc_btf, 'cadet_calc_btf_2d', &
-                             'calcite flux to Sediments', 'mol m-2 s-1', legacy_name='cadet_calc_btf')
-    call g_restart_field_add(fields, cobalt%f_lithdet_btf, 'lithdet_btf_2d', &
-                             'Lith flux to Sediments', 'g m-2 s-1', legacy_name='lithdet_btf')
-    call g_restart_field_add(fields, cobalt%f_ndet_btf, 'ndet_btf_2d', &
-                             'N flux to Sediments', 'mol m-2 s-1', legacy_name='ndet_btf')
-    call g_restart_field_add(fields, cobalt%f_pdet_btf, 'pdet_btf_2d', &
-                             'P flux to Sediments', 'mol m-2 s-1', legacy_name='pdet_btf')
-    call g_restart_field_add(fields, cobalt%f_sidet_btf, 'sidet_btf_2d', &
-                             'SiO2 flux to Sediments', 'mol m-2 s-1', legacy_name='sidet_btf')
-    call g_restart_field_add(fields, cobalt%f_fedet_btf, 'fedet_btf_2d', &
-                             'Fe flux to Sediments', 'mol m-2 s-1', legacy_name='fedet_btf')
-    call g_restart_field_add(fields, cobalt%f_nsm_btf, 'nsm_btf_2d', &
-                             'nsm flux to Sediments', 'mol m-2 s-1', legacy_name='nsm_btf')
-    call g_restart_field_add(fields, cobalt%f_fesm_btf, 'fesm_btf_2d', &
-                             'fesm flux to Sediments', 'mol m-2 s-1', legacy_name='fesm_btf')
-    call g_restart_field_add(fields, cobalt%f_psm_btf, 'psm_btf_2d', &
-                             'psm flux to Sediments', 'mol m-2 s-1', legacy_name='psm_btf')
-    call g_restart_field_add(fields, cobalt%f_nmd_btf, 'nmd_btf_2d', &
-                             'nmd flux to Sediments', 'mol m-2 s-1', legacy_name='nmd_btf')
-    call g_restart_field_add(fields, cobalt%f_nlg_btf, 'nlg_btf_2d', &
-                             'nlg flux to Sediments', 'mol m-2 s-1', legacy_name='nlg_btf')
-    call g_restart_field_add(fields, cobalt%f_ndi_btf, 'ndi_btf_2d', &
-                             'ndi flux to Sediments', 'mol m-2 s-1', legacy_name='ndi_btf')
-    call g_restart_field_add(fields, cobalt%f_femd_btf, 'femd_btf_2d', &
-                             'femd flux to Sediments', 'mol m-2 s-1', legacy_name='femd_btf')
-    call g_restart_field_add(fields, cobalt%f_felg_btf, 'felg_btf_2d', &
-                             'felg flux to Sediments', 'mol m-2 s-1', legacy_name='felg_btf')
-    call g_restart_field_add(fields, cobalt%f_fedi_btf, 'fedi_btf_2d', &
-                             'fedi flux to Sediments', 'mol m-2 s-1', legacy_name='fedi_btf')
-    call g_restart_field_add(fields, cobalt%f_pmd_btf, 'pmd_btf_2d', &
-                             'pmd flux to Sediments', 'mol m-2 s-1', legacy_name='pmd_btf')
-    call g_restart_field_add(fields, cobalt%f_plg_btf, 'plg_btf_2d', &
-                             'plg flux to Sediments', 'mol m-2 s-1', legacy_name='plg_btf')
-    call g_restart_field_add(fields, cobalt%f_pdi_btf, 'pdi_btf_2d', &
-                             'pdi flux to Sediments', 'mol m-2 s-1', legacy_name='pdi_btf')
-    call g_restart_field_add(fields, cobalt%f_simd_btf, 'simd_btf_2d', &
-                             'simd flux to Sediments', 'mol m-2 s-1', legacy_name='simd_btf')
-    call g_restart_field_add(fields, cobalt%f_silg_btf, 'silg_btf_2d', &
-                             'silg flux to Sediments', 'mol m-2 s-1', legacy_name='silg_btf')
+    call g_restart_field_add(fields, cobalt%f_ndet_fast_btf, 'ndet_fast_btf', &
+                             'Fast sinking N flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_pdet_fast_btf, 'pdet_fast_btf', &
+                             'Fast sinking P flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_cadet_arag_btf, 'cadet_arag_btf', &
+                             'aragonite flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_cadet_calc_btf, 'cadet_calc_btf', &
+                             'calcite flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_lithdet_btf, 'lithdet_btf', &
+                             'Lith flux to Sediments', 'g m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_ndet_btf, 'ndet_btf', &
+                             'N flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_pdet_btf, 'pdet_btf', &
+                             'P flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_sidet_btf, 'sidet_btf', &
+                             'SiO2 flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_fedet_btf, 'fedet_btf', &
+                             'Fe flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_nsm_btf, 'nsm_btf', &
+                             'nsm flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_fesm_btf, 'fesm_btf', &
+                             'fesm flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_psm_btf, 'psm_btf', &
+                             'psm flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_nmd_btf, 'nmd_btf', &
+                             'nmd flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_nlg_btf, 'nlg_btf', &
+                             'nlg flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_ndi_btf, 'ndi_btf', &
+                             'ndi flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_femd_btf, 'femd_btf', &
+                             'femd flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_felg_btf, 'felg_btf', &
+                             'felg flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_fedi_btf, 'fedi_btf', &
+                             'fedi flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_pmd_btf, 'pmd_btf', &
+                             'pmd flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_plg_btf, 'plg_btf', &
+                             'plg flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_pdi_btf, 'pdi_btf', &
+                             'pdi flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_simd_btf, 'simd_btf', &
+                             'simd flux to Sediments', 'mol m-2 s-1')
+    call g_restart_field_add(fields, cobalt%f_silg_btf, 'silg_btf', &
+                             'silg flux to Sediments', 'mol m-2 s-1')
 
     call g_restart_field_add(fields, cobalt%f_htotal, 'htotal', 'H+ ion concentration', 'mol/kg')
     call g_restart_field_add(fields, cobalt%f_irr_aclm, 'irr_aclm', &

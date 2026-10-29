@@ -38,7 +38,6 @@ use MOM_diag_mediator, only : diag_ctrl, get_diag_time_end
 use MOM_error_handler, only : MOM_error, FATAL, WARNING, NOTE
 use MOM_file_parser, only : get_param, log_param, log_version, param_file_type
 use MOM_forcing_type, only : forcing, optics_type
-use MOM_get_input, only : get_MOM_input, directories
 use MOM_grid, only : ocean_grid_type
 use MOM_hor_index, only : hor_index_type
 use MOM_interface_heights, only : thickness_to_dz
@@ -47,7 +46,6 @@ use MOM_open_boundary, only : ocean_OBC_type
 use MOM_open_boundary, only : register_obgc_segments, fill_obgc_segments
 use MOM_open_boundary, only : set_obgc_segments_props
 use MOM_restart, only : register_restart_field, query_initialized, set_initialized, MOM_restart_CS
-use MOM_restart, only : only_read_from_restarts
 use MOM_spatial_means, only : global_area_mean, global_mass_int_EFP, array_global_min_max
 use MOM_sponge, only : sponge_CS
 use MOM_time_manager, only : time_type, set_time
@@ -237,16 +235,17 @@ function register_MOM_generic_tracer(HI, GV, param_file, CS, tr_Reg, restart_CS)
   enddo
 
   ! Register the fields that are kept outside of the tracer list, once the whole list has been built.
-  ! The 2D fields are not mandatory here because they may instead be read from older 3D restart fields
-  ! in initialize_MOM_generic_tracer, which also checks that each of them was found.
+  ! The 2D fields are saved through 3D arrays, so that the restart files keep the 3D variables that
+  ! older versions read and write (see generic_restart_fields).
   call generic_tracer_restart_fields(CS%restart_fields)
   do n=1,size(CS%restart_fields)
     associate(rf => CS%restart_fields(n))
-      if (associated(rf%field_3d)) then
-        call register_restart_field(rf%field_3d, rf%name, .not.CS%tracers_may_reinit, restart_CS, &
+      if (associated(rf%field_2d)) then
+        allocate(rf%restart_3d(HI%isd:HI%ied, HI%jsd:HI%jed, GV%ke)) ; rf%restart_3d(:,:,:) = 0.0
+        call register_restart_field(rf%restart_3d, rf%name, .not.CS%tracers_may_reinit, restart_CS, &
                                     longname=rf%longname, units=rf%units)
       else
-        call register_restart_field(rf%field_2d, rf%name, .false., restart_CS, &
+        call register_restart_field(rf%field_3d, rf%name, .not.CS%tracers_may_reinit, restart_CS, &
                                     longname=rf%longname, units=rf%units)
       endif
     end associate
@@ -514,11 +513,10 @@ subroutine initialize_MOM_generic_tracer(restart, day, G, GV, US, h, tv, param_f
 end subroutine initialize_MOM_generic_tracer
 
 !> Initialize the restart fields kept outside of the tracer list that were not read from the restart files.
-!! On a restart, a missing 2D field is first read from the top level of the 3D field that older versions
-!! saved instead. It is a fatal error if a field is not found, unless TRACERS_MAY_REINIT is true.
-!! On a new run (or a reinitialization), the fields are initialized in the same way as the generic tracers,
-!! from their source files or else from GENERIC_TRACER_IC_FILE, unless init_from_ic is false. 2D fields
-!! are read under their legacy names, keeping the top level.
+!! As for the generic tracers, the fields are initialized on a new run, or on a restart if they were not
+!! found and TRACERS_MAY_REINIT is true, from their source files or else from GENERIC_TRACER_IC_FILE, unless
+!! init_from_ic is false. The 2D fields are then copied from the top level of the 3D arrays they are saved
+!! through, whose lower levels are set to zero.
 subroutine initialize_restart_fields(restart, h, dz, G, GV, US, param_file, CS)
   logical,                     intent(in)    :: restart    !< .true. if the fields have already been
                                                            !! read from a restart file.
@@ -531,113 +529,81 @@ subroutine initialize_restart_fields(restart, h, dz, G, GV, US, param_file, CS)
   type(MOM_generic_tracer_CS), pointer       :: CS         !< Pointer to the control structure for this module.
 
   ! Local variables
-  type(directories) :: dirs  ! The directories and file names used for restarts
-  real, dimension(:,:,:), allocatable, target :: scratch ! A 3D version of a 2D field [various]
-  real, dimension(:,:,:), pointer :: field_3d ! The 3D field, or scratch for a 2D field [various]
-  logical :: initialized     ! True if the field was read from the restart files
-  logical :: found           ! True if the legacy field was found in the restart files
-  logical :: have_dirs       ! True once dirs has been read
-  character(len=64) :: ic_name ! The name of the field in GENERIC_TRACER_IC_FILE
+  real, dimension(:,:,:), pointer :: field_3d ! The 3D array that is saved and restored [various]
   integer :: i, j, k, n
 
-  if (size(CS%restart_fields) == 0) return
-
-  ! The 2D fields are read through this 3D buffer, because their legacy restart fields and initial
-  ! conditions are stored as 3D variables, and MOM_initialize_tracer_from_Z and tracer_Z_init only
-  ! fill 3D arrays. This should be revisited when the initialization of these fields is refactored.
-  allocate(scratch(G%isd:G%ied, G%jsd:G%jed, GV%ke))
-  have_dirs = .false.
   do n=1,size(CS%restart_fields)
     associate(rf => CS%restart_fields(n))
-      if (associated(rf%field_3d)) then
-        field_3d => rf%field_3d
+      if (associated(rf%field_2d)) then
+        field_3d => rf%restart_3d
       else
-        field_3d => scratch
-      endif
-
-      if (restart) then
-        ! 3d fields without a legacy name should already have been initialized in MOM, so
-        ! they will likely cycle here
-        if (associated(rf%field_3d)) then
-          initialized = query_initialized(rf%field_3d, rf%name, CS%restart_CSp)
-        else
-          initialized = query_initialized(rf%field_2d, rf%name, CS%restart_CSp)
-        endif
-        if (initialized) cycle
-
-        ! This block exists to support fields whose names may have changed
-        ! ( i.e 2d fields that were once 3d )
-        found = .false.
-        if (len_trim(rf%legacy_name) > 0) then
-          if (.not.have_dirs) then
-            ! Look for the restart files in the same place that restore_state does.
-            call get_MOM_input(dirs=dirs)
-            have_dirs = .true.
-          endif
-          scratch(:,:,:) = 0.0
-          call only_read_from_restarts(rf%legacy_name, scratch, G, CS%restart_CSp, &
-                                       filename=dirs%input_filename, directory=dirs%restart_input_dir, &
-                                       success=found)
-        endif
-
-        if (found) then
-          rf%field_2d(:,:) = scratch(:,:,1)
-          call set_initialized(rf%name, CS%restart_CSp)
-          call MOM_error(NOTE, "initialize_restart_fields: Initialized "//trim(rf%name)// &
-                               " from the top level of the legacy restart field "//trim(rf%legacy_name))
-          cycle
-        elseif (.not.CS%tracers_may_reinit) then
-          call MOM_error(FATAL, "initialize_restart_fields: Unable to find "//trim(rf%name)// &
-                                " or its legacy field "//trim(rf%legacy_name)//" in the restart files.")
-        endif
+        field_3d => rf%field_3d
       endif
 
       ! Initialize the field as the generic tracers are in initialize_MOM_generic_tracer.
-      if (INDEX(CS%IC_file, '_NULL_') /= 0) cycle
-      if (associated(rf%field_2d)) then
-        do k=1,GV%ke ; scratch(:,:,k) = rf%field_2d(:,:) ; enddo
-      endif
-      if (trim(rf%src_file) /= 'NULL') then
-        call MOM_error(NOTE, "initialize_restart_fields: initializing "//trim(rf%name)// &
-                             " using MOM_initialize_tracer_from_Z ")
-        call MOM_initialize_tracer_from_Z(dz, field_3d, G, GV, US, param_file, &
-                               src_file=rf%src_file, src_var_nam=rf%src_var_name, &
-                               src_var_unit_conversion=rf%src_var_unit_conversion, &
-                               src_var_record=rf%src_var_record, src_var_gridspec=rf%src_var_gridspec, &
-                               h_in_Z_units=.true.)
-        do k=1,GV%ke ; do j=G%jsc,G%jec ; do i=G%isc,G%iec
-          if (field_3d(i,j,k) /= CS%tracer_land_val) then
-            if (field_3d(i,j,k) < rf%src_var_valid_min) field_3d(i,j,k) = rf%src_var_valid_min
-          endif
-        enddo ; enddo ; enddo
-      elseif (.not.rf%init_from_ic) then
-        ! Keep the values set by the tracer package.
-        call MOM_error(NOTE, "initialize_restart_fields: skip initialization of "//trim(rf%name))
-      elseif (len_trim(CS%IC_file) > 0) then
-        ! Read a 2D field from the IC file under the name of the 3D tracer that older versions used.
-        ic_name = rf%name ; if (len_trim(rf%legacy_name) > 0) ic_name = rf%legacy_name
-        if (.not.file_exists(CS%IC_file)) call MOM_error(FATAL, &
-                "initialize_restart_fields: Unable to open "//CS%IC_file)
-        if (CS%Z_IC_file) then
-          if (.not.tracer_Z_init(field_3d, h, CS%IC_file, trim(ic_name), G, GV, US)) &
-            call MOM_error(FATAL, "initialize_restart_fields: Unable to read "//trim(ic_name)// &
-                                  " from "//trim(CS%IC_file)//".")
-        else
-          call MOM_read_data(CS%IC_file, trim(ic_name), field_3d, G%Domain)
+      if ((.not.restart .or. .not.query_initialized(field_3d, rf%name, CS%restart_CSp)) .and. &
+          (INDEX(CS%IC_file, '_NULL_') == 0)) then
+        if (associated(rf%field_2d)) then
+          do k=1,GV%ke ; field_3d(:,:,k) = rf%field_2d(:,:) ; enddo
         endif
-        call MOM_error(NOTE, "initialize_restart_fields: initialized "//trim(rf%name)// &
-                             " from "//trim(ic_name)//" in Generic Tracer IC file "//trim(CS%IC_file))
-      else
-        call MOM_error(FATAL, "initialize_restart_fields: check Generic Tracer IC filename "// &
-                              trim(CS%IC_file)//" for "//trim(rf%name))
+        if (trim(rf%src_file) /= 'NULL') then
+          call MOM_error(NOTE, "initialize_restart_fields: initializing "//trim(rf%name)// &
+                               " using MOM_initialize_tracer_from_Z ")
+          call MOM_initialize_tracer_from_Z(dz, field_3d, G, GV, US, param_file, &
+                                 src_file=rf%src_file, src_var_nam=rf%src_var_name, &
+                                 src_var_unit_conversion=rf%src_var_unit_conversion, &
+                                 src_var_record=rf%src_var_record, src_var_gridspec=rf%src_var_gridspec, &
+                                 h_in_Z_units=.true.)
+          do k=1,GV%ke ; do j=G%jsc,G%jec ; do i=G%isc,G%iec
+            if (field_3d(i,j,k) /= CS%tracer_land_val) then
+              if (field_3d(i,j,k) < rf%src_var_valid_min) field_3d(i,j,k) = rf%src_var_valid_min
+            endif
+          enddo ; enddo ; enddo
+        elseif (.not.rf%init_from_ic) then
+          ! Keep the values set by the tracer package.
+          call MOM_error(NOTE, "initialize_restart_fields: skip initialization of "//trim(rf%name))
+        elseif (len_trim(CS%IC_file) > 0) then
+          if (.not.file_exists(CS%IC_file)) call MOM_error(FATAL, &
+                  "initialize_restart_fields: Unable to open "//CS%IC_file)
+          if (CS%Z_IC_file) then
+            if (.not.tracer_Z_init(field_3d, h, CS%IC_file, trim(rf%name), G, GV, US)) &
+              call MOM_error(FATAL, "initialize_restart_fields: Unable to read "//trim(rf%name)// &
+                                    " from "//trim(CS%IC_file)//".")
+          else
+            call MOM_read_data(CS%IC_file, trim(rf%name), field_3d, G%Domain)
+          endif
+          call MOM_error(NOTE, "initialize_restart_fields: initialized "//trim(rf%name)// &
+                               " using Generic Tracer IC file "//trim(CS%IC_file))
+        else
+          call MOM_error(FATAL, "initialize_restart_fields: check Generic Tracer IC filename "// &
+                                trim(CS%IC_file)//" for "//trim(rf%name))
+        endif
+        call set_initialized(rf%name, CS%restart_CSp)
       endif
-      if (associated(rf%field_2d)) rf%field_2d(:,:) = scratch(:,:,1)
-      call set_initialized(rf%name, CS%restart_CSp)
+
+      if (associated(rf%field_2d)) then
+        rf%field_2d(:,:) = rf%restart_3d(:,:,1)
+        rf%restart_3d(:,:,2:) = 0.0
+      endif
     end associate
   enddo
-  deallocate(scratch)
 
 end subroutine initialize_restart_fields
+
+!> Copy the 2D restart fields kept outside of the tracer list into the top level of the 3D arrays they
+!! are saved through. This must be done after they are updated, before restart files are written.
+subroutine copy_restart_fields_to_3d(CS)
+  type(MOM_generic_tracer_CS), pointer :: CS !< Pointer to the control structure for this module.
+
+  integer :: n
+
+  do n=1,size(CS%restart_fields)
+    associate(rf => CS%restart_fields(n))
+      if (associated(rf%field_2d)) rf%restart_3d(:,:,1) = rf%field_2d(:,:)
+    end associate
+  enddo
+
+end subroutine copy_restart_fields_to_3d
 
 subroutine  g_tracer_initialize_sponges(G, GV, US, CS, param_file, Layer_CSp, ALE_CSp, Time)
   type(ocean_grid_type),   intent(in) :: G    !< The ocean's grid structure.
@@ -1007,6 +973,9 @@ subroutine MOM_generic_tracer_column_physics(h_old, h_new, ea, eb, fluxes, Hml, 
   call generic_tracer_update_from_bottom(US%T_to_s*dt, 1, get_diag_time_end(CS%diag), &
           US%C_to_degC*tv%T, US%S_to_ppt*tv%S, rho_dzt, dzt, G%isd, G%jsd)
 
+  ! Keep the 3D arrays that the 2D restart fields are saved through up to date.
+  call copy_restart_fields_to_3d(CS)
+
   !Output diagnostics via diag_manager for all generic tracers and their fluxes
   call g_tracer_send_diag(CS%g_tracer_list, get_diag_time_end(CS%diag), tau=1)
 #ifdef _USE_MOM6_DIAG
@@ -1284,9 +1253,16 @@ end subroutine MOM_generic_tracer_get
 subroutine end_MOM_generic_tracer(CS)
   type(MOM_generic_tracer_CS), pointer :: CS   !< Pointer to the control structure for this module.
 
+  integer :: n
+
   call generic_tracer_end()
 
   if (associated(CS)) then
+    if (allocated(CS%restart_fields)) then
+      do n=1,size(CS%restart_fields)
+        if (associated(CS%restart_fields(n)%restart_3d)) deallocate(CS%restart_fields(n)%restart_3d)
+      enddo
+    endif
     deallocate(CS)
   endif
 end subroutine end_MOM_generic_tracer
