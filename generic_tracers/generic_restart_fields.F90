@@ -1,4 +1,5 @@
-!> Describes fields that a generic tracer package keeps in its own arrays, but that must be saved
+module generic_restart_fields
+!! Describes fields that a generic tracer package keeps in its own arrays, but that must be saved
 !! in restart files because they carry information from one time step to the next.
 !!
 !! These fields are not tracers, so they are not added to the generic tracer list. The ocean model
@@ -11,7 +12,6 @@
 !!
 !! The initial conditions are read from the field_table entries of the package, in the same way as
 !! for the generic tracers, so the package must call g_tracer_start_param_list before adding fields.
-module generic_restart_fields
 
   use field_manager_mod, only : fm_string_len
   use mpp_mod,           only : mpp_error, FATAL
@@ -21,47 +21,47 @@ module generic_restart_fields
 
   public g_restart_field_type, g_restart_field_add
 
-  !> A 2D or 3D field to be saved in and restored from restart files
   type g_restart_field_type
-    character(len=64)  :: name = ''        !< The name of the field in the restart file
-    character(len=128) :: longname = ''    !< The long name of the field
-    character(len=32)  :: units = ''       !< The units of the field
-    character(len=64)  :: legacy_name = '' !< The name of a 3D restart field written by older versions
+    !! A 2D or 3D field to be saved in and restored from restart files
+    character(len=64)  :: name = ''        !! The name of the field in the restart file
+    character(len=128) :: longname = ''    !! The long name of the field
+    character(len=32)  :: units = ''       !! The units of the field
+    character(len=64)  :: legacy_name = '' !! The name of a 3D restart field written by older versions
                                            !! whose top level holds the same data, or blank if there is none.
                                            !! Only used for 2D fields.
     ! Exactly one of field_2d and field_3d is associated. They point to arrays owned by the package and
     ! must stay pointers: appending to the list copies its elements, which would copy allocatable
     ! components and leave the fields registered for restarts pointing to deallocated memory.
-    real, dimension(:,:),   pointer :: field_2d => NULL() !< The 2D array that is saved and restored, in [units]
-    real, dimension(:,:,:), pointer :: field_3d => NULL() !< The 3D array that is saved and restored, in [units]
-    logical :: init_from_ic = .true.                !< If false, a new run keeps the values set by the package
+    real, dimension(:,:),   pointer :: field_2d => NULL() !! The 2D array that is saved and restored, in [units]
+    real, dimension(:,:,:), pointer :: field_3d => NULL() !! The 3D array that is saved and restored, in [units]
+    logical :: init_from_ic = .true.                !! If false, a new run keeps the values set by the package
                                                     !! unless src_file is set
-    character(len=256) :: src_file = 'NULL'         !< The file with the initial condition, or 'NULL' if
+    character(len=256) :: src_file = 'NULL'         !! The file with the initial condition, or 'NULL' if
                                                     !! there is none
-    character(len=256) :: src_var_name = 'NULL'     !< The name of the initial condition in src_file
-    character(len=256) :: src_var_gridspec = 'NULL' !< The name of a gridspec file for src_file, or 'NULL'
-    integer :: src_var_record = -1                  !< The record to read from src_file
-    real :: src_var_unit_conversion = 1.0           !< A factor that converts the values in src_file to [units]
-    real :: src_var_valid_min = -99.0               !< The minimum value of the initial condition, in [units]
+    character(len=256) :: src_var_name = 'NULL'     !! The name of the initial condition in src_file
+    character(len=256) :: src_var_gridspec = 'NULL' !! The name of a gridspec file for src_file, or 'NULL'
+    integer :: src_var_record = -1                  !! The record to read from src_file
+    real :: src_var_unit_conversion = 1.0           !! A factor that converts the values in src_file to [units]
+    real :: src_var_valid_min = -99.0               !! The minimum value of the initial condition, in [units]
   end type g_restart_field_type
 
-  !> Append a 2D or 3D field to a list of restart fields
   interface g_restart_field_add
+    !! Append a 2D or 3D field to a list of restart fields
     module procedure g_restart_field_add_2d, g_restart_field_add_3d
   end interface g_restart_field_add
 
 contains
 
-  !> Append a 2D field to a list of restart fields. Its initial condition is set in the field_table
-  !! under legacy_name if it is present, or else under name, and is read in the same way as for a
-  !! 3D generic tracer, keeping only its top level.
   subroutine g_restart_field_add_2d(fields, field, name, longname, units, legacy_name)
-    type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields !< The list of restart fields
-    real, dimension(:,:), pointer, intent(in) :: field    !< The array to save and restore, in [units]
-    character(len=*),             intent(in) :: name     !< The name of the field in the restart file
-    character(len=*),             intent(in) :: longname !< The long name of the field
-    character(len=*),             intent(in) :: units    !< The units of the field
-    character(len=*),   optional, intent(in) :: legacy_name !< The name of a 3D restart field written by older
+    !! Append a 2D field to a list of restart fields. Its initial condition is set in the field_table
+    !! under legacy_name if it is present, or else under name, and is read in the same way as for a
+    !! 3D generic tracer, keeping only its top level.
+    type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields !! The list of restart fields
+    real, dimension(:,:), pointer, intent(in) :: field    !! The array to save and restore, in [units]
+    character(len=*),             intent(in) :: name     !! The name of the field in the restart file
+    character(len=*),             intent(in) :: longname !! The long name of the field
+    character(len=*),             intent(in) :: units    !! The units of the field
+    character(len=*),   optional, intent(in) :: legacy_name !! The name of a 3D restart field written by older
                                                          !! versions whose top level holds the same data
 
     if (present(legacy_name)) then
@@ -73,26 +73,26 @@ contains
     fields(size(fields))%field_2d => field
   end subroutine g_restart_field_add_2d
 
-  !> Append a 3D field to a list of restart fields. Its initial condition is set in the field_table
-  !! under name, and is read in the same way as for a 3D generic tracer.
   subroutine g_restart_field_add_3d(fields, field, name, longname, units)
-    type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields !< The list of restart fields
-    real, dimension(:,:,:), pointer, intent(in) :: field  !< The array to save and restore, in [units]
-    character(len=*),             intent(in) :: name     !< The name of the field in the restart file
-    character(len=*),             intent(in) :: longname !< The long name of the field
-    character(len=*),             intent(in) :: units    !< The units of the field
+    !! Append a 3D field to a list of restart fields. Its initial condition is set in the field_table
+    !! under name, and is read in the same way as for a 3D generic tracer.
+    type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields !! The list of restart fields
+    real, dimension(:,:,:), pointer, intent(in) :: field  !! The array to save and restore, in [units]
+    character(len=*),             intent(in) :: name     !! The name of the field in the restart file
+    character(len=*),             intent(in) :: longname !! The long name of the field
+    character(len=*),             intent(in) :: units    !! The units of the field
 
     call append(fields, name, longname, units, name)
     fields(size(fields))%field_3d => field
   end subroutine g_restart_field_add_3d
 
-  !> Append a restart field with the given description, but no array, to a list of restart fields
   subroutine append(fields, name, longname, units, ic_name)
-    type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields !< The list of restart fields
-    character(len=*), intent(in) :: name     !< The name of the field in the restart file
-    character(len=*), intent(in) :: longname !< The long name of the field
-    character(len=*), intent(in) :: units    !< The units of the field
-    character(len=*), intent(in) :: ic_name  !< The name under which the field_table sets the initial condition
+    !! Append a restart field with the given description, but no array, to a list of restart fields
+    type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields !! The list of restart fields
+    character(len=*), intent(in) :: name     !! The name of the field in the restart file
+    character(len=*), intent(in) :: longname !! The long name of the field
+    character(len=*), intent(in) :: units    !! The units of the field
+    character(len=*), intent(in) :: ic_name  !! The name under which the field_table sets the initial condition
 
     type(g_restart_field_type), dimension(:), allocatable :: new_fields
     integer :: n
@@ -108,11 +108,11 @@ contains
     call move_alloc(new_fields, fields)
   end subroutine append
 
-  !> Read the initial condition parameters that the field_table sets for a tracer called name into
-  !! the restart field rf. This follows g_tracer_add and g_tracer_init.
   subroutine read_ic_params(rf, name)
-    type(g_restart_field_type), intent(inout) :: rf   !< The restart field to set
-    character(len=*),           intent(in)    :: name !< The name under which the field_table sets
+    !! Read the initial condition parameters that the field_table sets for a tracer called name into
+    !! the restart field rf. This follows g_tracer_add and g_tracer_init.
+    type(g_restart_field_type), intent(inout) :: rf   !! The restart field to set
+    character(len=*),           intent(in)    :: name !! The name under which the field_table sets
                                                       !! the initial condition
 
     character(len=fm_string_len) :: src_var_unit
