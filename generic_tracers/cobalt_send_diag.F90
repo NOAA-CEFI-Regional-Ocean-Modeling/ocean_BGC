@@ -413,54 +413,57 @@ module COBALT_send_diag
           flux_i(:,:,1) = 0.0
           ! Sinking is solved with an implicit upwind scheme.  Thus, flux at interfaces 2:nk+1 is determined by the
           ! concentration and sinking velocity from the grid above.
+          ! NOTE: Interface diagnostics left unmasked because they have one more k dimension than grid_tmask
+          ! This would break diagnostics calculated via FMS, but including/excluding the mask
+          ! has no effect when _USE_MOM6_DIAG is set since that path ignores the mask anyways
           flux_i(:,:,2:nk+1) = cobalt%p_cadet_arag(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink
-          used = g_send_data(cobalt%id_fcadet_arag_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_fcadet_arag_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = cobalt%p_cadet_calc(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink
-          used = g_send_data(cobalt%id_fcadet_calc_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_fcadet_calc_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = cobalt%p_fedet(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink
-          used = g_send_data(cobalt%id_ffedet_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_ffedet_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = cobalt%p_lithdet(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink
-          used = g_send_data(cobalt%id_flithdet_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_flithdet_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = cobalt%p_ndet(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink
-          used = g_send_data(cobalt%id_fndet_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_fndet_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = cobalt%p_ndet_fast(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink_fast
-          used = g_send_data(cobalt%id_fndet_fast_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_fndet_fast_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
 			flux_i(:,:,2:nk+1) = cobalt%p_pdet(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink
-          used = g_send_data(cobalt%id_fpdet_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_fpdet_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = cobalt%p_pdet_fast(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink_fast
-          used = g_send_data(cobalt%id_fpdet_fast_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_fpdet_fast_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
 
           flux_i(:,:,2:nk+1) = cobalt%p_sidet(:,:,1:nk,tau)*cobalt%Rho_0*cobalt%wsink
-          used = g_send_data(cobalt%id_fsidet_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_fsidet_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           ! total fluxes require sinking phytoplankton
           flux_i(:,:,2:nk+1) = (cobalt%p_fedet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_fesm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_femd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
             cobalt%p_felg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_fedi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0
-          used = g_send_data(cobalt%id_ffetot_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_ffetot_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = (cobalt%p_ndet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_ndet_fast(:,:,:,tau)*cobalt%wsink_fast + &
             cobalt%p_nsm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
             cobalt%p_nlg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0
-          used = g_send_data(cobalt%id_fntot_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_fntot_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = (cobalt%p_pdet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_pdet_fast(:,:,:,tau)*cobalt%wsink_fast + &
             cobalt%p_psm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
             cobalt%p_plg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_pdi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0
-          used = g_send_data(cobalt%id_fptot_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_fptot_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           flux_i(:,:,2:nk+1) = (cobalt%p_sidet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_simd(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_silg(:,:,:,tau)*phyto(MDP)%vmove(:,:,:))* &
@@ -1036,7 +1039,7 @@ module COBALT_send_diag
             cobalt%p_nsm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
             cobalt%p_nlg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%c_2_n*cobalt%Rho_0*grid_tmask(:,:,:)
-          used = g_send_data(cobalt%id_expc_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_expc_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           ! Bottom flux added for CMIP7, grid_tmask for nk corresponds to bottom flux at nk+1
           used = g_send_data(cobalt%id_expcob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
@@ -1048,7 +1051,7 @@ module COBALT_send_diag
             cobalt%p_nsm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_nmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
             cobalt%p_nlg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_ndi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:)
-          used = g_send_data(cobalt%id_expn_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_expn_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           used = g_send_data(cobalt%id_expnob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
             is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
@@ -1060,7 +1063,7 @@ module COBALT_send_diag
             cobalt%p_psm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_pmd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
             cobalt%p_plg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_pdi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:)
-          used = g_send_data(cobalt%id_expp_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_expp_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           used = g_send_data(cobalt%id_exppob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
             is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
@@ -1068,7 +1071,7 @@ module COBALT_send_diag
             cobalt%p_fesm(:,:,:,tau)*phyto(SMP)%vmove(:,:,:) + cobalt%p_femd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + &
             cobalt%p_felg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:) + cobalt%p_fedi(:,:,:,tau)*phyto(DIAZ)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:)
-          used = g_send_data(cobalt%id_expfe_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_expfe_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           used = g_send_data(cobalt%id_expfeob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
             is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
@@ -1079,17 +1082,17 @@ module COBALT_send_diag
           flux_i(:,:,2:nk+1) = (cobalt%p_sidet(:,:,:,tau)*cobalt%wsink + &
             cobalt%p_simd(:,:,:,tau)*phyto(MDP)%vmove(:,:,:) + cobalt%p_silg(:,:,:,tau)*phyto(LGP)%vmove(:,:,:)) * &
             cobalt%Rho_0*grid_tmask(:,:,:)
-          used = g_send_data(cobalt%id_expsi_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_expsi_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           used = g_send_data(cobalt%id_expsiob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
             is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = cobalt%p_cadet_calc(:,:,:,tau)*cobalt%Rho_0*cobalt%wsink
-          used = g_send_data(cobalt%id_expcalc_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_expcalc_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           used = g_send_data(cobalt%id_expcalcob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
             is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           flux_i(:,:,2:nk+1) = cobalt%p_cadet_arag(:,:,:,tau)*cobalt%Rho_0*cobalt%wsink
-          used = g_send_data(cobalt%id_exparag_i, flux_i, model_time, rmask = grid_tmask, &
+          used = g_send_data(cobalt%id_exparag_i, flux_i, model_time, &
             is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk+1)
           used = g_send_data(cobalt%id_exparagob, flux_i(:,:,nk+1), model_time, rmask = grid_tmask(:,:,nk), &
             is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
