@@ -136,6 +136,8 @@ contains
         trim(name)//' : src_file is not set in the field_table')
     if (rf%src_var_name == 'NULL') call mpp_error(FATAL, 'g_restart_field_add: '// &
         trim(name)//' : src_var_name is not set in the field_table')
+    if (rf%src_var_valid_min == -99.0) call mpp_error(FATAL, 'g_restart_field_add: '// &
+        trim(name)//' : src_var_valid_min is not set in the field_table')
     select case (trim(src_var_unit))
       case ('none') ; rf%src_var_unit_conversion = 1.0
       case ('ppt')  ; rf%src_var_unit_conversion = 1.0e-12
