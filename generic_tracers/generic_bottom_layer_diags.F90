@@ -1,17 +1,18 @@
-! The generic_bottom_layer_diags module simplifies the averaging of 3D data
-! over a layer near the bottom topography. The main subroutine is generic_bld_average,
-! which does the actual averaging of the 3D data into a 2D bottom field.
-! The other subroutines allocate and update information about the vertical coordinates.
+
 module generic_bottom_layer_diags
+!! The generic_bottom_layer_diags module simplifies the averaging of 3D data
+!! over a layer near the bottom topography. The main subroutine is [[generic_bld_average]],
+!! which does the actual averaging of the 3D data into a 2D bottom field.
+!! The other subroutines allocate and update information about the vertical coordinates.
   use MOM_error_handler, only : MOM_error, FATAL
   implicit none
   private
 
   type, public :: generic_bld
-    real, pointer :: rho_dzt(:, :, :) => null()  !< density * thickness
-    real, allocatable :: rho_dzt_bot(:, :)       !< Accumulated mass in bottom layer
-    integer, pointer :: kmt(:, :) => null()      !< Index of the bottom layer
-    integer, allocatable :: k_bot(:, :)          !< Shallowest layer within bottom_thickness
+    real, pointer :: rho_dzt(:, :, :) => null()  !! density * thickness
+    real, allocatable :: rho_dzt_bot(:, :)       !! Accumulated mass in bottom layer
+    integer, pointer :: kmt(:, :) => null()      !! Index of the bottom layer
+    integer, allocatable :: k_bot(:, :)          !! Shallowest layer within bottom_thickness
     real :: Rho_0, bottom_thickness
     integer :: isc, iec, jsc, jec
   end type generic_bld
@@ -42,9 +43,9 @@ module generic_bottom_layer_diags
       deallocate(bld%rho_dzt_bot)
     end subroutine generic_bld_dealloc
 
-    !> Update layer information needed for bottom averaging.
-    !! Should be called at beginning of time step.
     subroutine generic_bld_update(bld, rho_dzt, grid_kmt)
+      !! Updates layer information needed for bottom averaging.
+      !! Should be called at beginning of time step.
       type(generic_bld), intent(inout) :: bld
       real, target :: rho_dzt(:, :, :)
       integer, target :: grid_kmt(:, :)
@@ -72,11 +73,11 @@ module generic_bottom_layer_diags
       end do; end do
     end subroutine generic_bld_update
 
-    !> Average a 3D field over the bottom layer defined by the bottom thickness.
     subroutine generic_bld_average(bld, field, field_btm)
+      !! Averages a 3D field over the bottom layer defined by the bottom thickness.
       type(generic_bld), intent(in) :: bld
-      real, intent(in) :: field(:, :, :)   !< 3D field to be averaged
-      real, intent(out) :: field_btm(:, :) !< 2D field of bottom layer average
+      real, intent(in) :: field(:, :, :)   !! 3D field to be averaged
+      real, intent(out) :: field_btm(:, :) !! 2D field of bottom layer average
       integer :: i, j, k
 
       ! COBALT always calls generic_bld_update beforehand,

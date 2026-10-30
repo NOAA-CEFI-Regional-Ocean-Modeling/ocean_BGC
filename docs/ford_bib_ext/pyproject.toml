@@ -1,0 +1,26 @@
+[project]
+name = "ford-bib"
+version = "0.1.0"
+description = "FORD docs environment: ford plus the mdx_bib citation extension"
+requires-python = ">=3.10"
+dependencies = ["ford", "mdx_bib"]
+
+[tool.uv.sources]
+# mdx_bib is not on PyPI
+mdx_bib = { git = "https://github.com/darwindarak/mdx_bib", rev = "3f9061e76ca9338dfd86b58b8e041dce966cf084" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B", "C4", "UP", "PL", "RUF"]
+ignore = ["PLR2004", "PLR0912", "PLR0913", "B028"]
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+line-ending = "auto"
