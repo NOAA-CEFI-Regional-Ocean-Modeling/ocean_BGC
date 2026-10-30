@@ -12,6 +12,18 @@ module generic_restart_fields
 !!
 !! The initial conditions are read from the field_table entries of the package, in the same way as
 !! for the generic tracers, so the package must call g_tracer_start_param_list before adding fields.
+!!
+!! 2D fields are saved as 3D variables, with their data in the top level, under the names of the 3D
+!! tracers that older versions saved. The coupling layer owns these 3D arrays and copies the 2D fields
+!! to and from their top level. Saving the fields as 2D variables would need new names, because
+!! MOM_restart matches restart variables by name only and FMS cannot read a 3D variable into a 2D array.
+!! Restart files with new names cannot be used by older versions: they stop if TRACERS_MAY_REINIT is
+!! false, and otherwise silently re-initialize these fields. Older versions also cannot use such files
+!! as GENERIC_TRACER_IC_FILE. Newer versions could read the old 3D variables as a fallback, but
+!! MOM_restart cannot do this for restart files that are split across processors, or in CESM. Saving
+!! the fields with a vertical axis of length 1 under the old names fails the restart checksums when
+!! reading older files whose lower levels are not zero (e.g. irr_aclm_sfc). This should be revisited if
+!! MOM_restart can read fields that it does not write, or if a change to the restart format is acceptable.
 
   use field_manager_mod, only : fm_string_len
   use mpp_mod,           only : mpp_error, FATAL
@@ -26,14 +38,14 @@ module generic_restart_fields
     character(len=64)  :: name = ''        !! The name of the field in the restart file
     character(len=128) :: longname = ''    !! The long name of the field
     character(len=32)  :: units = ''       !! The units of the field
-    character(len=64)  :: legacy_name = '' !! The name of a 3D restart field written by older versions
-                                           !! whose top level holds the same data, or blank if there is none.
-                                           !! Only used for 2D fields.
     ! Exactly one of field_2d and field_3d is associated. They point to arrays owned by the package and
     ! must stay pointers: appending to the list copies its elements, which would copy allocatable
     ! components and leave the fields registered for restarts pointing to deallocated memory.
     real, dimension(:,:),   pointer :: field_2d => NULL() !! The 2D array that is saved and restored, in [units]
     real, dimension(:,:,:), pointer :: field_3d => NULL() !! The 3D array that is saved and restored, in [units]
+    real, dimension(:,:,:), pointer :: restart_3d => NULL() !! For a 2D field, the 3D array that is saved and
+                                                          !! restored, whose top level holds field_2d, in [units].
+                                                          !! It is allocated and owned by the coupling layer.
     logical :: init_from_ic = .true.                !! If false, a new run keeps the values set by the package
                                                     !! unless src_file is set
     character(len=256) :: src_file = 'NULL'         !! The file with the initial condition, or 'NULL' if
@@ -52,24 +64,16 @@ module generic_restart_fields
 
 contains
 
-  subroutine g_restart_field_add_2d(fields, field, name, longname, units, legacy_name)
+  subroutine g_restart_field_add_2d(fields, field, name, longname, units)
     !! Append a 2D field to a list of restart fields. Its initial condition is set in the field_table
-    !! under legacy_name if it is present, or else under name, and is read in the same way as for a
-    !! 3D generic tracer, keeping only its top level.
+    !! under name, and is read in the same way as for a 3D generic tracer, keeping only its top level.
     type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields !! The list of restart fields
     real, dimension(:,:), pointer, intent(in) :: field    !! The array to save and restore, in [units]
     character(len=*),             intent(in) :: name     !! The name of the field in the restart file
     character(len=*),             intent(in) :: longname !! The long name of the field
     character(len=*),             intent(in) :: units    !! The units of the field
-    character(len=*),   optional, intent(in) :: legacy_name !! The name of a 3D restart field written by older
-                                                         !! versions whose top level holds the same data
 
-    if (present(legacy_name)) then
-      call append(fields, name, longname, units, legacy_name)
-      fields(size(fields))%legacy_name = legacy_name
-    else
-      call append(fields, name, longname, units, name)
-    endif
+    call append(fields, name, longname, units)
     fields(size(fields))%field_2d => field
   end subroutine g_restart_field_add_2d
 
@@ -82,17 +86,16 @@ contains
     character(len=*),             intent(in) :: longname !! The long name of the field
     character(len=*),             intent(in) :: units    !! The units of the field
 
-    call append(fields, name, longname, units, name)
+    call append(fields, name, longname, units)
     fields(size(fields))%field_3d => field
   end subroutine g_restart_field_add_3d
 
-  subroutine append(fields, name, longname, units, ic_name)
+  subroutine append(fields, name, longname, units)
     !! Append a restart field with the given description, but no array, to a list of restart fields
     type(g_restart_field_type), dimension(:), allocatable, intent(inout) :: fields !! The list of restart fields
     character(len=*), intent(in) :: name     !! The name of the field in the restart file
     character(len=*), intent(in) :: longname !! The long name of the field
     character(len=*), intent(in) :: units    !! The units of the field
-    character(len=*), intent(in) :: ic_name  !! The name under which the field_table sets the initial condition
 
     type(g_restart_field_type), dimension(:), allocatable :: new_fields
     integer :: n
@@ -104,7 +107,7 @@ contains
     new_fields(n+1)%name = name
     new_fields(n+1)%longname = longname
     new_fields(n+1)%units = units
-    call read_ic_params(new_fields(n+1), ic_name)
+    call read_ic_params(new_fields(n+1), name)
     call move_alloc(new_fields, fields)
   end subroutine append
 
