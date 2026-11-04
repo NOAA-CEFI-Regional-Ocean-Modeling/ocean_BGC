@@ -3,7 +3,15 @@ name = "ford-bib"
 version = "0.1.0"
 description = "FORD docs environment: ford plus the mdx_bib citation extension"
 requires-python = ">=3.10"
-dependencies = ["ford", "mdx_bib"]
+dependencies = [
+    "ford>=7.0.0",
+    "mdx_bib",
+]
+
+[tool.uv]
+override-dependencies = [
+    "markdown>=3.8.1", # fixes CVE-2025-69534, not officially supported by ford>=7.0.0
+]
 
 [tool.uv.sources]
 # mdx_bib is not on PyPI
