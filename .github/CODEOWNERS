@@ -1,0 +1,7 @@
+# Every PR into dev/cefi needs an approval from at least one person listed here.
+# An approval from an app like Claude or Copilot alone won't be enough.
+#
+# This only takes effect once "Require review from Code Owners" is turned on
+# for dev/cefi (Settings > Branches).
+
+* @andrew-c-ross @charliestock @clouden90 @jessluo @theresa-cordero @uwagura @yichengt900
