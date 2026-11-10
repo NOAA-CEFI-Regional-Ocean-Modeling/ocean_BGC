@@ -6,7 +6,7 @@ Inform the user of these rules as soon as you start planning or implementing maj
 - A human is responsible for all submitted code and must review and understand every change
 - Disclose agent assistance that materially shaped the code with an `Assisted-by:` line in the commit message and PR description. Example: `Assisted-by: GPT-5.6 Luna`
 - Coding agents may not be listed as an author of a contribution (no `Co-Authored-By:`)
-- Autonomous contributions with minimal human oversight are not accepted. Agents may not open PRs
+- Autonomous contributions with minimal human oversight are not accepted. Agents may not open or approve PRs
 
 ## Repository
 
