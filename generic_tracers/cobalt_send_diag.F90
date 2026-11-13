@@ -157,8 +157,6 @@ module COBALT_send_diag
                 omega_arag=cobalt%omega_arag(:,:,k), &
                 omega_calc=cobalt%omega_calc(:,:,k))
             enddo
-            call g_tracer_set_values(tracer_list,'htotal','field',cobalt%f_htotal,isd,jsd)
-            call g_tracer_set_values(tracer_list,'co3_ion','field',cobalt%f_co3_ion,isd,jsd)
             call g_tracer_set_values(tracer_list,'dic','alpha',cobalt%co2_alpha,isd,jsd)
             call g_tracer_set_values(tracer_list,'dic','csurf',cobalt%co2_csurf,isd,jsd)
 
@@ -174,6 +172,8 @@ module COBALT_send_diag
 
           endif !} recalculate carbon system properties
 
+          used = g_send_data(cobalt%id_htotal, cobalt%f_htotal, &
+              model_time, rmask = grid_tmask(:,:,:), is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_co3_sol_arag, cobalt%co3_sol_arag, &
               model_time, rmask = grid_tmask(:,:,:), is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
           used = g_send_data(cobalt%id_co3_sol_calc, cobalt%co3_sol_calc, &
@@ -1396,6 +1396,10 @@ module COBALT_send_diag
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
             used = g_send_data(phyto(n)%id_f_pcmlim_aclm, phyto(n)%f_pcmlim_aclm, &
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+            used = g_send_data(phyto(n)%id_f_mu_mem_n, phyto(n)%f_mu_mem, &
+              model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
+            used = g_send_data(phyto(n)%id_f_pcmlim_aclm_n, phyto(n)%f_pcmlim_aclm, &
+              model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
             used = g_send_data(phyto(n)%id_pcmlim_aclm_inst, phyto(n)%pcmlim_aclm_inst, &
               model_time, rmask = grid_tmask, is_in=isc, js_in=jsc, ks_in=1,ie_in=iec, je_in=jec, ke_in=nk)
             used = g_send_data(phyto(n)%id_stress_fac, phyto(n)%stress_fac, &
@@ -1702,7 +1706,7 @@ module COBALT_send_diag
           !
           used = g_send_data(cobalt%id_sfc_irr, cobalt%irr_inst(:,:,1), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
-          used = g_send_data(cobalt%id_sfc_irr_aclm, cobalt%f_irr_aclm_sfc(:,:,1), &
+          used = g_send_data(cobalt%id_sfc_irr_aclm, cobalt%f_irr_aclm_sfc(:,:), &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
           used = g_send_data(cobalt%id_mld_aclm, cobalt%mld_aclm, &
             model_time, rmask = grid_tmask(:,:,1), is_in=isc, js_in=jsc,ie_in=iec, je_in=jec)
