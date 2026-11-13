@@ -87,7 +87,8 @@ module COBALT_send_diag
           call g_tracer_get_pointer(tracer_list,'ldop'   ,'field',cobalt%p_ldop   )
           call g_tracer_get_pointer(tracer_list,'nbact'  ,'field',cobalt%p_nbact  )
           call g_tracer_get_pointer(tracer_list,'ndet'   ,'field',cobalt%p_ndet   )
-          call g_tracer_get_pointer(tracer_list,'ndet_fast','field',cobalt%p_ndet_fast)
+          if (cobalt%do_fastsinking) &
+            call g_tracer_get_pointer(tracer_list,'ndet_fast','field',cobalt%p_ndet_fast)
           call g_tracer_get_pointer(tracer_list,'ndi'    ,'field',cobalt%p_ndi    )
           call g_tracer_get_pointer(tracer_list,'nlg'    ,'field',cobalt%p_nlg    )
           call g_tracer_get_pointer(tracer_list,'nmd'    ,'field',cobalt%p_nmd    )
@@ -100,7 +101,8 @@ module COBALT_send_diag
           call g_tracer_get_pointer(tracer_list,'pmd'    ,'field',cobalt%p_pmd    )
           call g_tracer_get_pointer(tracer_list,'psm'    ,'field',cobalt%p_psm    )
           call g_tracer_get_pointer(tracer_list,'pdet'   ,'field',cobalt%p_pdet   )
-          call g_tracer_get_pointer(tracer_list,'pdet_fast','field',cobalt%p_pdet_fast)
+          if (cobalt%do_fastsinking) &
+            call g_tracer_get_pointer(tracer_list,'pdet_fast','field',cobalt%p_pdet_fast)
           call g_tracer_get_pointer(tracer_list,'po4'    ,'field',cobalt%p_po4    )
           call g_tracer_get_pointer(tracer_list,'srdon'  ,'field',cobalt%p_srdon )
           call g_tracer_get_pointer(tracer_list,'srdop'  ,'field',cobalt%p_srdop )
