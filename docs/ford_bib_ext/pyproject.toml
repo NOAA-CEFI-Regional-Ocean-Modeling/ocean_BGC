@@ -9,6 +9,10 @@ dependencies = [
 ]
 
 [tool.uv]
+# Setting constraint-dependencies controls the versions of modules that are
+# installed as dependencies for other modules. Here we require >= specific
+# versions that fix vulnerabilities.
+constraint-dependencies = ["soupsieve>=4.0.0"]
 override-dependencies = [
     "markdown>=3.8.1", # fixes CVE-2025-69534, not officially supported by ford>=7.0.0
 ]
