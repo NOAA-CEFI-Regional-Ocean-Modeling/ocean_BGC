@@ -72,6 +72,17 @@ class AuthorYearBibliography(Bibliography):
 
     def formatReference(self, ref: Entry) -> str:
         html = super().formatReference(ref)
+        booktitle = ref.fields.get('booktitle')
+        if booktitle:
+            # Look for the start of the year like (20xx ).
+            head, tail = html.rsplit(' (', 1)
+            editors = ref.persons.get('editor', [])
+            if editors:
+                eds = ', '.join(map(self.formatAuthor, editors))
+                eds += ' (Eds.), ' if len(editors) > 1 else ' (Ed.), '
+            else:
+                eds = ''
+            html = f'{head} In: {eds}<i>{booktitle}</i>. ({tail}'
         doi = ref.fields.get('doi')
         if doi:
             # Old DOIs (SICI) contain "<" and ">", e.g. morel1994
@@ -82,9 +93,12 @@ class AuthorYearBibliography(Bibliography):
     def makeBibliography(self, root: etree.Element) -> etree.Element:
         div = super().makeBibliography(root)
         for row in div.iter('tr'):
-            found = self.names_and_year(row[0].text)
-            if found:
-                row[0].text = '{} ({})'.format(*found)
+            row.remove(row[0])
+        # Add a References heading if we're printing a references list
+        if len(div):
+            heading = etree.Element('h3')
+            heading.text = 'References'
+            div.insert(0, heading)
         return div
 
 
@@ -161,7 +175,8 @@ if __name__ == '__main__':
     assert '(<a href="#ref-local1">local1</a>)' in html and 'Not a cite [x]' in html, (
         html
     )
-    assert '<td>Garcia and Gordon (1992)</td>' in html and 'Montégut' not in html, html
+    assert '<tr id="ref-garcia1992">\n<td>' in html and 'Montégut' not in html, html
+    assert 'Garcia and Gordon (1992)' not in html, html
     html = markdown.markdown('[@morel1994]', extensions=[makeExtension()])
     assert (
         '<a href="https://doi.org/10.1175/1520-0485%281994%29024%3C1652%3Ahrwtuo%3E2.0.co%3B2">'
