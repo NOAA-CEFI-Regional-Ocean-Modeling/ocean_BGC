@@ -94,6 +94,11 @@ class AuthorYearBibliography(Bibliography):
         div = super().makeBibliography(root)
         for row in div.iter('tr'):
             row.remove(row[0])
+        # Add a References heading if we're printing a references list
+        if len(div):
+            heading = etree.Element('h3')
+            heading.text = 'References'
+            div.insert(0, heading)
         return div
 
 
