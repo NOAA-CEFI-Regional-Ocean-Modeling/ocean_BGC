@@ -72,6 +72,17 @@ class AuthorYearBibliography(Bibliography):
 
     def formatReference(self, ref: Entry) -> str:
         html = super().formatReference(ref)
+        booktitle = ref.fields.get('booktitle')
+        if booktitle:
+            # Look for the start of the year like (20xx ).
+            head, tail = html.rsplit(' (', 1)
+            editors = ref.persons.get('editor', [])
+            if editors:
+                eds = ', '.join(map(self.formatAuthor, editors))
+                eds += ' (Eds.), ' if len(editors) > 1 else ' (Ed.), '
+            else:
+                eds = ''
+            html = f'{head} In: {eds}<i>{booktitle}</i>. ({tail}'
         doi = ref.fields.get('doi')
         if doi:
             # Old DOIs (SICI) contain "<" and ">", e.g. morel1994
