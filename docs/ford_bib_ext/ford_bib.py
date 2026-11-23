@@ -93,9 +93,7 @@ class AuthorYearBibliography(Bibliography):
     def makeBibliography(self, root: etree.Element) -> etree.Element:
         div = super().makeBibliography(root)
         for row in div.iter('tr'):
-            found = self.names_and_year(row[0].text)
-            if found:
-                row[0].text = '{} ({})'.format(*found)
+            row.remove(row[0])
         return div
 
 
@@ -172,7 +170,8 @@ if __name__ == '__main__':
     assert '(<a href="#ref-local1">local1</a>)' in html and 'Not a cite [x]' in html, (
         html
     )
-    assert '<td>Garcia and Gordon (1992)</td>' in html and 'Montégut' not in html, html
+    assert '<tr id="ref-garcia1992">\n<td>' in html and 'Montégut' not in html, html
+    assert 'Garcia and Gordon (1992)' not in html, html
     html = markdown.markdown('[@morel1994]', extensions=[makeExtension()])
     assert (
         '<a href="https://doi.org/10.1175/1520-0485%281994%29024%3C1652%3Ahrwtuo%3E2.0.co%3B2">'
