@@ -1,0 +1,33 @@
+[project]
+name = "obgc-ci-scripts"
+version = "0.1.0"
+description = "Helper scripts for the ocean_BGC CI (1D answer report)"
+requires-python = ">=3.11"
+dependencies = [
+    "netcdf4>=1.6",
+    "numpy>=1.25",
+]
+
+[dependency-groups]
+dev = [
+    "actionlint-py>=1.7",
+    "pytest>=8",
+    "ruff>=0.6",
+    "shellcheck-py>=0.10",
+]
+
+[tool.uv]
+package = false
+
+# Same ruff settings as docs/ford_bib_ext/pyproject.toml.
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B", "C4", "UP", "PL", "RUF"]
+ignore = ["PLR2004", "PLR0912", "PLR0913", "B028"]
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+line-ending = "auto"

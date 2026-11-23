@@ -22,3 +22,6 @@ jobs:
 
       - name: Run uv audit
         run: uv audit --project docs/ford_bib_ext --preview-features audit
+
+      - name: Run uv audit (CI scripts)
+        run: uv audit --project .github/scripts --preview-features audit

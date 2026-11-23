@@ -12,6 +12,10 @@ on:
 env:
   BRANCH_NAME: main 
 
+# The jobs only read the repository.
+permissions:
+  contents: read
+
 jobs:
   # This workflow contains a single job called "build"
   run-obgc_1d-ci:
@@ -30,12 +34,6 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: jitterbit/get-changed-files@v1
-        id: abc
-        with:
-          format: space-delimited
-          token: ${{ secrets.GITHUB_TOKEN }}   
-
       # git clone CEFI-regional-MOM6 and replace ocean_BGC
       - name: git clone CEFI-regional-MOM6 
         working-directory: ../
@@ -44,7 +42,8 @@ jobs:
           ls -l -h
           git clone -b $BRANCH_NAME https://github.com/NOAA-GFDL/CEFI-regional-MOM6.git --recursive
           rm -rf CEFI-regional-MOM6/src/ocean_BGC
-          cp -r ocean_BGC CEFI-regional-MOM6/src
+          # $GITHUB_WORKSPACE, not the repo name, so this also works in forks with another name
+          cp -r "$GITHUB_WORKSPACE" CEFI-regional-MOM6/src/ocean_BGC
           cd CEFI-regional-MOM6/src/ocean_BGC && git branch
 
       - name: Copy 1D model input dataset
@@ -140,3 +139,146 @@ jobs:
               (no3_advection_xy + no3h_tendency_vert_remap + no3_vdiffuse_impl + no3_diffusion_xy + jno3h);
               print(result)' no3_tot_budget.nc ncap2_temp.nc |  awk -F'=' '{print $2}')
           python3 check_residual.py $resid
+
+      # The two steps below feed the 1D answer report (job answer-report). They only
+      # copy files, and continue-on-error keeps them from changing the result of
+      # this (required) job.
+      - name: Collect 1D outputs for the answer report
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        continue-on-error: true
+        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
+        env:
+          # Keep in sync with the container image above.
+          CI_IMAGE: ghcr.io/noaa-gfdl/cefi-regional-mom6/1d_mom6_cobalt:2024_04
+        run: >-
+          bash "$GITHUB_WORKSPACE/.github/scripts/collect_1d_outputs.sh"
+          "$GITHUB_WORKSPACE/answer-report/pr" pr "$CI_IMAGE"
+
+      - name: Upload 1D outputs
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        continue-on-error: true
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: 1d-outputs-pr
+          path: answer-report/pr
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Runs the same 1D case with the base commit, for the answer report. Not a
+  # required check. Keep the clone, build and run steps the same as in
+  # run-obgc_1d-ci.
+  base-1d:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+       # Keep in sync with run-obgc_1d-ci.
+       image: ghcr.io/noaa-gfdl/cefi-regional-mom6/1d_mom6_cobalt:2024_04
+       options: --user=builder
+
+    steps:
+      - name: Checkout the PR merge commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          submodules: recursive
+
+      # The base is the first parent of the merge commit that run-obgc_1d-ci
+      # tests, so the two runs differ only by the changes in this PR.
+      - name: Switch to the base commit
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/mocsy"
+          # Keep the PR's CI scripts: the base commit may not have them yet.
+          cp -r .github/scripts "$RUNNER_TEMP/ci-scripts"
+          git checkout --detach HEAD^1
+          git submodule update --init --recursive
+          git log -1 --format='Base commit: %H %s'
+
+      - name: git clone CEFI-regional-MOM6
+        working-directory: ../
+        run: |
+          git clone -b "$BRANCH_NAME" https://github.com/NOAA-GFDL/CEFI-regional-MOM6.git --recursive
+          rm -rf CEFI-regional-MOM6/src/ocean_BGC
+          # $GITHUB_WORKSPACE, not the repo name, so this also works in forks with another name
+          cp -r "$GITHUB_WORKSPACE" CEFI-regional-MOM6/src/ocean_BGC
+
+      - name: Copy 1D model input dataset
+        working-directory: ../CEFI-regional-MOM6/exps
+        run: ln -fs /opt/datasets ./
+
+      - name: Build mom6sis2-cobalt
+        working-directory: ../CEFI-regional-MOM6/builds
+        run: ./linux-build.bash -m docker -p linux-gnu -t debug -f mom6sis2
+
+      - name: Run 1D BATS case
+        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
+        run: ./driver.sh
+
+      - name: Collect 1D outputs for the answer report
+        if: ${{ !cancelled() }}
+        working-directory: ../CEFI-regional-MOM6/exps/OM4.single_column.COBALT
+        env:
+          CI_IMAGE: ghcr.io/noaa-gfdl/cefi-regional-mom6/1d_mom6_cobalt:2024_04
+        run: >-
+          bash "$RUNNER_TEMP/ci-scripts/collect_1d_outputs.sh"
+          "$GITHUB_WORKSPACE/answer-report/base" base "$CI_IMAGE"
+
+      - name: Upload 1D outputs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: 1d-outputs-base
+          path: answer-report/base
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Compares the PR and base 1D runs and writes the report to the job summary.
+  # Report-only: not a required check, and the compare step always exits 0.
+  # See .github/scripts/README.md.
+  answer-report:
+    needs: [run-obgc_1d-ci, base-1d]
+    if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+
+      # A missing artifact means that run failed early; the report says so.
+      - name: Download PR outputs
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: 1d-outputs-pr
+          path: answer-report/pr
+
+      - name: Download base outputs
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: 1d-outputs-base
+          path: answer-report/base
+
+      - name: Compare base and PR
+        run: >-
+          uv run --locked --no-dev --project .github/scripts
+          python .github/scripts/compare_1d.py answer-report/base answer-report/pr
+          --summary "$GITHUB_STEP_SUMMARY" --github-annotations
+
+  # Lint and unit tests for the CI helper scripts in .github/scripts.
+  ci-scripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+
+      - name: Run checks
+        run: .github/scripts/check_all.sh
